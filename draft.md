@@ -2572,3 +2572,723 @@ Continuity/compact vẫn là architecture kế tiếp, không nằm trong first 
 - chốt acceptance first slice: deterministic, read-only, no LLM routing, fail-closed ở canonical rule loss.
 
 Chưa gửi Claude. Chưa implement production Context Compiler.
+
+---
+
+# VÒNG 7 — Stress-test bằng repo hiện tại và ba task thật
+
+## 66. Evidence mới: repo đã có `PHIEN.md` — proposal cũ phải điều chỉnh
+
+Đối chiếu HEAD ngày 09/09 cho thấy startup contract đã thay đổi so với premise của các vòng đầu.
+
+`AGENTS.md` gốc hiện chốt:
+
+```text
+phiên đụng một gói -> đọc đúng PHIEN.md của gói
+phiên luật / điều phối / hạ tầng -> đọc AGENTS.md gốc
+```
+
+và nói rõ:
+
+```text
+Đừng nạp HANDOFF.md hay AGENTS.md của gói lúc mở.
+```
+
+`workers/duc-scouter/v0.1.0/PHIEN.md` là file **máy sinh** từ:
+
+```text
+workers/_shared/LUAT-CORE.md
++ package AGENTS.md
++ package STATUS.md
+```
+
+và tự nhận là **toàn bộ thứ một phiên đụng gói cần nạp lúc mở**.
+
+### Kết luận
+
+Repo đã tự phát triển một phần của thứ ta gọi là Context Compiler:
+
+> `PHIEN.md` chính là **materialized startup context bundle**.
+
+Vì vậy xây một Context Compiler mới mà lại bắt đầu bằng:
+
+```text
+root AGENTS
++ package AGENTS
++ STATUS projection
+```
+
+sẽ là **cài cùng một tính năng lần hai**.
+
+### REVISED DECISION R7-1
+
+**Context Compiler V1 không thay `PHIEN.md`. Nó phải reuse `PHIEN.md` làm bootstrap package context đã compile.**
+
+Đây là thay đổi kiến trúc lớn nhất của vòng cuối.
+
+---
+
+## 67. REVISED — Context Compiler là umbrella; first implementation thực chất là Context Router
+
+Sau khi nhận ra `PHIEN.md` đã xử lý bootstrap, kiến trúc nên chia rõ:
+
+```text
+CONTEXT COMPILER — umbrella architecture
+
+A. BOOTSTRAP COMPILATION        [ĐÃ CÓ]
+   Rule Compiler
+      -> PHIEN.md
+
+B. CONDITIONAL CONTEXT ROUTING  [THIẾU]
+   operation + role + scope
+      -> mandatory on-demand context
+      -> Context Manifest
+
+C. CONTINUITY / COMPACTION      [SAU]
+   checkpoint + carry + rehydrate
+```
+
+### PROVISIONAL DECISION R7-2
+
+First code slice nên được nghĩ như **read-only Context Router**, dù proposal tổng thể vẫn mang tên Context Compiler.
+
+Giá trị mới không phải “nén startup thêm một lần”. Giá trị mới là:
+
+- operation nào buộc phải đọc protocol nào;
+- role/mode nào buộc phải nạp firewall nào;
+- recovery lúc nào mới đọc HANDOFF;
+- cross-runtime adapter sau này làm sao dùng cùng contract;
+- compact làm sao rehydrate từ nguồn hiện hành.
+
+---
+
+## 68. Ba tầng loading mới: Bootstrap / Required-now / Discoverable
+
+Hai trục `semantic kind × load mode` vẫn đúng, nhưng runtime flow cần thêm một phân biệt vận hành:
+
+```text
+BOOTSTRAP
+REQUIRED-NOW
+DISCOVERABLE
+```
+
+### BOOTSTRAP
+
+Thứ session phải có trước khi bắt đầu:
+
+```text
+product package session -> đúng PHIEN.md của focus package
+system/hạ tầng session   -> AGENTS.md gốc
+orchestrator mode        -> AGENTS.md gốc + ORCHESTRATOR.md
+```
+
+### REQUIRED-NOW
+
+Thứ operation hiện tại **bắt buộc** phải biết trước khi hành động.
+
+Ví dụ:
+
+```text
+claim.change / commit.prepare / push.prepare
+  -> MULTIFLOW
+
+rule.change
+  -> RULE-COMPILER
+
+recovery.request
+  -> HANDOFF liên quan
+```
+
+### DISCOVERABLE
+
+Thứ có thể hữu ích nhưng không phải bắt buộc ở mọi instance của operation.
+
+Ví dụ trong `PHIEN.md` Scouter đã tự chỉ:
+
+```text
+AGENTS.md gói (bản đồ file)
+HANDOFF.md gói (phiên trước vấp gì)
+RULE-COMPILER nếu đổi luật
+MULTIFLOW nếu cần khóa/đóng phiên
+```
+
+### PROVISIONAL DECISION R7-3
+
+**Context Registry không được biến thành catalog mọi file “có thể hữu ích”.**
+
+Nó chỉ quản lý bootstrap contract chưa có nguồn khác sở hữu và mandatory conditional context.
+
+Discoverability tiếp tục do:
+
+- PHIEN;
+- protocol;
+- repo map/docs index;
+- agent/tool retrieval.
+
+Nếu registry cố liệt kê mọi useful doc, nó sẽ trở thành repo-map thứ hai và phình theo tuổi repo.
+
+---
+
+## 69. REVISED — ownership state không nên là model context
+
+R5/R6 từng giữ projector:
+
+```text
+claims.scope_current
+```
+
+Stress-test với flow thật cho thấy đây là nhầm boundary.
+
+Rule hiện tại đã yêu cầu:
+
+```text
+TRƯỚC mỗi lượt ghi
+-> chạy claim.mjs --sua ...
+-> đọc kết quả
+```
+
+Tức ownership được kiểm ở **action boundary**, bằng máy, với state mới nhất.
+
+Preload `.agents/claims.json` vào model trước đó có hai vấn đề:
+
+1. snapshot có thể stale ngay sau khi load;
+2. model “biết owner” không có giá trị bằng command thật sự từ chối write.
+
+### REVISED DECISION R7-4
+
+**Bỏ `claims.scope_current` khỏi V1 projector/context inventory.**
+
+Ownership là **deterministic enforcement state**, không phải model knowledge cần mang theo.
+
+Context Router chỉ cần bảo đảm operation `claim.change` đã nạp `MULTIFLOW` trước khi thao tác quyền.
+
+### General invariant mới
+
+> Nếu một sự thật chỉ cần để máy quyết “được phép làm action này không”, ưu tiên enforcement/check tại action boundary thay vì preload vào prompt.
+
+Đây chính là mục tiêu chuyển deterministic rules khỏi context sang enforcement.
+
+---
+
+## 70. REVISED — Task Descriptor cần `focus_scope`, không dùng `scope_hint` mơ hồ
+
+Stress-test `commit.prepare` cho thấy có hai khái niệm khác nhau:
+
+```text
+focus scope   = session đang làm chính ở đâu
+operation targets = action hiện tại thực sự đụng những file nào
+```
+
+Ví dụ:
+
+```text
+focus_scope = workers/duc-scouter
+
+commit targets =
+  workers/duc-scouter/...
+  workers/_shared/...
+```
+
+Nếu dùng cùng một `scope_hint`, hai khái niệm này rất dễ bị trộn.
+
+### REVISED DECISION R7-5
+
+Đổi field:
+
+```text
+scope_hint -> focus_scope
+```
+
+Semantics:
+
+- `focus_scope` chọn bootstrap context của session;
+- `targets` quyết scope/risk của action hiện tại;
+- `focus_scope` **không authorize write** và không được che target thật/git state.
+
+Candidate Task Descriptor sau stress-test:
+
+```json
+{
+  "schema_version": 1,
+  "operation": "commit.prepare",
+  "targets": ["..."],
+  "role": "product",
+  "orchestration": false,
+  "resume": false,
+  "focus_scope": "workers/duc-scouter",
+  "label": "commit work"
+}
+```
+
+---
+
+## 71. Bootstrap resolver — reuse hiện có thay vì duplicate inventory
+
+Không nên khai từng package như:
+
+```text
+scouter.rules
+scouter.state
+gemini.rules
+gemini.state
+chatgpt.rules
+...
+```
+
+vì `PHIEN.md` đã gom chúng và Rule Compiler đã sinh theo package.
+
+### PROVISIONAL DECISION R7-6
+
+Bootstrap resolution V1:
+
+```text
+if role=product and focus_scope là package:
+    resolve <unit>/PHIEN.md từ topology/unit mapping
+    validate file có marker PHIEN MAY SINH
+    validate current generation/fingerprint bằng Rule Compiler mechanism hiện có
+    use PHIEN as derived bootstrap bundle
+
+if role=system:
+    use AGENTS.md root
+
+if orchestration=true:
+    add ORCHESTRATOR.md mandatory
+```
+
+Không hand-author một registry entry cho từng package bootstrap.
+
+Như vậy package mới không làm `context-registry.json` tăng tuyến tính chỉ vì nó tồn tại.
+
+---
+
+## 72. Registry initial inventory — nhỏ hơn rất nhiều
+
+Sau khi reuse PHIEN + bỏ ownership snapshot, initial registry không cần inventory toàn repo.
+
+Candidate mandatory conditional sources:
+
+```text
+protocol.orchestrator
+  source: docs/protocols/ORCHESTRATOR.md
+  trigger: orchestration=true
+
+protocol.multiflow
+  source: docs/protocols/MULTIFLOW.md
+  triggers: claim.change, commit.prepare, push.prepare
+
+protocol.rule-compiler
+  source: docs/protocols/RULE-COMPILER.md
+  trigger: rule.change
+
+protocol.handoff
+  source: scoped HANDOFF of focus package
+  triggers: work.resume, recovery.request
+
+protocol.platform
+  source: PLATFORM.md
+  triggers: permission.change, live.run when extension/Bridge operation requires platform contract
+
+protocol.hnx
+  source: workers/hnx-fetch/PROTOCOL.md
+  trigger: HNX operation/scope when actual task enters that domain
+```
+
+### Hai loại source
+
+Có hai shape thực tế:
+
+1. **fixed path** — ORCHESTRATOR, MULTIFLOW, RULE-COMPILER, PLATFORM;
+2. **scope-relative path** — package HANDOFF, package-specific protocol.
+
+### OPEN nhưng không cần chốt trước proposal Claude
+
+Scope-relative source nên encode bằng named resolver ID hay derive bằng package convention hiện có.
+
+Đây là implementation detail nhỏ, không còn là câu hỏi kiến trúc nền.
+
+---
+
+## 73. Thought experiment A — Product sửa Scouter
+
+### Input
+
+```json
+{
+  "operation": "repo.write",
+  "role": "product",
+  "focus_scope": "workers/duc-scouter",
+  "targets": ["workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs"],
+  "orchestration": false,
+  "resume": false
+}
+```
+
+### Bootstrap
+
+```text
+workers/duc-scouter/v0.1.0/PHIEN.md
+```
+
+PHIEN hiện đã chứa:
+
+- common hard rules;
+- package-specific rules;
+- four command order;
+- latest package status;
+- pointers tới AGENTS/HANDOFF/protocol khi cần đào sâu.
+
+### Required-now cho `repo.write`
+
+Không tự load MULTIFLOW chỉ vì “sẽ có lúc cần claim”.
+
+Khi runtime chuyển action sang:
+
+```text
+claim.change
+```
+
+thì descriptor mới buộc load MULTIFLOW.
+
+### Enforcement
+
+`claim.mjs --sua` kiểm ownership lúc thật sự sắp write.
+
+Không preload claims snapshot.
+
+### Result
+
+Kiến trúc không duplicate PHIEN, không load HANDOFF, không load toàn MULTIFLOW khi chưa tới claim step.
+
+**PASS.**
+
+---
+
+## 74. Thought experiment B — Commit có hai scope
+
+Giả sử session product đang focus Scouter nhưng commit thực tế chứa:
+
+```text
+workers/duc-scouter/...
+workers/_shared/...
+```
+
+### Descriptor
+
+```text
+operation = commit.prepare
+focus_scope = workers/duc-scouter
+targets = actual git changed/unpushed files
+```
+
+### Bootstrap
+
+Vẫn là **Scouter PHIEN**, vì đó là mental model của session đang làm.
+
+Không tự load `_shared PHIEN` chỉ vì commit cuốn một file đã được sửa/commit trong scope khác.
+
+### Required-now
+
+```text
+MULTIFLOW full protocol
+```
+
+Actual git state thắng `focus_scope` khi resolver nói commit liên quan scope nào.
+
+### Enforcement/publish
+
+Session-check/safe-push vẫn là nơi kiểm attribution và publish safety. Context Router không duplicate logic đó.
+
+### Insight
+
+Một stateless resolver vẫn làm được nếu manifest tách:
+
+```text
+bootstrap context
+vs
+operation-required context
+vs
+effective action scopes
+```
+
+Nó không cần giả vờ mọi scope của action đều là “focus scope”.
+
+**PASS.**
+
+---
+
+## 75. Thought experiment C — Đức hỏi phiên điều phối “làm gì tiếp?”
+
+### Descriptor
+
+```json
+{
+  "operation": "repo.read",
+  "role": "system",
+  "orchestration": true,
+  "targets": [],
+  "focus_scope": null
+}
+```
+
+### Bootstrap
+
+```text
+AGENTS.md root
++ ORCHESTRATOR.md
+```
+
+Không load PHIEN của mọi package.
+
+ORCHESTRATOR hiện đã quy định:
+
+- query-driven;
+- hard role firewall;
+- không code/debug/patch;
+- dùng nguồn sống/what-next;
+- báo cáo theo contract năm mục.
+
+### Query-specific retrieval
+
+Câu “làm gì trước” có thể khiến agent đọc:
+
+```text
+ROADMAP.md
+what-next.mjs output
+```
+
+nhờ chỉ dẫn đã nằm trong root AGENTS/ORCHESTRATOR.
+
+Context Registry **không cần một operation mới `project.next` chỉ để route mọi câu hỏi con**.
+
+### Insight
+
+Context Router quản lý **mandatory control context**, không thay reasoning/retrieval của agent.
+
+Nếu cố encode mọi intent như “what next”, “why”, “compare”, “audit”, taxonomy sẽ nổ.
+
+**PASS.**
+
+---
+
+## 76. Thought experiment D — compact rồi resume Scouter
+
+Đây là stress-test thêm vì compact là mục tiêu gốc.
+
+Trước compact, material durable facts đã được persist theo checkpoint policy.
+
+Carry nhỏ giữ:
+
+```text
+role=product
+focus_scope=workers/duc-scouter
+current operation/task pointer
+recovery pointer
+```
+
+Sau compact/new session:
+
+```text
+1. resolve CURRENT Scouter PHIEN
+2. operation work.resume/recovery.request
+3. load HANDOFF raw on-demand
+4. canonical current sources thắng carry summary nếu lệch
+```
+
+Không cần carry lại:
+
+- package AGENTS full;
+- STATUS body;
+- all previous protocol;
+- transcript;
+- claims snapshot.
+
+**PASS về kiến trúc.** Physical token reclaim vẫn phụ thuộc runtime như đã chốt.
+
+---
+
+## 77. REVISED — projector scope của first implementation còn nhỏ hơn nữa
+
+Do package bootstrap đã materialize vào PHIEN, `status.frontmatter` không còn cần thiết để tối ưu startup **trong repo hiện tại**.
+
+`claims.scope_current` đã bị loại vì thuộc enforcement.
+
+### REVISED DECISION R7-7
+
+Read-only Context Router first slice thực tế chỉ cần:
+
+```text
+full
+```
+
+cho mandatory on-demand protocols.
+
+Projector framework + Loss Contract vẫn là kiến trúc V1, nhưng **không cần implement projector lossy nào trước khi có source thật cần nó**.
+
+`status.frontmatter` trở thành candidate khi:
+
+- một repo khác chưa có PHIEN-like bundle;
+- hoặc measurement cho thấy cần projection riêng ngoài generated bootstrap.
+
+Điều này cắt thêm code/test mà không mất chức năng hiện tại.
+
+---
+
+## 78. REVISED — initial test matrix theo kiến trúc thật
+
+Các fixture R6 dựa trên root+package AGENTS+STATUS cần cập nhật.
+
+Minimum corpus sau stress-test:
+
+```text
+A. BOOTSTRAP
+1. product + valid focus package -> đúng PHIEN, không AGENTS/STATUS raw
+2. system -> AGENTS root
+3. orchestration=true -> AGENTS root + ORCHESTRATOR
+4. product focus package thiếu/stale PHIEN -> BLOCKED hoặc yêu cầu regenerate, không đoán raw bundle
+
+B. CONDITIONAL
+5. claim.change -> MULTIFLOW
+6. commit.prepare -> MULTIFLOW + effective scopes từ git/targets
+7. push.prepare -> MULTIFLOW
+8. rule.change -> RULE-COMPILER
+9. work.resume/recovery -> scoped HANDOFF
+
+C. BOUNDARY
+10. repo.write không preload claims snapshot
+11. repo.write không auto-load HANDOFF
+12. repo.write không auto-load MULTIFLOW trước khi operation chuyển claim.change
+13. orchestration không load tất cả package PHIEN
+14. actual target/git scopes thắng focus_scope trong publish risk
+
+D. FAILURE
+15. unknown operation -> BLOCKED
+16. orchestration mode thiếu ORCHESTRATOR -> BLOCKED
+17. stale/missing generated PHIEN cho product bootstrap -> BLOCKED
+18. mandatory protocol missing ở high-risk operation -> BLOCKED
+19. same input/state -> deterministic manifest
+```
+
+Lossy projector mutation tests chuyển sang khi projector thứ hai thực sự được đưa vào production.
+
+---
+
+## 79. Architecture snapshot — sau stress-test cuối
+
+```text
+                           CANONICAL TRUTH
+              ADR / active rules / STATUS / protocols
+                                 │
+                                 ▼
+                         Rule Compiler
+                      ┌──────────┴──────────┐
+                      │                     │
+              generated PHIEN         active-rule checks
+              [package bootstrap]           │
+                      │                     │
+                      └──────────┬──────────┘
+                                 │
+                         Task Descriptor
+                 role + focus_scope + operation
+                         + actual targets
+                                 │
+                                 ▼
+                       Context Router V1
+               ┌─────────────────┼──────────────────┐
+               │                 │                  │
+          BOOTSTRAP        REQUIRED-NOW        DISCOVERABLE
+       PHIEN / root AGENTS   protocol bắt buộc   pointers only
+               │                 │                  │
+               └─────────────────┴──────────────────┘
+                                 │
+                         Context Manifest
+                       READY / WARN / BLOCKED
+                                 │
+                      [READ-ONLY V1 STOPS]
+                                 │
+                    future Runtime Adapters
+
+ENFORCEMENT chạy song song, KHÔNG qua model context:
+claim.mjs / session-check / safe-push / tests / permission guards
+
+CONTINUITY:
+material durable change -> canonical source
+compact boundary -> carry pointers
+rehydrate -> CURRENT bootstrap + recovery context
+```
+
+---
+
+## 80. Những gì Context Compiler KHÔNG sở hữu — chốt boundary
+
+Sau bảy vòng reasoning, đây là boundary quan trọng nhất để tránh mega-system.
+
+Context Compiler/Router **không sở hữu**:
+
+- rule semantics — Rule Compiler/ADR sở hữu;
+- package startup prose — PHIEN generator sở hữu;
+- ownership permission — claim mechanism sở hữu;
+- commit/push safety — session-check/safe-push sở hữu;
+- code/workset retrieval — coding agent/tool sở hữu;
+- roadmap prioritization — ROADMAP/what-next/Orchestrator sở hữu;
+- product state truth — STATUS/BACKLOG canonical sources sở hữu;
+- physical compact implementation — runtime adapter sở hữu.
+
+Nó sở hữu đúng một câu hỏi:
+
+> **Với role/focus hiện tại và operation sắp làm, context control-plane nào BẮT BUỘC phải có mà bootstrap hiện tại chưa cung cấp?**
+
+Đây là phạm vi nhỏ, rõ và test được.
+
+---
+
+## 81. Reasoning completion gate
+
+Sau thought-experiment, các câu hỏi còn mở phần lớn đã chuyển từ **architecture decisions** thành **implementation/evidence questions**:
+
+- exact JSON syntax cho scope-relative source;
+- cách check PHIEN stale/fingerprint tối thiểu;
+- CLI shape của read-only router;
+- adapter Claude/Codex/Antigravity/GPT cụ thể;
+- measurement token/latency sau khi manifest correctness đạt.
+
+Không còn lý do tốt để tiếp tục thêm abstraction trước khi Claude phản biện.
+
+### PROVISIONAL DECISION R7-8
+
+**Dừng phase mở rộng reasoning tại đây.**
+
+Bước tiếp theo không phải vòng brainstorm 8.
+
+Bước tiếp theo là:
+
+```text
+AUDIT toàn draft
+-> resolve REVISED/REJECTED
+-> loại premise cũ đã bị PHIEN thay
+-> deduplicate
+-> trim
+-> viết architecture final proposal
+-> tách Accepted / Deferred / Open
+-> gửi Claude làm independent reviewer/challenger
+```
+
+---
+
+## 82. Change log — vòng 7
+
+### 2026-09-09 — vòng 7
+
+- phát hiện HEAD hiện tại đã có **PHIEN.md machine-generated startup bundle**; REVISED premise startup của vòng đầu;
+- chốt Context Compiler umbrella = existing bootstrap compilation + **new conditional Context Router** + future continuity layer;
+- thêm operational split `BOOTSTRAP / REQUIRED-NOW / DISCOVERABLE`;
+- **REVISED ownership**: bỏ `claims.scope_current`, quyền ghi thuộc deterministic action enforcement;
+- `scope_hint` đổi thành **`focus_scope`**, tách mental/session scope khỏi actual action targets;
+- bootstrap package reuse PHIEN, không hand-author rule/state entries cho từng package;
+- registry initial inventory thu còn mandatory conditional protocols;
+- stress-test Scouter write, multi-scope commit, Orchestrator query và compact/resume đều pass về boundary;
+- first implementation projector thu còn `full`; lossy projection framework giữ cho use case sau;
+- cập nhật test corpus theo PHIEN architecture;
+- chốt ownership boundary để Context Router không thành mega-orchestrator;
+- **REASONING EXPANSION COMPLETE** — vòng kế tiếp phải là audit/compact proposal, không brainstorm thêm.
+
+Chưa gửi Claude. Chưa implement production Context Router/Compiler.
