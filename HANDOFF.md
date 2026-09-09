@@ -9,48 +9,11 @@
 <!-- HANDOFF-THANG: 2026-09 -->
 
 <!-- HANDOFF-CUT-POINTER: ADR-0008 -->
-> **6 mục cũ hơn đã dời sang [`HANDOFF-ARCHIVE-03.md`](HANDOFF-ARCHIVE-03.md)** — cùng thư mục này,
+> **1 mục cũ hơn đã dời sang [`HANDOFF-ARCHIVE-04.md`](HANDOFF-ARCHIVE-04.md)** — cùng thư mục này,
 > nguyên văn, không mất chữ nào. File này giữ **20 mục cuối** (ADR-0008). Cần đào lịch sử
 > xa hơn thì mở file đó và đi tiếp theo con trỏ trong nó; ghi Log mới thì vẫn ghi vào cuối
 > file này.
 <!-- /HANDOFF-CUT-POINTER -->
-
-## 2026-09-08 · `claude-scouter-s06` — HNX Fetch thành gói riêng; trần ghi 50 → 200
-
-Hai chốt của Đức trong một phiên.
-
-**① Trần ghi 50 → 200** ([ADR-0005](workers/duc-scouter/v0.1.0/docs/adr/0005-tran-ghi-nang-tu-50-len-200.md)).
-Trần 50 hôm 07/09 dừng một việc **đúng** — lượt tải 216 PDF — rồi Đức bật lại và việc đó chạy
-tiếp y nguyên. Nó không lọc được gì, chỉ cắt một việc lành làm nhiều khúc. Bốn lớp còn lại
-không đụng. Kèm: **ba mỏ neo đột biến đã chết từ hôm trước** (`D9 H2 F6`) được vá — chúng canh
-ba chốt an toàn mà lại khớp 0 lần.
-
-**② HNX Fetch tách thành extension riêng** ([ADR-0021](docs/adr/0021-goi-extension.md)).
-Đức: *"scouter đi scout trang khác, còn HNX thành 1 extension độc lập."*
-
-**Phép đo quyết định hình dạng gói, chạy TRƯỚC khi chép một dòng nào:** tầng dữ liệu HNX gọi
-**đúng một lệnh** của extension (`scout.fetch`), và lệnh đó **không dùng** `chrome.debugger`.
-Nên gói mới **không phải fork**: nó bỏ hẳn quyền debugger, giữ **4 lệnh trên 15**, vùng đích
-hẹp về `hnx.vn` thay cho `<all_urls>`. Extension không có debugger thì **không ai bắt nó bấm
-được** — kể cả AI vận hành nó, vì Chrome từ chối ở tầng hệ thống.
-
-**Cắt chứ không tắt bằng cờ:** 11 lệnh bị XOÁ khỏi từ vựng. `scout.click` trả `METHOD_NOT_FOUND`.
-Một lệnh không tồn tại thì không ai bật lại được.
-
-**Trần "một gói sống" nâng lên HAI.** Trần là *số gói CÓ LÝ DO sống*, và lý do phải viết được
-thành một ADR. Gói thứ ba phải hỏi Đức.
-
-**Hai lỗi cũ lộ ra trong lượt này, đã vá:**
-
-- Suite gốc **không chạy** phép ghim của gói mới — thiếu `tests/run-all.mjs`. Cổng đóng phiên tự
-  tìm tệp đó theo hình dạng, nên thiếu nó là **im lặng bỏ qua cả gói**.
-- STATUS của Scouter khai `ref_readme: README.md` — đường đó **tồn tại ở gốc repo** nên phép
-  kiểm XANH, nhưng người bấm từ bảng rơi vào README của CẢ REPO. Xanh mà trỏ nhầm chỗ.
-
-**Đo.** Suite gốc **375** (trước 369). Phép ghim bề mặt hẹp **4/4**. `check-bootstrap` 0 đỏ.
-
-**Còn nợ:** thư mục pilot cũ **chưa xoá** (xoá tệp phải hỏi Đức), đã dán bảng ĐÃ CHUYỂN NHÀ.
-Chưa lượt nào chạy qua chính extension mới.
 
 ## 2026-09-08 · `claude-scouter-s06` — bảng hiện DANH TÍNH từng extension
 
@@ -605,3 +568,27 @@ nguyên và giao lại** qua sổ nợ.
 
 **Còn mở:** phép ② **100 mồ côi** ở hai sổ `chatgpt`/`gemini` → **N-58**, không phải nhiễu: bốn
 chốt `run.trial` của Đức nằm trong đó và chúng ĐANG SỐNG.
+
+## 2026-09-09 · `claude-luat-rasoat` (lượt 2) — phép ② về 0, và bốn phép đều sạch
+
+**Đóng N-58.** Phép ② `QUYET_DINH_MO_COI`: **100 → 0**. Soi từng cái trong 100, không lấp bằng
+cửa miễn trừ — **67 luật đang sống** vào bản hiệu lực hai gói (mục mới *Sổ cái của gói*, nhóm theo
+chủ đề) · **27 bản ghi lịch sử** khai `mo_coi_co_y` · **6 thật sự đã chết** đánh dấu đúng khuôn.
+
+**Nghi ngờ lúc mở mục đã được xác nhận: đó không phải nhiễu.** Trong đám mồ côi có luật đang ràng
+buộc mà ai chỉ đọc `AGENTS.md` sẽ không bao giờ biết — `gemini` ADR-0046 ghim **CẤM dựng lại** hai
+ngõ cụt đã bị bằng chứng bác bỏ; `chatgpt` ADR-0042 *việc thật KHÔNG chạy qua `run.trial`* và
+ADR-0045 *text quá 32.767 ký tự thì DỪNG, không lưu gì*.
+
+**Bộ đo nhận thêm dạng NHÓM cho `mo_coi_co_y`** — một lý do chung, một danh sách số hiệu. 27 câu
+lý do gần giống nhau chép 27 lần là **giả vờ đã suy nghĩ 27 lần**. Cố ý **không** làm dạng *"cả sổ
+này miễn"*: nhóm vẫn phải liệt kê từng số, nên quyết định mới thêm sau vẫn kêu. Ghim cả hai chiều.
+
+**Cấu trúc tìm ra khi đối chiếu hai sổ:** `gemini 0001–0015` và `chatgpt 0001–0016` là **cùng một
+chuỗi quyết định lệch nhau đúng một số** — lịch sử trước lúc fork, chép đôi. Từ `0016` trở đi mới
+là lịch sử riêng. Đây là chỗ nên nhìn kỹ ở lượt cải tổ tới.
+
+**Đức chuyển khoá `duc-auto-chatgpt`** sau khi báo lane `claude-gpt-chay-het-job` đã dừng.
+
+**Bốn phép nay: ① 0 · ② 0 · ③ 12 (đều có lý do viết tay) · ④ 0.** Không còn gì trong sổ nợ hạ tầng
+thuộc về bộ biên dịch luật.

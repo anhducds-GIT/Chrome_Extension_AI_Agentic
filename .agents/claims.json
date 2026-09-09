@@ -92,6 +92,17 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "3e2c8fb9ffc928e6",
-  "tam": {}
+  "_fingerprint": "7fe6374e46672051",
+  "tam": {
+    "HANDOFF.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T04:51",
+      "viec": null
+    },
+    "HANDOFF-ARCHIVE-04.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T04:51",
+      "viec": null
+    }
+  }
 }
