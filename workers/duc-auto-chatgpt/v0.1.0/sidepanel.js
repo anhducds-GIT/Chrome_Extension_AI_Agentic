@@ -6113,11 +6113,18 @@
       audit("RECONCILE_RESULT", item, { message: `KHÔNG thấy lượt hỏi của job này trong hội thoại (${truoc.reconcile?.reason}); không F5, không kết luận.` });
       return dungHan(`${message} Không tìm thấy lượt hỏi của job này trong hội thoại, nên không khẳng định được prompt đã tới đâu.`);
     }
-    if (truoc.reconcile.complete) {
-      // Đọc thẳng đã đủ — khỏi F5. Ca này xảy ra khi trang vừa được nhìn tới.
-      audit("RECONCILE_RESULT", item, { message: `Đọc lại thấy câu trả lời đủ ${truoc.reconcile.chars} ký tự, không cần F5.` });
-      return finishTextOutput(item, truoc.result, effectiveOutput);
-    }
+    // KHÔNG CÓ CỬA TẮT "đọc thẳng đã đủ thì khỏi F5". Bản đầu của tôi CÓ, và nó để lọt đúng
+    // con bug này trong lượt nghiệm thu live 09/09: hết giờ 180 giây → đối soát → cửa tắt đọc
+    // được **27 ký tự**, `looksTruncated` bảo "trông trọn vẹn", chốt SUCCESS,
+    // `persistence_verified: true`. Câu trả lời thật, đọc sau một cú F5: **1.917 ký tự**.
+    //
+    // Lỗi là lỗi THIẾT KẾ, không phải một chỗ thiếu điều kiện: cửa tắt đó tin `looksTruncated`
+    // để phán DOM đáng tin, trong một bản vá mà TOÀN BỘ tiền đề là *DOM không đáng tin*. Đã
+    // vào tới đây nghĩa là `waitForCompletion()` vừa thất bại suốt 180 giây; đó đúng là lúc
+    // KHÔNG được tin trang. `looksTruncated` chỉ còn một việc: phán bản SAU F5 đã đủ chưa.
+    //
+    // Cái giá, nói rõ: mỗi job hết giờ tốn thêm một cú F5 và một lượt đọc (~7 giây). Rẻ hơn
+    // một câu trả lời 27 ký tự đóng dấu "đã xác minh".
 
     // ⑶ Đã khẳng định prompt nằm trong hội thoại → F5 rồi đọc lại.
     const repair = await repairWorkspaceSurface();

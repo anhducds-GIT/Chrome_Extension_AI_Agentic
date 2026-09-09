@@ -988,6 +988,13 @@
         surfaceAllowed: surfaceAllowedNow(),
         generating: Boolean(findStopButton()),
         assistantCount: assistantMessages().length,
+        // B-43: BÁO RA, đừng để phiên sau phải SUY như tôi đã suy. `visibilityState` chỉ nói
+        // "hidden" cho một TAB NỀN. Cửa sổ bị cửa sổ KHÁC che mà tab đó vẫn đang mở thì trang
+        // báo "visible" — đúng thói quen Đức mô tả 09/09 (*"F5 rồi sang Claude làm việc"*), nên
+        // mọi cửa chặn neo vào trường này đều vô hiệu trong ca thật của Đức. `hasFocus` tách
+        // được hai ca đó ra, và chỉ có đo mới nói được, không suy.
+        visibility: typeof document !== "undefined" ? document.visibilityState : null,
+        docFocused: typeof document !== "undefined" && typeof document.hasFocus === "function" ? document.hasFocus() : null,
         busy: STATE.busy,
         securityBlocker: securityBlockerText(),
         generationLimitBlocker: generationLimitText(),

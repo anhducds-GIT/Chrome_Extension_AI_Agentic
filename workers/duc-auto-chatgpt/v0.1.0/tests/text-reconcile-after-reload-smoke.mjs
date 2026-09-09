@@ -213,6 +213,18 @@ const API = tOut.API;
   assert.ok(viTriChan > 0 && viTriChan < viTriF5, "cửa chặn 'không thấy lượt hỏi' phải đứng TRƯỚC F5");
   assert.ok(/dungHan\(/.test(than.slice(viTriChan, viTriF5)), "và không thấy lượt hỏi thì DỪNG HẲN, không đi tiếp tới F5");
   assert.ok(!/DAC_RUN_TEXT_JOB|setContentEditableValue|submitPrompt/.test(than), "đường đối soát KHÔNG được gọi bất cứ thứ gì gửi prompt");
+
+  /* ⒂ KHÔNG CÓ CỬA TẮT "đọc thẳng đã đủ thì khỏi F5". Bản đầu CÓ, và nó để lọt đúng con bug
+     này trong lượt nghiệm thu live 09/09: hết giờ 180 giây → đối soát → cửa tắt đọc được 27
+     ký tự, `looksTruncated` bảo trông trọn vẹn, chốt SUCCESS với `persistence_verified: true`.
+     Câu trả lời thật sau một cú F5: 1.917 ký tự.
+
+     Mép này canh bằng THỨ TỰ, không bằng chữ: lượt chốt (`finishTextOutput`) đầu tiên trong
+     thân hàm phải nằm SAU lượt F5. Đảo lại là mở lại đúng cửa tắt đã để lọt 27 ký tự. */
+  const viTriChot = than.indexOf("finishTextOutput(");
+  assert.ok(viTriChot > 0, "phải có lượt chốt trong thân hàm");
+  assert.ok(viTriChot > viTriF5, "mọi lượt chốt phải nằm SAU F5 — không có cửa tắt tin DOM trước khi F5");
+  assert.equal(than.split("finishTextOutput(").length - 1, 1, "ĐÚNG MỘT lượt chốt: hai lượt nghĩa là cửa tắt quay lại");
 }
 
-console.log("B-43 F5 rồi đọc lại, chạy thật (14 mép): PASS");
+console.log("B-43 F5 rồi đọc lại, chạy thật (15 mép): PASS");
