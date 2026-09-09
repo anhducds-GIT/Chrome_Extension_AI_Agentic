@@ -1574,7 +1574,7 @@ cho xanh.
 
 
 
-### B-46 · (ĐÓNG — ĐÃ ĐO, KHÔNG PHẢI LÀM GÌ, 09/09) Đọc lại sớm khi bằng chứng còn sống
+### ~~B-46~~ · (ĐÓNG — ĐÃ ĐO, KHÔNG PHẢI LÀM GÌ, 09/09) Đọc lại sớm khi bằng chứng còn sống
 
 Mục này mở 09/09 để thay `B-45`, rồi **đo xong cùng ngày, và tiền đề của nó SAI.** Đức chốt
 *"chạy B-46 đi"*; tôi chạy bằng `diagnostics.dom_probe` — **chỉ đọc, 0 credit**.
@@ -1619,7 +1619,7 @@ kéo từ B-43 — nơi tab bị che **thật sự** làm chữ không vẽ — 
 
 - **đóng khi:** đã đóng — phép đo ở trên là điều kiện đóng, và nó nói KHÔNG phải làm gì.
 
-### B-45 · (ĐÓNG — SẼ KHÔNG LÀM, 09/09) Quy thuộc một ảnh SAU cú F5
+### ~~B-45~~ · (ĐÓNG — SẼ KHÔNG LÀM, 09/09) Quy thuộc một ảnh SAU cú F5
 
 **ĐỨC ĐỂ TÔI CHỌN 09/09** (*"B-45 là gì tôi k hiểu, bạn chủ động chọn nhé"*), **và tôi chọn KHÔNG
 LÀM.** Ba lý do, xếp theo sức nặng:
@@ -2100,4 +2100,72 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   KHÔNG ai nhìn**. Nên nó là **tiện lợi**, không phải đường duy nhất, và vế live chưa đo được
   **không còn chặn gì**. Lý do nó vẫn sống, một câu: cửa vừa bị gỡ **suy ra một điều phủ định từ
   việc không thấy** (hỏng MỞ), còn nó **đọc một câu nói thẳng** (hỏng ĐÓNG).
+## KẾ HOẠCH TRIỂN KHAI — chốt 09/09, viết để sống qua một lượt compact
+
+Đức yêu cầu *"lên kế hoạch triển khai trước khi tôi compact"*. Nên kế hoạch nằm **ở đây**, không
+nằm trong hội thoại. Thứ tự lấy từ `node scripts/what-next.mjs` + `ROADMAP.md`, **không tự bịa**.
+
+### Điều bộ máy nói, và nó khác dự đoán của tôi
+
+Hai làn **ưu tiên #1** không phải gói này, và **cả hai đang chờ Đức**:
+
+| làn | chờ gì | ghi chú tiền |
+|---|---|---|
+| `workers/hnx-fetch` | Đức bật công tắc *Cho phép lấy dữ liệu*; SSOT thiếu **3 ngày** (01/09, 02/09, 08/09 — hai ngày đầu gần như chắc là nghỉ Quốc khánh, lượt chạy sẽ tự ghi nhận) | không tốn credit ảnh |
+| `workers/duc-auto-gg-flow-video` | Đức xem thông báo **quá tải** của Flow còn không; job Q001 đã nằm sẵn trong hàng đợi | **CẢNH BÁO:** chip đang để **x2** mà trang tự khai 6 credit/video → một job có thể là **12**, không phải 6 |
+
+Gói này là **ưu tiên #2**, và nó là chỗ DUY NHẤT tôi làm tiếp được ngay.
+
+### ⓐ Làm ngay, không cần Đức, không tốn credit — `B-20`
+
+Tính năng *alias* (tên gọi ngắn cho ảnh mẫu) là **code chết ở cả hai worker**: `alias` được gán ở
+đúng hai chỗ và **cả hai gán chuỗi rỗng**; không có ô nhập trong gallery; không có cột trong schema
+XLSX; nhánh khớp-theo-alias đòi `key &&` khác rỗng nên **không bao giờ chạy**. Và `README.md:74`
+**khai sai**: *"gallery with editable aliases"*.
+
+**Tôi chọn BỎ, không NỐI** — và đây là quyết định của tôi, nói rõ để Đức đảo được: bỏ làm code nói
+thật và xoá một lời khai sai trong tài liệu; nối là thêm một tính năng **chưa ai xin**. Đức chưa
+bao giờ dùng được nó, vì không có UI để đặt alias.
+
+Việc: xoá nhánh alias khỏi `resolveReferences`, sửa `README.md`, sửa tài liệu schema · một phép
+ghim khẳng định **không còn nhánh nào khớp-theo-alias tới được** và README **không còn khai** nó ·
+thử phá. **Đừng đụng `aliases()`** — hàm chống trùng đó vẫn có việc thật.
+
+### ⓑ Chờ MỘT lượt chạy ảnh thật — nó trả lời **BA** câu cùng lúc, miễn phí
+
+Đây là chỗ hội tụ, và nó là lý do đừng đo ba lần:
+
+1. **`B-46` (vế còn để mở):** tab bị che có vẽ xong một `<img>` **sinh ra** hay không. Đọc
+   `imageCandidateCount` + `generatedChains` từ `diagnostics.dom_probe` **sau** lượt sinh.
+2. **`B-14`:** `attachmentPreview` thực chất chỉ đứng trên **một** selector, và nó neo vào
+   `aria-label` **tiếng Anh** (`"Remove file"`). ChatGPT đổi nhãn hoặc Đức đổi ngôn ngữ giao diện
+   là mù. Cần probe **GIỮA LÚC ĐANG GẮN ẢNH** để tìm một mục neo theo **cấu trúc**, không theo chữ.
+3. **`B-15`:** `uploadPending` **chưa từng khớp** qua 52 lượt dò. Chưa phân biệt được "selector
+   chết" với "ChatGPT không có dấu hiệu upload-đang-chạy". Cách phân biệt đã ghi sẵn trong mục đó:
+   dùng ảnh **~2MB**, không phải 11–28KB, để cửa sổ upload đủ dài mà dò kịp.
+
+**Nên lượt chạy đó phải đính một ảnh mẫu ~2MB, và phải probe HAI mốc: giữa lúc gắn, và sau khi
+sinh.** Một lượt, ba câu trả lời. Chạy ba lượt riêng là tiêu credit ba lần cho cùng một thứ.
+
+**Vì sao `B-15` đáng làm sớm, nói thẳng cái xấu:** nếu `uploadPending` không bao giờ khớp thì
+`attachmentPending` trong cổng sẵn-sàng **luôn false**, tức cổng đó có thể đang là **mã chết** — và
+một cổng chết ở đúng chỗ này nghĩa là runner có thể gõ Gửi **khi ảnh chưa upload xong**. Chưa
+khẳng định, nhưng đó là giả thuyết phải đo, và nó cùng họ với hai con bug audit bắt hôm nay.
+
+### ⓒ Việc chờ Đức, xếp theo thứ tự tôi khuyên
+
+1. **Bật công tắc `hnx-fetch`** — rẻ nhất, không tốn credit ảnh, và đang thiếu dữ liệu thật.
+2. **Xem Flow còn quá tải không** — nhưng **hỏi lại chuyện chip x2 trước khi bấm**, vì nó có thể
+   nhân đôi hoá đơn.
+3. **Một loạt ảnh thật ở gói này** — khi nào Đức muốn dùng tính năng, không phải để làm hài lòng
+   một phép đo.
+
+### Không làm, và vì sao
+
+- **`B-36`** (nút cấp lại quyền thư mục): Đức chốt 09/09 *"tạm thời chưa cần"*.
+- **Vế live `ADR-0053`:** cần một lỗi thật của nhà cung cấp. **Không giả lập.** Đã hạ mức 09/09
+  nên nó không chặn gì.
+- **`B-06` / `B-07`** (đồng bộ và port ngược sang Gemini): P2, và cả hai chạm gói khác — không
+  mở khi gói này còn P1.
+
 
