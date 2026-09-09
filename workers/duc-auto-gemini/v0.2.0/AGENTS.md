@@ -14,15 +14,26 @@ chốt.
 | Vai | Ai/gì | Được làm | Không được làm |
 |---|---|---|---|
 | Chủ dự án / chốt duy nhất | Đức | Duyệt mọi thay đổi, quyết định commit, chọn hướng roadmap | — |
-| Coordinator / Architecture Reviewer | Claude | Đọc code, audit kiến trúc, đề xuất sửa, implement khi Đức giao | Tự commit/push khi chưa hỏi |
+| Coordinator / Architecture Reviewer | Claude | Đọc code, audit kiến trúc, đề xuất sửa, implement khi Đức giao · **tự commit và đẩy** khi đủ ba điều kiện ở `AGENTS.md` gốc mục 2 (*Commit và đẩy*) | Đẩy bằng `git push` trần — luôn `safe-push.mjs`; đẩy việc còn dở |
 | Independent Code Auditor / Implementer | Codex | Audit độc lập, implement theo brief | Tự ý mở rộng phạm vi ngoài brief |
 | Implementer gốc | GPT Web | Đã dựng V0 ban đầu | — |
-| AI ngoài qua Agent Bridge | Bất kỳ agent nào gọi qua Bridge (kể cả Claude/Codex khi chạy qua CLI) | Đọc trạng thái (`ping`, `capabilities`, `queue-list`, `run-status`, `ledger-read`), gửi 1 đề xuất (`propose`) vào vùng cách ly | Không bao giờ tự chạy Run, pause, resume; không bỏ qua bước Đức duyệt trong side panel |
+| AI ngoài qua Agent Bridge | Bất kỳ agent nào gọi qua Bridge (kể cả Claude/Codex khi chạy qua CLI) | Đọc trạng thái (`ping`, `capabilities`, `queue-list`, `run-status`, `ledger-read`), gửi 1 đề xuất (`propose`) vào vùng cách ly · **`run.trial` trong đúng bốn nắp cứng ở luật 7** | Không bao giờ tự chạy `run.start`/pause/resume; không bỏ qua bước Đức duyệt trong side panel |
 
 Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file này
 (mục "Template COUNCIL"), copy từ `HANDOFF.md`.
 
 ## Luật vàng của project này
+
+> **Mục này CỐ Ý gần giống `workers/duc-auto-chatgpt/v0.1.0/AGENTS.md` — đừng gộp.** Bộ biên dịch
+> luật nêu ba cặp ở phép ③ `LUAT_TRUNG` (luật 3, 5, 9); đây là câu trả lời, ghi tại chỗ theo
+> `docs/protocols/RULE-COMPILER.md` mục 4. **Lý do:** một phiên làm ở gói này đọc `AGENTS.md` gốc
+> repo rồi đọc file này, **không bao giờ đọc file của gói kia**. Gộp vào một file dùng chung là
+> bắt mọi phiên đọc thêm một file thứ ba, và tệ hơn: **hai bản PHẢI được phép lệch nhau** — luật 7
+> và 8 dưới đây khác nhánh ChatGPT một cách đúng đắn, vì hai sản phẩm khác nhau.
+>
+> **Cái lệch mới là bệnh, không phải cái giống.** Ngày 09/09 phép ③ chính là thứ lôi ra được luật
+> 8 đã chết từ 24/08 mà nằm đây 16 ngày, và luật 7 thiếu hẳn một method tiêu tiền. Phép ③ kêu ở
+> đây là nó **đang chạy đúng**, không phải một món nợ.
 
 1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-03/`, `pilot-05/`,
    `pilot-06/`, `pilot-06B/`.** Đây là bằng chứng vận hành (evidence) của các
@@ -53,15 +64,42 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    `decisions.md`.** Bridge là ingress + observability, không phải remote
    execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
    Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
-   nền nào thay thế.
-8. **Không build preview/harness để tự "xem" UI.** In-app Browser pane không
-   verify được UI thật của extension này (chặn script, bỏ stylesheet) — xem
-   `README.md`/`NEXT-SESSION-BRIEF.md`. Suy luận từ source, viết static test,
-   giao việc xem bằng mắt cho Đức.
+   nền nào thay thế. *Ngoại lệ DUY NHẤT, và nó tiêu credit thật:* method
+   **`run.trial`** có thật trong gói này
+   ([ADR-0027](docs/adr/0027-ai-duoc-tu-khoi-dong-trial-run-qua-bridge-trong.md)),
+   với bốn nắp cứng — dev-toggle phải BẬT · **≤ 30 job một chuỗi**
+   ([ADR-0032](docs/adr/0032-tran-chuoi-trial-10-30-job-10-job-van-la-it.md),
+   nâng từ 10) · hai trial cách nhau ≥ 5 phút
+   ([ADR-0028](docs/adr/0028-bo-tran-6-trial-gio-thay-bang-hai-trial-lien-tiep.md))
+   · một trial là **một chuỗi liên tục**
+   ([ADR-0031](docs/adr/0031-bo-tran-2-job-trial-mot-trial-chay-lien-tuc-ca.md)).
+   Trần thật khai ở `MAX_TRIAL_JOBS` trong `dev-trial-core.js` — đừng gõ con số
+   vào chỗ khác. **`run.start` thật vẫn cấm vĩnh viễn**: thấy mình đang gỡ nó
+   khỏi danh sách cấm thì dừng lại.
+   > **Dòng này thiếu cả ngoại lệ trên cho tới 09/09.** Bốn quyết định của Đức
+   > (25/08) về một method tiêu tiền chưa bao giờ đi vào luật vàng của gói, nên
+   > ai chỉ đọc file này sẽ tin Bridge không chạy được gì. Nhánh ChatGPT có ghi.
+8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
+   stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
+   2026-08-24, harness bằng Chrome THẬT được phép** — Playwright/CDP chạy
+   extension thật với trang giả lập là công cụ verify hợp lệ
+   ([ADR-0022](docs/adr/0022-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md)).
+   Việc xem bằng mắt của Đức chỉ còn cần cho những gì harness không chạm được
+   (OS folder picker, gemini.google.com thật).
+   > **Vế CẤM HARNESS ở dòng này đã chết 24/08 và nằm đây tới 09/09.** ADR-0022
+   > tên đúng là *"Sửa luật 8 AGENTS.md"* — một chỉ thị sửa chính dòng này, và
+   > nhánh ChatGPT đã sửa ngay hôm đó. Nhánh này thì không: đó là cái giá của
+   > fork, đo bằng 16 ngày một luật đã chết vẫn dạy người đọc.
 9. **Một việc một lúc, không overbuild.** Không thêm tính năng/abstraction
    ngoài phạm vi được giao trong cùng 1 lượt sửa.
 
 ## Core / Companion của project này
+
+> **Bảy dòng dưới đây trùng nguyên văn với gói ChatGPT — CỐ Ý, cùng lý do ghi ở mục *Luật vàng*
+> ngay trên.** Chúng tả **bộ khung chuẩn** mà `CLAUDE.md` gốc của Đức bắt mọi project phải có
+> (`README` · `AGENTS` · `HANDOFF` · `decisions` · `drafts/`), nên hai gói giống nhau là **đúng
+> thiết kế**. Thứ phải khác nhau là **con số và danh sách file riêng của từng gói** — kiểm hai
+> con số ADR dưới đây mỗi lượt rà, chúng là chỗ đã sai ở gói kia.
 
 CORE (đọc mỗi lần):
 - `README.md` — project là gì, kiến trúc, phạm vi (đóng vai design_brief).

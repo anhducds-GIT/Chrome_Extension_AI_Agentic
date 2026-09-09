@@ -15,21 +15,21 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-crlf",
+      "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T08:04",
-      "task": "soi phep kiem tinh vo vi CRLF",
+      "claimed_at": "2026-09-09T03:11",
+      "task": "N-57: ra soat AGENTS.md goi Gemini, sua luat 8 da chet theo ADR-0022",
       "released_at": null,
-      "taken_from": "claude-codex-ngan",
-      "taken_by": "claude-gemini-hoan-thien",
-      "taken_at": "2026-09-06T14:24",
-      "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
+      "taken_from": "claude-gemini-crlf",
+      "taken_by": "claude-luat-rasoat",
+      "taken_at": "2026-09-09T03:11",
+      "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-no-ky-thuat",
+      "owner": "claude-gpt-chay-het-job",
       "ai": "Claude",
-      "claimed_at": "2026-09-08T12:19",
-      "task": "Ra soat va dong het no ky thuat goi ChatGPT, roi phat trien tiep + MVP CC-GPT",
+      "claimed_at": "2026-09-08T17:33",
+      "task": "B-41: thi hanh ADR-0050 (b) — RECEIVER_LOST/WRONG_SURFACE thanh dieu kien chua duoc, co nap so lan chua",
       "released_at": null,
       "taken_from": "claude-gpt-don-no",
       "taken_by": "claude-assistant",
@@ -39,9 +39,9 @@
     "_root": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T12:18",
-      "task": "N-46: khai luat NHA CHUNG cua Bridge vao .repo-structure.json va AGENTS.md goc",
-      "released_at": "2026-09-08T12:32",
+      "claimed_at": "2026-09-08T22:33",
+      "task": "them hai lien ket ADR con thieu vao gioi han 7 va 9",
+      "released_at": "2026-09-08T22:49",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -50,9 +50,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T11:49",
-      "task": "khoa muc FILE: giu ngan, tra ngay (Duc chot 08/09)",
-      "released_at": "2026-09-08T12:16",
+      "claimed_at": "2026-09-08T20:30",
+      "task": "ra soat 4 so tay quy trinh sau luot gop ADR",
+      "released_at": "2026-09-08T22:49",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -62,9 +62,9 @@
     "_code": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T12:46",
-      "task": "day loat commit N-05/N-33",
-      "released_at": "2026-09-08T12:51",
+      "claimed_at": "2026-09-08T22:46",
+      "task": "bo bien dich luat: pham vi theo duong lien ket + mo coi co y",
+      "released_at": "2026-09-08T22:49",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -73,25 +73,31 @@
     "workers/duc-scouter": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T11:25",
-      "task": "Xoa thu muc pilot cu sau khi da chuyen bo dot bien",
-      "released_at": "2026-09-08T11:40"
+      "claimed_at": "2026-09-08T21:36",
+      "task": "ra soat luat goi",
+      "released_at": "2026-09-08T22:49"
     },
     "workers/_shared": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T12:19",
-      "task": "N-46: bo sinh doc duong dan tu .repo-structure.json thay vi go cung",
-      "released_at": "2026-09-08T12:32"
+      "claimed_at": "2026-09-08T21:26",
+      "task": "ra soat luat vung dung chung",
+      "released_at": "2026-09-08T22:30"
     },
     "workers/hnx-fetch": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T12:53",
-      "task": "Dong H-06: da chung minh khong can --target",
-      "released_at": "2026-09-08T13:04"
+      "claimed_at": "2026-09-08T21:36",
+      "task": "ra soat luat goi",
+      "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "ab519c1594fa69aa",
-  "tam": {}
+  "_fingerprint": "7a9a05d9df1bf110",
+  "tam": {
+    ".agents/claims.json": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T03:16",
+      "viec": null
+    }
+  }
 }
