@@ -853,27 +853,32 @@ const chay = (deps) => {
   ok("thuoc coc kho chu: con so o cau hinh, tru ADR, co ma loi rieng");
 }
 
-/* ---- THƯỚC THỨ BA: BỀ MẶT LUẬT — thêm 09/09 -------------------------------
+/* ---- THƯỚC THỨ BA: CÁI MỘT PHIÊN THẬT SỰ TRẢ, ĐO BẰNG KÝ TỰ -----------------
  *
- * Hai thước cũ đo `AGENTS.md` và `docs/`. Không cái nào đo **19 nơi chứa luật cộng lại**, mà đó
- * mới là thứ Đức bảo phải giới hạn. Đo 09/09: hai `AGENTS.md` của hai gói fork chiếm 695 dòng
- * với **115 dòng giống hệt từng byte** — cả hai thước cũ đều mù trước con số đó.
+ * Bản đầu (cùng ngày 09/09) đo DÒNG và nói dối ngay lượt đầu: một lượt nén giảm **32% số dòng**
+ * mà chỉ giảm **7% số ký tự**. Đo `chatgpt/AGENTS.md`: 123 ký tự một dòng, gấp rưỡi `AGENTS.md`
+ * gốc — thước dòng đếm thiếu nó một phần ba. **Dòng nói dối; ký tự thì không.**
  *
- * Ghim ba vế, và vế thứ ba mới là vế dễ hỏng: nguồn phải là chính `luat.ra_soat`, không phải
- * một danh sách gõ tay thứ hai. Khai thêm một nơi chứa luật thì nó phải TỰ ĐỘNG bị tính — bản
- * gõ tay sẽ lệch đúng như hai bản sao danh sách miễn-khoá đã lệch trước 04/09. */
+ * Nó cũng đo sai CHỖ: tổng 19 nơi chứa luật là con số không phiên nào trả. Ghim ba vế:
+ * đơn vị là ký tự · danh sách file nạp-mọi-phiên đọc từ cấu hình · có ĐÍCH tách khỏi THƯỚC
+ * (mô hình giới hạn ③: máy canh thước, không canh đích). */
 {
   const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate, /structure\?\.luat\?\.tran_dong_ban_hieu_luc/,
-    "thuoc be mat luat phai doc tu .repo-structure.json");
-  assert.match(gate, /BE_MAT_LUAT_PHINH/, "phai co ma loi rieng de tra duoc");
-  assert.match(gate, /structure\?\.luat\?\.ra_soat/,
-    "phai duyet chinh luat.ra_soat — danh sach go tay thu hai se lech");
+  assert.match(gate, /NAP_MOI_PHIEN_PHINH/, "phai co ma loi rieng de tra duoc");
+  assert.match(gate, /nap\.moi_phien/,
+    "danh sach file nap-moi-phien phai doc tu cau hinh, khong go cung vao script");
+  assert.doesNotMatch(gate, /tran_dong_ban_hieu_luc/,
+    "thuoc DONG da bi bo — no do sai don vi, dung de sot lai mot ban thu hai");
 
   const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
-  assert.equal(typeof ct.luat?.tran_dong_ban_hieu_luc, "number",
-    "bo con so nay di la tat den bao cho toan bo be mat luat");
-  ok("thuoc coc be mat luat: doc tu ra_soat, con so o cau hinh, co ma loi rieng");
+  assert.equal(typeof ct.luat?.nap?.tran_ky_tu_moi_phien, "number", "phai khai THUOC");
+  assert.equal(typeof ct.luat?.nap?.dich_ky_tu_moi_phien, "number",
+    "phai khai DICH rieng — thuoc la con so hom nay, dich la cho phai toi");
+  assert.ok(ct.luat.nap.dich_ky_tu_moi_phien < ct.luat.nap.tran_ky_tu_moi_phien,
+    "dich phai NHO hon thuoc, khong thi no khong phai dich");
+  assert.ok(Array.isArray(ct.luat?.nap?.moi_phien) && ct.luat.nap.moi_phien.length,
+    "phai khai file nao duoc nap moi phien");
+  ok("thuoc nap moi phien: don vi KY TU, danh sach o cau hinh, dich tach khoi thuoc");
 }
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *

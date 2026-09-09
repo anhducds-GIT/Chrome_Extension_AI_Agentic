@@ -227,8 +227,7 @@
     "_doc": "THUOC COC cho AGENTS.md — hien phap, thu MOI AI nap MOI PHIEN truoc ca khi biet minh sap lam gi. Mot dong o day dat hon mot tram dong trong docs/studies/. Dat o dung con so cua HOM NAY: no chi chan PHINH.",
     "_vi_sao_can": "Gioi han (7) cua AGENTS.md (mot luat vao thi mot luat ra) ra doi 07/09 voi wc -l = 291. Trong hai ngay file phinh len 402 (+45%) ma KHONG gi keu — dung hinh dang luat khong may nao canh ma muc 7 cua chinh no canh bao. B9 co canh bao vang o moc 200 nhung no keu suot va khong ai nghe; mot canh bao luon bat thi khong con la tin hieu.",
     "_do_that": "2026-09-09: 402 -> 300 (cat N-52) -> 254 (ban dang ky tieng Anh) -> 252 (Duc dao lai: luat giu TIENG VIET de Duc doc duoc ban cuoi, ADR-0000 ve 4). Phan tiet kiem con giu la phan CAT NGAN va PHAN NHOM — khong phu thuoc ngon ngu. Lenh do lai: node scripts/session-check.mjs",
-    "_cua_ra": "Them luat thi phai lay mot luat ra, hoac chuyen phan ke chuyen sang ADR roi HA con so nay xuong. Nang no len thi phai noi vi sao trong nhat ky phien.",
-    "tran_dong": 252
+    "_cua_ra": "Them luat thi phai lay mot luat ra, hoac chuyen phan ke chuyen sang ADR roi HA con so nay xuong. Nang no len thi phai noi vi sao trong nhat ky phien."
   },
   "docs": {
     "_doc": "THUOC COC cho kho chu, KHONG phai tran ly tuong. Dat o dung con so cua HOM NAY: no khong doi ai don, no chi chan PHINH. Moi luot xoa thi HA con so nay xuong — cho da ha khong quay lai duoc.",
@@ -330,11 +329,21 @@
         ]
       }
     },
-    "tran_dong_ban_hieu_luc": 3810,
-    "_doc_tran_be_mat": "Thuoc coc cho TONG so dong cua moi noi chua luat khai o ra_soat. Khong phai tran ly tuong — la con so cua hom nay. Ha duoc thi ha. Doi con so nay phai noi vi sao trong nhat ky phien.",
     "khoi_sinh": {
       "_doc": "Buoc (6) compile: pham vi so cai -> file mang khoi may sinh. KHONG suy tu duong dan — suy ho la doan cho ghi de vao file luat cua nguoi khac. docs/adr/ goc CO Y khong co dich: ban hieu luc goc co thuoc coc 252 dong.",
       "workers/duc-auto-gemini/v0.2.0/docs/adr/": "workers/duc-auto-gemini/v0.2.0/AGENTS.md"
+    },
+    "nap": {
+      "_doc": "Do CAI MOT PHIEN THAT SU TRA, bang KY TU — khong bang dong. Do 09/09: mot luot cat giam 32% so DONG ma chi giam 7% so KY TU, vi phan cat la chu ngan va phan them la chu dac. Dong noi doi; ky tu thi khong. ~2,2 ky tu = 1 token voi tieng Viet co dau.",
+      "moi_phien": [
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "tran_ky_tu_moi_phien": 17580,
+      "dich_ky_tu_moi_phien": 8000,
+      "tran_ky_tu_mot_goi": 43783,
+      "dich_ky_tu_mot_goi": 8000,
+      "_doc_dich": "DICH suy tu chinh loi Duc: 25-50 active rules cho mot task. Mot luat = mot cau + mot lien ket ADR ~ 150 ky tu, nen 50 luat ~ 7.500 ky tu. TRAN la con so HOM NAY, DICH la cho phai toi — giong het mo hinh gioi han (3). May canh TRAN, khong canh DICH: mot cong do voi moi phien trong nhieu tuan la mot cong se bi go."
     }
   }
 }

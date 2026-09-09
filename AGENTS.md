@@ -141,11 +141,13 @@ automation tự chạy — nếu chưa hỏi.
    Cơ chế đóng băng ở lại với danh sách rỗng — nó là công tắc Đức bật lại được. Giới hạn ⑦ và ②
    nay gánh thay phần trần này bỏ lại; **đừng nới cái nào trong hai.**
 2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước.
-3. **`docs/` ≤ 8.000 dòng là ĐÍCH; thứ máy canh là THƯỚC CÓC.** `docs.tran_dong_khong_ke_adr` giữ
-   con số của hôm nay, không kể ADR. Cổng ĐỎ khi vượt, và tự nhắc HẠ con số khi bạn đã dưới thước
-   ≥ 50 dòng. Một phép kiểm đỏ với mọi phiên trong nhiều tuần là một phép kiểm sẽ bị gỡ — đó là lý
-   do máy không canh thẳng 8.000.
-4. **`AGENTS.md` cũng có thước cóc:** `agents.tran_dong`. Cùng hình dạng, cùng lý do.
+3. **Thước ràng buộc nhất: CÁI MỘT PHIÊN NẠP, đo bằng KÝ TỰ** — `luat.nap`, [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). Hôm nay **20.530 ký tự (~9.300 token)** mọi phiên, đích **8.000**. **Đừng đo bằng dòng — dòng nói dối:** một lượt nén giảm 32% dòng mà chỉ giảm 7% ký tự.
+   **Cửa ra rẻ nhất:** chuyển phần **kể chuyện** sang ADR — ADR nạp theo yêu cầu nên **miễn phí**; ở đây
+   giữ một câu luật cộng một liên kết.
+4. **`docs/` ≤ 8.000 dòng là ĐÍCH; máy canh THƯỚC CÓC** `docs.tran_dong_khong_ke_adr` (không kể ADR).
+   Đo kho chữ phình, khác câu hỏi của giới hạn ③. **Mọi thước đều tách ĐÍCH khỏi THƯỚC**, và máy chỉ
+   canh thước — lý do ở [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md) ③: một cổng đỏ với mọi phiên
+   trong nhiều tuần là một cổng sẽ bị gỡ.
 5. **Sổ nợ hạ tầng ≤ 15 mục.** Đếm lại, đừng tin dòng này: `node scripts/backlog-check.mjs`. Cửa ra
    là **đóng một mục** — thêm `- **ĐÓNG <mã>** · …` ở CUỐI sổ; dấu `**` phải đóng **ngay sau mã**,
    viết sai mẫu thì nó không đóng gì mà đọc y hệt dòng đúng. Trần khai ở `backlog.tran`; **hỏi Đức
@@ -213,35 +215,33 @@ gì."* — chưa bao giờ chứng minh được nó tự nạp.
 
 ## 7. Sổ tay — Tầng 2, mở khi cần
 
+> **Bảng này là BẢNG CHỈ ĐƯỜNG, không phải nội dung.** Mỗi sổ tự nói nó chứa gì ở dòng đầu của
+> chính nó; chép lời giới thiệu xuống đây là bắt **mọi phiên** trả tiền cho một sổ **hầu hết
+> phiên không mở**. Rút gọn 09/09, [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md).
+
 | Khi bạn sắp… | Mở |
 |---|---|
-| **Đụng ba gói `duc-auto-*`** | `AGENTS.md` của chính gói đó, kèm `BACKLOG.md` và `HANDOFF.md` cạnh nó. Ba gói là **fork của nhau** (giới hạn ②), nên một lỗi thường có ba bản sao và vá một bản là để lại hai |
-| **Là phiên ĐIỀU PHỐI: Đức hỏi đang có gì, làm gì tiếp, việc nào chạy song song được** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL** (vai điều phối KHÔNG code, KHÔNG debug product, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ"), và luật nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG. Công cụ: `node scripts/what-next.mjs`, chỉ đọc, không đòi khoá |
-| **Biết Đức đã chốt gì, và vì sao** | `docs/adr/` cho quyết định cả repo, `workers/<gói>/<phiên-bản>/docs/adr/` cho quyết định một gói. **Từ 09/09 gộp theo CHỦ ĐỀ, 9 file** — mục lục và bản đồ số hiệu → file nằm ở `docs/README.md`. Luật của sổ: [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md). **Trích theo SỐ HIỆU, đừng trích theo tên file** |
-| **Ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief). Trần **2.600 byte một mục**, cổng chặn **đúng mục bạn vừa thêm**; một quyển giữ **20 mục** ([ADR-0008](docs/adr/0008-nhat-ky-phien.md)), chặn khai ở `handoff.tran_so_muc`. Công cụ: `handoff.mjs --check` · `--rotate <file>` sang tháng mới |
-| **Đào lịch sử xa hơn 20 mục** | `HANDOFF-ARCHIVE-*.md` cạnh chính `HANDOFF.md` đó, nối thành chuỗi. **Nguyên văn, chỉ đọc** — ghép lại dựng được bản gốc từng byte. Cắt tiếp: `handoff.mjs --cat <file> --giu 20`. **Quển này xếp CŨ TRÊN, MỚI DƯỚI** — ghì mục mới vào **cuối**; chèn lên đầu thì lượt cắt dời ngay chính nó vào kho lưu trữ (vấp thật 09/09) |
-| **Biết nhánh mình thiếu tính năng gì so với nhánh kia** | Hai file, đọc cùng nhau ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)): `FEATURE-PARITY.md` là **chữ của người** (mục 2 hành vi, bằng chứng **[ĐỌC]**) và phải giữ `_root`; `FEATURE-PARITY-AUTO.md` là **số của máy**, sinh tự động và miễn khoá. Đừng viết văn của người chung dòng với số của máy — một câu diễn giải đã bị nuốt đúng vì thế. Dòng **[DÒ]** là đoán theo tên: kiểm lại trước khi hành động |
-| **Hiểu repo trong một lần đọc** | `llms.txt` và `repo-map.json`, đều từ `node scripts/build-dashboard.mjs` |
-| **Xem repo có extension nào, cái nào dùng được** | `DASHBOARD.md` — sinh tự động, đừng sửa tay |
+| **Đụng ba gói `duc-auto-*`** | `AGENTS.md` của chính gói đó. **Ba gói là fork của nhau** (giới hạn ②) — một lỗi thường có ba bản sao, vá một bản là để lại hai |
+| **Là phiên ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: vai điều phối KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch. Không có ngoại lệ "sửa nhỏ". Công cụ: `node scripts/what-next.mjs` |
+| **Hỏi làm gì TRƯỚC** | `ROADMAP.md` — thứ tự, không phải trạng thái. Trạng thái sống: `what-next.mjs` |
+| **Biết Đức đã chốt gì, và vì sao** | `docs/adr/` (cả repo) · `workers/<gói>/<phiên-bản>/docs/adr/` (một gói). Mục lục và bản đồ số hiệu → file: `docs/README.md`. **Trích theo SỐ HIỆU, đừng trích theo tên file** |
+| **Thêm/sửa/bỏ một LUẬT, hoặc tới lượt rà hằng tuần** | `docs/protocols/RULE-COMPILER.md` — sáu bước. **Trim không phải xoá.** Bộ đo cố ý **không có `--fix`** |
+| **Ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md`. Trần **2.600 byte/mục**, **20 mục/quyển**. Quyển xếp **cũ trên, mới dưới** — ghi vào **cuối** |
+| **Đào lịch sử xa hơn 20 mục** | `HANDOFF-ARCHIVE-*.md` cạnh chính `HANDOFF.md` đó. Nguyên văn, chỉ đọc. Cắt tiếp: `handoff.mjs --cat <file> --giu 20` |
+| **Làm cùng lúc với AI khác, hoặc sửa một cơ chế đa phiên** | `docs/protocols/MULTIFLOW.md` — bốn cơ chế, sáu bất biến, bảng mã lỗi. Đổi cơ chế thì **bắt buộc có đột biến kiểm** |
+| **Cổng báo `DAU_VO` — bảng quyền bị sửa tay** | `git diff .agents/claims.json`, rồi **hỏi Đức**. **Đừng restamp cho xong việc** — làm thế là đóng dấu hợp lệ cho vụ sửa tay và xoá luôn tang chứng |
+| **Biết nhánh mình thiếu tính năng gì** | `FEATURE-PARITY.md` (chữ của người, giữ `_root`) + `FEATURE-PARITY-AUTO.md` (số của máy) — [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md). Dòng **[DÒ]** là đoán theo tên: kiểm lại trước khi hành động |
+| **Biết repo đang nợ gì về cấu trúc** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa |
+| **Hiểu repo trong một lần đọc** · **xem có extension nào** | `llms.txt` · `repo-map.json` · `DASHBOARD.md` — đều máy sinh, đừng sửa tay |
 | **Vận hành nhiều extension, hoặc thêm một cái** | `PLATFORM.md`; khai cái mới bằng cách chép `STATUS.template.md` đặt cạnh `manifest.json` |
-| **Biết repo đang nợ gì về cấu trúc** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa. Tám phép chặn thật: `B1 B2 B3 B4 B5 B7 B10 B12`, khai ở `bootstrap.blocking`. Bảy phép còn lại chỉ cảnh báo; **B15 cưỡng chế luật viết-cho-Đức** ở ba trường trên bảng |
-| **Lấy dữ liệu HNX, hoặc sửa gói đó** | `workers/hnx-fetch/PROTOCOL.md` — sổ tay tự đứng một mình, viết cho AI không phải Claude Code. Gói này **không có quyền `debugger`** nên nó không bấm được gì; cần bấm là việc của Scouter |
-| **Sửa hoặc vận hành Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0007-scouter.md)). Hai chỗ dễ vấp: **selector không bao giờ được gõ vào seed**, và cửa Bridge của nó **bắt tay hai chiều** nên chỉ nối được với máy chủ bản ChatGPT |
-| **Thêm/sửa/bỏ một LUẬT, hoặc tới lượt rà hằng tuần** | `docs/protocols/RULE-COMPILER.md` — hai tầng (sổ cái ↔ bản hiệu lực), sáu bước `append → merge → supersede → trim → compile`, và bốn phép đo. **Trim không phải xoá**: luật rời bản hiệu lực thì xuống mục `Vế đã chết` của ADR kèm tên quyết định đã thay nó. Bộ đo cố ý **không có `--fix`** — AI đề xuất, Đức quyết |
-| **Tìm một tài liệu, tra đường dẫn cũ, hay viết hồ sơ mới** | `docs/README.md` — mục lục, bản đồ 33 đường dẫn cũ → mới, bản đồ ADR cũ → file gộp, và các bản mẫu (`docs/_TEMPLATE-*.md`). **Hồ sơ đã nghỉ thì xoá**, git giữ hộ |
-| **Lấy bộ chuẩn về dùng, hoặc sửa bộ chuẩn** | **KHÔNG CÒN Ở REPO NÀY** — `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). Repo này là **người dùng** |
-| **Sửa gói Assistant** (`what-next.mjs` · `state-check.mjs` · `ORCHESTRATOR.md`) | **Sửa ở bộ khung TRƯỚC**, rồi mới về đây ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md) ⑷). Làm ngược là đẻ ra hai bản của cùng một gói, bản nào cũng tự xưng là bản chuẩn |
-| **Đặt tệp ghép cặp, bộ khởi động, hay vùng ghi của Bridge** | **Đừng tự chọn chỗ.** Mọi thứ thuộc Bridge nằm dưới đường dẫn khai ở `thu_muc_ngoai_repo`. Dùng `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>`: nó đọc bản đồ và tự đặt đúng chỗ. Vùng ghi **luôn là thư mục CON**, vì `file.read` đọc được mọi tệp dưới vùng ghi |
-| **Cổng báo `DAU_VO` — bảng quyền bị sửa tay** | `git diff .agents/claims.json` → khoá của bạn có bị đổi chủ không → có thì **hỏi Đức** → chốt xong mới `--restamp`. **Đừng restamp cho xong việc**: làm thế là đóng dấu hợp lệ cho vụ sửa tay và xoá luôn tang chứng. Nếu lượt sửa đó chuyển chủ một khoá khỏi tay người khác, `--restamp` **từ chối** cho tới khi bạn đưa `--duc-duyet "<câu chốt>"`, và câu đó ghi **vào bảng** — nơi phiên vừa mất khoá thật sự đọc |
-| **Làm cùng lúc với AI khác, hoặc sửa một trong bốn cơ chế đa phiên** | `docs/protocols/MULTIFLOW.md` — bốn cơ chế, sáu bất biến kèm lý do từng cái, quy trình đổi cơ chế (**bắt buộc có đột biến kiểm**: đếm được 4 lần trong một ngày một chốt vừa viết ra hoá ra vô tác dụng mà test vẫn xanh), và bảng tra mã lỗi |
-| **Hiểu vì sao nhiều phiên hay va nhau** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` — tách hai vấn đề khác nhau: quyền bị ghi đè (bug, đã vá) và push cuốn theo commit người khác (hệ quả của một nhánh) |
-| **Đức cần một câu để dán** | `PROMPTS.md` — mỗi flow một khối. **Mỗi câu phải chạy được với cả ba AI**, nên nó chỉ nói mục tiêu, không nói tên công cụ |
-| **Đức muốn tự mở bảng trạng thái** | `bang-trang-thai/` — ba cửa, một lõi. Bốn chốt an toàn, `tests/bang-ba-cua-smoke.mjs` cưỡng chế cả bốn: ngừng sinh khi có phiên giữ `_code` và **nói rõ vì sao** · chỉ sinh bảng HTML · không commit/đẩy/nhận khoá · gộp nhịp 30 giây |
-| **Sinh bảng cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. Bản ra **không commit**. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |
-| **Ghi một chỗ hỏng vấp phải khi đang làm việc khác** | `BACKLOG.md` — sổ nợ hạ tầng, miễn khoá, cửa ra là một dòng thêm ở cuối. Trường `đóng khi:` **bắt buộc** và cổng đếm nó: không khai được điều kiện đóng thì mục đó chưa đủ chín để ghi |
-| **Hỏi làm gì TRƯỚC** | `ROADMAP.md` — sáu làn theo thứ tự Đức chốt, mỗi làn một **điều kiện đóng đo được**. Nó là THỨ TỰ, không phải trạng thái — trạng thái sống lấy bằng `node scripts/what-next.mjs`, và đừng tin con số nào gõ trong file đó |
-| **Ghi một ý tưởng của Đức** | `IDEAS.md` — phòng chờ, không phải roadmap thứ hai. Bắt buộc `bậc` và `việc kế`; đang xây thì phải khai `chủ` + `phạm vi`. Ý tưởng có nhà rồi thì rời sổ |
-
+| **Lấy dữ liệu HNX, hoặc sửa gói đó** | `workers/hnx-fetch/PROTOCOL.md` — sổ tự đứng một mình. Gói này **không có quyền `debugger`** |
+| **Sửa hoặc vận hành Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
+| **Đặt tệp ghép cặp, bộ khởi động, hay vùng ghi của Bridge** | **Đừng tự chọn chỗ** — `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>` tự đặt đúng. Vùng ghi **luôn là thư mục CON** |
+| **Lấy hoặc sửa bộ chuẩn** · **sửa gói Assistant** | **KHÔNG CÒN Ở ĐÂY** — `Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). Sửa ở bộ khung TRƯỚC, rồi mới về đây |
+| **Đức cần một câu để dán** · **muốn tự mở bảng** | `PROMPTS.md` · `bang-trang-thai/` · `node scripts/build-overview.mjs <file-ra.html>` (bản ra **không commit**) |
+| **Ghi một chỗ hỏng, hoặc một ý tưởng của Đức** | `BACKLOG.md` (nợ hạ tầng, trường `đóng khi:` **bắt buộc**) · `IDEAS.md` (phòng chờ, bắt buộc `bậc` + `việc kế`) |
+| **Tìm một tài liệu, tra đường dẫn cũ, viết hồ sơ mới** | `docs/README.md` — mục lục, bản đồ đường dẫn cũ → mới, và các bản mẫu. **Hồ sơ đã nghỉ thì xoá**, git giữ hộ |
+| **Hiểu vì sao nhiều phiên hay va nhau** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` |
 ## 8. Đóng phiên — ghi lại ba thứ
 
 1. Một dòng Log vào `HANDOFF.md` của gói: làm gì, kết quả số, còn gì mở.
