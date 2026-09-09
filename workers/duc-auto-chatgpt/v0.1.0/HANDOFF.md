@@ -714,3 +714,37 @@ tám chỗ ở `BACKLOG.md`, mục tiến độ B-41 ⑵ và B-42 — ở đó v
 **Còn mở, và cả bốn đều cần Đức:** `B-45` · `B-36` (nút cấp lại quyền) · vế **audit độc
 lập** của B-42 · vế **live** của ADR-0053. Tôi không tự ký nghiệm thu bản sửa của chính mình, và
 không giả lập một lỗi nhà cung cấp.
+
+## 2026-09-09 (lượt 6) · `claude-gpt-chay-het-job` — AUDIT ĐẢO LẠI HAI BẢN VÁ CỦA LƯỢT 5
+
+**`chat.say` chạy live, PASS:** 349 ký tự, xác nhận **0,9 giây**, `17 × 23 = 391` đúng,
+**0** dòng Excel. Đọc lần đầu (cửa sổ bị che) **17 ký tự** đứng yên; **135** sau khi tôi tự F5 —
+cơ chế B-43 y nguyên, ở đường mới.
+
+**AUDIT CODEX (Đức yêu cầu): hai vòng, CẢ HAI FAIL, cả hai bắt lỗi THẬT.** Tôi dựng lại từng ca
+trên chính hàm đã ship trước khi nhận. Hai điều một phiên sau **không được undo**:
+
+⑴ **Phép neo lượt hỏi phải DUY NHẤT.** Bản cũ so 160 ký tự đầu rồi lấy lượt khớp cuối; workbook
+ảnh của Đức có đoạn mở đầu chung 173 ký tự → hai job **cùng khoá** → ghi **câu trả lời của job
+khác** vào sổ với dấu `persistence_verified`. Nay: khoá **đầu+đuôi**, trùng khoá là
+**không kết luận được**.
+
+⑵ **Không có cửa gửi lại nào sau đối soát mù.** Không thể khẳng định *"máy chủ không tạo gì"* từ
+DOM — "chưa vẽ", "không có" và "selector mục một phần" trông y hệt nhau. Vế đó của ADR-0050 ⒞ là
+**không thi hành được**; số nguồn khẳng định **trở lại 0**.
+
+Cộng ba mục HIGH của `chat.say`: *"đã gửi"* nay là **bằng chứng** chứ không phải *"đã bấm
+nút"* · lỗi lấp lửng **không thử lại được** · sổ ghi **trước** lượt gửi.
+
+**Số đo:** suite **126/126** · thử phá **8/8** và **9/9**, **0 thoát**.
+
+**Chỗ tôi sai, và nó là bài học lớn hơn con bug:** sáng cùng ngày tôi đã **ghim chính ca ⑴ thành
+"giới hạn đã biết"** rồi cho là chấp nhận được. Tôi ghi ra cái giới hạn mà **không ghi ra cái
+giá**. Một "giới hạn đã biết" không thành an toàn chỉ vì đã được ghi ra.
+
+**Đức chốt lượt này:** `B-45` để tôi chọn → **đóng, sẽ không làm**, mở `B-46` hẹp hơn ·
+`B-36` **tạm chưa cần** · audit **giao Codex** (đã chạy) · **ADR-0053 hạ mức** — Đức chỉ ra
+rằng có AI đang nhìn thì `chat.read`+`chat.say` là đủ, và Đức đúng.
+
+Số đo đầy đủ, cả hai chuỗi sự kiện, và hai lỗi trong đồ nghề của tôi: `BACKLOG.md` khối
+**AUDIT ĐỘC LẬP 09/09** — ở đó vì mục nhật ký này chạm trần.
