@@ -730,17 +730,12 @@ vượt là bộ sinh **từ chối ghi** và thoát 1. Thước cóc thì báo 
 chính tôi nâng một cái**, có lý do, nhưng vẫn là nâng. Trần này không có đường đó — muốn thêm một
 luật thì phải bỏ một luật, tức giới hạn ⑧ từ chữ thành cơ chế.
 
-**Đột biến 4/4:** nhồi 1.500 ký tự → từ chối **và** `PHIEN.md` không bị ghi đè · gỡ trần → ghim ĐỎ ·
-nới trần lên 20.000 → ghim ĐỎ · bỏ phần nền khỏi công thức cổng → ghim ĐỎ. Cổng và bộ sinh nay cộng
-**cùng một công thức**, và có một phép ghim canh đúng điều đó.
+**Đột biến 4/4:** nhồi 1.500 ký tự → từ chối **và** `PHIEN.md` không bị ghi đè · gỡ trần, nới trần
+lên 20.000, bỏ phần nền khỏi công thức cổng → đều ĐỎ. Cổng và bộ sinh nay cộng **cùng một công
+thức**, có phép ghim canh. Dedupe làm việc thật: bốn luật đầu của gemini trùng lõi → còn một dòng.
 
-**Dedupe làm việc thật:** bốn luật đầu của gemini trùng nguyên nghĩa với lõi → gộp còn một dòng trỏ
-về lõi.
-
-**`--carry`: lượt đẩy này cuốn theo **mọi commit chưa đẩy** của lane `claude-gpt-chay-het-job`** —
-`5cd84c4` `1ed666f` `fe56961` `8513daa` `c7d59c1` tại lúc đẩy. Kể tên theo ADR-0005 ⑶. **Lane đó
-đang CHẠY**, không dừng như tưởng, nên con số có thể lớn hơn: bản ghi thật là
-`git log origin/main..HEAD` ngay trước lượt đẩy.
+**`--carry` cuốn theo mọi commit chưa đẩy của lane `claude-gpt-chay-het-job`** (ADR-0005 ⑶).
+**Lane đó đang CHẠY**, không dừng như tưởng — bản ghi thật: `git log origin/main..HEAD` trước lượt đẩy.
 
 **Gói `duc-auto-chatgpt` KHÔNG sinh được: 3.912 token, quá trần 912.** Phần thừa đã biết chính xác
 (khối biện minh ADR-0032 đã nhận về + bốn luật trùng lõi), vùng đang có lane khác giữ. Hệ quả cần
