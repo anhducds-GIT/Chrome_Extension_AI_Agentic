@@ -1495,3 +1495,522 @@ material change
 - fail policy dựa trên authority × operation risk.
 
 Chưa gửi Claude. Chưa implement production Context Compiler.
+
+---
+
+# VÒNG 5 — SourceRef, V1 tối thiểu và capability thật của runtime
+
+## 38. Evidence snapshot — runtime capability, kiểm ngày 2026-09-09
+
+Vòng này dùng tài liệu chính thức / codelab chính thức để tránh thiết kế dựa trên giả định runtime.
+
+### Claude Code
+
+Nguồn: `code.claude.com/docs/en/memory`, `/hooks`, `/features-overview`, `/context-window`.
+
+Đã xác nhận:
+
+- project `CLAUDE.md` được nạp vào session; `CLAUDE.md` trong subdirectory có thể load lazy khi Claude truy cập file trong vùng đó;
+- `.claude/rules/` hỗ trợ rules theo phạm vi/path và có thể load theo trigger path;
+- skills có description ở startup, body nạp khi dùng; skill manual có thể có zero startup context;
+- `SessionStart` hook có thể thêm dynamic context;
+- `InstructionsLoaded` cho observability khi instruction file được eager/lazy load;
+- có `PreCompact` và `PostCompact` lifecycle hook;
+- `/context` và `/memory` cho observability context/memory.
+
+Điều quan trọng: docs nói static context nên dùng `CLAUDE.md`; `SessionStart` cần giữ nhanh và chỉ dùng khi context thực sự dynamic.
+
+### Codex
+
+Nguồn: OpenAI `Unrolling the Codex agent loop`, `Introducing Codex`, `Harness engineering`.
+
+Đã xác nhận:
+
+- Codex có native `AGENTS.md` hierarchy và instruction precedence theo scope directory;
+- user instructions được aggregate từ `AGENTS.override.md` / `AGENTS.md`, mặc định có budget khoảng 32 KiB trong luồng startup được mô tả;
+- OpenAI khuyến nghị `AGENTS.md` ngắn như **map/table of contents**, còn knowledge sâu nằm trong structured docs thay vì một manual khổng lồ;
+- có compaction primitive ở OpenAI Responses API, nhưng vòng này **chưa tìm được evidence chính thức rằng Codex CLI expose lifecycle hook tương đương Claude `PreCompact`**.
+
+Vì vậy không được thiết kế checkpoint phụ thuộc Codex hook chưa chứng minh tồn tại.
+
+### ChatGPT / GPT Web
+
+Nguồn: OpenAI Help `Projects in ChatGPT`, `Connecting GitHub to ChatGPT`.
+
+Đã xác nhận:
+
+- Projects có project memory/context từ chats/files/instructions;
+- GitHub trong ChatGPT có thể retrieve repo content theo yêu cầu;
+- standard GitHub app documentation mô tả GitHub access trong ChatGPT là retrieval/read, còn write/edit/push được định tuyến sang Codex ở product surface chuẩn.
+
+Điều này có nghĩa project memory hữu ích như cache/continuity, nhưng **không thể coi là canonical repo state**.
+
+Lưu ý: connector/tool surface trong từng ChatGPT environment có thể mạnh hơn product GitHub app chuẩn; adapter phải capability-detect thay vì assume.
+
+### Google Antigravity
+
+Nguồn: Google Codelabs `Getting Started with Antigravity IDE`, `Spec-Driven ADK Agent Development`, Antigravity developer pipeline codelabs.
+
+Đã xác nhận Antigravity có native hierarchy gần đúng thứ Context Compiler đang thiết kế:
+
+```text
+.agents/rules/       = always-active workspace instructions
+.agents/skills/      = on-demand knowledge, match bằng description
+.agents/workflows/   = explicit slash-triggered workflow
+```
+
+Ngoài ra có global `~/.gemini/GEMINI.md` và Agent/IDE/CLI cùng một harness family.
+
+**Chưa đủ evidence** trong vòng này về hook before-compact hay primitive physical eviction tương đương Claude Code.
+
+---
+
+## 39. REVISED — không đặt registry cross-runtime trong `.agents/`
+
+R3/R4 từng ưu tiên:
+
+```text
+.agents/context-registry.json
+```
+
+Capability audit cho thấy `.agents/` là **namespace native của Antigravity** cho rules/skills/workflows.
+
+Dù Antigravity có thể bỏ qua file JSON lạ, dựa vào hành vi đó là coupling không cần thiết và chưa được chứng minh.
+
+### REVISED DECISION R5-1
+
+**Không chốt `.agents/context-registry.json` làm canonical cross-runtime registry.**
+
+Registry phải sống ở namespace neutral với vendor.
+
+Candidate còn mở:
+
+```text
+.context/registry.json
+context/registry.json
+context-registry.json
+```
+
+Không chốt vị trí cuối chỉ vì thẩm mỹ. Tiêu chí:
+
+- không chiếm namespace vendor;
+- machine-readable;
+- topology/check-bootstrap biết nó;
+- không auto-load vào model chỉ vì file tồn tại;
+- không biến `docs/` thành config store.
+
+---
+
+## 40. SourceRef contract — dùng provider identity, không dùng path giả
+
+`source_ref` không nên là một alias tùy ý kiểu:
+
+```text
+rules.repo.active
+```
+
+mà không nói ai resolve nó.
+
+### PROVISIONAL DECISION R5-2
+
+Dùng provider-qualified identity. Candidate đơn giản:
+
+```text
+rule://repo
+rule://workers/duc-scouter
+rule://workers/_shared
+```
+
+Semantics:
+
+```text
+rule://<scope>
+    ↓
+Rule Compiler provider
+    ↓
+active canonical rule source(s) của scope đó
+```
+
+Context Registry sở hữu:
+
+```text
+WHEN / HOW TO LOAD
+```
+
+Rule Compiler provider sở hữu:
+
+```text
+WHAT RULE SOURCE IS ACTIVE
+```
+
+### Resolved manifest phải giữ cả symbolic và physical view
+
+Ví dụ:
+
+```yaml
+id: package.scouter.rules
+source_ref: rule://workers/duc-scouter
+resolved:
+  sources:
+    - workers/duc-scouter/v0.1.0/AGENTS.md
+  revision: <fingerprint-or-source-revision>
+```
+
+`resolved` là derived observability, không phải config người phải maintain.
+
+### Fail policy
+
+Nếu `rule://<active-write-scope>` không resolve được:
+
+```text
+HARD STOP before write
+```
+
+Không fallback sang “đoán path AGENTS.md”. Đoán path chính là tạo source of truth thứ hai bằng convention ngầm.
+
+### Không generic hóa quá sớm
+
+V1 chỉ cần provider `rule://` nếu đó là nơi thật sự cần indirect resolution.
+
+Các source state/knowledge có path canonical ổn định vẫn dùng:
+
+```json
+"source": "workers/.../STATUS.md"
+```
+
+Không tạo một URI framework cho mọi thứ chỉ vì có thể.
+
+---
+
+## 41. V1 projector set — cắt rất mạnh scope implementation
+
+R4 còn cân nhắc projector cho protocol/HANDOFF. Sau audit runtime, proposal V1 nên nhỏ hơn.
+
+### PROVISIONAL DECISION R5-3
+
+V1 production chỉ cần ba projector primitive:
+
+```text
+full
+status.frontmatter
+claims.scope_current
+```
+
+#### `full`
+
+Không transform. Dùng cho active rules và on-demand protocol ban đầu.
+
+#### `status.frontmatter`
+
+Giảm startup state mà vẫn deterministic theo schema status hiện có.
+
+#### `claims.scope_current`
+
+Chỉ lấy ownership/task state của scope đang cần, không mang transfer history và claims của scope khác.
+
+### DEFERRED — `protocol.section_by_trigger`
+
+V1 khi trigger protocol nổ thì **load full protocol**.
+
+Lý do:
+
+- protocol đã on-demand nên không trả cost ở mọi session;
+- section projection tạo risk mất điều kiện liên mục;
+- implementation/test phức tạp hơn phần token có thể tiết kiệm lúc đầu.
+
+Sau khi có measurement mới quyết có đáng section-project hay không.
+
+### DEFERRED — HANDOFF projector
+
+Không xây `handoff.latest_entry` trong first production slice.
+
+V1 `work.resume/recovery` có thể load raw HANDOFF on-demand. HANDOFF đã bị loại khỏi startup, nên lợi ích chính đã đạt.
+
+Sau này có thể reuse parser hiện có nếu audit chứng minh boundary entry deterministic và không mất pointer/archive semantics.
+
+---
+
+## 42. Runtime adapter không phải một injector chung
+
+Capability audit xác nhận bốn runtime có native primitives khác nhau.
+
+### PROVISIONAL DECISION R5-4
+
+Context Compiler sinh **semantic manifest chung**, rồi adapter compile nó sang native mechanism phù hợp nhất.
+
+Không có requirement:
+
+> “mọi runtime phải nhận cùng một giant prompt string”.
+
+### Claude Code adapter — native-rich
+
+Mapping khả thi:
+
+```text
+always rules        -> root CLAUDE.md import / project instructions
+scoped rules        -> nested CLAUDE.md hoặc path-scoped rules nếu được generate an toàn
+on-demand knowledge -> skills / explicit read
+checkpoint          -> material-change persistence + PreCompact hook bổ sung
+observability       -> InstructionsLoaded + /context + /memory
+```
+
+**OPEN:** repo hiện dùng package `AGENTS.md`, không phải nested `CLAUDE.md`. Không tự sinh adapter file trước khi audit nguy cơ duplicate/drift và khả năng import thin-pointer.
+
+### Codex adapter — AGENTS-native, hook-poor chưa rõ
+
+Mapping:
+
+```text
+rules              -> AGENTS hierarchy native
+knowledge/state    -> manifest-guided file reads
+checkpoint         -> vendor-independent material-change checkpoint
+compact hook       -> KHÔNG ASSUME
+```
+
+Có một nuance cần giữ: tài liệu về agent loop mô tả startup aggregation root→cwd, trong khi AGENTS spec nói nested instructions có scope trên subtree file. Trước implementation cần test surface Codex thật của Đức để biết eager/lazy behavior chính xác; không suy từ một tài liệu thành runtime guarantee rộng hơn.
+
+### GPT Web adapter — retrieval-first
+
+Mapping:
+
+```text
+project instructions/memory -> cache / conversational continuity
+GitHub/files                -> canonical retrieval on demand
+manifest                    -> kế hoạch retrieval, không phải local hook
+checkpoint write            -> phụ thuộc connector/product surface
+```
+
+GPT project memory **không** thay repo canonical source.
+
+### Antigravity adapter — rules/skills/workflows native
+
+Mapping tự nhiên:
+
+```text
+always/scoped workspace guidance -> rules
+on-demand knowledge              -> skills
+explicit multi-step operation    -> workflows
+```
+
+Nhưng không copy canonical content bằng tay vào `.agents/rules`/skills. Nếu adapter artifact cần tồn tại, nó phải được generate/thin-reference và có drift check.
+
+---
+
+## 43. Runtime profile tách khỏi Context Registry
+
+Không nên thêm vào mỗi source:
+
+```json
+"runtime": ["claude", "codex", "antigravity"]
+```
+
+vì cùng semantic source áp cho mọi runtime; khác nhau là **cách vận chuyển**.
+
+### PROVISIONAL DECISION R5-5
+
+Registry vẫn vendor-neutral.
+
+Runtime capability sống trong adapter/profile riêng, ví dụ conceptual:
+
+```yaml
+runtime: claude-code
+capabilities:
+  scoped_native_rules: true
+  lifecycle_precompact: true
+  on_demand_skill: true
+  repo_read: local
+```
+
+V1 chưa cần file profile hand-authored nếu capability có thể nằm trong code adapter + tests.
+
+Không đưa capability matrix vào canonical registry chỉ để documentation đẹp.
+
+---
+
+## 44. Adapter artifact rule — derived hoặc pointer-only
+
+Nếu sau này Context Compiler tạo:
+
+```text
+.claude/rules/...
+.agents/rules/...
+AGENTS adapter files
+```
+
+thì những file đó có nguy cơ trở thành bản sao luật.
+
+### PROVISIONAL DECISION R5-6
+
+Adapter artifact chỉ hợp lệ khi một trong hai:
+
+1. **thin pointer/import** tới canonical source; hoặc
+2. **100% generated derived artifact** có drift check và không được human-edit.
+
+Không có phương án thứ ba “copy rồi nhớ sync”.
+
+Điều này áp dụng đặc biệt cho Antigravity rules và Claude path-scoped rules.
+
+---
+
+## 45. Context Compiler first implementation nên là READ-ONLY
+
+Đây là thay đổi quan trọng về thứ tự build.
+
+Nếu build ngay hooks/injection, khi routing sai ta khó biết lỗi nằm ở:
+
+```text
+registry?
+resolver?
+projector?
+adapter?
+runtime?
+```
+
+### PROVISIONAL DECISION R5-7
+
+First slice nên chỉ:
+
+```text
+TASK DESCRIPTOR
+      ↓
+read canonical registry/topology/rule provider
+      ↓
+resolve + project
+      ↓
+print CONTEXT MANIFEST + warnings/conflicts
+```
+
+**Không inject. Không sửa CLAUDE/AGENTS. Không hook compact.**
+
+Acceptance ban đầu là correctness/inspectability:
+
+- task giống nhau -> manifest deterministic;
+- scope đúng;
+- high-risk trigger không false-negative trong fixtures;
+- source_ref resolve được;
+- projector fallback đúng;
+- conflict surface đúng.
+
+Sau khi manifest đáng tin mới nối adapter.
+
+Điều này giảm mạnh cost of change và giúp Đức/GPT/Claude cùng audit output bằng mắt.
+
+---
+
+## 46. Capability tiers thay vì cố parity tuyệt đối
+
+Không cần mọi runtime có feature parity.
+
+Candidate:
+
+```text
+Tier A — native context lifecycle
+  Claude Code: scoped/lazy instructions + hooks + compact lifecycle evidence
+
+Tier B — native rule hierarchy, external lifecycle
+  Codex: AGENTS strong; compact/checkpoint hook chưa xác nhận
+  Antigravity: rules/skills/workflows strong; compact lifecycle chưa xác nhận
+
+Tier C — retrieval orchestrated
+  GPT Web: connector/project-context driven, no repo-local lifecycle contract assumed
+```
+
+Đây chỉ là **adapter capability classification**, không phải ranking chất lượng AI.
+
+### Hệ quả
+
+Core Context Compiler phải đúng ngay cả ở Tier C:
+
+```text
+resolve manifest
+-> tell runtime what must be fetched
+-> verify canonical source was retrieved before high-risk action
+```
+
+Runtime giàu capability chỉ làm flow tự động hơn, không thay semantic contract.
+
+---
+
+## 47. Compact strategy sau capability audit
+
+Claude Code có `PreCompact/PostCompact`, nên adapter Claude có thể tận dụng chúng.
+
+OpenAI Responses API có compaction primitive, nhưng đó không chứng minh Codex CLI hay GPT Web expose cùng lifecycle hook.
+
+Antigravity evidence hiện chưa đủ.
+
+### PROVISIONAL DECISION R5-8
+
+**Material-change checkpoint vẫn là cơ chế chính. Vendor pre-compact hook chỉ là safety net.**
+
+```text
+PRIMARY:
+material durable event -> persist canonical truth ngay
+
+SECONDARY:
+if runtime has PreCompact -> verify checkpoint / emit carry pointers
+
+FALLBACK:
+manual compact/new-session wrapper -> verify checkpoint first
+```
+
+Như vậy architecture không gãy khi chuyển runtime.
+
+---
+
+## 48. Insight đối chiếu với hướng ngành
+
+OpenAI mô tả chính bài toán chúng ta đang gặp: giant `AGENTS.md` làm context bị lấn, guidance thành noise, docs stale và khó verify; giải pháp họ dùng là `AGENTS.md` ngắn như map, deeper knowledge ở structured docs.
+
+Claude Code docs cũng khuyên giữ CLAUDE nhỏ, chuyển procedure/reference material sang scoped rules/skills; Antigravity phân tách rules/skills/workflows.
+
+Ba hệ độc lập đang hội tụ về cùng một shape:
+
+```text
+SMALL ALWAYS-ON CONTROL PLANE
+        +
+SCOPED / ON-DEMAND KNOWLEDGE
+        +
+NATIVE TOOL/HOOK ENFORCEMENT
+```
+
+**Kết luận provisional:** hướng Context Compiler không phải một abstraction tự nghĩ ra để tối ưu repo này; nó phù hợp với native loading models của các runtime hiện đại. Giá trị riêng của hệ thống của Đức là thêm:
+
+- canonical cross-runtime registry;
+- rule ledger/compiler;
+- projection safety;
+- state/history separation;
+- deterministic manifest;
+- recovery/checkpoint contract.
+
+---
+
+## 49. OPEN sau vòng 5
+
+1. Chọn namespace neutral cuối cho registry: `.context/` hay file root?
+2. Rule Compiler provider có thể expose `rule://scope` bằng cách import function hiện có hay cần generated index?
+3. Claude thin adapter cho package AGENTS nên dùng nested `CLAUDE.md @AGENTS.md`, path-scoped rule, hay không tạo file nào?
+4. Test Codex surface thật của Đức: nested AGENTS load/apply ở repo-root working directory chính xác ra sao?
+5. Audit Antigravity compact/session lifecycle thêm nếu có docs chính thức sâu hơn.
+6. GPT adapter cần cơ chế gì để chứng minh required canonical source đã được retrieve trước high-risk action?
+7. Task Descriptor được sinh từ đâu trong first read-only slice: CLI flags deterministic trước, NLP parser sau?
+
+---
+
+## 50. Change log — vòng 5
+
+### 2026-09-09 — vòng 5
+
+- audit capability thật của Claude Code / Codex / ChatGPT / Google Antigravity;
+- **REVISED** vị trí `.agents/context-registry.json` vì `.agents/` là namespace native của Antigravity;
+- chốt proposal `rule://<scope>` provider-qualified source_ref;
+- thu V1 projector xuống `full`, `status.frontmatter`, `claims.scope_current`;
+- DEFER protocol section projection và HANDOFF projection;
+- runtime adapter compile manifest sang native mechanisms, không giant prompt parity;
+- registry vendor-neutral, runtime capability nằm ở adapter;
+- adapter file chỉ thin-pointer hoặc generated derived artifact;
+- **first implementation nên read-only manifest compiler**, chưa hook/inject;
+- material-change checkpoint là primary, vendor PreCompact chỉ safety net;
+- ghi nhận convergence giữa OpenAI/Claude/Antigravity về small always-on + scoped/on-demand context.
+
+Chưa gửi Claude. Chưa implement production Context Compiler.
