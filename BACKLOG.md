@@ -963,3 +963,25 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
   khác: nay đã canh được *cũ*, chưa canh được *chưa vào git*.
 - **đóng khi (bổ sung):** một `PHIEN.md` có trên đĩa mà không có trong `HEAD` cũng làm cổng ĐỎ ở
   đúng lane chịu trách nhiệm.
+
+## N-64 · `drafts/` là nháp DÙNG CHUNG, nhưng bộ máy coi nó thuộc vùng `_root`
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-nen-luat`
+- **vùng:** `_code` + `_root` (`.repo-structure.json`)
+- **[ĐO] chặn thật, 09/09 18:30:** lane `claude-context-review` để
+  `drafts/REVIEW-CONTEXT-COMPILER-V1.md` (chưa track) trong cây làm việc. Tôi đang giữ `_root` để
+  cắt sổ, nên `quyTrachNhiemSuite` quy file đó cho tôi và trả `TOI_CON_SUA_DO: drafts/` →
+  `role-firewall-smoke` ĐỎ → cổng ĐỎ → **không đẩy được**. File không phải của tôi, và tôi
+  **không được** commit, xoá, hay `.gitignore` nó.
+- **[ĐO] tiền đề sai nằm ngay trong chú thích của chính cái chốt:** *"chỉ tôi được ghi vào vùng
+  tôi giữ, nên file bẩn trong đó LÀ CỦA TÔI"*. Đúng với mọi vùng **trừ** `drafts/` — `CLAUDE.md`
+  toàn cục nói đó là **chỗ DUY NHẤT agent tự ghi không cần hỏi**, tức nhiều lane ghi vào cùng lúc
+  theo đúng thiết kế.
+- **đừng chữa bằng cách nới chốt.** Chốt đó đúng và cần; cái sai là bản đồ quyền sở hữu nhận vơ
+  một thư mục cố ý dùng chung. Cửa đúng: khai `drafts/` **ngoài mọi vùng** trong
+  `.repo-structure.json` (cùng họ với `append_only_exempt`), rồi `quyTrachNhiemSuite` bỏ qua nó.
+- **liên quan:** `N-62` — cây làm việc dùng chung. Đây là lần thứ **ba** trong một ngày một lane
+  bị chặn bởi file sửa dở của lane khác; hai lần trước đã ghi trong `N-62`.
+- **đóng khi:** một lane khác để file nháp trong `drafts/` **không** làm đỏ cổng của lane đang
+  giữ `_root`, **và** có phép ghim cho đúng ca đó.
