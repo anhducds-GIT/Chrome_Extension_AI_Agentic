@@ -1574,6 +1574,70 @@ cho xanh.
 
 
 
+### B-46 · (ĐÓNG — ĐÃ ĐO, KHÔNG PHẢI LÀM GÌ, 09/09) Đọc lại sớm khi bằng chứng còn sống
+
+Mục này mở 09/09 để thay `B-45`, rồi **đo xong cùng ngày, và tiền đề của nó SAI.** Đức chốt
+*"chạy B-46 đi"*; tôi chạy bằng `diagnostics.dom_probe` — **chỉ đọc, 0 credit**.
+
+**Số đo, trên tab ĐANG BỊ CHE thật:**
+
+| trường | giá trị |
+|---|---|
+| `visibility` | **hidden** |
+| `docFocused` | **false** |
+| `assistantCount` | **3** |
+| `selectorCounts.assistantMessage` | `[data-turn="assistant"] => 3` · `[data-message-author-role="assistant"] => 3` |
+| `surface` | `CONVERSATION`, `surface_allowed: true` |
+
+**Vì sao phép đo này KÍN, không phải một biến gián tiếp:** `assistantCount` của probe **chính là**
+biểu thức mà điều kiện mù dùng — cùng hàm, cùng adapter selector, không phải một bản chép:
+
+    content.js:813   const blind = expectImage && assistantMessages().length === 0;
+    content.js:990   assistantCount: assistantMessages().length
+
+Tab bị che → `3` → `blind = (3 === 0)` = **false**. **Che cửa sổ KHÔNG làm bộ dò mù.**
+`DETECTION_BLIND` cần một selector **mục thật** hoặc tab **không ở trên một hội thoại** — hai ca mà
+"đọc lại sớm" không giúp gì, vì bộ đọc **hỏng**, không phải **chậm**.
+
+**Nhánh còn lại cũng không cần mục này.** Giả sử tab bị che làm ảnh vẽ chậm: lỗi lúc đó là
+`OUTPUT_DETECTION_TIMEOUT`, **không phải** `DETECTION_BLIND`, và nó đi vào
+`reconcileSubmittedAttempt()` — đường **không có cú F5 nào**. Bằng chứng quy thuộc **còn nguyên**.
+
+**Điều che cửa sổ THẬT SỰ làm hỏng là CHỮ trong lượt không vẽ xong**, không phải việc phát hiện
+lượt. Đo hai lần trong ngày: **17 → 135** ký tự sau F5 (`chat.say`) và **27 → 1.917** (job chữ).
+B-43 / [ADR-0052](docs/adr/0052-tab-bi-che-thi-doc-lai-sau-f5-thay-vi-dung-han.md) đã xử đúng cái đó.
+
+**MỘT CÂU CÒN ĐỂ MỞ, và nó tự trả lời miễn phí:** tab bị che có vẽ xong một `<img>` **sinh ra** hay
+không. Hội thoại lúc đo không có ảnh sinh nào (`imageCandidateCount: 0`, chỉ avatar). **Không giả
+lập và không đốt một credit chỉ để hỏi** — lượt chạy ảnh thật tới nào cũng trả lời, và probe đã ghi
+sẵn `imageCandidateCount` + `generatedChains`. Nếu hoá ra tab bị che **không** vẽ ảnh thì đó là một
+mục KHÁC (job ảnh cần tab hiện, hoặc tải theo URL thay vì chờ DOM sẵn sàng), không phải mục này.
+
+**Bài học, và nó đáng hơn cả kết luận:** tiền đề *"tab bị che làm bộ dò ảnh mù"* là một suy diễn tôi
+kéo từ B-43 — nơi tab bị che **thật sự** làm chữ không vẽ — sang một cơ chế **khác**, mà **không
+đo**. Chính mục này đã tự dặn *"Đo trước, đừng đoán"*, và phép đo mất **một lệnh chỉ-đọc**.
+
+- **đóng khi:** đã đóng — phép đo ở trên là điều kiện đóng, và nó nói KHÔNG phải làm gì.
+
+### B-45 · (ĐÓNG — SẼ KHÔNG LÀM, 09/09) Quy thuộc một ảnh SAU cú F5
+
+**ĐỨC ĐỂ TÔI CHỌN 09/09** (*"B-45 là gì tôi k hiểu, bạn chủ động chọn nhé"*), **và tôi chọn KHÔNG
+LÀM.** Ba lý do, xếp theo sức nặng:
+
+⑴ **Phép suy "đúng một ảnh mới không nằm trong ảnh cũ" sai đúng lúc nó được gọi.** Nó chỉ chạy khi
+   đã hết giờ và đã F5 — tức đúng lúc có thể có thứ khác chen vào: Đức gõ tay một câu, một lượt cũ
+   vừa sinh ảnh xong, một tab khác cùng hội thoại. Khi sai, nó **ghi ảnh của việc khác vào sổ dưới
+   tên job này**. Cùng ngày, audit Codex đã tìm ra **hai** con bug thuộc đúng họ đó.
+⑵ **Cái nó cứu được nhỏ**, và hôm nay máy đã dừng an toàn kèm câu chỉ rõ phải xem gì.
+⑶ **Có đường rẻ hơn** — và nó thành `B-46`, mục đã đo xong ngay bên trên.
+
+**VÀ SAU KHI `B-46` ĐƯỢC ĐO (09/09), quyết định này còn đứng vững hơn:** động lực của `B-45` là
+*"tab bị che làm bộ dò mù nên phải F5, mà F5 xoá bằng chứng"*. Đo được: **tab bị che KHÔNG làm bộ
+dò mù** (`assistantMessages().length` = 3 khi `visibility: hidden`). Nên cái tình huống sinh ra
+`B-45` **hiếm hơn hẳn** những gì tôi tưởng khi mở nó.
+
+Đức thấy sai thì mở lại — quyết định này là của tôi, không phải của Đức.
+
 **Đo 09/09 khi làm `B-41` ⑵, và nó làm HẸP hẳn thứ bản vá đó cứu được.** ADR-0050 ⒞ viết
 *"chữa xong thì bộ dò vừa mù nay nhìn lại được … thấy thì quy về job và xong"* — tức nó giả định
 sau F5 vẫn quy được một ảnh về lượt gửi. **Không quy được, và cả hai đường đều bị chặn bởi thiết

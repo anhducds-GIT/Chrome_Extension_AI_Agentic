@@ -635,3 +635,33 @@ cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự
 *(Bản nén `AGENTS.md` nằm trong commit `1702ae5d` mang nhãn `claude-gpt-chay-het-job`: một lượt
 `git add` không giới hạn đường dẫn trên cây làm việc dùng chung đã cuốn theo. Nội dung đúng, chỉ
 nhãn nguồn gốc sai — không sửa vì sửa nhãn là viết lại lịch sử.)*
+
+## 2026-09-09 (lượt 7) · `claude-gpt-chay-het-job` — B-46 đo xong, và MỘT LƯỢT GHI SỔ CỦA TÔI ĐÃ TRƯỢT
+
+**B-46 đóng: ĐÃ ĐO, TIỀN ĐỀ SAI, 0 credit.** Đức chốt *"chạy B-46 đi"*; tôi chạy bằng
+`diagnostics.dom_probe` — chỉ đọc. Trên tab **đang bị che thật** (`visibility: hidden`,
+`docFocused: false`): `assistantCount` = **3**. Và `assistantCount` **chính là**
+`assistantMessages().length` — cùng hàm, cùng adapter selector mà điều kiện mù dùng. Nên
+`blind = (3 === 0)` = **false**: **che cửa sổ KHÔNG làm bộ dò mù.** `DETECTION_BLIND` cần
+selector **mục thật** hoặc tab **không ở trên hội thoại** — hai ca mà đọc-lại-sớm không giúp gì.
+Che cửa sổ chỉ làm **chữ** không vẽ xong — B-43 đã xử. Số đo đủ ở BACKLOG.md, mục B-46.
+
+**LỖI CỦA TÔI, và nó tệ hơn con bug:** lượt ghi sổ ở lượt 6 **trượt lặng lẽ**. Một dòng trong
+script của tôi hoá ra là `s.replace(tieuDeMoi, "")` — nó **xoá đúng tiêu đề vừa đặt**, nên hai
+lệnh `.replace()` sau đó thành **no-op**. Kết quả: thân `B-45` **mồ côi** (bị gán lặng lẽ
+vào mục B-41 phía trên), khối chốt B-45 **không vào**, `B-46` **không vào**. Script vẫn in
+"xong" vì dòng in là **vô điều kiện**, và `backlog-check` vẫn xanh (34 mục, 0 mục vô hình).
+**Và tôi đã báo cả ba việc đó là đã xong với Đức, kèm trong thông điệp commit `a7a218c4`.**
+
+**Cách chặn, đã áp từ lượt này:** mọi script ghi sổ phải **đọc LẠI TỪ ĐĨA rồi `assert`** từng
+khối vừa ghi. Một dòng in "xong" không chứng minh gì. Đã dùng cho cả `BACKLOG.md` lẫn
+`STATUS.md` lượt này, cộng một phép kiểm rằng frontmatter STATUS **còn parse được** (17
+trường, 0 lỗi) chứ không tin mắt thường.
+
+**Hai mục cổng đỏ của lượt 6 nay đã đóng — bởi lane `claude-nen-luat`, không phải tôi:**
+`PHIEN.md` đã track, và `drafts/` đã sửa quy thuộc (N-64). Tôi đã không sửa hộ, và đó là
+quyết định đúng.
+
+**Còn để mở, tự trả lời miễn phí:** tab bị che có vẽ xong một `<img>` **sinh ra** hay không.
+Hội thoại lúc đo không có ảnh sinh nào. Lượt chạy ảnh thật tới nào cũng trả lời; probe đã ghi sẵn
+`imageCandidateCount` và `generatedChains`. **Tôi không đốt một credit chỉ để hỏi.**
