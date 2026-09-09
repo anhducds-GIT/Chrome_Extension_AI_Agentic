@@ -1178,6 +1178,46 @@
           .map((image) => ({ alt: (image.alt || "").slice(0, 50), chain: dataChain(image) }));
         const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
         const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
+        // B-48 · SOI RIÊNG TRONG Ô SOẠN THẢO, và đây là lý do nó phải là một trường RIÊNG chứ
+        // không phải một nắp to hơn. Đo live 09/09: `buttons` ở trên nắp 40 mục, và thanh bên
+        // ChatGPT của Đức (10 project + lịch sử hội thoại) CHIẾM HẾT 40 — nên bốn nút
+        // "Remove file" của chip đính kèm KHÔNG BAO GIỜ vào danh sách, đúng cái mục B-14 cần
+        // xem. Nới nắp là sai đường: payload có nắp 64KB và thanh bên sẽ ăn thêm bao nhiêu
+        // cũng hết. Cửa ra là soi THEO PHẠM VI — trong `form` soạn thảo không có thanh bên nào
+        // để ăn nắp, nên cùng một số byte mà nhìn thấy đúng thứ.
+        //
+        // Chuỗi tổ tiên ở đây mang cả `aria-*` và `role`, KHÔNG chỉ `data-*` như `dataChain`
+        // bên trên: đo live 09/09 nói ChatGPT không đặt `data-testid` nào lên chip đính kèm,
+        // nên nếu chỉ soi `data-*` thì phép đo này quay về đúng chỗ mù mà nó sinh ra để chữa.
+        const composerChain = (element, depth = 8) => {
+          const out = []; let node = element, hops = 0;
+          while (node && hops < depth) {
+            const attrs = Array.from(node.attributes || [])
+              .filter((attribute) => /^(data-|aria-)/.test(attribute.name) || attribute.name === "role" || attribute.name === "type")
+              .map((attribute) => `${attribute.name}="${String(attribute.value).slice(0, 24)}"`);
+            out.push(node.tagName.toLowerCase() + (attrs.length ? `[${attrs.join(" ")}]` : ""));
+            node = node.parentElement; hops += 1;
+          }
+          return out.join(" < ");
+        };
+        // Đi qua adapter (`SEL.fileInput` = `form input[type="file"]`) chứ không viết lại một
+        // selector nữa: hai bản sao của cùng một selector là đúng cái đã làm mẫu chữ của probe
+        // mù suốt một tuần.
+        const composerForm = document.querySelector(SEL.fileInput)?.closest?.("form") || null;
+        const composerScope = composerForm ? {
+          found: true,
+          buttons: Array.from(composerForm.querySelectorAll('button, [role="button"]')).slice(0, 20).map((button) => ({
+            aria: (button.getAttribute("aria-label") || "").slice(0, 60),
+            testid: button.getAttribute("data-testid") || "",
+            role: button.getAttribute("role") || "",
+            txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 30),
+            chain: composerChain(button, 5)
+          })),
+          data_attr_names: [...new Set(Array.from(composerForm.querySelectorAll("*"))
+            .flatMap((element) => Array.from(element.attributes || []).map((attribute) => attribute.name))
+            .filter((name) => /^data-/.test(name)))].slice(0, 24),
+          preview_chains: Array.from(composerForm.querySelectorAll(SEL.attachmentPreview.join(", "))).slice(0, 4).map((element) => composerChain(element))
+        } : { found: false, buttons: [], data_attr_names: [], preview_chains: [] };
         const poll = findAbPoll();
         const probe = {
           captured_at: new Date().toISOString(),
@@ -1203,7 +1243,7 @@
           abPollPending: abPollPending(),
           abPoll: poll ? poll.diagnostics : null,
           busy: STATE.busy,
-          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, messageSample, messageSampleDiag, customTags, fileInputs,
+          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, messageSample, messageSampleDiag, customTags, fileInputs, composerScope,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
