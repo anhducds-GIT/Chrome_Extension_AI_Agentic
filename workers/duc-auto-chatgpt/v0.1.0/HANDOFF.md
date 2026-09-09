@@ -578,3 +578,10 @@ lần đầu (*"bạn lấy khoá đi"*), bị `claude-luat-rasoat` lấy với 
 `text-reconcile-after-reload-smoke.mjs` 16 mép. **Còn mở:** `B-44` (dọn rác không thấy thư mục con
 Chrome ghi vào) · `B-36` (điều kiện đóng cần đối chiếu lại sau lượt chạy hôm nay) · B-41 ⑵⑶.
 
+## 2026-09-09 (tệp đẩy ⒉) · `claude-gpt-chay-het-job` — có cuốn theo lane khác
+
+Lượt đẩy đóng B-43 dùng `--carry` và **cuốn theo 4 commit của lane `claude-luat-rasoat`** (đợt
+N-58: gỡ các quyết định mồ côi khỏi sổ cái, và sửa một phép ghim đang cưỡng chế chính luật đã
+chết). Ghi ra vì [ADR-0005](../../../docs/adr/0005-lam-viec-song-song.md) ⑶ bỏ cửa hỏi Đức cho
+`--carry`, nên tên lane bị cuốn theo là dấu vết duy nhất còn lại. Cổng XANH TOÀN BỘ trước khi đẩy.
+
