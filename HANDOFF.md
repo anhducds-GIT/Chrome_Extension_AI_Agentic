@@ -649,3 +649,30 @@ phải giữ hằng ngày là thước cóc.
 
 **Chỗ chưa với tới:** không gì canh **nền** tự phình — lõi to ra 300 là cả bốn bó to ra 300, chỉ
 thước cóc bắt, sau khi việc đã rồi (Hệ quả ADR-0036).
+
+### 2026-09-09 · harness-loi-01 · MIGRATE bộ khung 0.3.0 → 1.8.0 (từ mốc Stable Baseline)
+
+**Không chạm `workers/`** — lane `claude-gpt-chay-het-job` đang giữ `workers/duc-auto-chatgpt`
+kèm file sửa dở. Chỉ nhận ba vùng trống `_code` · `_root` · `_docs`.
+
+**Nhận về:** 36 file máy · 5 tài liệu · 10 tên lệnh npm · `bang-song/` · `features.json`.
+Bốn thứ đáng kể: **bộ biên dịch luật** (`npm run luat`) · **Context Compiler**
+(`npm run luat -- --nap`) · `can-nang` nay đo **TOKEN** chứ không đo dòng · **dấu niêm phong
+`.agents/claims.json`** — lớp bảo vệ repo NÀY phát minh ra 03/09, nay đã có trong bộ khung nhà
+và quay lại đây qua đường chính thức.
+
+**Đo tại chỗ, chạy thật:** nạp mỗi phiên **3.566 / 6.000 token** (AGENTS.md 2.904 + STATUS.md
+662) — **KHÔNG nạp 220.637 token** trong 61 file `docs/`. Tỉ lệ nạp **2%**.
+
+**Dựng `STATUS.md` ở GỐC** — trước không có, nên B1 đỏ: đơn vị gốc không có trang trạng thái.
+Từ khung 1.8.0, **mở phiên đọc `STATUS.md`**, không đọc đuôi `HANDOFF.md` nữa.
+
+**Cổng cấu trúc còn ĐỎ, và đó là nợ CÓ THẬT:**
+- **B12 · 42/154 ADR** đã `Accepted` mà thân bài bị sửa sau đó. Khung 1.8.0 đo chặt hơn 0.3.0.
+  → `KHUNG-M1`.
+- **B16** đòi khai `luat.chu_de` cho 154 ADR. **Cố ý để ở nhóm CẢNH BÁO**, không CHẶN — bật chặn
+  khi đang đỏ là tự khoá repo. → `KHUNG-M2`.
+- `budget.tokenNap: 6000` là con số **lúc migrate**, chưa phải con số của repo này. → `KHUNG-M3`.
+
+**CHƯA ĐẨY.** Cổng đỏ ở B12 thì không được đẩy — luật mục 3 của repo này và mục 2 của bộ khung
+đều nói vậy. Ba commit nằm local, chờ lane của repo này xử `KHUNG-M1` hoặc Đức chốt.
