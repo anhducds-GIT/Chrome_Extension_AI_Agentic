@@ -439,6 +439,29 @@ check("Không có secret lọt vào repo", () => {
   return { ok: true, msg: `Quét ${tracked.length} file được track, sạch.` };
 });
 
+/* KHAI BẰNG HÌNH DẠNG, KHÔNG BẮT GÕ TỪNG TÊN — 09/09.
+ *
+ * Bản đồ file đòi tên file mới xuất hiện NGUYÊN VĂN trong `AGENTS.md`. Với thứ sinh ra theo lượt
+ * — mỗi lần cắt sổ nhật ký đẻ một `HANDOFF-ARCHIVE-NN.md` — luật đó bắt danh sách dài thêm mãi,
+ * ngay trong file MỌI phiên nạp. Đo 09/09: `AGENTS.md` gốc đang ở đúng thước cóc, dư **0** ký tự,
+ * nên cái tên thứ bảy sẽ không có chỗ mà nằm.
+ *
+ * Và repo này đã học đúng bài đó một lần rồi: ADR-0032 ⑶ — danh sách thư mục bằng chứng gõ tay
+ * bảo vệ **nhầm chỗ** ở nhánh Gemini (ba trong bốn cái không tồn tại), sửa bằng cách viết theo
+ * hình dạng, vì *"hình dạng thì không mục được"*.
+ *
+ * KHÔNG phải nới cửa: một hình dạng là lời khai CÓ CHỦ Ý, đặt trong backtick, và phải mang ít
+ * nhất 3 ký tự chữ. `*` trần hay `*.md` không qua được — nếu không thì một dấu sao lạc trong văn
+ * bản sẽ khai hộ cả repo. */
+const khaiTheoHinhDang = (map, ten) => {
+  for (const [, hinh] of map.matchAll(/`([A-Za-z0-9._*/-]*\*[A-Za-z0-9._*/-]*)`/g)) {
+    if (hinh.replace(/[^A-Za-z0-9]/g, "").length < 3) continue;
+    const re = new RegExp("^" + hinh.split("*").map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[^/]*") + "$");
+    if (re.test(ten)) return true;
+  }
+  return false;
+};
+
 /* ---- 4. File mới phải khai vào Bản đồ file ------------------------------ */
 check("File mới đã khai vào Bản đồ file", () => {
   const added = workingChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file).filter(mine);
@@ -456,7 +479,9 @@ check("File mới đã khai vào Bản đồ file", () => {
     const topLevel = rest.split("/")[0];
     if (!topLevel || topLevel === "AGENTS.md") continue;
     const map = fs.readFileSync(agentsPath, "utf8");
-    if (!map.includes(topLevel)) undeclared.push(base ? `${base}/${topLevel}` : topLevel);
+    if (!map.includes(topLevel) && !khaiTheoHinhDang(map, topLevel)) {
+      undeclared.push(base ? `${base}/${topLevel}` : topLevel);
+    }
   }
   const unique = [...new Set(undeclared)];
   if (unique.length) return { ok: false, msg: `Chưa khai vào Bản đồ file của package: ${unique.join(", ")}. Không khai = không tồn tại (luật gốc).` };

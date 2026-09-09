@@ -65,7 +65,8 @@ ADR-0033 ⑸⒠.)*
 ## 5. Không bao giờ
 
 - **Token, mật khẩu, tệp ghép cặp lọt vào repo. Repo này PUBLIC.**
-- `pilot-*/` · `Pilot-*/` · `Batch-*/` · `evidence*/` là bằng chứng: **chỉ được THÊM.**
+- `pilot-*/` · `Pilot-*/` · `Batch-*/` · `evidence*/` · `HANDOFF-ARCHIVE-*.md` là bằng chứng:
+  **chỉ được THÊM.** `drafts/` là nháp — ghi tự do, không phải bằng chứng.
 - Gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
 - **Đoán selector** — phải có bằng chứng DOM thật từ `diagnostics.dom_probe`; ở Scouter
   **selector không bao giờ gõ vào seed**.
@@ -104,7 +105,7 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 |---|---|
 | Đụng một gói `duc-auto-*` | `AGENTS.md` của **chính gói đó**. **Ba gói là fork của nhau** — một lỗi thường có **ba** bản sao |
 | Nhận khoá · commit · đóng phiên · tranh chấp khoá | `docs/protocols/MULTIFLOW.md` mục 3a–3b |
-| Nhận việc **ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ". Nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi **DỪNG**. Công cụ chỉ đọc: `node scripts/what-next.mjs` |
+| Nhận việc **ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ" |
 | Thêm/sửa/bỏ một LUẬT hay TRẦN · lượt rà hằng tuần | `docs/protocols/RULE-COMPILER.md` |
 | Ghi nhật ký · cắt sổ · đóng một mục sổ nợ | `docs/protocols/HANDOFF.md` · `RULE-COMPILER.md` 5a |
 | Hỏi làm gì TRƯỚC | `ROADMAP.md` (thứ tự) · `what-next.mjs` (trạng thái sống) |

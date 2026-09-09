@@ -1014,6 +1014,35 @@ const chay = (deps) => {
 
   ok("PHIEN.md con tuoi: cong canh, dung CHUNG cong thuc voi bo sinh, va pham vi khong bay K2-2");
 }
+
+/* ---- BAN DO FILE KHAI BANG HINH DANG ---------------------------------------
+ *
+ * Ban do doi ten file moi xuat hien NGUYEN VAN trong AGENTS.md. Voi thu sinh theo luot — moi luot
+ * cat so de mot `HANDOFF-ARCHIVE-NN.md` — luat do bat danh sach dai them mai, ngay trong file MOI
+ * phien nap, va `AGENTS.md` goc thi da o dung thuoc coc. ADR-0032 (3) da day dung bai nay: danh
+ * sach go tay bao ve NHAM CHO, sua bang cach viet theo hinh dang.
+ *
+ * Ghim CAI CHAN, khong ghim cai cho qua: mot hinh dang phai nam trong backtick va mang it nhat 3
+ * ky tu chu. Bo dieu kien do la mot dau sao lac trong van ban khai ho ca repo. */
+{
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate, /const khaiTheoHinhDang = /, "phai co ham khai theo hinh dang");
+  assert.match(gate, /\.replace\(\/\[\^A-Za-z0-9\]\/g, ""\)\.length < 3/,
+    "hinh dang phai co >= 3 ky tu chu — khong thi `*` tran se khai ho ca repo");
+  assert.match(gate, /map\.matchAll\(\/`\(/,
+    "chi doc hinh dang trong BACKTICK — mot dau sao trong van xuoi khong phai loi khai");
+  assert.match(gate, /join\("\[\^\/\]\*"\)/,
+    "`*` khong duoc vuot qua dau `/` — khai mot file khong duoc khai ca cay thu muc duoi no");
+  assert.match(gate, /!map\.includes\(topLevel\) && !khaiTheoHinhDang/,
+    "ten nguyen van van la duong chinh; hinh dang chi la duong bo sung");
+
+  // Va ban do that phai dung no, neu khong thi ham nay la code chet.
+  const ag = fs.readFileSync(path.join(ROOT, "AGENTS.md"), "utf8");
+  assert.match(ag, /`HANDOFF-ARCHIVE-\*\.md`/,
+    "so nhat ky da cat phai khai bang HINH DANG o AGENTS.md goc, khong go tung ten");
+
+  ok("ban do file: khai duoc bang hinh dang, va hinh dang phai du chat de khong khai ho ca repo");
+}
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *
  * `--soat` đo đúng nhưng chạy TRƯỚC `git commit`, và ngày 08/09 đo được cửa sổ giữa hai lệnh:

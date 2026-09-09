@@ -617,3 +617,21 @@ rằng có AI đang nhìn thì `chat.read`+`chat.say` là đủ, và Đức đú
 
 Số đo đầy đủ, cả hai chuỗi sự kiện, và hai lỗi trong đồ nghề của tôi: `BACKLOG.md` khối
 **AUDIT ĐỘC LẬP 09/09** — ở đó vì mục nhật ký này chạm trần.
+
+## 2026-09-09 · `claude-nen-luat` — gói này nay mở phiên bằng `PHIEN.md`
+
+**Mở phiên ở gói này: đọc `PHIEN.md`, một file, xong** (ADR-0035). Máy sinh, tự chứa: lõi luật
+chung + `## Luật vàng` của gói + bản chắt trạng thái từ `STATUS.md`. **2.463 token** — trước hôm
+nay là 29.826. Đừng nạp `AGENTS.md` hay file nhật ký này lúc mở; chúng là **nguồn** của `PHIEN.md`,
+mở khi cần đào sâu.
+
+`## Luật vàng` 4.265 → 2.187 ký tự. **Không luật nào bị xoá:** khối biện minh ADR-0032 còn một
+dòng + một liên kết · bốn luật trùng lõi trỏ về lõi · bản kể tên lại bốn luật đó bỏ hẳn, vì trong
+`PHIEN.md` chúng in ngay phía trên. Nắp `run.trial` và bảy lớp bảo vệ **giữ nguyên**.
+
+**Sửa `AGENTS.md` hay `STATUS.md` của gói thì PHẢI chạy `node scripts/rule-compile.mjs --sinh`** —
+cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự thì bộ sinh **từ chối ghi**.
+
+*(Bản nén `AGENTS.md` nằm trong commit `1702ae5d` mang nhãn `claude-gpt-chay-het-job`: một lượt
+`git add` không giới hạn đường dẫn trên cây làm việc dùng chung đã cuốn theo. Nội dung đúng, chỉ
+nhãn nguồn gốc sai — không sửa vì sửa nhãn là viết lại lịch sử.)*
