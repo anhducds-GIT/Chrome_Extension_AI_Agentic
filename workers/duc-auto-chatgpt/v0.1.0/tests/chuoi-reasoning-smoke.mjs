@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "turn-cu";
 const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
@@ -218,4 +218,47 @@ console.log("chuoi reasoning smoke tests: PASS");
   const iGui = src.indexOf('"chat-say"');
   assert.ok(iKhoa > 0 && iGui > iKhoa, "khoá phải đặt TRƯỚC mọi đường gửi");
   console.log("  ok  ⓜ khoá một-bản-chạy đặt trước mọi đường gửi");
+}
+
+/* ⓝ B-63 — tab còn là của tôi không. Mép duy nhất ở đây bảo vệ NGƯỜI, không bảo vệ chuỗi. */
+{
+  const U = "https://chatgpt.com/c/aaa";
+  // Lần đọc đầu: chưa có gì để so, phải cho chạy.
+  assert.equal(canhTab({ url: U, urlGhim: U, idLuotNguoiCuoi: "u1", mocLuotNguoi: "u1" }).dung, false);
+
+  // URL đổi = hội thoại khác. Đây là ca "bộ chạy gõ vào chỗ khác".
+  const doiUrl = canhTab({ url: "https://chatgpt.com/c/bbb", urlGhim: U, idLuotNguoiCuoi: "u1", mocLuotNguoi: "u1" });
+  assert.equal(doiUrl.dung, true);
+  assert.match(doiUrl.vi, /DOI_HOI_THOAI/);
+
+  // Lượt gõ lạ = người đang dùng. Đúng cảnh 11:32 ngày 10/09.
+  const nguoiGo = canhTab({ url: U, urlGhim: U, idLuotNguoiCuoi: "u9", mocLuotNguoi: "u1" });
+  assert.equal(nguoiGo.dung, true);
+  assert.match(nguoiGo.vi, /NGUOI_DANG_DUNG/);
+  assert.match(nguoiGo.vi, /u9/);
+
+  // Hội thoại rỗng, chưa ghim gì: không được dựng cờ giả.
+  assert.equal(canhTab({ url: U, urlGhim: null, idLuotNguoiCuoi: null, mocLuotNguoi: undefined }).dung, false);
+
+  // CHIỀU NGƯỢC: bản cũ không có phép kiểm nào, nên nó "xanh" ở CẢ HAI ca trên.
+  const cu = () => ({ dung: false });
+  assert.equal(cu().dung, false, "bản cũ phải cho chạy ở ca người đang gõ — đó là lỗi đã xảy ra");
+  console.log("  ok  ⓝ đổi hội thoại và lượt gõ lạ đều dừng bộ chạy");
+}
+
+/* ⓞ Phép canh phải nằm TRƯỚC quyetDinh trong vòng lặp, và mốc không được nhích mù. */
+{
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const iCanh = src.indexOf("const canh = canhTab(");
+  const iQuyet = src.indexOf("const qd = quyetDinh(");
+  assert.ok(iCanh > 0 && iQuyet > iCanh, "canhTab phải chạy trước quyetDinh");
+  /* Bỏ chú thích trước khi dò — lần thứ tư trong ngày phép dò khớp trúng chính câu văn giải
+     thích vì sao không được làm thế. Chú thích không chạy; chỉ mã mới tính. */
+  const chiMa = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  assert.ok(!/mocLuotNguoi = undefined/.test(chiMa), "không được nhích mốc mù — người gõ ngay sau sẽ thành mốc");
+  assert.match(src, /mocLuotNguoi = cuoi\.id/, "mốc chỉ nhích sang lượt đã nhận ra là của mình");
+  console.log("  ok  ⓞ canh tab đặt trước quyết định, mốc nhích có điều kiện");
 }

@@ -55,6 +55,27 @@ export function nguoiNhanCuaKhoi(text) {
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
 }
 
+/* B-63 — TAB NÀY CÒN LÀ CỦA TÔI KHÔNG. Đo 11:32 ngày 10/09: đúng hội thoại đang chạy chuỗi,
+   nhưng ba lượt cuối là của Đức đang hỏi GPT chuyện khác, và `generating: true` là Đức đang
+   chờ câu trả lời của mình. `RUN_ACTIVE` với cửa `generating` chỉ đo "trang có bận không",
+   không đo "ai đang dùng" — người gõ xong, trang lặng, bộ chạy sẽ chèn prompt vào giữa cuộc
+   nói chuyện của người và coi câu trả lời cho người là khối nối vòng của nó.
+
+   Hai phép kiểm, và cả hai đều là SO SÁNH VỚI MỘT MỐC ĐÃ GHIM, không phải đoán từ nội dung:
+   ⑴ URL đổi = không còn là hội thoại đã ghim.
+   ⑵ Lượt `user` cuối mang một id khác mốc = có ai đó gõ vào. Mốc chỉ nhích khi CHÍNH bộ chạy
+      gửi xong, nên mọi thay đổi khác đều là người.
+   Dừng, không gửi. Đây là mép duy nhất trong tệp này bảo vệ NGƯỜI chứ không bảo vệ chuỗi. */
+export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
+  if (urlGhim && url && url !== urlGhim) {
+    return { dung: true, vi: `DOI_HOI_THOAI — ghim ${urlGhim}, giờ là ${url}` };
+  }
+  if (idLuotNguoiCuoi && mocLuotNguoi !== undefined && idLuotNguoiCuoi !== mocLuotNguoi) {
+    return { dung: true, vi: `NGUOI_DANG_DUNG — có lượt gõ lạ (${idLuotNguoiCuoi}), không phải lượt tôi gửi` };
+  }
+  return { dung: false, vi: null };
+}
+
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
 export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0 }) {
@@ -171,6 +192,10 @@ async function chinh() {
   let khoiCu = docCo(argv, "tu-turn", "");
   let daGui = 0;
   let lyDo = "HET_SO_VONG";
+  /* Ghim ở LƯỢT ĐỌC ĐẦU, không phải từ tham số: bộ chạy nối vào một tab đang mở sẵn, và
+     tham số dòng lệnh không biết tab ấy đang ở hội thoại nào. `undefined` = chưa ghim. */
+  let urlGhim = null;
+  let mocLuotNguoi;
 
   console.log(`chuỗi "${nhan}" · trần ${soVong} vòng · trần ${tranPhut} phút · nhật ký ${soNhatKy}`);
   ghi({ su_kien: "BAT_DAU", so_vong: soVong, tran_phut: tranPhut, tu_turn: khoiCu || null });
@@ -199,6 +224,22 @@ async function chinh() {
       }
       docHong = 0;
       const r = d.result;
+
+      /* B-63 — CANH TAB TRƯỚC MỌI THỨ KHÁC. Đặt ngay sau lượt đọc và trước cả `quyetDinh`:
+         mọi nhánh phía dưới đều có thể dẫn tới một lượt gửi, nên phép kiểm này phải chặn
+         trước, không phải chặn song song. */
+      const luotNguoi = (r.turns || []).filter((t) => t.role === "user");
+      const idLuotNguoiCuoi = luotNguoi.length ? luotNguoi[luotNguoi.length - 1].id : null;
+      if (urlGhim === null && r.url) { urlGhim = r.url; }
+      if (mocLuotNguoi === undefined) { mocLuotNguoi = idLuotNguoiCuoi; }
+      const canh = canhTab({ url: r.url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi });
+      if (canh.dung) {
+        console.log(`  vòng ${vong}: ${canh.vi}`);
+        ghi({ su_kien: "CANH_TAB", vong, vi: canh.vi });
+        lyDo = canh.vi;
+        break;
+      }
+
       if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
 
       const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen });
@@ -277,6 +318,22 @@ async function chinh() {
 
     daGui += 1;
     khoiCu = khoi.turn_id;
+    /* NHÍCH MỐC SANG ĐÚNG LƯỢT VỪA GỬI — và chỉ khi nhận ra nó là lượt của mình. Không được
+       nhích mù (xoá mốc đi để nó tự ghim lại): nếu người gõ ngay sau lượt tôi,
+       nhích mù sẽ nhận lượt của người làm mốc và mép B-63 mất tác dụng đúng lúc cần nhất.
+       So bằng 60 ký tự đầu của khối, giống `daVaoChua` — không so bằng từ khoá. */
+    const sauGui = doc();
+    if (sauGui.ok) {
+      const cuoi = [...(sauGui.result.turns || [])].reverse().find((t) => t.role === "user");
+      if (cuoi && cuoi.text.startsWith(khoi.text.slice(0, 60))) {
+        mocLuotNguoi = cuoi.id;
+      } else if (cuoi) {
+        lyDo = `NGUOI_DANG_DUNG — ngay sau lượt gửi, lượt cuối lại không phải của tôi (${cuoi.id})`;
+        console.log(`  vòng ${vong}: ${lyDo}`);
+        ghi({ su_kien: "CANH_TAB", vong, vi: lyDo });
+        break;
+      }
+    }
     console.log(`  vòng ${vong}/${soVong}: đã gửi ${khoi.chars} ký tự — ${kl.vi}`);
     ghi({ su_kien: "DA_GUI", vong, ky_tu: khoi.chars, turn_id: khoi.turn_id, vi: kl.vi, text: khoi.text });
     await ngu(95000); // nắp chờ 90 giây của Bridge, cộng biên

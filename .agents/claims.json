@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T11:30:50.983Z",
-      "task": "B-61 khoa mot-ban-chay + B-62 nhan CAN_NGUOI",
+      "claimed_at": "2026-09-10T11:44:31.199Z",
+      "task": "B-63 canh tab: ghim hoi thoai + nhan ra luot go cua nguoi",
       "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-10T11:24:02.186Z",
       "task": "Cong safe-push doc nham tien to conventional-commit 'audit:' thanh nhan Audit:",
-      "released_at": null,
+      "released_at": "2026-09-10T11:33:19.788Z",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -96,7 +96,7 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "90f0968bde168c13",
+  "_fingerprint": "b5bb88629094b4e5",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
