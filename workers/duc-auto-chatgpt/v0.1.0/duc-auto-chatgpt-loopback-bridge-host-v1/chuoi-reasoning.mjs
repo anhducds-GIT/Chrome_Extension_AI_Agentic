@@ -25,6 +25,7 @@
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -144,7 +145,12 @@ async function chinh() {
   const pairing = docCo(argv, "pairing", "");
   const target = docCo(argv, "target", "");
   const tranPhut = Number(docCo(argv, "tran-phut", "240"));
-  const thuMuc = docCo(argv, "nhat-ky", path.join(process.cwd(), `chuoi-${nhan || "khong-ten"}`));
+  /* MẶC ĐỊNH NẰM NGOÀI REPO. Bản đầu lấy `process.cwd()`, nên một lượt chạy từ gốc repo đẻ ra
+     `chuoi-<nhãn>/` ngay trong cây làm việc — xảy ra thật 10/09 với `chuoi-ark-luat/`, và nó
+     suýt bị `git add -A` của một lượt commit khác cuốn vào. Nhật ký là trạng thái vận hành,
+     không phải mã nguồn; nó không thuộc về bất kỳ repo nào. */
+  const thuMuc = docCo(argv, "nhat-ky",
+    path.join(os.homedir(), "Documents", "chuoi-gpt", nhan || "khong-ten"));
 
   if (!Number.isInteger(soVong) || soVong < 1 || soVong > TRAN_VONG) {
     console.error(`--so-vong phải là số nguyên 1..${TRAN_VONG}.`);

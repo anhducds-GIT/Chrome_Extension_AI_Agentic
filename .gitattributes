@@ -22,3 +22,12 @@
 # Giữ lại dòng có từ V0.2-A (27/08) — nay là trường hợp riêng của luật trên,
 # để nguyên vì `PLATFORM.md` mục 161 và brief V0.2-A còn trỏ tới nó.
 DASHBOARD.md text eol=lf
+
+# `.bat` PHẢI là CRLF — cmd.exe không đọc được tệp lệnh dùng LF. Đã đo 10/09:
+# `chay-chuoi.bat` lưu LF thì cmd cắt dòng sai và báo `'t' is not recognized`.
+# Khai ở đây để `git checkout` luôn viết đúng, và để `tests/eol-lf-smoke.mjs`
+# phân biệt được "CRLF do khai" với "CRLF do lỡ" — trong git vẫn là LF.
+*.bat text eol=crlf
+
+# `.cmd` cùng lý do với `.bat` — bốn tệp trong `bang-song/` là nút bấm của Đức.
+*.cmd text eol=crlf

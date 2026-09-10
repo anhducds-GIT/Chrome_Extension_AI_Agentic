@@ -48,13 +48,25 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
     `thuoc hong: \`git ls-files --eol\` chi tra ${dong.length} dong, khong the la ca repo`);
 
   const xau = { kho: [], dia: [] };
+  let soKhaiCrlf = 0;
   for (const d of dong) {
-    const m = /^i\/(\S+)\s+w\/(\S+)\s+attr\/.*?\t(.*)$/.exec(d);
+    const m = /^i\/(\S+)\s+w\/(\S+)\s+attr\/(.*?)\t(.*)$/.exec(d);
     assert.ok(m, `khong doc duoc dong \`git ls-files --eol\`: ${d}`);
-    const [, iEol, wEol, duongDan] = m;
+    const [, iEol, wEol, thuocTinh, duongDan] = m;
+    /* `.bat` PHAI la CRLF tren dia — cmd.exe khong doc duoc tep lenh dung LF (do 10/09:
+       cat dong sai, bao `'t' is not recognized`). Nen o day KHONG cam CRLF tren dia mot
+       cach mu quang; chi cam CRLF mà KHONG AI KHAI. Thuoc van la thuoc cua git: doc chinh
+       cot `attr/` no in ra, khong tu doan theo duoi tep. Ben KHO thi luat khong doi —
+       moi blob van phai la LF, ke ca `.bat`. */
+    const khaiCrlf = /\beol=crlf\b/.test(thuocTinh);
+    if (khaiCrlf) soKhaiCrlf += 1;
     if (iEol === "crlf" || iEol === "mixed") xau.kho.push(`${duongDan} (i/${iEol})`);
-    if (wEol === "crlf" || wEol === "mixed") xau.dia.push(`${duongDan} (w/${wEol})`);
+    if (!khaiCrlf && (wEol === "crlf" || wEol === "mixed")) xau.dia.push(`${duongDan} (w/${wEol})`);
   }
+  /* DOI CHUNG AM cho chinh cua mien tru: khong con tep nao khai eol=crlf thi cua nay da
+     thanh mot nhanh chet, va lan sau ai do them `.bat` se khong biet no ton tai. */
+  assert.ok(soKhaiCrlf > 0,
+    "khong tep nao khai `eol=crlf` — cua mien tru nay dang la nhanh chet, xoa no hoac xem lai `.gitattributes`");
 
   assert.deepEqual(xau.kho, [],
     `co blob mang CRLF trong git — chay \`git add --renormalize .\`:\n  ${xau.kho.join("\n  ")}`);

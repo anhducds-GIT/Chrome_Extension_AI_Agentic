@@ -42,3 +42,9 @@ bang-trang-thai/DUNG.txt
 
 # Dau xac nhan suite — cua MAY NAY, khong di theo repo (scripts/chay-test.mjs)
 .ark-suite-stamp.json
+
+# Nhật ký chuỗi reasoning. Mặc định cũ của `chuoi-reasoning.mjs` là thư mục hiện
+# hành, nên một lượt chạy từ gốc repo đẻ ra `chuoi-<nhãn>/` ngay trong cây làm
+# việc — đã xảy ra 10/09 với `chuoi-ark-luat/`. Mặc định nay là
+# `~/Documents/chuoi-gpt/<nhãn>`; dòng này chặn nốt các lượt chạy cũ.
+/chuoi-*/
