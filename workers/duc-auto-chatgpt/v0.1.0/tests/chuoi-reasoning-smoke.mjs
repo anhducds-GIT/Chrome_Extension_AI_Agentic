@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "turn-cu";
 const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
@@ -107,6 +107,28 @@ const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
 {
   const nguon = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
   assert.match(nguon, /startsWith\(khoi\.text\.slice\(0, 60\)\)/, "phải so bằng đầu khối, không bằng một từ khoá");
+}
+
+/* ---- ⓙ mỗi lượt gửi báo lỗi phải có lượt ĐỌC LẠI của riêng nó (B-58) --------
+   Lỗi thật lúc 09:43 ngày 10/09: bản đầu đọc lại sau lần gửi ⑴ nhưng KHÔNG đọc lại sau lần ⑵,
+   nên `REQUEST_TIMEOUT` ở lần hai bị chấm thẳng là thất bại và bộ chạy bỏ cuộc — trong khi
+   trang đang sinh, tức tin nhắn đã bay. Đo trước đó: 4/4 lượt gửi báo lỗi và 4/4 đều đã bay,
+   nên "báo lỗi" gần như KHÔNG mang thông tin gì về việc nó có bay hay không. */
+{
+  assert.equal(ketLuanGui({ ok1: true }).xong, true);
+  assert.equal(ketLuanGui({ ok1: false, daBay1: true }).xong, true, "lần ⑴ lỗi mà đọc lại thấy đã bay thì KHÔNG được gửi lại");
+  assert.equal(ketLuanGui({ ok1: false, daBay1: false, ok2: true }).xong, true);
+  assert.equal(ketLuanGui({ ok1: false, daBay1: false, ok2: false, daBay2: true }).xong, true,
+    "đây là mép mà bản đầu để lọt: lần ⑵ báo lỗi NHƯNG đọc lại thấy đã bay");
+  assert.equal(ketLuanGui({ ok1: false, daBay1: false, ok2: false, daBay2: false }).xong, false,
+    "chỉ khi HAI lượt gửi và HAI lượt đọc lại đều không thấy thì mới là thất bại");
+  // Kiểm ngược: logic BẢN CŨ (bỏ qua daBay2) trả THẤT BẠI ở đúng mép trên.
+  const cu = ({ ok1, daBay1, ok2 }) => Boolean(ok1 || daBay1 || ok2);
+  assert.equal(cu({ ok1: false, daBay1: false, ok2: false }), false, "bản cũ thật sự để lọt mép này");
+
+  const nguon = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const soLanDocLai = nguon.split("await daVaoChua()").length - 1;
+  assert.equal(soLanDocLai, 2, "phải có ĐÚNG hai lượt đọc lại — một cho mỗi lượt gửi có thể lỗi");
 }
 
 console.log("chuoi reasoning smoke tests: PASS");

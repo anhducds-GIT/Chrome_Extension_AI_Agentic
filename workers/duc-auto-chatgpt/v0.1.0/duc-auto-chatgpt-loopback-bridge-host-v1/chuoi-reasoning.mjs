@@ -69,6 +69,19 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
   return { viec: "DUNG", vi: "HET_CHUOI — đã nạp lại mà vẫn không có khối mới" };
 }
 
+/* Kết luận một lượt gửi — cũng THUẦN, cũng ghim được.
+   Sinh ra từ lỗi 09:43 ngày 10/09: bản đầu đọc lại sau lần gửi ⑴ nhưng KHÔNG đọc lại sau lần
+   ⑵, nên `REQUEST_TIMEOUT` ở lần hai bị chấm thẳng là thất bại. Trang lúc đó đang sinh —
+   tin nhắn đã bay. Đúng luật B-58 mà chính file này cài để chặn, chặn được nửa đường.
+   Luật đầy đủ: **mỗi lượt gửi báo lỗi đều phải có một lượt đọc lại của riêng nó.** */
+export function ketLuanGui({ ok1, daBay1, ok2, daBay2 }) {
+  if (ok1) return { xong: true, vi: "gửi thẳng OK" };
+  if (daBay1) return { xong: true, vi: "lần ⑴ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  if (ok2) return { xong: true, vi: "gửi lại OK" };
+  if (daBay2) return { xong: true, vi: "lần ⑵ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  return { xong: false, vi: "hai lượt gửi, hai lượt đọc lại, đều không thấy trong hội thoại" };
+}
+
 /* ------------------------------------------------------------------ phần có tác dụng phụ */
 
 function docCo(argv, ten, mac) {
@@ -155,28 +168,38 @@ async function chinh() {
     // Gửi. Lỗi ở đây KHÔNG được tự thử lại mù (B-58) — phải đọc lại xem nó đã bay chưa.
     const fParam = path.join(thuMuc, `vong-${String(vong).padStart(2, "0")}.json`);
     fs.writeFileSync(fParam, JSON.stringify({ text: khoi.text, timeout_sec: 180 }, null, 1));
-    const kq = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
-    let daBay = Boolean(kq.ok);
-
-    if (!daBay) {
+    // So bằng 60 ký tự ĐẦU của chính khối — không so bằng một từ khoá, vì một từ khoá cũng
+    // nằm trong prompt vòng trước và sẽ cho dương tính giả (đã dính đúng bẫy này 10/09).
+    const daVaoChua = async () => {
       await ngu(45000);
       const lai = doc();
       const hoiCuoi = lai.ok ? [...lai.result.turns].reverse().find((t) => t.role === "user") : null;
-      // So bằng 60 ký tự ĐẦU của chính khối — không so bằng một từ khoá, vì một từ khoá cũng
-      // nằm trong prompt vòng trước và sẽ cho dương tính giả (đã dính đúng bẫy này 10/09).
-      daBay = Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
-      ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, ma: kq.error?.code || null, da_bay: daBay });
-      if (!daBay) {
+      return Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
+    };
+
+    const lan1 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
+    let ok1 = Boolean(lan1.ok), daBay1 = false, ok2 = false, daBay2 = false;
+    if (!ok1) {
+      daBay1 = await daVaoChua();
+      ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 1, ma: lan1.error?.code || null, da_bay: daBay1 });
+      if (!daBay1) {
         const lan2 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
-        daBay = Boolean(lan2.ok);
-        if (!daBay) { lyDo = `GUI_THAT_BAI: ${lan2.error?.code || kq.error?.code}`; break; }
+        ok2 = Boolean(lan2.ok);
+        // MỖI lượt gửi báo lỗi phải có lượt đọc lại CỦA RIÊNG NÓ. Bản đầu bỏ lượt này và
+        // chấm `REQUEST_TIMEOUT` ở lần hai thành thất bại, trong khi tin nhắn đã bay.
+        if (!ok2) {
+          daBay2 = await daVaoChua();
+          ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 2, ma: lan2.error?.code || null, da_bay: daBay2 });
+        }
       }
     }
+    const kl = ketLuanGui({ ok1, daBay1, ok2, daBay2 });
+    if (!kl.xong) { lyDo = `GUI_THAT_BAI: ${kl.vi}`; break; }
 
     daGui += 1;
     khoiCu = khoi.turn_id;
-    console.log(`  vòng ${vong}/${soVong}: đã gửi ${khoi.chars} ký tự (turn ${khoi.turn_id})`);
-    ghi({ su_kien: "DA_GUI", vong, ky_tu: khoi.chars, turn_id: khoi.turn_id, text: khoi.text });
+    console.log(`  vòng ${vong}/${soVong}: đã gửi ${khoi.chars} ký tự — ${kl.vi}`);
+    ghi({ su_kien: "DA_GUI", vong, ky_tu: khoi.chars, turn_id: khoi.turn_id, vi: kl.vi, text: khoi.text });
     await ngu(95000); // nắp chờ 90 giây của Bridge, cộng biên
   }
 
