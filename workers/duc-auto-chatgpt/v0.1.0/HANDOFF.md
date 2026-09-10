@@ -724,3 +724,31 @@ nghĩa. Và nó đọc lại `B-59`: các quãng cụt không hoàn toàn là DO
 `core.hooksPath = .githooks`, `commit-msg` chạy `--soat`, và nó chặn tôi **hai lần** trong ngày.
 
 Suite **133/133**. Roadmap đầy đủ ở `## ROADMAP — nền tảng reasoning GPT×CC` trong `BACKLOG.md`.
+
+## 2026-09-10 (lượt 20) · `claude-gpt-chay-het-job` — chuỗi thành NÚT BẤM, ba mép mới bắt được lỗi thật
+
+**Nút bấm:** `chay-chuoi.bat` / `dung-chuoi.bat`. Nhấp đôi thì hỏi tên chuỗi, số vòng, trần
+phút, rồi **CHO CHỌN profile** từ danh sách đang thật sự nối (`chon-profile.mjs` hỏi host, không
+hỏi trang, nên không giành panel). **Chạy chuỗi tốn 0 usage CC** — Node thuần.
+
+**Ba mép mới:** `~~B-61~~` khoá một-bản-chạy · `~~B-62~~` `CAN_NGUOI` · `~~B-63~~` ghim hội
+thoại. **`B-63` chạy thật 14:08:** Đức đổi tab, `ark-luat` dừng bằng `DOI_HOI_THOAI` sau 4 vòng
+thay vì gõ nhầm chỗ. Ba mép **còn hở** ghi ở `B-64`, `B-65`, và khoá không tự trả khi bị giết.
+
+**Mốc ② chuỗi `luat-audit`: FAIL** — thiếu `workers/hnx-fetch/AGENTS.md`, gói duy nhất không có
+`v*/`. Phạm vi thật **14 file, 2153 dòng**. Hai con số cũ sai vì **cùng một chỗ**: glob quét
+trúng `_shared/AGENTS.md` lần hai (dư đúng 128 dòng) và làm rơi `hnx-fetch` — hai lỗi ngược
+chiều che nhau. Luật mới: **phạm vi là danh sách TÊN FILE**; glob chỉ để tìm, không để ghi.
+Chi tiết ở `drafts/luat-audit/CC/MOC-2.md`.
+
+**Cổng `safe-push` bắt nhầm commit của tôi** — tiêu đề kiểu `audit:` bị đọc thành nhãn `Audit:`.
+Sửa **cổng**, không dùng cờ vượt. Trên đường đó lộ ra **`npm test` chết ở mục thứ 6**:
+`tests/repo-structure-smoke.mjs` import 3 export đã bị xoá, nên **hơn 20 tệp test phía sau chưa
+từng chạy** — và vì thế 3 tệp nguồn mang CRLF nằm đó không ai thấy. Ba export đó chạm lớp bảo vệ
+append-only nên tôi **không tự đoán**; cần Đức giao lane.
+
+**Thước usage** `scripts/do-usage-phien.mjs`. Bản đầu cho **7,38 tỷ** token — sai gấp bảy vì cộng
+cả 18.954 dòng nhật ký trong khi chỉ có 2.684 `message.id`. Số đúng: **2.688 lượt · ~370.000
+token đọc mỗi lượt · phần ra 0,24%**. Giá ≈ **số lượt** × bối cảnh.
+
+Suite **133/133**. Pilot kế: `drafts/PILOT-DIEU-PHOI-V0.md` + `pilot-dieu-phoi/GOI-VIEC.md`.
