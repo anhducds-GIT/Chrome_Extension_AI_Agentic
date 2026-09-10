@@ -26,16 +26,16 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-10T10:55:40.484Z",
       "task": "B-61 B-62: khoa mot-ban-chay va nhan dung cho bo chay chuoi",
-      "released_at": null,
+      "released_at": "2026-09-10T10:57:07.978Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
       "duc_decision": "Duc chot 2026-09-09 luot BA: \"tiep di\" — tra loi truc tiep hai lua chon \"cho lane nay lay khoa\" hay \"doi lane kia xong\". Kem chot noi dung ngay truoc: \"phuong an 2. can dam bao flow chay tu dau toi cuoi cho den het, tru khi bi captcha hoac bao het credit\" = B-40 duong (b), sua trong vung nay. Lay tu lane claude-nen-luat (dang nen tai lieu); no da bao xong phan cua no trong vung nay o cac commit truoc.",
-      "tra_khi_chua_day": "9 commit · B-36 DA DONG (nghiem thu live chuoi 3 anh vao thu muc da cap quyen) va B-52. 13 commit cua toi chua day duoc vi 4 commit migrate cua harness-loi-01 nam duoi va chinh lane do ghi la khong duoc day. Cho Duc chot --carry."
+      "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
       "owner": null,
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T02:12:06.918Z",
-      "task": "sua loi pham vi behaviourOpts trong build-dashboard.mjs — dang chan bang cua ca repo",
-      "released_at": "2026-09-10T02:25:15.907Z",
+      "claimed_at": "2026-09-10T11:24:02.186Z",
+      "task": "Cong safe-push doc nham tien to conventional-commit 'audit:' thanh nhan Audit:",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -96,19 +96,15 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "7efc5d66ce485566",
+  "_fingerprint": "646e1948547c612d",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
     },
-    "drafts/luat-audit/CC/MOC-2.md": {
+    "package.json": {
       "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T10:54:14.857Z"
-    },
-    "drafts/luat-audit/CC/HOP-DONG.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T10:54:14.857Z"
+      "luc": "2026-09-10T11:27:20.986Z"
     }
   }
 }

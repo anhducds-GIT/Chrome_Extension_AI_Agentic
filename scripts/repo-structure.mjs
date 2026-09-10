@@ -425,7 +425,13 @@ export function nguoiDuyetSaiKhuon(structure) {
  *  Repo KHÔNG khai danh sách → KHÔNG ai là người duyệt → lời khai `chua-co` chỉ gỡ được bằng
  *  `--duc-duyet-chua-audit`. Fail-closed, và nói rõ bằng mã lỗi. */
 export function auditFromMessage(text, dsNguoiDuyet = []) {
-  const values = String(text ?? "").split("\n")
+  /* BỎ QUA DÒNG TIÊU ĐỀ — đo được 10/09. `Audit:` là một TRAILER, mà trailer không bao giờ nằm
+     ở dòng đầu. Bản cũ quét cả dòng đầu, nên một commit theo lối conventional-commit với KIỂU
+     là `audit:` — `audit: MOC 2 FAIL — thieu …` — bị đọc thành lời khai người duyệt tên
+     *"moc 2 fail — thieu …"*, rơi ra ngoài `audit.nguoi_duyet` và bị chặn push. Commit đó
+     không chạm `scripts/` lẫn `tests/`; cửa audit lẽ ra không được hỏi tới nó.
+     `laneFromMessage` ngay trên đã đúng từ đầu (`startsWith`, không nới lỏng) — chỗ này lệch. */
+  const values = String(text ?? "").split("\n").slice(1)
     .filter((line) => /^\s*audit\s*:/i.test(line))
     .map((line) => line.slice(line.indexOf(":") + 1).trim().toLowerCase());
   if (!values.length) return { chuaAudit: false, khai: null, problem: null };
