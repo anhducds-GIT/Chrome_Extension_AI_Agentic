@@ -96,15 +96,19 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "d1d851bb2b815412",
+  "_fingerprint": "3807d7079e7272a2",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
     },
-    "scripts/nghiem-thu-artifact.mjs": {
+    "drafts/pilot-dieu-phoi/GOI-VIEC.md": {
       "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T12:10:16.510Z"
+      "luc": "2026-09-10T12:10:57.507Z"
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T12:11:45.254Z"
     }
   }
 }
