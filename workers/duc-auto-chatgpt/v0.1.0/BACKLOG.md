@@ -2983,7 +2983,10 @@ hiệu ứng đều thật**, và phải chặn cả hai.
 - **đóng khi:** có một tín hiệu "đã xong" **không** dựa vào nút Stop. Ứng viên: đếm số lượt trả
   lời · khối copy đứng yên qua hai lượt đọc cách nhau · trạng thái nút Gửi.
 
-### B-61 · (P1) Hai bộ chạy cùng lúc — không có khoá một-bản-chạy
+### ~~B-61~~ · (ĐÓNG 10/09) Hai bộ chạy cùng lúc — không có khoá một-bản-chạy
+
+> **Vá và thử thật:** bộ chạy chiếm `DANG-CHAY.json` bằng cờ `wx` trước mọi đường gửi; bản
+> thứ hai thoát 3 và không gửi gì. Còn một mép chưa kín đã chốt KHÔNG sửa — xem `~~B-64~~`.
 
 10/09 hai tiến trình `chuoi-reasoning.mjs` chạy song song trên cùng một tab và cùng ghi một
 `nhat-ky.jsonl`. Nhật ký đan xen thành vô nghĩa: hai `NAP_LAI` cùng giây `10:28:56`, hai lượt
@@ -3000,7 +3003,10 @@ Hai bộ chạy cũng **nạp lại tab của nhau** giữa lúc GPT đang sinh.
   khoá còn sống thì từ chối chạy và nói rõ ai đang giữ. Ghim: chạy hai bản, bản thứ hai phải
   thoát khác 0 mà **không** gửi gì.
 
-### B-62 · (P2) `HET_CHUOI` gộp hai việc khác hẳn nhau
+### ~~B-62~~ · (ĐÓNG 10/09) `HET_CHUOI` gộp hai việc khác hẳn nhau
+
+> **Vá:** đọc dòng `NGƯỜI NHẬN` của khối; không phải GPT thì dừng bằng `CAN_NGUOI` kèm tên.
+> Chỉ so phần tên trước dấu ngăn đầu tiên. Có phép ghim kèm chiều ngược.
 
 Chuỗi `luat-audit` dừng sau Vòng 6 với `HET_CHUOI — đã nạp lại mà vẫn không có khối mới`. Sự
 thật: GPT **đã trả lời**, và trả lời rằng khối nối vòng ghi `NGƯỜI NHẬN/THỰC THI: Claude Code
@@ -3015,7 +3021,11 @@ chỉ nhãn sai.
   phải GPT thì dừng với `CAN_NGUOI` kèm tên người nhận, không gửi đi. Ghim: khối ghi
   `Claude Code (CC)` phải cho `CAN_NGUOI`, khối ghi `GPT Web` phải cho `GUI`.
 
-### B-63 · (P0) Bộ chạy không hỏi "người có đang dùng tab này không"
+### ~~B-63~~ · (ĐÓNG 10/09 — đã cứu thật một lần) Bộ chạy không hỏi "người có đang dùng tab này không"
+
+> **Vá:** `canhTab()` ghim `conversation_id` ở lượt đọc đầu và dừng khi lượt `user` cuối mang
+> id khác mốc. **Chạy thật 14:08 ngày 10/09:** Đức đổi tab, chuỗi `ark-luat` dừng bằng
+> `DOI_HOI_THOAI` sau 4 vòng thay vì gõ vào nhầm hội thoại. Đột biến: vô hiệu `canhTab` thì đỏ.
 
 11:32 ngày 10/09 tôi gửi prompt Vòng 7, `chat.say` từ chối: *"ChatGPT is already generating"*.
 Đọc lại: **đúng hội thoại đó** (`6aa23606-…`), nhưng ba lượt cuối là của **Đức**, đang hỏi GPT
