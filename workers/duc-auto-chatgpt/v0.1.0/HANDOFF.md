@@ -649,3 +649,39 @@ phần còn sống (panel không trả lời lúc bận) là `B-50`.
 
 **Tôi ghi đè nhầm `HANDOFF-ARCHIVE-01.md` (vùng CHỈ-THÊM) rồi khôi phục** — nguyên nhân, bài
 học, và nợ hạ tầng kèm theo ghi ở `B-69` trong `BACKLOG.md`.
+
+## 2026-09-11 (lượt 22) · `claude-gpt-chay-het-job` — cụm giác quan đóng bằng một lượt đo live
+
+**Đức chốt:** `B-56` ok · `B-40`/`B-41` vẫn dùng · `B-66` `B-69` bỏ. Sổ nợ **38 → 2**.
+
+**`B-40` `B-41` hoá ra đã vá từ 09/09, chỉ quên gạch** — lần thứ hai trong hai ngày gặp đúng
+kiểu hồ sơ này (`B-37` `B-38` `B-39` hôm qua). Kiểm bằng MÃ và bằng cách CHẠY từng phép ghim.
+`B-56` → [ADR-0054](docs/adr/0054-vong-reasoning-tu-noi-chi-chuyen-tiep-nguyen-van-khoi-copy.md),
+**hồi tố và tự khai là hồi tố**; rủi ro tiêm lệnh **chưa đóng**, ADR ghi rõ giá.
+
+**Đo live 11/09 trên tab thật, và nó đổ hai tín hiệu bộ chạy vẫn tin:**
+
+| giây | nút Stop | dạng `data-turn-id` | ký tự |
+|---:|---|---|---:|
+| 6.1 | còn sinh | TẠM | 26 |
+| **8.7** | **ĐÃ TẮT** | TẠM | 26 |
+| 27.0 | đã tắt | TẠM | 26 |
+| *(nạp lại)* | — | **UUID** | **85** |
+
+Nút Stop **và** "chữ đứng yên 20 giây" cùng nói *"xong"* ở giây 8.7, trong khi câu trả lời thật
+dài 85 ký tự. **Tín hiệu đúng nằm sẵn trong payload, chưa ai đọc:** trang đánh dấu lượt chưa
+hoàn tất bằng `data-turn-id` **tạm** (`request-<hội thoại>-<n>`), lượt đã chốt mang UUID. Đó là
+dấu hiệu của chính ChatGPT, thuộc tính **cấu trúc**, không phải nhãn tiếng Anh.
+
+Và bản cũ còn sai chiều ngược: lượt chưa chốt trả `found: true` với `chars: 0` → bộ chạy chấm
+`KHOI_RONG` rồi DỪNG — **lý do sai, và đi vòng qua chính luật B-59**. Vá bằng `luotDaChot()` +
+cửa `LUOT_CHUA_CHOT` đứng **trước** mọi phán quyết về khối. Đóng `~~B-59~~` `~~B-60~~`.
+
+**`B-68` nghiệm thu LIVE:** `system.ping` trả `url` + `conversation_id`, rút đúng định danh từ
+một hội thoại trong Project — đúng ca mà bản sao cũ ở `sidepanel.js` từng trả `null`.
+
+**Giới hạn:** cả lượt đo ở trên tab **đang bị che**. Chưa tách được *hydrat muộn* khỏi *tab bị
+che*. Cần một lượt đo trên tab hiện.
+
+Còn `B-50` (panel chết một nửa: router 166 ms, executor 11/11 hết giờ; hai thể) và `B-58`.
+Suite **133/133**.

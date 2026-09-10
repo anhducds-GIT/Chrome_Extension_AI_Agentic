@@ -60,6 +60,34 @@ export function nguoiNhanCuaKhoi(text) {
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
 }
 
+/* LƯỢT NÀY ĐÃ CHỐT CHƯA — B-59/B-60, đo live 11/09.
+ *
+ * Trang tự đánh dấu một lượt CHƯA hoàn tất bằng một `data-turn-id` **tạm**: `request-<id hội
+ * thoại>-<n>`, hoặc `client-created-root`. Lượt đã chốt thì mang một UUID thật. Đây là dấu
+ * hiệu của chính ChatGPT, không phải phép đoán của ta, và nó là thuộc tính cấu trúc — không
+ * phải nhãn tiếng Anh, nên không chết khi Đức đổi ngôn ngữ giao diện.
+ *
+ * VÌ SAO CẦN NÓ: nút Stop nói dối, đo được. Một lượt gửi lúc 11/09:
+ *
+ *     giây  nút Stop   dạng id   ký tự
+ *      3.5  còn sinh   TẠM        13
+ *      6.1  còn sinh   TẠM        26
+ *      8.7  ĐÃ TẮT     TẠM        26   ← nút Stop nói "xong"
+ *     27.0  đã tắt     TẠM        26   ← chữ đứng yên 20 giây, cũng nói "xong"
+ *     (nạp lại)        UUID       85   ← sự thật: câu trả lời dài 85 ký tự
+ *
+ * Hai tín hiệu bộ chạy vẫn dùng đều nói SAI ở giây 8.7. Dạng id **chưa nói sai lần nào**: nó
+ * giữ TẠM suốt lúc chưa xong và chỉ thành UUID khi lượt thật sự chốt.
+ *
+ * GIỚI HẠN ĐÃ BIẾT, nói ra vì nó đổi cách đọc bảng trên: cả lượt đo diễn ra trên một tab
+ * ĐANG BỊ CHE (`visibility: hidden`). Nên chưa tách được "lượt hydrat muộn" khỏi "tab bị che
+ * thì không hydrat". Luật rút ra không đổi theo hai cách đọc đó — TẠM vẫn là "đừng tin lượt
+ * này" — nhưng con số 8.7 giây thì có thể khác trên tab hiện. Đo lại khi có tab hiện.
+ */
+export function luotDaChot(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id ?? ""));
+}
+
 /* ĐỊNH DANH HỘI THOẠI TỪ MỘT ĐỊA CHỈ. Bản sao có chủ ý của `conversationId` trong
    `provider-adapter.js` — bộ chạy là một tiến trình node, không nạp được mã của tiện ích.
    `tests/chuoi-url-smoke.mjs` đọc regex THẬT trong adapter và bắt hai bên phải trùng, nên
@@ -101,13 +129,27 @@ export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
 
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
-export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0 }) {
+export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0, idLuotTraLoiCuoi = null }) {
   if (generating === true) return { viec: "CHO", vi: "trang còn đang sinh" };
   /* HAI đường mở khoá, không một. Đường ⑴ là lượt vừa gửi: đã thấy nó sinh rồi lặng.
      Đường ⑵ là nối vào một chuỗi đã xong từ trước: không bao giờ thấy nó sinh, nên phải
      nhận `yên đủ lâu` làm bằng chứng. Bản đầu chỉ có ⑴ và nó treo vô hạn ở cảnh ⑵. */
   if (!daThayDangChay && soLanYen < NGUONG_YEN) {
     return { viec: "CHO", vi: `chưa thấy trang sinh, mới yên ${soLanYen}/${NGUONG_YEN} lượt — false lúc này có thể là 'chưa khởi động'` };
+  }
+
+  /* LƯỢT CHƯA CHỐT THÌ CHƯA ĐỌC ĐƯỢC GÌ CẢ — cửa này đứng TRƯỚC mọi phán quyết về khối.
+     Đo 11/09: trên một lượt chưa chốt, `chat.read` trả `found: true` với `chars: 0` và
+     `turn_id: "request-<hội thoại>-0"`. Bản trước đi thẳng vào nhánh "có khối" rồi chấm
+     `KHOI_RONG` → DỪNG. Sai hai lần trong một bước: dừng bằng LÝ DO SAI (khối không rỗng, nó
+     chưa tồn tại), và **đi vòng qua luật B-59** bắt phải nạp lại một lần trước khi kết luận.
+     Nhận `id` của lượt trả lời cuối chứ không chỉ của khối, vì có lúc khối chưa hiện mà lượt
+     đã có id tạm — đo được ở giây 6.1. */
+  const idXet = khoi?.turn_id || idLuotTraLoiCuoi;
+  if (idXet && !luotDaChot(idXet)) {
+    if (soLanYen < NGUONG_YEN) return { viec: "CHO", vi: `LUOT_CHUA_CHOT — trang còn đánh dấu lượt này là "${idXet}", chưa phải danh tính thật` };
+    if (!daNapLai) return { viec: "NAP_LAI", vi: "LUOT_CHUA_CHOT quá lâu — nạp lại để trang gắn danh tính thật cho lượt" };
+    return { viec: "DUNG", vi: `LUOT_CHUA_CHOT — nạp lại rồi mà lượt vẫn mang id tạm "${idXet}"` };
   }
 
   const coKhoiMoi = Boolean(khoi?.found) && Boolean(khoi.turn_id) && khoi.turn_id !== khoiCu;
@@ -301,7 +343,8 @@ async function chinh() {
 
       if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
 
-      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen });
+      const luotTL = [...(r.turns || [])].reverse().find((t) => t.role === "assistant");
+      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
       if (qd.viec === "CHO") {
         /* NHỊP TIM. Bản đầu im hoàn toàn trong lúc chờ, nên một lượt treo 25 phút nhìn từ
            ngoài KHÔNG phân biệt được với một tiến trình đã chết — Đức hỏi đúng câu đó. */

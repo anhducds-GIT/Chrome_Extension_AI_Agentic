@@ -12,10 +12,10 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
-const KHOI_CU = "turn-cu";
-const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
+const KHOI_CU = "11111111-1111-4111-8111-111111111111";
+const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
   ({ found: true, chars: text.length, truncated: false, text, turn_id: turn, blocks_in_turn: 1 });
 
 /* ---- ⓐ đường thẳng: đã chạy, đã xong, có khối mới → GỬI --------------------- */
@@ -180,30 +180,30 @@ console.log("chuoi reasoning smoke tests: PASS");
 /* ⓛ B-62 — khối giao cho CC thì KHÔNG được chuyển tiếp về GPT. Chuỗi luat-audit dừng sau
    Vòng 6 với nhãn `HET_CHUOI` trong khi GPT đã trả lời và từ chối đúng vai. */
 {
-  const khoiCC = { found: true, turn_id: "t9", chars: 1671, truncated: false,
+  const khoiCC = { found: true, turn_id: "99999999-9999-4999-8999-999999999999", chars: 1671, truncated: false,
     text: "NGƯỜI NHẬN/THỰC THI: Claude Code (CC) — MỐC ② trước VÒNG 7/12.\n\nLàm gì đó." };
-  const r = quyetDinh({ generating: false, khoi: khoiCC, khoiCu: "t8", daNapLai: false, daThayDangChay: true });
+  const r = quyetDinh({ generating: false, khoi: khoiCC, khoiCu: "88888888-8888-4888-8888-888888888888", daNapLai: false, daThayDangChay: true });
   assert.equal(r.viec, "DUNG", "khối giao cho CC mà vẫn GUI");
   assert.match(r.vi, /CAN_NGUOI/);
   assert.match(r.vi, /Claude Code/); // cắt trước "(" nên tên là "Claude Code", không kèm "(CC)"
 
-  const khoiGPT = { found: true, turn_id: "t9", chars: 1388, truncated: false,
+  const khoiGPT = { found: true, turn_id: "99999999-9999-4999-8999-999999999999", chars: 1388, truncated: false,
     text: "NGƯỜI NHẬN/THỰC THI: GPT Web — Repo Rule Audit, VÒNG 6/12.\n\nLàm gì đó." };
-  assert.equal(quyetDinh({ generating: false, khoi: khoiGPT, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+  assert.equal(quyetDinh({ generating: false, khoi: khoiGPT, khoiCu: "88888888-8888-4888-8888-888888888888", daNapLai: false, daThayDangChay: true }).viec,
     "GUI", "khối giao cho GPT phải đi tiếp");
 
   // Không khai người nhận thì chạy như cũ — chuỗi khác không bắt buộc theo mẫu này.
-  const khoiTron = { found: true, turn_id: "t9", chars: 40, truncated: false, text: "Vòng tiếp theo: làm X." };
-  assert.equal(quyetDinh({ generating: false, khoi: khoiTron, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec, "GUI");
+  const khoiTron = { found: true, turn_id: "99999999-9999-4999-8999-999999999999", chars: 40, truncated: false, text: "Vòng tiếp theo: làm X." };
+  assert.equal(quyetDinh({ generating: false, khoi: khoiTron, khoiCu: "88888888-8888-4888-8888-888888888888", daNapLai: false, daThayDangChay: true }).viec, "GUI");
 
   /* Bẫy đã lường: dòng giao cho CC mà có nhắc chữ GPT ở phần mô tả. So cả dòng thì lọt. */
-  const khoiBay = { found: true, turn_id: "t9", chars: 60, truncated: false,
+  const khoiBay = { found: true, turn_id: "99999999-9999-4999-8999-999999999999", chars: 60, truncated: false,
     text: "NGƯỜI NHẬN/THỰC THI: Claude Code (CC) — đối chiếu kết quả GPT\n\nLàm gì đó." };
-  assert.equal(quyetDinh({ generating: false, khoi: khoiBay, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+  assert.equal(quyetDinh({ generating: false, khoi: khoiBay, khoiCu: "88888888-8888-4888-8888-888888888888", daNapLai: false, daThayDangChay: true }).viec,
     "DUNG", "so cả dòng nên tưởng khối này của GPT");
 
   // CHIỀU NGƯỢC: logic cũ (không hỏi người nhận) phải GUI đúng cái khối CC — tức lỗi tái hiện được.
-  assert.equal(quyetDinh({ generating: false, khoi: { ...khoiCC, text: "Làm gì đó." }, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+  assert.equal(quyetDinh({ generating: false, khoi: { ...khoiCC, text: "Làm gì đó." }, khoiCu: "88888888-8888-4888-8888-888888888888", daNapLai: false, daThayDangChay: true }).viec,
     "GUI", "bỏ dòng NGƯỜI NHẬN đi mà vẫn DUNG thì phép ghim này không đo dòng đó");
   console.log("  ok  ⓛ khối giao cho CC dừng bằng CAN_NGUOI, khối của GPT vẫn đi tiếp");
 }
@@ -341,4 +341,73 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(iSaiTrang > 0 && iPanelBan > iSaiTrang,
     "nhánh SAI_TRANG phải đứng TRƯỚC nhánh đếm đọc-hỏng, nếu không nó không bao giờ chạy tới");
   console.log("  ok  ⓟ bắt địa chỉ: so bằng định danh hội thoại, --url kiểm ở cửa, sai trang nói đúng bệnh");
+}
+
+/* ⓠ B-59/B-60 — LƯỢT CHƯA CHỐT. Đo live 11/09 trên tab thật, một lượt gửi:
+ *
+ *     giây  nút Stop   dạng id   ký tự
+ *      3.5  còn sinh   TẠM        13
+ *      6.1  còn sinh   TẠM        26
+ *      8.7  ĐÃ TẮT     TẠM        26
+ *     27.0  đã tắt     TẠM        26
+ *     (nạp lại)        UUID       85
+ *
+ * Hai tín hiệu bộ chạy vẫn dùng — nút Stop và "chữ đứng yên" — đều nói "xong" ở giây 8.7,
+ * trong khi câu trả lời thật dài 85 ký tự. Dạng id không nói sai lần nào. */
+{
+  const THAT = "6b3e1715-899f-444c-9c3d-0a1b2c3d4e5f";
+  const TAM = "request-6aa2e7ba-b920-83ec-95be-ad310cdfe480-0";
+
+  assert.equal(luotDaChot(THAT), true);
+  assert.equal(luotDaChot(TAM), false, "id dạng request-<hội thoại>-<n> là lượt CHƯA chốt");
+  assert.equal(luotDaChot("client-created-root"), false, "dạng tạm thứ hai, cũng đo được trên trang");
+  assert.equal(luotDaChot(null), false, "không có id thì không được coi là đã chốt");
+  assert.equal(luotDaChot(""), false);
+  assert.equal(luotDaChot("turn-moi"), false, "DANH SÁCH CHO PHÉP, không phải danh sách cấm: id lạ là chưa chốt");
+
+  /* Payload ĐÚNG NHƯ ĐO ĐƯỢC: found:true nhưng chars:0 và turn_id tạm. */
+  const khoiTam = { found: true, chars: 0, truncated: false, text: "", turn_id: TAM, blocks_in_turn: 1 };
+
+  const cho = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 1 });
+  assert.equal(cho.viec, "CHO", "lượt chưa chốt thì chờ, không kết luận");
+  assert.match(cho.vi, /LUOT_CHUA_CHOT/);
+
+  const napLai = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: NGUONG_YEN });
+  assert.equal(napLai.viec, "NAP_LAI", "chờ lâu mà vẫn tạm thì nạp lại — nạp lại là thứ đã chữa được, đo 11/09");
+
+  const dung = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: true, daThayDangChay: true, soLanYen: NGUONG_YEN });
+  assert.equal(dung.viec, "DUNG");
+  assert.match(dung.vi, /LUOT_CHUA_CHOT/);
+
+  /* CHIỀU NGƯỢC — logic CŨ (không có cửa này) chấm đúng payload trên là KHOI_RONG rồi DỪTC.
+     Sai hai lần trong một bước: lý do sai (khối không rỗng, nó chưa tồn tại), và đi vòng qua
+     luật B-59 bắt nạp lại một lần. Mép này chứng minh lỗi có thật, không phải tôi tưởng ra. */
+  const cu = (khoi) => {
+    const coKhoiMoi = Boolean(khoi?.found) && Boolean(khoi.turn_id) && khoi.turn_id !== KHOI_CU;
+    if (!coKhoiMoi) return "NAP_LAI";
+    if (!khoi.text?.trim()) return "DUNG:KHOI_RONG";
+    return "GUI";
+  };
+  assert.equal(cu(khoiTam), "DUNG:KHOI_RONG", "bản cũ thật sự dừng bằng lý do sai ở đúng payload này");
+
+  /* ĐừNG VÁ QUÁ TAY: lượt đã chốt vẫn phải đi tiếp như cũ. */
+  const khoiThat = { found: true, chars: 20, truncated: false, text: "prompt vòng sau", turn_id: THAT, blocks_in_turn: 1 };
+  assert.equal(quyetDinh({ generating: false, khoi: khoiThat, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true }).viec, "GUI");
+
+  /* Khối chưa hiện mà LƯỢT đã mang id tạm — đo được ở giây 6.1: khoiCo=0, dang=TẠM.
+     Không nhận `idLuotTraLoiCuoi` thì cảnh này lọt xuống nhánh NAP_LAI ngay, sớm hơn cần. */
+  const chuaCoKhoi = quyetDinh({ generating: false, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 1, idLuotTraLoiCuoi: TAM });
+  assert.equal(chuaCoKhoi.viec, "CHO", "lượt mang id tạm thì chưa được nạp lại, dù khối chưa hiện");
+
+  /* Cửa này phải đứng TRƯỚC mọi phán quyết về khối trong mã nguồn. */
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const chiMa = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  const iChot = chiMa.indexOf("!luotDaChot(idXet)");
+  const iKhoiMoi = chiMa.indexOf("const coKhoiMoi");
+  assert.ok(iChot > 0 && iKhoiMoi > iChot, "cửa LUOT_CHUA_CHOT phải đứng trước coKhoiMoi");
+  assert.match(chiMa, /idLuotTraLoiCuoi: luotTL\?\.id/, "vòng chạy phải TRUYỀN id lượt trả lời cuối vào, không thì cửa này mù một nửa");
+  console.log("  ok  ⓠ lượt chưa chốt: chờ → nạp lại → dừng, và không chấm nhầm thành KHOI_RONG");
 }

@@ -2674,7 +2674,14 @@ một trong nhiều đường**.
 mục kia — nó là **cửa vào** của cả cụm.
 
 Lối thoát tạm cho người: **đóng rồi mở lại side panel** (nạp lại tab thì không đủ nếu panel mới
-là chỗ kẹt).
+là chỗ kẹt). **Đã nghiệm thu 11/09:** Đức mở lại panel, executor trả lời ngay lượt kế.
+
+**Và nó KHÔNG chỉ xảy ra một lần.** Sau khi hồi phục, trong ~25 phút đo tiếp theo còn **3 lượt
+`REQUEST_TIMEOUT` lẻ tẻ** xen giữa các lượt thành công (một lượt dò nền, một lượt `chat-reload`,
+một lượt `chat-read` ngay sau đó) — lần nào cũng tự khỏi ở lượt sau. Nên bệnh có **hai thể**:
+thể **kẹt hẳn** (phải mở lại panel) và thể **chớp nhoáng** (tự khỏi). Đừng vá một thể rồi tưởng
+đã xong; và mọi công cụ gọi Bridge phải **thử lại với cùng `request-id`**, không được chấm lượt
+đầu là thất bại.
 
 - **đóng khi:** ⓐ tách được nguyên nhân bằng phép đo — **ưu tiên đúng cảnh 11/09: không run,
   không ảnh, executor chết mà router sống**; ⓑ panel còn trả lời các method chỉ đọc trong lúc
@@ -2983,6 +2990,26 @@ thúc. `generating: true` thì cứ chờ, bất kể chữ có dài thêm hay k
 
 ### B-58 · (P1, CHƯA GIẢI THÍCH ĐƯỢC — đừng tin giả thuyết nào ở đây) Bốn cửa nói bốn chuyện khác nhau cho cùng một lúc bị chặn
 
+**ĐO THÊM 11/09 — cửa thứ năm, và nó nói chuyện thứ năm.** Cùng **một** panel, cùng một lúc:
+
+| cửa | trả lời | thời gian |
+|---|---|---|
+| `bridge.sessions` (host trả lời) | OK | tức thì |
+| `system.capabilities` (router **trong panel**) | OK | **166 ms** |
+| `system.ping` · `chat.read` · `run.status` (executor **trong panel**) | **REQUEST_TIMEOUT** | 11/11 lượt, ~10,3 giây mỗi lượt |
+
+Nên *"Bridge nối được"* và *"panel nói được gì về trang"* là **hai sự thật khác nhau**, và từ
+bên ngoài hiện chỉ đo được cái thứ nhất. Panel không "chậm" — nó **chết một nửa**. Chi tiết và
+lối thoát tạm ở `B-50`.
+
+**Một mẩu nữa, cùng họ:** trên một lượt chưa chốt, `chat.read` trả `found: true` với `chars: 0`
+(xem `~~B-59~~`). Cửa đó khai *"có khối"* trong khi khối chưa tồn tại — lại là một cửa nói một
+nửa sự thật, và nửa nó bỏ ra là nửa quyết định.
+
+**Đã bớt một mẩu:** `system.ping` nay trả `url` + `conversation_id` (`~~B-68~~`), nên cửa duy
+nhất còn sống khi tab không ở hội thoại **đã nói được mình đang ở đâu**. Trước đó nó có
+`ping.url` trong tay mà vứt đi.
+
 **Đo live 10/09.** Sau lượt gửi đầu, tôi không gửi tiếp được. Bốn lời từ chối, trong vòng vài phút:
 
 | gọi | trả lời |
@@ -3035,7 +3062,43 @@ gọi không thấy nội dung mong đợi thì phải **nạp lại một lần
 Với **dây nối**, phép ghim phải chạy đúng cửa đã ship. Và một lời tuyên bố mạnh trong tài liệu
 là một chỗ để sai — Codex bác được nó chỉ bằng cách đọc chính câu tôi viết.
 
-### B-59 · (P1) Trang ĐÃ trả lời xong mà DOM sống vẫn cụt — chỉ nạp lại mới hiện đủ
+### ~~B-59~~ · (VÁ 11/09) Trang ĐÃ trả lời xong mà DOM sống vẫn cụt — chỉ nạp lại mới hiện đủ
+
+> **ĐO LIVE 11/09 trên tab thật của Đức. Một lượt gửi, dò `chat.read` mỗi 2,5 giây.**
+>
+> | giây | nút Stop | dạng `data-turn-id` | ký tự |
+> |---:|---|---|---:|
+> | 3.5 | còn sinh | **TẠM** `request-<hội thoại>-0` | 13 |
+> | 6.1 | còn sinh | TẠM | 26 |
+> | **8.7** | **ĐÃ TẮT** | TẠM | 26 |
+> | 27.0 | đã tắt | TẠM | 26 |
+> | *(nạp lại)* | — | **UUID** `6b3e1715-…` | **85** |
+>
+> **Hai tín hiệu bộ chạy đang dùng đều nói dối ở giây 8.7:** nút Stop tắt (→ `B-60`), và số ký
+> tự đứng yên **20 giây** (→ đúng cái bẫy *"plateau không phải kết thúc"*). Sự thật: câu trả
+> lời dài 85 ký tự, chỉ hiện sau khi nạp lại.
+>
+> **Tín hiệu thứ ba KHÔNG nói dối, và nó nằm sẵn trong payload — chỉ chưa ai đọc:** trang tự
+> đánh dấu lượt chưa hoàn tất bằng `data-turn-id` **tạm** (`request-<hội thoại>-<n>`, hoặc
+> `client-created-root`); lượt đã chốt mang UUID. Đây là dấu hiệu của **chính ChatGPT**, là
+> thuộc tính **cấu trúc** (không phải nhãn tiếng Anh), và `chat.read` **vốn đã trả nó ra** ở
+> `turns[].id` và `last_copy_block.turn_id`.
+>
+> **Và bản cũ còn sai theo chiều ngược:** trên lượt chưa chốt, `chat.read` trả `found: true`
+> với `chars: 0`. Bộ chạy đi thẳng vào nhánh *"có khối"* rồi chấm `KHOI_RONG` → DỪNG — **sai
+> hai lần trong một bước**: lý do sai (khối không rỗng, nó chưa tồn tại), và **đi vòng qua
+> chính luật B-59** bắt phải nạp lại một lần trước khi kết luận.
+>
+> **Vá:** `luotDaChot()` + cửa `LUOT_CHUA_CHOT` đứng **trước** mọi phán quyết về khối
+> (chờ → nạp lại → dừng), và vòng chạy truyền thêm id lượt trả lời cuối (đo được giây 6.1:
+> lượt đã có id tạm trong khi khối chưa hiện). Ghim mép ⓠ, gồm **chiều ngược** chứng minh bản
+> cũ thật sự chấm `KHOI_RONG` ở đúng payload đo được. Suite **133/133**.
+>
+> **GIỚI HẠN, nói ra vì nó đổi cách đọc bảng:** cả lượt đo diễn ra trên tab **đang bị che**
+> (`visibility: hidden`, `docFocused: false`). Nên **chưa tách được** *"lượt hydrat muộn"* khỏi
+> *"tab bị che thì không hydrat"* — cùng họ với `~~B-46~~`. Luật rút ra không đổi theo hai cách
+> đọc đó, nhưng **con số 8,7 giây có thể khác trên tab hiện**. Ai có tab hiện thì đo lại và ghi
+> vào đây.
 
 **Đo live 10/09, thấy BA lần trong một chuỗi năm vòng.** Sau một lượt GPT gọi tool nhiều lần,
 `chat.read` đọc được đúng phần vệt tool đã gập lại cộng khoảng 15 ký tự đầu của câu trả lời, rồi
@@ -3097,7 +3160,14 @@ commit · và nhóm an toàn mã (`innerHTML`, bằng chứng selector, tự ngh
 **Nên đọc bảng của GPT là "chưa tìm thấy hook từ gốc", không phải "không có hook".** Danh sách
 RỖNG 11 nhiều khả năng còn vài mục cùng dạng — có ghim mức gói mà audit gốc không thấy.
 
-### B-60 · (P1) Nút Stop BIẾN MẤT trong lúc model chạy tool — `generating` nhấp nháy
+### ~~B-60~~ · (VÁ 11/09 — có tín hiệu thay thế, đo được) Nút Stop BIẾN MẤT trong lúc model chạy tool — `generating` nhấp nháy
+
+> **Đóng bằng cách THÔI TIN nút Stop, không phải bằng cách sửa nó.** Nút Stop là DOM của nhà
+> cung cấp; ta không sửa được, và mọi phép đoán quanh nó đều đã sai (đây là lần thứ tư).
+> Xem khối *"ĐO LIVE 11/09"* trong `~~B-59~~` — cùng một lượt đo đóng cả hai mục.
+> Tín hiệu thay thế: **dạng `data-turn-id`**. `luotDaChot()` trong `chuoi-reasoning.mjs`,
+> ghim ở mép ⓠ. Trong lượt đo, nút Stop nói *"xong"* ở giây 8.7 khi câu trả lời mới có 26/85
+> ký tự; dạng id **không nói sai lần nào**.
 
 **Đo 10/09, và nó sửa lại cách hiểu `~~B-57~~`.** `generating` đọc nút Stop. Trong một lượt trả
 lời có gọi tool, nút Stop **biến mất giữa các lượt gọi**, nên `generating: false` xuất hiện

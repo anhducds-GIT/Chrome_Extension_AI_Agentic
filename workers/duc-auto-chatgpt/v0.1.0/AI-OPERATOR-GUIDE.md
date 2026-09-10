@@ -317,6 +317,7 @@ node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
 | `NGUOI_DANG_DUNG` | có lượt gõ lạ trong hội thoại | người đang dùng tab — **đợi, đừng chạy đè** |
 | `DOI_HOI_THOAI` | tab đã chuyển sang **hội thoại khác** với hội thoại đã ghim | mở lại đúng hội thoại rồi chạy lại |
 | `SAI_TRANG` | tab **không ở một hội thoại nào** — hay gặp nhất là chat MỚI chưa gõ câu nào | gõ một câu vào chat đó, `/c/<id>` mới hiện ra, rồi chạy lại |
+| `LUOT_CHUA_CHOT` | trang vẫn đánh dấu lượt trả lời cuối bằng một id **tạm**, kể cả sau khi nạp lại — nghĩa là nó **chưa xong**, dù nút Stop đã tắt | mở tab lên nhìn; nếu tab đang bị che thì đưa nó ra trước rồi chạy lại |
 | `KHOI_BI_CAT` / `KHOI_QUA_DAI` / `KHOI_RONG` | khối không dùng được | đọc chat, sửa tay |
 | `GUI_THAT_BAI` | gửi hai lần đều không vào | xem panel, hỏi Đức |
 | `QUA_TRAN_PHUT` / `NGUOI_DUNG` | hết giờ / có file `DUNG` | chạy tiếp bằng `--tu-turn` |
@@ -330,8 +331,16 @@ Thoát **3** thì không phải lý do dừng của chuỗi: đã có một bả
 > trả lời đầy đủ và đang **từ chối đúng vai** vì khối được giao cho CC. Thấy `HET_CHUOI` thì
 > mở chat đọc lượt cuối, đừng đóng sổ.
 
-### Bốn luật đọc — ĐỪNG tự chế lại, cả bốn đều mua bằng lỗi thật
+### Năm luật đọc — ĐỪNG tự chế lại, cả năm đều mua bằng lỗi thật
 
+0. **HỎI "LƯỢT NÀY CHỐT CHƯA" TRƯỚC MỌI CÂU KHÁC — và đừng hỏi nút Stop.** Trang tự đánh dấu
+   một lượt chưa hoàn tất bằng `data-turn-id` **tạm** (`request-<hội thoại>-<n>` hoặc
+   `client-created-root`); lượt đã chốt mang **UUID**. `chat.read` vốn đã trả nó ra ở
+   `turns[].id` và `last_copy_block.turn_id` — không phải gọi thêm gì.
+   **Đo live 11/09, một lượt gửi:** nút Stop tắt ở giây **8.7** và số ký tự đứng yên **20
+   giây**, trong khi câu trả lời thật dài **85** ký tự và DOM sống mới có **26**. Hai tín hiệu
+   cũ đều nói dối cùng lúc; dạng id thì không. Cẩn thận: lượt đo đó ở trên một tab **đang bị
+   che**, nên con số 8,7 giây có thể khác trên tab hiện — luật thì không đổi.
 1. **Chữ ngừng dài ra KHÔNG có nghĩa là xong.** Model gọi tool thì chữ đứng yên hàng phút. Chỉ
    `generating: false` mới là điều kiện cần — và nó **chưa đủ**.
 2. **Xong mà không có khối thì phải NẠP LẠI MỘT LẦN rồi đọc lại.** Đo được **3/4 vòng** đọc ra

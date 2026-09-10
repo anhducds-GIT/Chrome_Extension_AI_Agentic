@@ -91,14 +91,21 @@ kết quả GPT` bị đọc thành của GPT.
 **Số vòng do BÊN ĐIỀU KHIỂN đếm, không do khối quyết định.** Thiếu khối không phân biệt được
 *đã xong* với *câu trả lời hỏng* hay *đọc hụt*.
 
-## 5. Bốn luật đọc trang — bộ chạy đã cưỡng chế cả bốn
+## 5. Năm luật đọc trang — bộ chạy đã cưỡng chế cả năm
 
 | | luật | máy làm gì |
 |---|---|---|
+| ⓪ | **Hỏi "lượt này chốt chưa" TRƯỚC mọi câu khác.** Trang đánh dấu lượt chưa xong bằng `data-turn-id` **tạm**; lượt đã chốt mang **UUID** | chờ → nạp lại → dừng (`LUOT_CHUA_CHOT`) |
 | ⒜ | `generating: false` **không** phải giấy chứng nhận đã xong — model gọi tool thì chữ đứng yên hàng phút | chờ thêm trọn một cửa sổ quan sát |
 | ⒝ | Không có khối **≠** dừng, cho tới khi đã **nạp lại một lần** | `NAP_LAI` rồi mới được kết luận `HET_CHUOI` |
 | ⒞ | Lượt GHI báo lỗi thì **không tự gửi lại** — đọc lại xem nó đã bay chưa | ba trạng thái: đã bay · không thấy · **không đọc được** (mù thì DỪNG) |
 | ⒟ | **Ghim HỘI THOẠI, không ghim địa chỉ** — địa chỉ tự mọc thêm `?...`, và một chat mới chưa có `/c/<id>` | so bằng định danh hội thoại; `--url` khai trước; sai trang nói `SAI_TRANG`, không nói "panel bận" |
+
+**Điều ⓪ mua bằng một lượt đo live 11/09, và nó đổ hai tín hiệu cũ cùng lúc:** nút Stop tắt ở
+giây **8.7** và số ký tự đứng yên **20 giây**, trong khi câu trả lời thật dài **85** ký tự còn
+DOM sống mới có **26**. Dạng id không nói sai lần nào. Bộ đọc **vốn đã** trả id ra ở
+`turns[].id` — chỉ là chưa ai đọc nó. *(Giới hạn: lượt đo ở trên một tab đang bị che, nên con
+số 8,7 giây có thể khác trên tab hiện; luật thì không đổi.)*
 
 Điều ⒟ là luật mới 10/09: một chat **mới tinh** nằm ở `chatgpt.com/`, không phải
 `chatgpt.com/c/<id>`, nên mọi lượt đọc bị từ chối. **Gõ một câu vào chat mới trước khi nối bộ
