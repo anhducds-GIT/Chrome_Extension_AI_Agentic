@@ -1559,7 +1559,10 @@ const doNap = () => {
   if (kq.dat) return { ok: true, msg: `~${kq.napToken}/${kq.tran} token nạp mỗi phiên · ${kq.khongNapToken} token để dành (${tyLe}% nạp).` };
   return {
     ok: false,
-    msg: `PHAN_NAP_VUOT_TRAN: ${kq.napDong}/${kq.tran} dòng. Đây là thứ MỌI phiên ở MỌI repo nạp, nên mỗi dòng nhân theo (số repo × số phiên). `
+    /* NÊU ĐÚNG ĐƠN VỊ ĐÃ PHÁN XỬ. Bản cũ in `napDong` và nói "dòng" trong khi `dat` tính
+       bằng `napToken` — nên 10/09 cổng in *"200/4200 dòng"* rồi bảo VƯỢT TRẦN, một câu vô
+       nghĩa. Và nó chỉ hiện ở nhánh Đỏ, tức đúng lúc Đức cần đọc số. Ghim: `core-contract`. */
+    msg: `PHAN_NAP_VUOT_TRAN: ~${kq.napToken}/${kq.tran} token nạp mỗi phiên. Đây là thứ MỌI phiên ở MỌI repo nạp, nên mỗi token ở đây nhân theo (số repo × số phiên). `
       + "Bớt ở `AGENTS.md` (luật mục 8: thêm một luật thì bớt một luật), đừng nới trần."
   };
 };
