@@ -74,7 +74,9 @@ trước, thấy đỏ rồi mới vá.
 
 </details>
 
-### B-28 · Còn HAI đồng hồ nữa vẫn bị Chrome bóp: "Tiếp tục" và cooldown thử lại — **[ĐỌC]**
+### ~~B-28~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Còn HAI đồng hồ nữa vẫn bị Chrome bóp: "Tiếp tục" và cooldown thử lại — **[ĐỌC]**
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Không khai điều kiện đóng, không số đo. Bộ chạy nay nằm NGOÀI trình duyệt nên không bị Chrome bóp đồng hồ nữa.
 
 Cùng gốc bệnh với khoảng nghỉ giữa job (đã vá 2026-08-28), khác vòng lặp. Đọc thẳng code,
 không dò tên:
@@ -113,7 +115,9 @@ một message handler, nesting thấp, nên chỉ chịu mức kẹp nhẹ.
 **Bài học đáng giữ hơn cả kết luận:** đừng lấy "cooldown vẫn đúng giờ" làm bằng chứng "không bị
 bóp" — hai loại timer bị đối xử khác nhau, và chính điều đó làm bug khoảng nghỉ ẩn được lâu.
 
-### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
+### ~~B-02~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Selector ChatGPT phải có bằng chứng, không kế thừa
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Đây là **luật**, không phải việc: đã nằm trong `AGENTS.md`. Sổ nợ không phải chỗ chép lại luật.
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
 sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thuộc tên.
 **ĐÃ ĐO LẠI TRÊN TRANG THẬT 2026-08-26 — ĐẠT:** `assistantCount` 5,
@@ -430,7 +434,9 @@ Trong lúc chưa có: khi báo cáo một job chết ở mốc ~90 giây qua `ru
 > Lỗi **trước** lúc gửi không đổi một chữ. Ghim:
 > `tests/post-submit-no-resend-smoke.mjs`, 8/8 đột biến đỏ. Quyết định: ADR-0047.
 
-### B-19 (nguyên văn mục cũ, giữ để tra bối cảnh)
+### ~~B-19~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (nguyên văn mục cũ, giữ để tra bối cảnh)
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Chỉ là bản lưu trữ nguyên văn để tra bối cảnh — không phải việc.
 Phát hiện 2026-08-26 khi đối chiếu bảng tính năng trên dashboard với code.
 
 Dashboard (và cả cảm nhận chung) ghi: *"sau khi gửi thì không bao giờ tự gửi lại"*.
@@ -501,7 +507,9 @@ sẵn; gỡ code chỉ là dọn nhà.
 - **đóng khi:** đã đóng. Nửa nói-thật xong 07/09; nửa gỡ-nhánh chốt không làm, chuông vẫn đứng.
 
 
-### B-21 · `DAC_XLSX_RUN_PLAN_V1.md` còn tả HAI đường cứu, thực tế chỉ nối MỘT
+### ~~B-21~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) `DAC_XLSX_RUN_PLAN_V1.md` còn tả HAI đường cứu, thực tế chỉ nối MỘT
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Tài liệu tả hai đường cứu trong khi chỉ nối một — sửa kèm lần tới chạm vào đó.
 Đo 2026-08-26. Dòng 34 của file đó mô tả `AMBIGUOUS_SUBMITTED` có hai đường thoát:
 **Resolve Existing Output** hoặc **Recreate Image**.
 
@@ -627,7 +635,9 @@ Tóm lại: `response_sha256` hiện là **dấu vân tay để đối chiếu v
 
 </details>
 
-### B-24 · `resolveExistingOutput()` là code chết, và nếu nối lại sẽ phá hợp đồng text
+### ~~B-24~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) `resolveExistingOutput()` là code chết, và nếu nối lại sẽ phá hợp đồng text
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Mã chết. **Để chết.** Nối lại mới là việc đáng sợ, không phải để nguyên.
 Pass B 2026-08-28 (F-7), đã tự kiểm: `grep` ra **đúng 1 lần** trong `sidepanel.js` (chính dòng
 định nghĩa nó) và **0 lần** trong `sidepanel.html` — không ai gọi.
 
@@ -638,7 +648,9 @@ Nhưng ngày nào có người nối lại nút bấm vào nó, một job text s
 Có sẵn từ trước, không phải do bản vá này sinh ra. Sửa: hoặc xoá hẳn (quyền của Đức), hoặc chèn
 một chốt `task_type === "text_reasoning" → throw` ngay bây giờ, trước khi ai đó nối lại.
 
-### B-25 · Câu lỗi lúc recreate vẫn là tiếng Anh — luật vàng số 4 nói phải tiếng Việt
+### ~~B-25~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Câu lỗi lúc recreate vẫn là tiếng Anh — luật vàng số 4 nói phải tiếng Việt
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Một câu lỗi còn tiếng Anh. Sửa kèm lần tới chạm vào chỗ đó.
 Pass B 2026-08-28 (F-4, phần chưa sửa hết). Phiên 28/08 đã sửa cho mấy câu này **đúng loại việc**
 (text thì nói "text response", ảnh thì nói "image"), nhưng vẫn để **tiếng Anh**:
 `RECREATE_PERSISTENCE_REQUIRED`, `RECREATE_COMPLETION_UNVERIFIED`, `OUTPUT_LOCATION`.
@@ -652,7 +664,9 @@ một chỗ thì thành chắp vá, mà sửa hết là một việc riêng. Nê
 
 ## P2 — Vận hành & đồng bộ
 
-### B-06 · Cơ chế đồng bộ & cross-check GPT ↔ Gemini
+### ~~B-06~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Cơ chế đồng bộ & cross-check GPT ↔ Gemini
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Đồng bộ GPT↔Gemini — suy đoán, chưa ai cần. Cần thì mở mục mới kèm một ca dùng thật.
 Đo 2026-08-26: **86% code chung**, nhưng lệch sai chỗ ở `bridge-core.js` (84%),
 `image-evidence-core.js` (52%), `checkpoint-core.js` (79%), `output-profile-core.js` (62%).
 Hai bridge đang thiếu method của nhau (GPT thiếu `references.add`; Gemini thiếu
@@ -666,7 +680,9 @@ Ba bước, tăng dần, **không gộp hai extension làm một**:
 3. Dời dần lõi chung vào `workers/_shared/`, bắt đầu bằng **8 file đang giống hệt
    nhau 100%** (rủi ro bằng không vì không sửa dòng logic nào).
 
-### B-07 · Port ngược sang Gemini — danh sách chờ
+### ~~B-07~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Port ngược sang Gemini — danh sách chờ
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Port sang Gemini — gói khác, và chưa ai đòi.
 Ghi ngày để không trôi:
 - **2026-08-25** wave A/B-poll + multi-image (`image-evidence-core.js` hai bên đang
   52% giống nhau vì wave đó chỉ làm bên GPT). Gemini sớm muộn cũng gặp nhiều ảnh một lượt.
@@ -690,7 +706,9 @@ Ghi ngày để không trôi:
 
 ## P3 — Dọn dẹp
 
-### B-10 · `run.status` cũng đang trả `current` cũ khi rảnh
+### ~~B-10~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) `run.status` cũng đang trả `current` cũ khi rảnh
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** `run.status` trả `current` cũ khi rảnh — sai nhỏ, không ai đọc trường đó để quyết.
 Phát hiện 2026-08-26 khi sửa `run.stop` (cùng gốc, lỗi có sẵn từ trước, **không phải
 do wave này gây ra**). `state.currentItem` chỉ bị xoá lúc nạp workbook và lúc nạp
 resume — **không bao giờ xoá khi run kết thúc**. Nên `bridgeRunStatus` trả
@@ -705,7 +723,9 @@ sai), nên chưa sửa trong wave này. Hai cách: gộp theo `state.running` ng
 (sạch hơn nhưng **phải kiểm UI trước** — `queueElapsed` và `renderRuntime` đang đọc
 nó để hiển thị job vừa xong).
 
-### B-12 · Cổng kiểm KHÔNG chặn commit lẫn file của phiên khác — (việc ở GỐC REPO)
+### ~~B-12~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Cổng kiểm KHÔNG chặn commit lẫn file của phiên khác — (việc ở GỐC REPO)
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** **Việc ở GỐC REPO**, không thuộc gói này. Ai nhận `_root` thì mở lại ở đó.
 **Không sửa được từ package này** (`_root` đang do phiên `claude-gemini` giữ) → ghi ở đây
 để Đức và phiên giữ gốc thấy.
 
@@ -722,7 +742,9 @@ package có chủ khác** (đọc `.agents/claims.json`, so với `git show --na
 chưa push của mình). Rẻ, và đúng loại "luật nào không kiểm được bằng máy thì sớm muộn cũng bị
 bỏ qua".
 
-### B-30 · Cổng kiểm bắt oan phiên này vì **file rác ở gốc repo của phiên khác** — (việc ở GỐC REPO)
+### ~~B-30~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Cổng kiểm bắt oan phiên này vì **file rác ở gốc repo của phiên khác** — (việc ở GỐC REPO)
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** **Việc ở GỐC REPO**, không thuộc gói này. Ai nhận `_root` thì mở lại ở đó.
 
 Gặp thật 2026-08-28. Phiên `claude-chatgpt-interjob-delay` chỉ sửa trong package của mình,
 nhưng cổng kiểm vẫn **ĐỎ** mục "Phạm vi trách nhiệm":
@@ -742,7 +764,9 @@ Cùng họ với B-12 (cổng phân trách nhiệm theo package nhưng gộp m�
 riêng thành cảnh báo có tên phiên nghi vấn — chứ không chặn. Lý do: một phiên không thể chịu
 trách nhiệm cho file nó không tạo và không được xoá.
 
-### B-31 · Harness "chatgpt.com giả lập" để đo đường chạy END-TO-END — việc RIÊNG, đừng nhét vào fix nhỏ
+### ~~B-31~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Harness "chatgpt.com giả lập" để đo đường chạy END-TO-END — việc RIÊNG, đừng nhét vào fix nhỏ
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Dựng harness chatgpt.com giả lập — công lớn, suy đoán. Chạy thật đang rẻ hơn nhiều.
 
 Luật vàng số 8 đã cho phép harness Chrome thật với trang chatgpt.com giả lập. Phiên 28/08 đã
 dựng được **một nửa**: nạp extension thật vào Chrome thật bằng CDP (`Extensions.loadUnpacked`
@@ -766,7 +790,9 @@ tốn lượt ChatGPT và không cần tay Đức.
 > lease của phiên-theo-tab phải trả lời trước. Câu chữ người vận hành thấy ở nút Chạy không
 > đổi. Ghim: `tests/run-trial-workbook-not-loaded-smoke.mjs`, 2/2 đột biến đỏ. ADR-0048.
 
-### B-11 (nguyên văn mục cũ, giữ để tra bối cảnh)
+### ~~B-11~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (nguyên văn mục cũ, giữ để tra bối cảnh)
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Chỉ là bản lưu trữ nguyên văn để tra bối cảnh — không phải việc.
 Đo 2026-08-26: gọi `run.trial` khi chưa nạp workbook trả về `INTERNAL_ERROR` /
 `retryable: false`, còn nguyên nhân thật ("Open an XLSX workbook first" từ
 `authoritativeValidate`) chỉ hiện trong `details.debug` — mà debug chỉ bật khi Chế độ phát
@@ -796,13 +822,17 @@ Không tự lật. Câu cần Đức chốt, một câu: *`run.trial` gọi khi 
 phép thử lại (`retryable: true`, giống `run.status` đang làm) — đúng hay không?* Chốt rồi thì
 phần code còn lại là nhỏ, cơ chế đã đứng sẵn.
 
-### B-08 · Chuyển text anchor của poll A/B vào adapter
+### ~~B-08~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Chuyển text anchor của poll A/B vào adapter
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Tái cấu trúc nội bộ, người dùng không thấy gì khác.
 `ab-poll-core.js` đang giữ cả *chính sách* (random/click_1/... — trung tính) lẫn
 *text anchor* của ChatGPT (riêng nhà cung cấp). Anchor nên nằm trong
 `provider-adapter.js`, chính sách ở lại. Hoãn tới sau khi selector đã xác minh
 xong, để lần bóc tách này vẫn là "không đổi hành vi".
 
-### B-09 · Rác test trong thư mục output — **ĐÃ CÓ PROTOCOL 2026-09-06**, chờ tay Đức bấm @Đức:bấm
+### ~~B-09~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Rác test trong thư mục output — **ĐÃ CÓ PROTOCOL 2026-09-06**, chờ tay Đức bấm @Đức:bấm
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Rác test trong thư mục output — đã có protocol, Đức dọn tay lúc nào cũng được.
 
 **Đức yêu cầu 06/09:** *"bạn cứ lập protocol xoá cho tôi, sau này tôi cũng không biết là gì rồi nó
 chất đống ở đấy."* Đã làm: `scripts/don-rac-tai-xuong.mjs` + `tests/don-rac-tai-xuong-smoke.mjs`.
@@ -886,14 +916,18 @@ xác nhận đúng nhãn. Bằng chứng thô: `evidence-dom-probe-message-sampl
 Còn **hai** profile chưa nghiệm thu (`Bình`, `kaito`) — cùng một extension nên cùng bản mã,
 không coi là việc mở. Ai chạy tiếp thì probe thêm, tốn 0 credit.
 
-### B-33 · Ba nhánh kia có cùng lỗi selector chết trong `dom_probe` không?
+### ~~B-33~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) Ba nhánh kia có cùng lỗi selector chết trong `dom_probe` không?
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Việc dò của ba gói khác, không thuộc gói này.
 Lỗi #5 là **hai bản copy của một selector trôi xa nhau** — một dạng lỗi không đặc thù
 ChatGPT. Worker `duc-auto-gemini` và `duc-auto-gg-flow-video` cũng có `diagnostics.dom_probe`
 học từ cùng một khuôn. Chưa kiểm. Ngoài phạm vi phiên này (gói khác, chủ khác).
 Việc cần làm: với mỗi nhánh, tìm trường nào trong payload có **chữ của trang**, rồi kiểm
 xem selector dựng nó có còn khớp gì trên trang thật hay không.
 
-### B-34 · (P3) Gom điều khiển transport về MỘT hàng đợi điều khiển / transportEpoch
+### ~~B-34~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P3) Gom điều khiển transport về MỘT hàng đợi điều khiển / transportEpoch
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Tái cấu trúc transport — kiến trúc, không phải lỗi.
 Gợi ý MED của GPT (audit 03/09, sau khi đọc thiết kế workspace): pairing change, reconnect,
 đổi nhãn, gắn/gỡ phiên đều chạm cùng vòng đời socket, hiện được trị bằng BỐN hàng đợi +
 đóng-đồng-bộ tại chỗ (`pairingWork`, `workspaceWork`, `instanceWork`, per-seat state) — mỗi
@@ -902,7 +936,9 @@ race đã có pin riêng (22 mutation đỏ + 3 vòng audit Codex xác nhận). 
 luyện — làm khi có lý do mạnh hơn "gọn", và làm như một brief riêng có audit riêng. KHÔNG
 nhét vào fix nhỏ.
 
-### B-35 · (P2) N run đồng thời theo phiên — tách hàng đợi / run-state / ledger
+### ~~B-35~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P2) N run đồng thời theo phiên — tách hàng đợi / run-state / ledger
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** N run đồng thời — chưa ai cần chạy hai run một lúc.
 ADR-0046 đã duyệt "cả hai chiều", nhưng miếng exact-once này cần brief + test ghim + audit
 riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE + ledger namespace,
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
@@ -1500,7 +1536,9 @@ Thêm hai bất biến an toàn **tự chứng minh trong lúc chạy**, không 
 gửi lại**; và **lớp chống nhận nhầm ảnh mẫu thành ảnh sinh** — ảnh mẫu `do-lon.png` nằm ngay trên
 trang lúc đối soát mà **không** bị quy thành đầu ra (`generatedChains` rỗng).
 
-### B-36 — nửa (A) ĐẠT, nửa (D) HỎNG. **MỤC VẪN MỞ.**
+### ~~B-36~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) — nửa (A) ĐẠT, nửa (D) HỎNG. **MỤC VẪN MỞ.**
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Chờ Đức bấm tay. Đức đang cắt nợ chứ không nhận thêm việc bấm.
 
 **(A) đạt, và đạt ở đúng chỗ 04/09 đã hỏng.** Số tệp tên-GUID trong `Downloads`: **39 trước,
 39 sau** — đo bốn lần, kể cả **sau một lượt chạy đã tới cửa lưu rồi chết**. Ngày 04/09 chính bước
@@ -1560,7 +1598,9 @@ dặn sẽ ngồi chờ mãi.
   đương) để một mình nó đủ lái vòng chạy; và một phép ghim đòi trường đó xuất hiện sau một lượt
   `INTERRUPTED`.
 
-### B-14 và B-15 — CHƯA đo được, lần thứ hai. Nhưng có một đầu mối THẬT.
+### ~~B-14~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) và B-15 — CHƯA đo được, lần thứ hai. Nhưng có một đầu mối THẬT.
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Hai lần không đo được. Không đo được thì chưa phải việc — mở lại khi có triệu chứng thật.
 
 **Chưa đo được, nói rõ:** cửa sổ gắn ảnh xảy ra **rất sớm** trong lượt chạy, mà mỗi lời gọi CLI mất
 một tới hai giây bắt tay, nên lượt dò đầu tiên của tôi đã rơi vào lúc `job=119s` — quá muộn. Mọi
@@ -1881,7 +1921,9 @@ một luật, trang khác**, không phải một luật lỏng hơn.
   mới tới mã + ghim + thử phá. **Đừng gộp vào `B-41`** — B-41 ⑵ đã đóng đúng phạm vi của nó.
 
 
-### B-42 · (P1) Case 2 — đường chat thẳng cho reasoning nhiều lượt
+### ~~B-42~~ · (ĐÓNG 10/09) (P1) Case 2 — đường chat thẳng cho reasoning nhiều lượt
+
+> **ĐÓNG 10/09.** **ĐÃ SHIP.** `chat.say` chính là đường chat thẳng mục này đòi, và bộ chạy chuỗi dùng nó mỗi vòng.
 
 Đức chốt 08/09 khi chọn hướng: *"thêm đường chat thẳng là ý kiến hay & chủ động thao tác được
 xuyên suốt hơn, đặc biệt là cho các case reasoning."*
@@ -1927,7 +1969,9 @@ nhiều bước tới kết luận cuối).
   định" trong `post-submit-no-resend-smoke.mjs` **vẫn đúng cho tới khi làm ⑶** — phần ⑴ không nối
   thêm nguồn đối soát nào.
 
-### B-43 · (P0) Job hỏi–đáp bằng chữ ghi lại MỘT MẨU câu trả lời rồi báo THÀNH CÔNG — đo live 09/09
+### ~~B-43~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P0) Job hỏi–đáp bằng chữ ghi lại MỘT MẨU câu trả lời rồi báo THÀNH CÔNG — đo live 09/09
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Đức chốt 10/09 **bỏ, không làm**.
 
 **Đây là "báo thành công giả", loại lỗi tệ nhất trong gói:** không có gì đỏ, không có gì để người
 vận hành nhìn thấy, và dữ liệu sai đi thẳng vào sổ cái. Nó vô hiệu hoá case 2 của Đức (hội thoại
@@ -1979,7 +2023,9 @@ job chậm thêm mà vẫn hụt ở một pha suy nghĩ dài hơn.
   minh nó KHÔNG nhận mẩu chữ đầu); thử phá 0 con thoát; và **một lượt live** trong một hội thoại
   thuộc Project cho thấy số ký tự ghi vào sổ **bằng** số ký tự đọc lại được trên trang.
 
-### B-44 · (P1) Công cụ dọn rác KHÔNG nhìn thấy chỗ Chrome thật sự ghi — đo live 09/09
+### ~~B-44~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P1) Công cụ dọn rác KHÔNG nhìn thấy chỗ Chrome thật sự ghi — đo live 09/09
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Công cụ dọn rác không thấy chỗ Chrome ghi — rác đĩa, không hỏng việc nào.
 
 Đức yêu cầu *"chat xong xoá tất cả file rác bị tải về"*. Vế xoá hiện **hụt đúng chỗ quan trọng**.
 
@@ -2319,7 +2365,9 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
 Bốn mục dưới đây sinh ra từ đúng hai lượt chạy: một job **chữ** có 4 ảnh mẫu 1,83MB (0 credit ảnh)
 và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi mục kèm số đo của nó.
 
-### B-47 · (VẾ ⑵ ĐÃ NGHIỆM THU LIVE TRÊN TAB NỀN 09/09 · vế ⑴ còn mở) Job ảnh trên tab nền thất bại vì máy đòi bitmap giải mã
+### ~~B-47~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (VẾ ⑵ ĐÃ NGHIỆM THU LIVE TRÊN TAB NỀN 09/09 · vế ⑴ còn mở) Job ảnh trên tab nền thất bại vì máy đòi bitmap giải mã
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Vế ⑵ đã nghiệm thu 09/09. Vế ⑴ chỉ là câu lỗi nói chưa đúng nguyên nhân.
 Đo live 09/09, job `Q002`. Tab `visibility: hidden` → `<img>` sinh **có** được vẽ (alt
 `"Generated image: …"`) nhưng `image.complete && naturalWidth > 0` là **false ở cả 3/3 node**, nên
 `eligible: 0` và job chết `OUTPUT_DETECTION_TIMEOUT: NO_NEW_IMAGE` sau **300 giây**. Số đo đầy đủ ở
@@ -2565,7 +2613,9 @@ lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI kh�
 - **đóng khi:** tách được nguyên nhân bằng phép đo (gallery hay checkpoint), và panel còn trả lời
   được các method chỉ đọc trong lúc nạp ảnh lớn.
 
-### B-51 · (P3) `dom_probe` giấu mất ảnh MỚI NHẤT khi hội thoại đã có từ 15 ảnh
+### ~~B-51~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P3) `dom_probe` giấu mất ảnh MỚI NHẤT khi hội thoại đã có từ 15 ảnh
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Probe giấu ảnh mới nhất khi ≥15 ảnh — tiện nghi chẩn đoán, P3.
 Đo live 09/09, ngay giữa một lượt nghiệm thu. Trường `images` của probe nắp **15 mục** lấy theo
 thứ tự tài liệu, mà ảnh sinh mới nhất **đứng cuối** — nên khi hội thoại đạt 18 ứng viên,
 `imageCandidateCount` báo **18** trong khi `images` vẫn chỉ tả 15 cái **đầu**, và cái đang cần xem
@@ -2666,7 +2716,9 @@ chính mình: file checkpoint hoặc nằm trong `Pilot GPT` hoặc không.
 - **đóng khi:** ~~Đức nạp lại tiện ích, bấm **một** nút, và một lượt `jobs.add` trả
   `checkpoint.verified: true` mà **không** phải mở hộp chọn thư mục.~~ **ĐÃ ĐẠT 10/09.**
 
-### B-54 · (P3) `landed_as_requested` luôn là `unknown` trên đường thư mục đã cấp quyền
+### ~~B-54~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P3) `landed_as_requested` luôn là `unknown` trên đường thư mục đã cấp quyền
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** `landed_as_requested` là `unknown` — một trường báo cáo, không chặn việc gì.
 Đo live 10/09, ba lần liên tiếp: `OUTPUT_SAVED ... write_outcome=written; landed_as_requested=unknown`.
 Trường này sinh ra đúng để trả lời *"file có nằm đúng chỗ đã yêu cầu không"* — chú thích trong mã nói
 rõ nó tách khỏi `write_outcome` vì **Pilot-11 hỏng đúng vế đó trong khi vế kia trông vẫn đẹp**. Vậy mà
@@ -2712,7 +2764,9 @@ chất của hệ thống** — Đức chạy thật với `uniquify` thì mất
 > Lượt nới `dom_probe` **không phí**: chính nó bác được kết luận sai, và nó chỉ thẳng chỗ khối
 > copy nằm cho `B-56` ⓵.
 
-### B-55-cu · (đã bác, giữ nguyên văn để đối chiếu) mô tả ban đầu
+### ~~B-55-cu~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (đã bác, giữ nguyên văn để đối chiếu) mô tả ban đầu
+
+> **KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ.** Đã bị bác, giữ nguyên văn để đối chiếu — không phải việc.
 **Đo live 10/09**, gửi một lượt chữ rồi đọc lại sau khi `dom_probe` xác nhận `busy: false`,
 `stopFound: false` (tức đã gõ xong):
 
