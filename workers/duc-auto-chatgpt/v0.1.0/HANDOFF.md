@@ -692,3 +692,35 @@ nạp vào `vm`.
 
 Suite **132/132**. **CHƯA nghiệm thu live** — cần Đức nạp lại tiện ích thì `generating` mới có.
 Bốn cửa nói bốn chuyện khác nhau lúc bị chặn: xem **`B-58`** trong `BACKLOG.md`, chưa giải thích được.
+
+## 2026-09-10 (lượt 19) · `claude-gpt-chay-het-job` — nền reasoning GPT×CC, và năm lỗi cùng một họ
+
+**Đức chốt hướng:** GPT nghĩ, CC chỉ điều phối. GPT ghi thẳng `main` (nó chỉ tổng hợp, không
+sửa mã). Chuỗi chạy tự động trọn vòng — trước đó mỗi vòng một lệnh.
+
+**Số đo đổi cả thiết kế:** mỗi lượt gọi model tốn **~232.000 token đọc**, bất kể lệnh to hay
+nhỏ. Phần tôi *suy nghĩ và viết ra* chỉ là **0,4%** khối lượng; kết quả mọi công cụ là **0,06%**.
+Đòn bẩy là **cắt số lượt gọi**, không phải cắt nội dung. 12 vòng chạy tay ≈ 36 lượt gọi; gộp
+vào bộ chạy còn **1**.
+
+**Đã dựng và đã đo:** `~~B-57~~` `chat.read` trả `generating` (live) · khối copy 5/5 vòng ·
+**GPT ghi được file vào repo** — 52 giây, commit `436ee0ff`, đúng đường dẫn, nhưng **thẳng
+`main`, không nhánh, không `Lane:`, ký trùng danh tính với Đức** · Sheet luật 93 dòng, năm trích
+dẫn số dòng tôi kiểm chéo đều khớp · runbook trong `AI-OPERATOR-GUIDE.md` viết cho phiên Haiku
+không có bối cảnh · protocol `drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md` (V0 bị Codex chấm
+**UNSOUND**, V1 vá năm chỗ).
+
+**Bộ chạy: vá NĂM lỗi, CHƯA đi trọn một chuỗi nào.** Cả năm **cùng một họ** — lấy một *dấu hiệu
+vắng mặt* làm *bằng chứng kết thúc*: `busy:false` · chữ đứng yên · đọc hỏng · nút Stop biến mất
+giữa chuỗi tool (`B-60`) · nhánh `continue` không in gì. **Suite không bắt được lỗi nào trong
+năm** — mọi phép ghim của tôi ghim đúng **giả định của tôi**. Nay mỗi mép mới đều kèm một phép
+chạy lại logic bản cũ để chứng minh nó thật sự bắt được lỗi đã xảy ra.
+
+**`B-60` sửa lại `B-57`:** `generating` đọc nút Stop, mà nút Stop biến mất giữa các lượt gọi
+tool. Nên `false` **một lượt đọc** không nói được gì — chỉ *yên liên tục qua nhiều lượt* mới có
+nghĩa. Và nó đọc lại `B-59`: các quãng cụt không hoàn toàn là DOM cũ; hai hiệu ứng đều thật.
+
+**Tự sửa một khẳng định sai của chính tôi:** *"`.git/hooks/` trống"* — thật ra
+`core.hooksPath = .githooks`, `commit-msg` chạy `--soat`, và nó chặn tôi **hai lần** trong ngày.
+
+Suite **133/133**. Roadmap đầy đủ ở `## ROADMAP — nền tảng reasoning GPT×CC` trong `BACKLOG.md`.
