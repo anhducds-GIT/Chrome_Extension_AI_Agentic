@@ -46,13 +46,20 @@ Mirror gọn trong `drafts/luat-audit/GPT/` mỗi vòng: đã làm gì, còn gì
 **`moc_nguon`** — commit **`1ea8b429`**. Không phải "mã trên `main`". `main` sẽ đổi trong lúc
 chạy; nếu cần mốc mới thì CC ra mốc mới ở lần chốt hướng, không tự đổi giữa vòng.
 
-**Phạm vi — 13 file, 2281 dòng, đo lúc `1ea8b429`:**
+**Phạm vi — 14 file, 2153 dòng, đo lúc `1ea8b429`:**
 ```
 AGENTS.md · CLAUDE.md
 workers/_shared/LUAT-CORE.md · workers/_shared/AGENTS.md
-workers/*/AGENTS.md · workers/*/v*/AGENTS.md          (5 gói)
+workers/duc-auto-chatgpt/v0.1.0/AGENTS.md · workers/duc-auto-gemini/v0.2.0/AGENTS.md
+workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md · workers/duc-scouter/v0.1.0/AGENTS.md
+workers/hnx-fetch/AGENTS.md                            (5 gói — gói này KHÔNG có thư mục v*/)
 docs/protocols/*.md                                    (5 file, 1272 dòng)
 ```
+
+> **Sửa tại Mốc ② (CC, 10/09).** Bản đầu ghi `13 file, 2281 dòng` — sai cả hai: glob
+> `workers/*/AGENTS.md` quét trúng `_shared/AGENTS.md` lần hai (cộng dư 128 dòng) và đồng thời
+> làm rơi `workers/hnx-fetch/AGENTS.md` (125 dòng). Nay liệt kê **thẳng tên từng file**, không
+> để glob tự đếm nữa. `moc_nguon` `1ea8b429` **không đổi**. Xem `drafts/luat-audit/CC/MOC-2.md`.
 
 **`ngoai_pham_vi`**
 - `PHIEN.md` — **máy sinh** từ các file trên. Rà bản sinh là đếm hai lần.

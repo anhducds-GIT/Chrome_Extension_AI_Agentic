@@ -2979,6 +2979,38 @@ hiệu ứng đều thật**, và phải chặn cả hai.
 - **đóng khi:** có một tín hiệu "đã xong" **không** dựa vào nút Stop. Ứng viên: đếm số lượt trả
   lời · khối copy đứng yên qua hai lượt đọc cách nhau · trạng thái nút Gửi.
 
+### B-61 · (P1) Hai bộ chạy cùng lúc — không có khoá một-bản-chạy
+
+10/09 hai tiến trình `chuoi-reasoning.mjs` chạy song song trên cùng một tab và cùng ghi một
+`nhat-ky.jsonl`. Nhật ký đan xen thành vô nghĩa: hai `NAP_LAI` cùng giây `10:28:56`, hai lượt
+gửi cùng một prompt 1671 ký tự cách nhau **59 giây**, hai `KET_THUC`.
+
+**Không có prompt trùng nào vào hội thoại** — chốt `RUN_ACTIVE` chặn lượt thứ hai, đọc lại
+đúng 5 lượt, chỉ một bản. Chốt cưỡng chế đã cứu. Nhưng nó cứu **tình cờ**: đọc-lại-thấy-đã-bay
+chứng minh *một* lượt gửi đã bay, **không** chứng minh *lượt của tôi* đã bay. Một tiến trình
+thì hai câu đó trùng nhau; hai tiến trình thì không.
+
+Hai bộ chạy cũng **nạp lại tab của nhau** giữa lúc GPT đang sinh.
+
+- **đóng khi:** bộ chạy chiếm một tệp khoá cạnh nhật ký lúc khởi động (kèm PID + giờ), thấy
+  khoá còn sống thì từ chối chạy và nói rõ ai đang giữ. Ghim: chạy hai bản, bản thứ hai phải
+  thoát khác 0 mà **không** gửi gì.
+
+### B-62 · (P2) `HET_CHUOI` gộp hai việc khác hẳn nhau
+
+Chuỗi `luat-audit` dừng sau Vòng 6 với `HET_CHUOI — đã nạp lại mà vẫn không có khối mới`. Sự
+thật: GPT **đã trả lời**, và trả lời rằng khối nối vòng ghi `NGƯỜI NHẬN/THỰC THI: Claude Code
+(CC)` nên nó **từ chối tự thực thi Mốc ②** — luật chống tự-nghiệm-thu của protocol V1 chạy
+đúng. Bộ chạy chuyển khối dành cho CC ngược về GPT, rồi chấm là hết chuỗi.
+
+*"GPT không còn gì để nói"* và *"tới lượt CC"* là hai việc khác nhau; nhãn thứ nhất khiến
+người đọc nhật ký tưởng chuỗi hỏng. Đây **không** cùng họ với 5 lỗi kia — kết luận dừng đúng,
+chỉ nhãn sai.
+
+- **đóng khi:** trước khi chuyển tiếp, bộ chạy đọc dòng `NGƯỜI NHẬN/THỰC THI:` của khối; không
+  phải GPT thì dừng với `CAN_NGUOI` kèm tên người nhận, không gửi đi. Ghim: khối ghi
+  `Claude Code (CC)` phải cho `CAN_NGUOI`, khối ghi `GPT Web` phải cho `GUI`.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
