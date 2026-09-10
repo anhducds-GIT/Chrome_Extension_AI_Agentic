@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, TRAN_VONG, TRAN_KY_TU_KHOI } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "turn-cu";
 const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
@@ -31,6 +31,21 @@ const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
 {
   const qd = quyetDinh({ generating: false, khoi: khoiTot("cũ", KHOI_CU), khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: false });
   assert.equal(qd.viec, "CHO", "chưa thấy trang sinh thì false là 'chưa khởi động'");
+}
+
+/* ---- ⓑ2 NHƯNG yên đủ lâu thì phải MỞ KHOÁ — lỗi treo 25 phút, 10/09 08:19 ---
+   Bản đầu chỉ mở khoá khi đã THẤY `generating === true`. Nối bộ chạy vào một chuỗi mà câu trả
+   lời ĐÃ XONG TỪ TRƯỚC thì điều đó không bao giờ xảy ra: nó chờ vô hạn, ghi đúng một dòng
+   `BAT_DAU`, và nhìn từ ngoài y hệt một tiến trình đã chết. Mép ⓑ ở trên PASS suốt — nó ghim
+   đúng giả định của tôi, không ghim thế giới. Đây là mép ghim thế giới. */
+{
+  const chuaDu = quyetDinh({ generating: false, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: false, soLanYen: NGUONG_YEN - 1 });
+  assert.equal(chuaDu.viec, "CHO", "chưa yên đủ lâu thì vẫn chờ");
+  const duYen = quyetDinh({ generating: false, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: false, soLanYen: NGUONG_YEN });
+  assert.notEqual(duYen.viec, "CHO", "yên đủ lâu là bằng chứng trang đã lặng — KHÔNG được chờ tiếp, đây là chỗ bản đầu treo vô hạn");
+  assert.equal(duYen.viec, "NAP_LAI");
+  const coKhoi = quyetDinh({ generating: false, khoi: khoiTot(), khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: false, soLanYen: NGUONG_YEN });
+  assert.equal(coKhoi.viec, "GUI", "nối vào chuỗi đã xong sẵn và đã có khối mới thì gửi luôn");
 }
 
 /* ---- ⓒ khối gõ DỞ không được gửi ------------------------------------------

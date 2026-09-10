@@ -35,11 +35,24 @@ const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge-cli.
 export const TRAN_VONG = 30;
 export const TRAN_KY_TU_KHOI = 12000;
 
+/* Bao nhiêu lượt đọc YÊN liên tiếp thì coi là trang đã lặng thật — kể cả khi bộ chạy CHƯA
+   BAO GIỜ thấy nó sinh. Sinh ra từ một lỗi thật lúc 08:19 ngày 10/09: bản đầu chỉ mở khoá khi
+   đã THẤY `generating === true`. Nối vào một chuỗi mà câu trả lời ĐÃ XONG TỪ TRƯỚC thì điều
+   đó không bao giờ xảy ra, nên nó chờ vô hạn — chạy 25 phút, ghi đúng một dòng `BAT_DAU`, và
+   nhìn từ ngoài y hệt như đã chết. Sáu lượt × 15 giây ≈ 90 giây: đủ dài để một lượt vừa gửi
+   kịp khởi động, đủ ngắn để không phí nửa tiếng. */
+export const NGUONG_YEN = 6;
+
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
-export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay }) {
+export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0 }) {
   if (generating === true) return { viec: "CHO", vi: "trang còn đang sinh" };
-  if (!daThayDangChay) return { viec: "CHO", vi: "chưa thấy trang bắt đầu sinh — false lúc này là 'chưa khởi động'" };
+  /* HAI đường mở khoá, không một. Đường ⑴ là lượt vừa gửi: đã thấy nó sinh rồi lặng.
+     Đường ⑵ là nối vào một chuỗi đã xong từ trước: không bao giờ thấy nó sinh, nên phải
+     nhận `yên đủ lâu` làm bằng chứng. Bản đầu chỉ có ⑴ và nó treo vô hạn ở cảnh ⑵. */
+  if (!daThayDangChay && soLanYen < NGUONG_YEN) {
+    return { viec: "CHO", vi: `chưa thấy trang sinh, mới yên ${soLanYen}/${NGUONG_YEN} lượt — false lúc này có thể là 'chưa khởi động'` };
+  }
 
   const coKhoiMoi = Boolean(khoi?.found) && Boolean(khoi.turn_id) && khoi.turn_id !== khoiCu;
 
@@ -103,7 +116,9 @@ async function chinh() {
   for (let vong = 1; vong <= soVong; vong += 1) {
     let daNapLai = false;
     let daThayDangChay = false;
+    let soLanYen = 0;
     let khoi = null;
+    let nhip = 0;
 
     while (true) {
       if (fs.existsSync(path.join(thuMuc, "DUNG"))) { lyDo = "NGUOI_DUNG"; break; }
@@ -112,10 +127,17 @@ async function chinh() {
       const d = doc();
       if (!d.ok) { await ngu(4000); continue; }
       const r = d.result;
-      if (r.generating === true) daThayDangChay = true;
+      if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
 
-      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay });
-      if (qd.viec === "CHO") { await ngu(15000); continue; }
+      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen });
+      if (qd.viec === "CHO") {
+        /* NHỊP TIM. Bản đầu im hoàn toàn trong lúc chờ, nên một lượt treo 25 phút nhìn từ
+           ngoài KHÔNG phân biệt được với một tiến trình đã chết — Đức hỏi đúng câu đó. */
+        nhip += 1;
+        if (nhip % 4 === 1) console.log(`  vòng ${vong} · chờ: ${qd.vi}`);
+        await ngu(15000);
+        continue;
+      }
       if (qd.viec === "NAP_LAI") {
         console.log(`  vòng ${vong}: ${qd.vi}`);
         ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi });
