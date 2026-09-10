@@ -4,7 +4,7 @@ topic: gpt-reasoning-8-round
 status: draft V1 — đã qua một lượt công kích của Codex (verdict UNSOUND cho V0)
 author: claude-gpt-chay-het-job
 created: 2026-09-10
-supersedes: GPT-REASONING-8-ROUND-PROTOCOL-V0.md
+supersedes: GPT-REASONING-8-ROUND-PROTOCOL-V0.md (đã xoá 10/09 — mục 9 giữ nguyên văn Codex bác gì)
 authority: none — chưa ai chốt
 note: "Mọi con số do tôi ĐO ngày 10/09. V0 bị Codex bác; mục 9 ghi nguyên văn nó bác cái gì."
 ---
@@ -91,8 +91,19 @@ nên không thấy ghim **mức gói**.
 GIAO KÈO NỐI VÒNG — phần này do MÁY đọc:
 1. Kết thúc câu trả lời bằng ĐÚNG MỘT khối mã, và nó phải là khối CUỐI CÙNG.
 2. Trong khối chỉ chứa prompt cho vòng kế tiếp — không lời dẫn, không giải thích.
-3. Xong việc thì kết thúc KHÔNG có khối mã nào. Máy hiểu đó là lệnh DỪNG.
+3. DÒNG ĐẦU của khối phải khai người nhận:
+      NGƯỜI NHẬN/THỰC THI: <GPT Web | Claude Code (CC) | Đức>
+4. Xong việc thì kết thúc KHÔNG có khối mã nào. Máy hiểu đó là lệnh DỪNG.
 ```
+
+**Điều 3 mua bằng một lỗi thật, 10/09.** Vòng 6 của chuỗi `luat-audit` phát ra một khối là
+**chốt kiểm dành cho CC**. Bộ chạy chuyển nó ngược về GPT, và GPT **từ chối đúng vai**:
+*"Prompt này được giao cho Claude Code, không phải GPT Web… như vậy sẽ phá đúng vai trò kiểm
+tra độc lập đã thiết kế."* Luật chống tự-nghiệm-thu chạy được — nhưng bộ chạy chấm nhầm là
+`HET_CHUOI`. Có dòng người nhận thì máy dừng bằng `CAN_NGUOI` và nói rõ tới lượt ai.
+
+Máy chỉ so **phần tên trước dấu ngăn đầu tiên**. So cả dòng thì `Claude Code (CC) — đối chiếu
+kết quả GPT` sẽ bị đọc thành của GPT.
 
 **Đo được, 5/5 vòng:** khối lấy về 805 → 1069 → 1213 → 1206 → 1331 ký tự, máy đọc rồi máy gửi.
 
@@ -190,3 +201,33 @@ Codex chấm V0 **UNSOUND**. Năm chỗ, tôi nhận cả năm:
 
 **Còn hở, chưa vá:** không có gì **cưỡng chế** GPT ghi trong `drafts/` — vẫn chỉ là câu chữ
 trong prompt. Và 8 vòng vẫn chưa chạy bao giờ; dài nhất là 5, và vòng 1 chết một lần.
+
+## 10. Lượt 12 vòng đã đo được gì — bổ sung 10/09, sau khi chạy thật tới Vòng 6
+
+**Chạy được 6 vòng, Đức không dán gì.** Chuỗi dừng ở Mốc ② đúng như thiết kế, không phải vì hỏng.
+
+**Điều mừng nhất: luật chống tự-nghiệm-thu chạy được mà không ai nhắc.** GPT nhận khối dành cho
+CC và từ chối thực thi, tự nêu đúng lý do. Đây là cơ chế mục 6 lo là mù — nó không mù ở ca này.
+
+**Điều đắt nhất: chỗ hỏng không nằm ở reasoning, nằm ở GIÁC QUAN.** Sáu lỗi trong một ngày,
+không lỗi nào thuộc phần suy luận; tất cả đều ở câu *"bây giờ trên trang đang xảy ra chuyện
+gì"*. Năm lỗi đầu cùng một họ — lấy một **dấu hiệu vắng mặt** làm **bằng chứng kết thúc**. Lỗi
+thứ sáu tệ hơn: không biết **người** đang dùng tab. Xem `B-57`…`B-63` trong BACKLOG của gói.
+
+**Luật mới cho hợp đồng vòng 0 — ĐỪNG ĐỂ GLOB ĐẾM PHẠM VI.** Hợp đồng `luat-audit` viết phạm vi
+bằng `workers/*/AGENTS.md · workers/*/v*/AGENTS.md (5 gói)` kèm tổng *"13 file, 2281 dòng"*.
+Cả hai con số đều sai, và sai **vì cùng một chỗ**: glob quét trúng `workers/_shared/AGENTS.md`
+lần thứ hai (cộng dư đúng 128 dòng) và đồng thời làm **rơi** `workers/hnx-fetch/AGENTS.md` —
+gói duy nhất không có thư mục `v*/`. Hai lỗi ngược chiều **che nhau**, nên tổng trông hợp lý và
+không ai đếm lại; GPT làm hết 6 vòng trên một phạm vi thiếu 5,8%.
+
+→ **Phạm vi phải là danh sách TÊN FILE, kèm số dòng từng file.** Glob dùng để *tìm ra* danh
+sách, không dùng để *ghi* nó. Và tổng phải kiểm lại được bằng một lệnh, không phải bằng mắt.
+
+**GPT hỏi đúng chỗ bất nhất và KHÔNG tự đoán.** Nó thấy `(5 gói)` không khớp `13 file`, nêu ra,
+và dừng chờ phán quyết — đúng luật `khong_biet_thi_sao`. Chỗ này protocol không cần sửa.
+
+**Vẫn còn hở, chưa vá:** ⑴ không có gì **cưỡng chế** GPT ghi trong `drafts/`, và `Lane: gpt-web`
+vẫn chưa được cưỡng chế — commit của GPT dùng chung danh tính git với Đức. ⑵ 12 vòng vẫn chưa
+chạy trọn; dài nhất là 6. ⑶ Bên trong một hội thoại đang chạy chuỗi, **người và máy dùng chung
+một chỗ** — bộ chạy nay biết nhường, nhưng chưa có cách hai bên cùng làm việc.

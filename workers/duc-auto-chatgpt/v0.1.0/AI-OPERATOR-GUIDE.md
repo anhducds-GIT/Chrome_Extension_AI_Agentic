@@ -306,10 +306,22 @@ node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
 | lý do | nghĩa | làm gì |
 |---|---|---|
 | `HET_SO_VONG` | chạy đủ số vòng | đọc sản phẩm, xong |
-| `HET_CHUOI` | GPT kết thúc không kèm khối = **nó báo xong** | đọc sản phẩm, xong |
+| `HET_CHUOI` | nạp lại rồi mà vẫn không có khối mới | **đọc chat trước khi tin** — xem ghi chú dưới |
+| `CAN_NGUOI` | khối ghi `NGƯỜI NHẬN` không phải GPT | **tới lượt CC/Đức**, làm xong rồi chạy lại |
+| `NGUOI_DANG_DUNG` | có lượt gõ lạ trong hội thoại | người đang dùng tab — **đợi, đừng chạy đè** |
+| `DOI_HOI_THOAI` | URL đổi khác hội thoại đã ghim | mở lại đúng hội thoại rồi chạy lại |
 | `KHOI_BI_CAT` / `KHOI_QUA_DAI` / `KHOI_RONG` | khối không dùng được | đọc chat, sửa tay |
 | `GUI_THAT_BAI` | gửi hai lần đều không vào | xem panel, hỏi Đức |
 | `QUA_TRAN_PHUT` / `NGUOI_DUNG` | hết giờ / có file `DUNG` | chạy tiếp bằng `--tu-turn` |
+
+Thoát **3** thì không phải lý do dừng của chuỗi: đã có một bản chạy khác giữ thư mục nhật ký
+(`DANG-CHAY.json`). Nó chết rồi thì xoá tệp đó bằng tay.
+
+> **`HET_CHUOI` KHÔNG phải chứng chỉ "GPT đã xong".** Bản guide trước viết thế và sai. Nó chỉ
+> nói *không thấy khối mới sau khi nạp lại* — mà nguyên nhân có thể là GPT đã xong, **hoặc**
+> câu trả lời hỏng, **hoặc** đọc hụt. Đo 10/09: một lượt `HET_CHUOI` xảy ra trong khi GPT đã
+> trả lời đầy đủ và đang **từ chối đúng vai** vì khối được giao cho CC. Thấy `HET_CHUOI` thì
+> mở chat đọc lượt cuối, đừng đóng sổ.
 
 ### Ba luật đọc — ĐỪNG tự chế lại, cả ba đều mua bằng lỗi thật
 
@@ -321,7 +333,18 @@ node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
 3. **Lượt gửi báo lỗi thì KHÔNG tự gửi lại.** Phải đọc lại xem nó đã bay chưa. Đo được **4/4
    lượt gửi đều báo lỗi và 4/4 đều đã bay**.
 
-Bộ chạy đã cài sẵn cả ba. Đừng viết lại chúng ở chỗ khác.
+4. **Tab này chưa chắc là của bạn.** Đo 11:32 ngày 10/09: đúng hội thoại đang chạy chuỗi, nhưng
+   ba lượt cuối là của Đức, và `generating: true` là **Đức đang chờ câu trả lời của mình**. Chốt
+   `RUN_ACTIVE` và cửa `generating` chỉ đo *"trang có bận không"*, không đo *"ai đang dùng"*.
+   Bộ chạy ghim `conversation_id` ở lượt đọc đầu và dừng khi thấy một lượt gõ không phải của nó.
+   Ba luật trên làm chuỗi **dừng nhầm**; thiếu luật này thì chuỗi **chạy nhầm chỗ** và ghi đè
+   lên việc của người — nặng hơn hẳn.
+
+**Và một luật vận hành:** MỘT bản chạy một lúc, cho mỗi thư mục nhật ký. Hai tiến trình cùng
+tab sẽ nạp lại trang của nhau giữa lúc model đang sinh, và mỗi bản tưởng lượt gửi của bản kia
+là của mình. Bộ chạy chiếm `DANG-CHAY.json` bằng cờ `wx` để chặn; đừng gỡ.
+
+Bộ chạy đã cài sẵn cả bốn. Đừng viết lại chúng ở chỗ khác.
 
 ### Chuẩn bị đầu vào — việc của GPT, không phải của CC
 

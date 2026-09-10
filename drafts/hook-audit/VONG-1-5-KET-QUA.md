@@ -1,5 +1,21 @@
 # Kết quả kiểm toán hook — Vòng 1–5
 
+> **ĐÃ BỊ THAY THẾ — ĐỪNG TRÍCH BẢNG DƯỚI NHƯ SỰ THẬT.** Đây là sản phẩm của lượt pilot
+> 5 vòng ngày 10/09, giữ lại làm bản ghi lịch sử. CC kiểm lại **ba** kết luận sắc nhất và
+> **hai sai**, cả hai đều là câu khẳng định VẮNG MẶT:
+>
+> - `innerHTML` chấm **RỖNG** → sai. `tests/artifact-integrity-smoke.mjs:71` có
+>   `assert.doesNotMatch(…, /\.innerHTML\s*=/)` chạy thật trong suite. GPT audit từ gốc repo
+>   nên không thấy ghim **mức gói**.
+> - `--soat` chấm **RỖNG** → sai. `core.hooksPath = .githooks`, và `.githooks/commit-msg` gọi
+>   `claim.mjs --soat`, chặn bằng mã thoát 3. Hạng đúng là **MỀM** (có ba đường fail-open).
+>
+> Nên tỷ lệ *"~26% có cưỡng chế"* dưới đây là **chặn dưới, đo sai phía an toàn** — số thật
+> cao hơn, chưa biết cao bao nhiêu.
+>
+> Bản kiểm toán đang có hiệu lực là chuỗi `luat-audit` (Sheet 747 luật, phạm vi 14 file tại
+> commit `1ea8b429`) — xem `drafts/luat-audit/CC/HOP-DONG.md` và `MOC-2.md`.
+
 Phạm vi: đối chiếu luật root trong `AGENTS.md` / `CLAUDE.md` với enforcement đã tìm thấy trong repo `anhducds-GIT/Chrome_Extension_AI_Agentic` trên `main` qua 5 vòng kiểm toán. Đây là bản ghi kết quả audit, chưa phải kế hoạch sửa.
 
 ## Phân hạng 27 nhóm luật

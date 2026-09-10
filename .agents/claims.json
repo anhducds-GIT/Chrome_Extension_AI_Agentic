@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T11:44:31.199Z",
-      "task": "B-63 canh tab: ghim hoi thoai + nhan ra luot go cua nguoi",
+      "claimed_at": "2026-09-10T11:56:56.972Z",
+      "task": "hoan thien protocol + don rac + brief pilot dieu phoi",
       "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T11:24:02.186Z",
-      "task": "Cong safe-push doc nham tien to conventional-commit 'audit:' thanh nhan Audit:",
-      "released_at": "2026-09-10T11:33:19.788Z",
+      "claimed_at": "2026-09-10T11:59:15.631Z",
+      "task": "thuoc do usage phien CC cho pilot dieu phoi",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -96,15 +96,31 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "ae35607c909789fb",
+  "_fingerprint": "ca807a0bcb8fc0ed",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
     },
-    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md": {
+    "drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md": {
       "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T11:45:41.289Z"
+      "luc": "2026-09-10T11:56:57.052Z"
+    },
+    "drafts/GPT-REASONING-8-ROUND-PROTOCOL-V0.md": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T11:56:57.052Z"
+    },
+    "drafts/hook-audit/VONG-1-5-KET-QUA.md": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T11:56:57.052Z"
+    },
+    "drafts/PILOT-DIEU-PHOI-V0.md": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T11:56:57.052Z"
+    },
+    "package.json": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T12:02:42.522Z"
     }
   }
 }
