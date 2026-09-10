@@ -2675,7 +2675,40 @@ chất của hệ thống** — Đức chạy thật với `uniquify` thì mất
 - **đóng khi:** đường thư mục ghi `landed_as_requested` là `true`/`false` thật, và có ghim cắt hàm
   ghi ảnh để đòi nó khai đúng khi tên bị đổi.
 
-### B-55 · (P1) `chat.read` MÙ trước thân câu trả lời, và nó tự báo `status: OK`
+### ~~B-55~~ · (RÚT LẠI 10/09 — BÁO ĐỘNG SAI, lỗi của tôi) `chat.read` MÙ trước thân câu trả lời
+> **`chat.read` KHÔNG mù. Mục này sai, và nó sai vì tôi đo sai thời điểm.**
+>
+> **Đo lại 10/09** sau khi nới `dom_probe` để soi trong khung trả lời:
+>
+> | | |
+> |---|---|
+> | máy dò đếm trong khung | `innerText` **484** · `textContent` **497** — chữ CÓ, đủ |
+> | `chat.read` đọc ngay sau đó | **486 ký tự**, nguyên văn cả câu trả lời lẫn khối copy |
+> | `shadowRoots` | **0** — không có chuyện nội dung nằm ngoài tầm với |
+>
+> **Chuyện thật đã xảy ra, hai lỗi chồng lên nhau:**
+> ⑴ Tôi đọc **trong lúc câu trả lời còn đang gõ** — `"MODE:"` 5 ký tự là **năm ký tự đầu tiên
+> vừa hiện ra**, không phải một câu trả lời bị cắt cụt.
+> ⑵ Những lượt trả về đúng `"ChatGPT said:"` 13 ký tự là **các lượt SINH ẢNH**. Một lượt ảnh
+> **đúng là** không có chữ nào ngoài cái nhãn đó. Tôi đọc con số ấy thành "mù", trong khi nó là
+> câu trả lời **đúng**.
+>
+> **Vì sao tôi tin nhầm dù đã kiểm:** tôi có `busy: false` trong tay và coi đó là "đã gõ xong".
+> Nó nói **panel** không bận, không nói **câu trả lời** đã xong. Tôi lấy một tín hiệu gần đúng
+> thay cho tín hiệu cần đo — đúng cái bẫy mục `~~B-15~~` đã ghi: *một nhóm không sai, nó bị hỏi
+> sai câu.* Lần này người hỏi sai là tôi.
+>
+> **Cái giá thật, ghi ra để không lặp:** tôi đã viết nó thành mục **P1**, viết vào thông điệp
+> commit, và **báo với Đức rằng tính năng của anh ấy bị chặn ở bước không**. Không có phép đo
+> thứ hai thì phiên sau đã đi vá một thứ không hỏng.
+>
+> **Luật rút ra, và nó rẻ:** trước khi kết luận bộ đọc hỏng, **đọc hai lần cách nhau một quãng**
+> và so. Chữ dài ra = đang gõ, không phải mù. Một phép đo đứng yên mới là một phép đo.
+>
+> Lượt nới `dom_probe` **không phí**: chính nó bác được kết luận sai, và nó chỉ thẳng chỗ khối
+> copy nằm cho `B-56` ⓵.
+
+### B-55-cu · (đã bác, giữ nguyên văn để đối chiếu) mô tả ban đầu
 **Đo live 10/09**, gửi một lượt chữ rồi đọc lại sau khi `dom_probe` xác nhận `busy: false`,
 `stopFound: false` (tức đã gõ xong):
 
@@ -2713,10 +2746,36 @@ reasoning một vấn đề **qua nhiều vòng**.
 
 **Việc này tách làm hai nửa, và hai nửa có tình trạng KHÁC HẲN nhau. Đừng gộp.**
 
-**⓵ ĐỌC được khối copy — không vướng luật nào, nhưng đang bị `B-55` chặn.**
-Cần: lấy **khối cuối cùng** của lượt trả lời mới nhất, nguyên văn, không cắt, có ranh giới rõ.
-Hôm nay `chat.read` trả `innerText` phẳng của cả lượt, không đánh dấu đâu là khối — mà tệ hơn,
-theo `B-55` nó **chưa đọc được thân bài**. Nên thứ tự bắt buộc: **`B-55` trước, `⓵` sau.**
+**⓵ ĐỌC được khối copy — KHÔNG bị chặn (`~~B-55~~` là báo động sai), và mỏ neo đã ĐO ĐƯỢC 10/09.**
+`chat.read` đọc đủ thân bài (486 ký tự trên câu trả lời đo được 484). Thứ còn thiếu chỉ là **ranh
+giới**: nó trả một khối chữ phẳng, không nói đâu là khối copy. Máy dò đã chỉ ra chỗ:
+
+| đo được trong khung `[data-turn="assistant"]` cuối | |
+|---|---|
+| khối copy | `pre` — **1 khối**, `data-start` / `data-end`, nội dung đúng là prompt lượt sau |
+| thân bài | `div.markdown`, và `[data-message-author-role="assistant"]` mang `data-message-id` |
+| nút | `aria-label="Copy"` cho **từng khối** · `data-testid="copy-turn-action-button"` cho **cả lượt** — hai thứ khác nhau, đừng lẫn |
+| shadow DOM | **0** |
+
+Nên ⓵ = **lấy `pre` CUỐI CÙNG trong lượt trả lời mới nhất**. Neo `pre` là thẻ HTML chuẩn, không
+phải nhãn tiếng Anh, nên nó không chết khi Đức đổi ngôn ngữ giao diện.
+
+**⓵ ĐÃ VÁ 10/09.** `chat.read` nay trả thêm `last_copy_block`: `text` · `chars` (độ dài THẬT,
+không phải sau khi cắt) · `truncated` · `turn_id` · `blocks_in_turn`. Chữ ấy **vốn đã** nằm trong
+`text` của lượt — trường này **chỉ thêm ranh giới, không thêm quyền đọc gì mới**.
+
+`found: false` **không phải lỗi**, nó là **điều kiện dừng** tự nhiên: GPT không soạn prompt tiếp
+thì không có bước tiếp. Ghi rõ trong mã để không ai đọc thành *"bộ đọc hỏng"* rồi tự chế một
+prompt thay GPT.
+
+**Ghim:** mở rộng `tests/chat-read-smoke.mjs` (cùng hàm, cùng lát cắt — không dựng file mới), bảy
+mép. **Mép ⓐ là mép chịu tải:** khối của lượt **TRƯỚC** không được lọt ra. Một bản thi hành quét
+cả trang rồi lấy `pre` cuối sẽ **xanh ở mọi mép khác** và đỏ đúng ở đây — mà nếu nó lọt, chuỗi
+nhiều vòng sẽ gửi lại đúng prompt cũ, **im lặng, mãi mãi**. Suite **132/132**, thử phá **10/10 đỏ**,
+0 mỏ neo hỏng.
+
+- **⓵ đóng khi:** một lượt `chat.read` **live** trả `last_copy_block.found: true` với đúng nội
+  dung khối trên màn hình.
 
 **⓶ TỰ ĐỘNG gửi khối đó đi — đây đúng là `run.start`, thứ đang bị CẤM VĨNH VIỄN.**
 `B-42` định nghĩa `run.start` là *"chạy tiếp không ai nhìn: một lệnh, N lượt gửi, không cần cấp
