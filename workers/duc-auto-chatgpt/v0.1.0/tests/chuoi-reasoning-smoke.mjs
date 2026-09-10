@@ -131,4 +131,31 @@ const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
   assert.equal(soLanDocLai, 2, "phải có ĐÚNG hai lượt đọc lại — một cho mỗi lượt gửi có thể lỗi");
 }
 
+/* ---- ⓚ "ĐỌC KHÔNG ĐƯỢC" KHÁC "đọc được và không thấy" ----------------------
+   Lỗi thật, HAI LẦN liên tiếp ngày 10/09 (09:43 và 09:52). `daVaoChua()` đọc đúng MỘT lượt;
+   panel đang bận nên `chat.read` hết giờ; bản đầu chấm luôn thành "chưa bay" rồi gửi lại —
+   trong khi tin nhắn ĐÃ vào hội thoại (đo lại: vòng 4 = 1077 ký tự, vòng 5 = 1551 ký tự, cả
+   hai đều nằm trong chat). Vắng bằng chứng bị đọc thành bằng chứng vắng mặt.
+   Nay ba trạng thái: true · false · null. `null` thì DỪNG, không gửi lại — gửi lại lúc mù
+   đúng là thứ exact-once sinh ra để chặn. */
+{
+  const mu1 = ketLuanGui({ ok1: false, daBay1: null });
+  assert.equal(mu1.xong, false);
+  assert.equal(mu1.dung, true, "không đọc lại được thì phải DỪNG, không được gửi lại");
+  assert.match(mu1.vi, /KHONG_DOC_LAI_DUOC/);
+
+  const mu2 = ketLuanGui({ ok1: false, daBay1: false, ok2: false, daBay2: null });
+  assert.equal(mu2.dung, true);
+
+  // Và `false` vẫn phải đi tiếp như cũ — đừng vá quá tay thành "hễ lỗi là dừng".
+  assert.equal(ketLuanGui({ ok1: false, daBay1: false, ok2: true }).xong, true);
+
+  // Kiểm ngược: logic bản cũ coi null như false, tức nó GỬI LẠI ở đúng mép trên.
+  const cu = (daBay) => (daBay ? "khong-gui-lai" : "GUI_LAI");
+  assert.equal(cu(null), "GUI_LAI", "bản cũ thật sự gửi lại khi mù — mép này bắt đúng lỗi đã xảy ra");
+
+  const nguon = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  assert.match(nguon, /if \(daBay1 === false\)/, "chỉ gửi lại khi ĐỌC ĐƯỢC và KHÔNG THẤY — không phải khi !daBay1");
+}
+
 console.log("chuoi reasoning smoke tests: PASS");

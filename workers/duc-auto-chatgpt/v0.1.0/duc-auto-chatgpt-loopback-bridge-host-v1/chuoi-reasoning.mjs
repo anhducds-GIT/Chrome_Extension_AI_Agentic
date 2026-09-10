@@ -76,9 +76,15 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
    Luật đầy đủ: **mỗi lượt gửi báo lỗi đều phải có một lượt đọc lại của riêng nó.** */
 export function ketLuanGui({ ok1, daBay1, ok2, daBay2 }) {
   if (ok1) return { xong: true, vi: "gửi thẳng OK" };
-  if (daBay1) return { xong: true, vi: "lần ⑴ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  if (daBay1 === true) return { xong: true, vi: "lần ⑴ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  /* `null` = ĐỌC KHÔNG ĐƯỢC, khác hẳn `false` = ĐỌC ĐƯỢC VÀ KHÔNG THẤY.
+     Gộp hai cái này là lỗi đã xảy ra hai lần ngày 10/09: panel bận nên `chat.read` hết giờ,
+     bản đầu chấm luôn thành "chưa bay" rồi gửi lại — trong khi tin nhắn đã vào hội thoại.
+     Không đọc được thì KHÔNG được gửi lại: đó đúng là chỗ luật exact-once sinh ra để chặn. */
+  if (daBay1 === null) return { xong: false, dung: true, vi: "KHONG_DOC_LAI_DUOC sau lần ⑴ — KHÔNG gửi lại, người phải nhìn" };
   if (ok2) return { xong: true, vi: "gửi lại OK" };
-  if (daBay2) return { xong: true, vi: "lần ⑵ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  if (daBay2 === true) return { xong: true, vi: "lần ⑵ báo lỗi nhưng đọc lại thấy ĐÃ BAY" };
+  if (daBay2 === null) return { xong: false, dung: true, vi: "KHONG_DOC_LAI_DUOC sau lần ⑵ — KHÔNG gửi lại, người phải nhìn" };
   return { xong: false, vi: "hai lượt gửi, hai lượt đọc lại, đều không thấy trong hội thoại" };
 }
 
@@ -170,11 +176,21 @@ async function chinh() {
     fs.writeFileSync(fParam, JSON.stringify({ text: khoi.text, timeout_sec: 180 }, null, 1));
     // So bằng 60 ký tự ĐẦU của chính khối — không so bằng một từ khoá, vì một từ khoá cũng
     // nằm trong prompt vòng trước và sẽ cho dương tính giả (đã dính đúng bẫy này 10/09).
+    /* Trả BA giá trị: true đã bay · false đọc được và không thấy · null KHÔNG ĐỌC ĐƯỢC.
+       Phải thử lại nhiều lượt: đúng lúc cần đọc nhất là lúc trang đang sinh, và đó cũng là
+       lúc panel hay hết giờ nhất (B-50). Bản đầu đọc MỘT lượt, hết giờ là trả false, và hai
+       lần liên tiếp nó chấm nhầm một tin nhắn đã vào hội thoại thành chưa gửi. */
     const daVaoChua = async () => {
       await ngu(45000);
-      const lai = doc();
-      const hoiCuoi = lai.ok ? [...lai.result.turns].reverse().find((t) => t.role === "user") : null;
-      return Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
+      for (let i = 0; i < 12; i += 1) {
+        const lai = doc();
+        if (lai.ok) {
+          const hoiCuoi = [...lai.result.turns].reverse().find((t) => t.role === "user");
+          return Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
+        }
+        await ngu(5000);
+      }
+      return null;
     };
 
     const lan1 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
@@ -182,7 +198,9 @@ async function chinh() {
     if (!ok1) {
       daBay1 = await daVaoChua();
       ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 1, ma: lan1.error?.code || null, da_bay: daBay1 });
-      if (!daBay1) {
+      // Chỉ gửi lại khi đọc được VÀ không thấy. `null` (không đọc được) đi thẳng xuống
+      // `ketLuanGui` để dừng — gửi lại lúc mù là đúng thứ exact-once cấm.
+      if (daBay1 === false) {
         const lan2 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
         ok2 = Boolean(lan2.ok);
         // MỖI lượt gửi báo lỗi phải có lượt đọc lại CỦA RIÊNG NÓ. Bản đầu bỏ lượt này và
