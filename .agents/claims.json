@@ -96,31 +96,15 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "ca807a0bcb8fc0ed",
+  "_fingerprint": "d1d851bb2b815412",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
     },
-    "drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md": {
+    "scripts/nghiem-thu-artifact.mjs": {
       "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T11:56:57.052Z"
-    },
-    "drafts/GPT-REASONING-8-ROUND-PROTOCOL-V0.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T11:56:57.052Z"
-    },
-    "drafts/hook-audit/VONG-1-5-KET-QUA.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T11:56:57.052Z"
-    },
-    "drafts/PILOT-DIEU-PHOI-V0.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T11:56:57.052Z"
-    },
-    "package.json": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T12:02:42.522Z"
+      "luc": "2026-09-10T12:10:16.510Z"
     }
   }
 }
