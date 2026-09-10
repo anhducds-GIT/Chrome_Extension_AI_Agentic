@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh ngày 2026-09-10.
+Trang được sinh ngày 2026-09-11.
 
 ## Việc ưu tiên #1
 
