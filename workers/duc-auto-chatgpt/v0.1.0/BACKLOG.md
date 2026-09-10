@@ -2962,6 +2962,75 @@ commit · và nhóm an toàn mã (`innerHTML`, bằng chứng selector, tự ngh
 **Nên đọc bảng của GPT là "chưa tìm thấy hook từ gốc", không phải "không có hook".** Danh sách
 RỖNG 11 nhiều khả năng còn vài mục cùng dạng — có ghim mức gói mà audit gốc không thấy.
 
+### B-60 · (P1) Nút Stop BIẾN MẤT trong lúc model chạy tool — `generating` nhấp nháy
+
+**Đo 10/09, và nó sửa lại cách hiểu `~~B-57~~`.** `generating` đọc nút Stop. Trong một lượt trả
+lời có gọi tool, nút Stop **biến mất giữa các lượt gọi**, nên `generating: false` xuất hiện
+nhiều lần **giữa chừng** một câu trả lời chưa xong. Câu trả lời vòng 5 của chuỗi kiểm toán ghi
+*"Worked for 10m 50s"* với hàng chục lượt gọi tool; suốt quãng đó cờ này nhấp nháy.
+
+**Hệ quả:** `generating: false` **một lượt đọc** không nói được gì. Nó chỉ có nghĩa khi **yên
+liên tục qua nhiều lượt** — bộ chạy hiện đòi 6 lượt × 15 giây ≈ 90 giây.
+
+Điều này cũng **đọc lại** các quan sát của `B-59`: những quãng *"48–173 ký tự, `generating`
+false, đứng yên"* không hoàn toàn là DOM cũ — một phần là model đang ở giữa chuỗi tool. **Hai
+hiệu ứng đều thật**, và phải chặn cả hai.
+
+- **đóng khi:** có một tín hiệu "đã xong" **không** dựa vào nút Stop. Ứng viên: đếm số lượt trả
+  lời · khối copy đứng yên qua hai lượt đọc cách nhau · trạng thái nút Gửi.
+
+---
+
+## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
+
+**Ý tưởng:** GPT Web reasoning gần như miễn phí và đọc/ghi được GitHub lẫn Google Sheet. Việc
+lặp lại có mục tiêu rõ thì để GPT cày; CC chỉ xuất hiện ở chỗ **quyết định**. Đo được 10/09:
+**mỗi lượt gọi model tốn ~232.000 token đọc**, bất kể lệnh to hay nhỏ — nên đòn bẩy lớn nhất là
+**cắt số lượt gọi**, không phải cắt nội dung.
+
+### Đã có, đã đo, đã đẩy
+
+| thứ | chỗ | trạng thái |
+|---|---|---|
+| `chat.read` trả `generating` | `content.js` | ✅ live, ghim chạy thật |
+| Khối copy cuối câu trả lời | `last_copy_block` | ✅ live, 5/5 vòng pilot |
+| Bộ chạy trọn chuỗi | `duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs` | ⚠ **5 lỗi đã vá, chưa chạy trọn một chuỗi nào** |
+| Runbook cho phiên CC rẻ | `AI-OPERATOR-GUIDE.md` mục cuối | ✅ |
+| Protocol + vì sao từng luật | `drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md` | ✅ V0 bị Codex chấm UNSOUND, V1 vá 5 chỗ |
+| Hợp đồng vòng 0 mẫu | `drafts/luat-audit/CC/HOP-DONG.md` | ✅ |
+| GPT ghi thẳng repo | commit `436ee0ff` | ✅ đo được: 52 giây, đúng đường dẫn |
+| Bảng luật trên Sheet | Sheet `Repo Rule Audit` | 🔄 93 dòng ở vòng 1, đang chạy tiếp |
+
+### Còn phải làm — xếp theo thứ tự nên làm
+
+**⑴ Bộ chạy chưa đi hết một chuỗi.** Năm lỗi, **một họ duy nhất**: lấy một *dấu hiệu vắng mặt*
+làm *bằng chứng kết thúc* — `busy:false` · chữ đứng yên · đọc hỏng · nút Stop biến mất · nhánh
+`continue` không in gì. Cần một **tín hiệu "đã xong" thật** (xem `B-60`), không phải thêm một
+lớp chờ nữa. **Đây là việc chặn mọi thứ còn lại.**
+
+**⑵ `B-50` lên P1.** Panel hết giờ liên tục trong lúc trang sinh. Chạy tay thì đó là phiền;
+chạy tự động thì đó là **mù**, và mọi lỗi ở ⑴ đều lớn lên từ chỗ mù này.
+
+**⑶ Chạy hết 12 vòng `luat-audit`**, rồi Đức điền cột `Đức duyệt`, rồi mới thực hiện cắt/gộp.
+
+**⑷ Đo giá thật trên Haiku/Sonnet.** Chia hai vai: *CC chạy máy* (rẻ, ~90% số lượt) và *CC chốt*
+(Opus, đúng 3 mốc). Chưa thử lần nào — con số "rẻ hơn hai bậc" hiện là **ước tính, không phải đo**.
+
+**⑸ Một chuỗi ở loại việc KHÁC** — kiểu soạn đề IELTS hay tổng hợp dữ liệu game. Cả protocol
+hiện mới thử trên đúng một loại việc (kiểm toán repo), và đó là loại việc GPT đọc-nhiều-ghi-ít.
+
+**⑹ `Lane: gpt-web` chưa được cưỡng chế.** Hợp đồng có ghi, nhưng commit của GPT **vẫn chưa có**
+nhãn — và nó ký trùng danh tính với commit tay của Đức. Chưa có gì chặn.
+
+**⑺ Workflow GPT tự audit.** Đức nói chấp nhận GPT sai và sẽ phủ bằng cách cho GPT tự kiểm.
+Chưa thiết kế. Lưu ý từ Codex: ba cơ chế tự kiểm hiện tại **cùng một điểm mù** vì GPT chọn cả
+câu để bác lẫn cách bác.
+
+### Nợ cũ vẫn treo, không liên quan chuỗi này
+
+`~~B-49~~` chờ một job có ảnh mẫu · `B-47`⑴ · `B-51` · `B-54` · suite gốc repo chết (hàm
+`fileScriptCanChep` bị xoá khỏi `scripts/repo-structure.mjs`, thuộc lane khác).
+
 ## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
 > Thay khối *KẾ HOẠCH TRIỂN KHAI* cũ: hai mục của nó (`~~B-20~~`, và lượt đo ba câu `B-14`/`B-15`/

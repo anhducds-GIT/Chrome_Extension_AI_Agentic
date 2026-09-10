@@ -138,13 +138,23 @@ async function chinh() {
     let soLanYen = 0;
     let khoi = null;
     let nhip = 0;
+    let docHong = 0;
 
     while (true) {
       if (fs.existsSync(path.join(thuMuc, "DUNG"))) { lyDo = "NGUOI_DUNG"; break; }
       if (Date.now() > hanChung) { lyDo = "QUA_TRAN_PHUT"; break; }
 
       const d = doc();
-      if (!d.ok) { await ngu(4000); continue; }
+      if (!d.ok) {
+        /* ĐƯỜNG IM CUỐI CÙNG, và nó đã che mất một lượt đứng 10 phút: bản trước `continue`
+           không in gì, nên khi panel hết giờ liên tục thì bộ chạy quay vòng vô hình — nhịp
+           tim ở dưới không bao giờ chạy tới. Mọi nhánh `continue` phải nói ra mình là ai. */
+        docHong += 1;
+        if (docHong % 10 === 1) console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp (${d.error?.code}) — panel đang bận`);
+        await ngu(4000);
+        continue;
+      }
+      docHong = 0;
       const r = d.result;
       if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
 
