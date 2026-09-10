@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T14:15:40.148Z",
-      "task": "B-64 khoa mot-ban-chay dang khoa nham chieu",
+      "claimed_at": "2026-09-10T14:30:41.815Z",
+      "task": "menu chon profile + B-65",
       "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -96,11 +96,15 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "66d4119a8c36c8c6",
+  "_fingerprint": "3cab41ae01590710",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
+    },
+    "package.json": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-10T14:30:41.911Z"
     }
   }
 }

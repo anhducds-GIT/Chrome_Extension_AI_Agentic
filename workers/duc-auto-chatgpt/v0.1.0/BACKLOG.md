@@ -3045,6 +3045,26 @@ khởi động trên cùng tab. Lần này không va vì bản trước đã tho
   đặt tên theo `--target`, ghi kèm `conversation_id` đã ghim. Ghim: hai lượt chạy khác `--nhan`
   cùng một `--target`, bản thứ hai phải thoát khác 0 và **không gửi gì**.
 
+### B-65 · (P1) Đọc-lại không phân biệt được "tin của tôi" với "tin y hệt do người dán"
+
+`daVaoChua()` so **60 ký tự đầu của khối** với lượt `user` cuối để biết lượt gửi đã bay chưa.
+Nó so **nội dung**, không so **danh tính**.
+
+Đo 10/09 14:15: Đức tự dán Vòng 7, rồi nối bộ chạy vào. Lượt `chat.say` bị từ chối (trang
+đang sinh), nhưng đọc lại thấy đúng khối đó nằm ở lượt cuối — **do Đức dán** — nên bộ chạy
+ghi `DA_GUI · lần ⑴ báo lỗi nhưng đọc lại thấy ĐÃ BAY`. Nó tưởng mình đã gửi.
+
+Lần này vô hại, và còn ra đúng kết quả mong muốn. Nhưng lý do đúng thì sai, và chiều ngược
+lại mới nguy: nếu lượt gửi THẬT SỰ hỏng mà trên trang tình cờ có một khối giống, bộ chạy sẽ
+bỏ qua một vòng và đi tiếp như không có gì.
+
+Cùng họ với `B-61`: đọc lại chứng minh **một** lượt gửi đã bay, không chứng minh **lượt của
+tôi** đã bay.
+
+- **đóng khi:** ghi lại `turn_id` của lượt `user` cuối NGAY TRƯỚC khi gửi, rồi sau khi gửi
+  chỉ nhận là "đã bay" nếu xuất hiện một `turn_id` MỚI mang đúng nội dung ấy. Ghim: dựng
+  cảnh "khối giống hệt đã có sẵn từ trước", đòi kết quả là CHƯA BAY.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
