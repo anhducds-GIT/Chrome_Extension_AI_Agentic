@@ -162,6 +162,19 @@
     // TÊN FILE, thay cho phép đếm cũ. Nhóm này vì vậy KHÔNG còn là mỏ neo dự phòng — nó là
     // đường sống. `dom_probe` vẫn đếm nó mỗi lượt, và nay con số đó là cảnh báo sớm THẬT: nó
     // rơi về 0 nghĩa là mọi lượt gắn ảnh sắp chết, chứ không chỉ là một selector mốc.
+    // B-56 ⓵ · KHỐI COPY cuối câu trả lời — mỏ neo ĐO LIVE 10/09 bằng `answerScope`.
+    // Trong khung `[data-turn="assistant"]` cuối: đúng **một** `pre`, mang `data-start`/
+    // `data-end`, nội dung là prompt cho lượt sau. `shadowRoots: 0`, nên không có phần nào
+    // ngoài tầm `querySelectorAll`.
+    //
+    // VÌ SAO NEO VÀO `pre` CHỨ KHÔNG VÀO NÚT COPY: đo được HAI nút khác nhau trong cùng khung —
+    // `aria-label="Copy"` (từng khối) và `data-testid="copy-turn-action-button"` (CẢ lượt trả
+    // lời). Neo nhầm cái thứ hai là chép về cả bài văn thay vì cái khối. Và cả hai nhãn đều là
+    // tiếng Anh, chết ngay khi Đức đổi ngôn ngữ giao diện — `pre` là thẻ HTML chuẩn, không chết
+    // vì ngôn ngữ. Cùng lý do đã chọn `attachmentChip` thay cho `"Remove file"` ở `~~B-14~~`.
+    answerBlock: Object.freeze([
+      "pre",
+    ]),
     attachmentChip: Object.freeze([
       'form div[role="group"][aria-label]',      // ✔ MỚI 09/09 — khung chip, aria-label = TÊN FILE
       'form div[data-default-action="true"]',    // ✔ MỚI 09/09 — 0 khi chưa gắn, có khi đã gắn

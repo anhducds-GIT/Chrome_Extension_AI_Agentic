@@ -96,6 +96,18 @@ function makeDocument(specs) {
       },
       matches(selector) {
         return selector.split(",").map((token) => token.trim()).filter(Boolean).some((token) => matchToken(node, token));
+      },
+      // B-56 ⓵ · khối copy NẰM TRONG một lượt, nên phải hỏi được từ chính node lượt đó — chứ
+      // không phải quét cả trang rồi lấy cái cuối. Khác biệt ấy là cả một lỗi: quét cả trang
+      // thì khối của lượt TRƯỚC vẫn khớp, và chuỗi nhiều vòng sẽ gửi lại đúng prompt cũ.
+      querySelectorAll(selector) {
+        const tokens = selector.split(",").map((token) => token.trim()).filter(Boolean);
+        return (spec.blocks || []).map((text) => ({
+          tagName: "PRE",
+          attributes: [],
+          innerText: text,
+          getAttribute: () => null
+        })).filter((child) => tokens.some((token) => matchToken(child, token)));
       }
     };
     return node;
@@ -250,5 +262,88 @@ for (const [params, why] of [
 // Ngân sách phải được KHAI trong registry: đây là mặt tra cứu duy nhất mà một AI
 // bên ngoài đọc trước khi gọi, nên nắp không khai là nắp nó sẽ đụng bằng cách hỏng.
 assert.match(core.METHOD_REGISTRY["chat.read"].capability_description, /200000 characters/);
+
+/* ==== B-56 ⓵ · KHỐI COPY cuối câu trả lời =====================================
+   Cách làm việc Đức nêu 10/09: GPT tự soạn prompt cho bước sau và đặt vào một khối copy ở
+   cuối câu trả lời. Mỏ neo `pre` ĐO LIVE 10/09 bằng `answerScope`: trong khung
+   `[data-turn="assistant"]` cuối có đúng một `pre`, nội dung đúng là prompt lượt sau.
+
+   Chữ đó VỐN ĐÃ nằm trong `text` của lượt. Thứ trường này thêm vào là RANH GIỚI — và ranh
+   giới mới là thứ đáng ghim: khối là phần GPT CỐ Ý đóng gói, văn xuôi quanh nó là chỗ chữ lạ
+   trôi vào. */
+const BLOCK = "pre";
+const doiThoai = (blocks, { text = "câu trả lời có khối copy ở cuối." } = {}) => makeDocument([
+  { data: { "data-turn": "user", "data-message-id": "u1" }, text: "hỏi vòng 1" },
+  { data: { "data-turn": "assistant", "data-turn-id": "t1" }, text: "vòng 1 xong", blocks: ["PROMPT CŨ của vòng trước"] },
+  { data: { "data-turn": "user", "data-message-id": "u2" }, text: "hỏi vòng 2" },
+  { data: { "data-turn": "assistant", "data-turn-id": "t2" }, text, blocks }
+]);
+
+/* ---- ⓐ đường thường: lấy đúng khối của lượt MỚI NHẤT --------------------- */
+{
+  const r = runRead(doiThoai(["Vòng 3: hãy nêu 3 dấu hiệu phân biệt outcome với proxy."]), A, U, 10, 8000, BLOCK);
+  assert.equal(r.last_copy_block.found, true);
+  assert.equal(r.last_copy_block.text, "Vòng 3: hãy nêu 3 dấu hiệu phân biệt outcome với proxy.");
+  assert.equal(r.last_copy_block.turn_id, "t2", "phải quy về lượt mới nhất, để bên gọi đối chiếu được");
+  assert.equal(r.last_copy_block.blocks_in_turn, 1);
+  // MÉP CHỊU TẢI của cả tính năng: khối của lượt TRƯỚC không được lọt ra. Một bản thi hành
+  // quét cả trang rồi lấy `pre` cuối sẽ xanh ở mọi mép khác và ĐỎ ở đây — và nếu nó lọt, chuỗi
+  // nhiều vòng sẽ gửi lại đúng prompt cũ, im lặng, mãi mãi.
+  assert.doesNotMatch(r.last_copy_block.text, /CŨ/, "khối của lượt TRƯỚC không được nhận nhầm thành khối lượt này");
+}
+
+/* ---- ⓑ không có khối copy → DỪNG, không phải HỎNG ------------------------ */
+{
+  const r = runRead(doiThoai([]), A, U, 10, 8000, BLOCK);
+  assert.equal(r.last_copy_block.found, false, "GPT không soạn prompt tiếp thì không có bước tiếp — đây là điều kiện DỪNG");
+  assert.equal(r.last_copy_block.text, "");
+  assert.equal(r.status, "OK", "và lượt đọc vẫn OK: thiếu khối copy KHÔNG phải lỗi đọc, đừng để ai đọc thành 'bộ đọc hỏng'");
+}
+
+/* ---- ⓒ nhiều khối: lấy cái CUỐI, và NÓI RA là có mấy cái ----------------- */
+{
+  const r = runRead(doiThoai(["khối minh hoạ giữa bài", "PROMPT vòng sau"]), A, U, 10, 8000, BLOCK);
+  assert.equal(r.last_copy_block.text, "PROMPT vòng sau");
+  assert.equal(r.last_copy_block.blocks_in_turn, 2, "hai khối thì 'lấy cái cuối' là một LỰA CHỌN — bên gọi phải thấy được là mình đang tin vào lựa chọn đó");
+}
+
+/* ---- ⓓ nắp: khối dài phải cắt VÀ tự khai là đã cắt ----------------------- */
+{
+  const dai = "x".repeat(500);
+  const r = runRead(doiThoai([dai]), A, U, 10, 100, BLOCK);
+  assert.equal(r.last_copy_block.chars, 500, "`chars` là độ dài THẬT, không phải độ dài sau khi cắt");
+  assert.equal(r.last_copy_block.text.length, 100);
+  assert.equal(r.last_copy_block.truncated, true, "cắt mà không khai là gửi đi một prompt cụt mà không ai biết");
+}
+
+/* ---- ⓔ không truyền selector → im lặng ĐÚNG, không nổ ------------------- */
+{
+  // Ba đường chẩn đoán nội bộ gọi `readTurns` với năm tham số. Chúng không đọc khối copy, và
+  // KHÔNG được vì thế mà hỏng.
+  const r = runRead(doiThoai(["gì đó"]), A, U, 10, 8000);
+  assert.equal(r.last_copy_block.found, false);
+  assert.equal(r.last_copy_block.blocks_in_turn, 0);
+}
+
+/* ---- ⓕ không có lượt trả lời nào thì cũng không nổ ---------------------- */
+{
+  const chiHoi = makeDocument([{ data: { "data-turn": "user", "data-message-id": "u1" }, text: "mới hỏi thôi" }]);
+  const r = runRead(chiHoi, A, U, 10, 8000, BLOCK);
+  assert.equal(r.last_copy_block.found, false);
+  assert.equal(r.last_copy_block.turn_id, null);
+}
+
+/* ---- ⓖ mỏ neo `pre` phải nằm ở ADAPTER, không đóng cứng trong runner ----- */
+{
+  const adapter = fs.readFileSync(new URL("../provider-adapter.js", import.meta.url), "utf8");
+  assert.match(adapter, /answerBlock: Object\.freeze\(\[/, "mỏ neo khối copy phải khai ở adapter — mọi kiến thức selector đi qua đó");
+  assert.match(content, /SEL\.answerBlock/, "runner đọc mỏ neo QUA adapter");
+  // PHẠM VI LÀ CHÍNH LÁT CẮT `readTurns`, KHÔNG PHẢI CẢ FILE. Bản đầu của mép này soi cả
+  // `content.js` và đỏ ngay — vì nó khớp vào `khung.querySelectorAll("pre")` bên trong khối
+  // `answerScope` của MÁY DÒ. Máy dò được miễn trừ có chủ ý: nó là thứ đi TÌM cấu trúc, nên
+  // bắt nó hỏi adapter là bắt nó chỉ tìm được thứ ta đã biết. Ranh giới đó do
+  // `provider-adapter-static` cưỡng chế cho cả file; mép này chỉ lo đường ĐỌC.
+  assert.doesNotMatch(readBlock, /"pre"|'pre'/, "đường đọc KHÔNG được đóng cứng `pre` — nó nhận selector đã phân giải từ adapter");
+}
 
 console.log("chat read smoke tests: PASS");

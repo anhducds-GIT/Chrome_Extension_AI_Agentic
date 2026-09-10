@@ -77,6 +77,10 @@
     return list[0];
   }
   function assistantSelector() { return resolveSelector(SEL.assistantMessage); }
+  // B-56 (1). CHI `chat.read` truyen selector nay xuong `readTurns`; ba cho goi con lai la
+  // duong CHAN DOAN noi bo, chung khong doc khoi copy — nen tham so co mac dinh rong va
+  // `last_copy_block.found` la false o do. Do la im lang DUNG, khong phai thieu sot.
+  function answerBlockSelector() { return resolveSelector(SEL.answerBlock); }
   function userSelector() { return resolveSelector(SEL.userMessage); }
 
   // Trang hiện tại có phải một hội thoại thật không. THÊM 2026-09-02.
@@ -165,7 +169,7 @@
        NO_TURNS_MATCHED    · SELECTOR ĐÃ CHẾT — dựng lại từ `attribute_names`, đừng đoán
      Gộp hai cái sau thành một là bắt người đọc phân biệt "trang trống" với "selector chết",
      hai kết luận chỉ về hai hướng ngược nhau. */
-  function readTurns(doc, assistantSel, userSel, limit, maxChars) {
+  function readTurns(doc, assistantSel, userSel, limit, maxChars, blockSel = "") {
     const selector = `${assistantSel}, ${userSel}`;
     const turns = Array.from(doc.querySelectorAll(selector));
     if (turns.length === 0) {
@@ -202,9 +206,36 @@
         text: full.slice(0, maxChars)
       };
     });
+    /* B-56 ⓵ · KHỐI COPY của lượt trả lời MỚI NHẤT, tách riêng khỏi văn xuôi.
+       Cách làm việc của Đức: GPT tự soạn prompt cho bước sau và đặt vào một khối copy ở cuối
+       câu trả lời. Chữ đó VỐN ĐÃ nằm trong `text` của lượt — nhưng nằm phẳng, dính liền văn
+       xuôi, không có ranh giới. Trường này chỉ thêm RANH GIỚI, không thêm quyền đọc gì mới.
+
+       RANH GIỚI LÀ THỨ QUAN TRỌNG NHẤT Ở ĐÂY, không phải sự tiện tay: khối là thứ GPT CỐ Ý đóng
+       gói; văn xuôi quanh nó là chỗ chữ lạ trôi vào (GPT của Đức đọc Google Sheet và GitHub).
+       Ngày nào nửa ⓶ tự gửi chữ này đi, ranh giới ấy là lớp chắn duy nhất giữa "prompt GPT soạn"
+       và "một câu ra lệnh lẫn trong tài liệu nào đó".
+
+       LẤY KHỐI CUỐI, và `blocks_in_turn` nói ra có mấy khối: một câu trả lời có hai khối thì
+       "khối cuối" là một LỰA CHỌN, và bên gọi phải thấy được là mình đang tin vào lựa chọn đó. */
+    const newestAssistant = turns.filter((element) => element.matches(assistantSel)).pop() || null;
+    const blocks = newestAssistant && blockSel ? Array.from(newestAssistant.querySelectorAll(blockSel)) : [];
+    const block = blocks.length ? blocks[blocks.length - 1] : null;
+    const blockText = block ? (block.innerText || block.textContent || "").trim() : "";
+    const lastCopyBlock = {
+      // `found: false` KHÔNG phải lỗi — nó là điều kiện DỪNG tự nhiên của một chuỗi nhiều vòng:
+      // GPT không soạn prompt tiếp thì không có bước tiếp. Đừng để ai đọc nó thành "hỏng" rồi
+      // đi tự chế một prompt thay GPT.
+      found: Boolean(block),
+      chars: blockText.length,
+      truncated: blockText.length > maxChars,
+      text: blockText.slice(0, maxChars),
+      turn_id: newestAssistant?.getAttribute("data-turn-id") || null,
+      blocks_in_turn: blocks.length
+    };
     // `attribute_names` GIỮ KHOÁ cả ở đường thành công: hình dạng ổn định thì phía đọc không
     // phải xử lý hai kiểu payload. Cùng luật đang áp cho `repo-map.json`.
-    return { status: withText === 0 ? "MATCHED_BUT_NO_TEXT" : "OK", selector, matched: turns.length, returned: rows.length, with_text: withText, attribute_names: [], turns: rows };
+    return { status: withText === 0 ? "MATCHED_BUT_NO_TEXT" : "OK", selector, matched: turns.length, returned: rows.length, with_text: withText, attribute_names: [], turns: rows, last_copy_block: lastCopyBlock };
   }
 
   function latestAssistantText() {
@@ -1083,7 +1114,7 @@
         return false;
       }
       try {
-        sendResponse({ ok: true, read: { url: location.href, ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars) } });
+        sendResponse({ ok: true, read: { url: location.href, ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars, answerBlockSelector()) } });
       } catch (error) {
         sendResponse({ ok: false, error: `CHAT_READ_FAILED: ${error?.message || error}` });
       }
