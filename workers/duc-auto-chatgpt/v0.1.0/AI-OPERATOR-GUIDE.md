@@ -270,3 +270,81 @@ cả hai là trần cứng của trình duyệt hoặc chốt an toàn:
   cử chỉ của người. Một cú bấm mỗi lần khởi động lại máy — không nới được bằng mã.
 - **Có NHIỀU hơn một thư mục đã cấp quyền** thì gói **cố ý không chọn hộ**: chọn hộ là đem bằng
   chứng của run này ghi vào hồ sơ run khác. Chỉ định thẳng bằng `output.configure`.
+
+---
+
+## Chuỗi reasoning nhiều vòng — GPT nghĩ, CC chỉ điều phối (Đức chốt 2026-09-10)
+
+**Việc này để cho một phiên CC RẺ (Haiku/Sonnet) chạy.** Không cần đọc `BACKLOG.md`, không cần
+đọc lịch sử. Cả mục này là đủ.
+
+### Ý tưởng
+
+GPT Web reasoning gần như miễn phí và vẫn đọc/ghi được GitHub lẫn Google Sheet. Sau mỗi lượt,
+GPT tự soạn prompt cho vòng sau và đặt vào **một khối mã cuối câu trả lời**. Bộ chạy đọc khối
+đó rồi gửi lại nguyên văn. CC không tham gia suy luận — CC chỉ giữ nhịp và dừng đúng lúc.
+
+**Vì sao chạy trọn chuỗi bằng một lệnh:** đo 10/09, mỗi lượt gọi model tốn **~232.000 token
+đọc** bất kể lệnh to hay nhỏ. Chạy tay 12 vòng là trả cái giá đó 12 lần cho một việc lặp y hệt.
+
+### Chạy
+
+```bash
+node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
+  --so-vong 12 --nhan <tên-việc> --tran-phut 240 \
+  --pairing "<đường dẫn pairing>" --target <hồ sơ> \
+  --nhat-ky "<thư mục nhật ký>"
+```
+
+- `--so-vong` trần cứng **30** trong mã, không nới bằng cờ.
+- `--tu-turn <turn_id>` khi nối tiếp một chuỗi đang chạy dở.
+- **Dừng tay:** tạo file tên `DUNG` trong thư mục nhật ký.
+- Mọi vòng ghi vào `nhat-ky.jsonl`: khối đã gửi, số ký tự, `turn_id`, lý do dừng.
+
+### Nó dừng vì cái gì — một dòng, đọc là hiểu
+
+| lý do | nghĩa | làm gì |
+|---|---|---|
+| `HET_SO_VONG` | chạy đủ số vòng | đọc sản phẩm, xong |
+| `HET_CHUOI` | GPT kết thúc không kèm khối = **nó báo xong** | đọc sản phẩm, xong |
+| `KHOI_BI_CAT` / `KHOI_QUA_DAI` / `KHOI_RONG` | khối không dùng được | đọc chat, sửa tay |
+| `GUI_THAT_BAI` | gửi hai lần đều không vào | xem panel, hỏi Đức |
+| `QUA_TRAN_PHUT` / `NGUOI_DUNG` | hết giờ / có file `DUNG` | chạy tiếp bằng `--tu-turn` |
+
+### Ba luật đọc — ĐỪNG tự chế lại, cả ba đều mua bằng lỗi thật
+
+1. **Chữ ngừng dài ra KHÔNG có nghĩa là xong.** Model gọi tool thì chữ đứng yên hàng phút. Chỉ
+   `generating: false` mới là điều kiện cần — và nó **chưa đủ**.
+2. **Xong mà không có khối thì phải NẠP LẠI MỘT LẦN rồi đọc lại.** Đo được **3/4 vòng** đọc ra
+   48–173 ký tự không khối; nạp lại thì hiện đủ 2934–3450 ký tự **kèm khối**. Tin lần đọc đầu
+   là dừng nhầm ba phần tư số vòng.
+3. **Lượt gửi báo lỗi thì KHÔNG tự gửi lại.** Phải đọc lại xem nó đã bay chưa. Đo được **4/4
+   lượt gửi đều báo lỗi và 4/4 đều đã bay**.
+
+Bộ chạy đã cài sẵn cả ba. Đừng viết lại chúng ở chỗ khác.
+
+### Chuẩn bị đầu vào — việc của GPT, không phải của CC
+
+Trước khi chạy, cần một **hợp đồng vòng 0** ở `drafts/<chủ-đề>/CC/HOP-DONG.md`: mục tiêu · sản
+phẩm · điều kiện nghiệm thu đo được · **commit SHA làm mốc nguồn** · phạm vi · chuẩn bằng chứng ·
+một ví dụ ĐẠT và một ví dụ KHÔNG ĐẠT. Mẫu đầy đủ và lý do từng trường:
+`drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md`.
+
+Hai thư mục, hai thẩm quyền — **không gộp**: `drafts/<chủ-đề>/CC/` là hợp đồng và biên bản
+(GPT **cấm** ghi); `drafts/<chủ-đề>/GPT/` là nơi GPT ghi, và nội dung ở đó **chưa được tin**
+cho tới khi có người kiểm.
+
+**GPT ghi thẳng `main`** — Đức chốt 10/09, vì nó chỉ tổng hợp và suy luận, không sửa mã. Bắt nó
+kèm `Lane: gpt-web` trong commit message; nếu không thì commit của nó và commit tay của Đức
+**trùng danh tính**, không phân biệt được trong lịch sử git.
+
+### CC vào đúng ba lần, không hơn
+
+**① khởi tạo** — chốt hợp đồng với Đức, đẩy nó lên `main` để GPT đọc được, gửi vòng 1 bằng tay.
+**② chốt hướng** — ở tín hiệu đầu tiên, chậm nhất giữa chuỗi. **③ nghiệm thu** — đối chiếu với
+điều kiện nghiệm thu.
+
+**Luật cứng ở mốc ② và ③: tự kiểm lại ít nhất hai kết luận của GPT bằng mã thật, và ít nhất một
+phải là câu khẳng định VẮNG MẶT.** Ngày 10/09 kiểm ba, **hai sai** — và cả hai đều là câu vắng
+mặt (*"`innerHTML` không có hook"*, *"`--soat` không có hook"*). Một bảng của GPT phải đọc là
+*"chưa tìm thấy từ chỗ tôi đứng"*, không phải *"không có"*.
