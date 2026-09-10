@@ -41,20 +41,29 @@ for (const moi of SEL.attachmentChip) {
   assert.ok(!SEL.attachmentPreview.includes(moi), `\`${moi}\` KHÔNG được nằm trong \`attachmentPreview\` — nó làm mỗi chip đếm thành nhiều`);
 }
 
-/* ---- KHÔNG chỗ nào trong runner đọc nhóm mới ----------------------------- */
-// Lời khai "0 thay đổi hành vi" phải đo được, không phải hứa.
-const shipped = ["content.js", "sidepanel.js", "runner-core.js", "reconciliation-core.js", "bridge-core.js", "plan-diagnostics-core.js", "bridge-proposal-core.js"];
-for (const ten of shipped) {
-  const ma = fs.readFileSync(new URL(`../${ten}`, import.meta.url), "utf8");
-  assert.ok(!ma.includes("attachmentChip"), `${ten} KHÔNG được đọc \`attachmentChip\`: nhóm này chỉ để \`dom_probe\` đếm. Nối vào cổng trước-khi-gửi thì phải qua B-49 và Đức chốt.`);
-}
-// Và phép đếm cũ phải còn nguyên hình dạng "so với SỐ FILE" — đó là thứ bị phá nếu gộp nhóm.
+/* ---- AI ĐƯỢC ĐỌC NHÓM MỚI — luật đã ĐỔI 10/09, và phép ghim đổi theo ----- */
+// Bản đầu của mục này khẳng định điều ngược lại: KHÔNG file nào được đọc
+// `attachmentChip`, và ghi kèm cửa ra *"nối vào cổng trước-khi-gửi thì phải qua
+// B-49 và Đức chốt"*. Đức chốt 2026-09-10. Nên phép ghim không bị XOÁ, nó bị
+// ĐẢO CHIỀU: nay `content.js` BẮT BUỘC đọc, và đúng một mình nó.
 const content = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
-assert.match(
-  content,
-  /attachmentPreviewCount\(\) >= previousPreviewCount \+ referenceImages\.length/,
-  "phép đếm sẵn-sàng còn so với SỐ FILE — nếu dòng này đổi thì lý do tách nhóm cũng đổi, và phép ghim này phải được đọc lại"
-);
+assert.ok(content.includes("SEL.attachmentChip"), "content.js PHẢI đọc `attachmentChip` — cổng trước-khi-gửi nay nhận diện ảnh bằng tên trên chip (B-49 vế ⑵)");
+
+const khongDuocDoc = ["sidepanel.js", "runner-core.js", "reconciliation-core.js", "bridge-core.js", "plan-diagnostics-core.js", "bridge-proposal-core.js"];
+for (const ten of khongDuocDoc) {
+  const ma = fs.readFileSync(new URL(`../${ten}`, import.meta.url), "utf8");
+  assert.ok(!ma.includes("attachmentChip"), `${ten} KHÔNG được đọc \`attachmentChip\`: nhóm này chỉ có MỘT chỗ dùng, là cổng gắn ảnh trong content.js. Thêm chỗ đọc thứ hai là thêm một chỗ hỏng khi ChatGPT đổi cấu trúc.`);
+}
+
+// Và phép đếm cũ phải BIẾN MẤT HẲN — sót lại một nhánh là sót lại đúng cái lỗ
+// mà B-49 vế ⑵ sinh ra để bịt: chip của lượt trước được tính cho lượt này.
+// Bỏ dòng chú thích TRƯỚC khi soi: chính đoạn giải thích *"phép đếm cũ đã gỡ"* có chứa tên
+// biến cũ, nên soi cả chú thích thì phép ghim đỏ vì một câu tiếng Việt. Đã dính bẫy này hai
+// lần trong repo, lần thứ ba thì phải thành thói quen.
+const contentKhongChuThich = content.split("\n").filter((dong) => !dong.trim().startsWith("//")).join("\n");
+assert.doesNotMatch(contentKhongChuThich, /previousPreviewCount/, "phép đếm cũ phải biến mất hẳn khỏi content.js, không được để lại một nhánh nào");
+assert.doesNotMatch(contentKhongChuThich, /function attachmentPreviewCount/, "hàm đếm cũ nay là mã chết — để lại là mời người sau nối nó về");
+assert.match(content, /chipMangTen\(label, referenceImage\.fileName\)/, "cổng phải đối chiếu theo TÊN FILE, không phải theo số lượng");
 
 /* ---- DOM giả, dựng theo chuỗi tổ tiên ĐO ĐƯỢC 09/09 ---------------------- */
 function nut(tag, attrs = {}, con = []) {

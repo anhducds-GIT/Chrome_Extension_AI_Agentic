@@ -25,7 +25,10 @@ assert.match(source, /HARD_STOP: \$\{blocker\}/);
 assert.match(source, /if \(text === stableText\) \{/);
 assert.match(source, /type: "text"/);
 assert.match(source, /async function waitForReferenceImagesReady/);
-assert.match(source, /previewsReady && !uploadIsPending\(\)/);
+// B-49 (Đức chốt 10/09): cổng cũ là `previewsReady && !uploadIsPending()`. Cả hai vế đều đã đổi
+// — bỏ điều kiện đo nhầm, và đổi phép đếm sang đối chiếu TÊN FILE. Ghim hình dạng MỚI với cùng
+// độ chặt, đừng bỏ trống dòng này: hành vi vừa đổi là lúc dễ trôi ngược nhất.
+assert.match(source, /if \(!thieuFile\.length && !thieuChip\.length\) return;/);
 assert.doesNotMatch(source, /await sleep\(750\)/);
 assert.match(source, /runPrompt\(prompt, timeoutMs\)/);
 assert.match(source, /DAC_WAIT_CHAT_READY/);

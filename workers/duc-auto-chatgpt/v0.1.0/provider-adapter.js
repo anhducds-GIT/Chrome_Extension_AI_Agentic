@@ -157,10 +157,11 @@
       'button[aria-label*="Remove attachment"]', // CHƯA TỪNG KHỚP
       'button[aria-label*="Remove file"]',  // ✔ mục DUY NHẤT còn sống — nhãn tiếng Anh
     ]),
-    // B-14 ⑵ · MỎ NEO CẤU TRÚC, đo live 09/09. Nhóm này CỐ Ý chưa ai trong runner đọc: nó
-    // ở đây để `dom_probe` đếm mỗi lượt, nên ngày ChatGPT đổi cấu trúc thì ta thấy TRƯỚC khi
-    // cần dùng, chứ không phát hiện lúc nhãn tiếng Anh vừa chết. Muốn nối vào cổng
-    // trước-khi-gửi thì đọc `B-49` — đổi phép đếm là đổi cổng, và cần Đức chốt.
+    // B-14 ⑵ · MỎ NEO CẤU TRÚC, đo live 09/09. **ĐÃ NỐI VÀO CỔNG TRƯỚC-KHI-GỬI 10/09** (`B-49`,
+    // Đức chốt): `waitForReferenceImagesReady` đọc `aria-label` của nhóm này và đối chiếu với
+    // TÊN FILE, thay cho phép đếm cũ. Nhóm này vì vậy KHÔNG còn là mỏ neo dự phòng — nó là
+    // đường sống. `dom_probe` vẫn đếm nó mỗi lượt, và nay con số đó là cảnh báo sớm THẬT: nó
+    // rơi về 0 nghĩa là mọi lượt gắn ảnh sắp chết, chứ không chỉ là một selector mốc.
     attachmentChip: Object.freeze([
       'form div[role="group"][aria-label]',      // ✔ MỚI 09/09 — khung chip, aria-label = TÊN FILE
       'form div[data-default-action="true"]',    // ✔ MỚI 09/09 — 0 khi chưa gắn, có khi đã gắn
@@ -178,14 +179,15 @@
     // `[aria-busy="true"]` **KHỚP** (`upload=[0/1/0]`, `attachmentPending=true`, stop hiện).
     // Nên nhóm này đo *"trang đang bận"*, không phải *"ảnh đang upload"*.
     //
-    // HỆ QUẢ PHẢI ĐỌC TRƯỚC KHI DÙNG: `waitForReferenceImagesReady` có điều kiện
-    // `&& !uploadIsPending()`. Gắn ảnh trong lúc trang đang sinh dở một lượt khác → vòng chờ
-    // block 15 giây rồi NÉM *"Required reference images did not all become ready"* — một lỗi
-    // **nói sai nguyên nhân**: ảnh đã sẵn, thứ chưa xong là lượt sinh của người khác. Cửa ra
-    // ở `B-49`, và nó cần Đức chốt vì đụng cổng trước-khi-gửi.
+    // HỆ QUẢ ĐÃ GỠ 10/09 (`B-49`, Đức chốt): `waitForReferenceImagesReady` **không còn** đọc
+    // nhóm này. Trước đó nó có `&& !uploadIsPending()`, nên gắn ảnh trong lúc trang đang sinh
+    // dở một lượt khác thì cổng chặn 15 giây rồi ném *"Required reference images did not all
+    // become ready"* — một lỗi **nói sai nguyên nhân**: ảnh đã sẵn, thứ chưa xong là lượt sinh
+    // của người khác.
     //
-    // Điều lớp chắn thật dựa vào là `previewsReady` — và nó CÓ làm việc: 4 chip hiện đủ, 1,83MB
-    // tới máy chủ nguyên vẹn, ChatGPT tả đúng cả bốn ảnh.
+    // NHÓM NÀY KHÔNG SAI, NÓ CHỈ BỊ HỎI SAI CÂU. Nó vẫn được `DacChatReadiness` đọc, ở đó câu
+    // hỏi đúng là *"trang có đang bận không"* — và cho câu ấy thì `[aria-busy="true"]` trả lời
+    // đúng. Đừng xoá nó vì thấy nó bị gỡ khỏi một chỗ.
     uploadPending: Object.freeze([
       '[data-testid*="uploading"]',  // CHƯA TỪNG KHỚP (26/08 52 lượt · 09/09 ~27 lượt trong cửa sổ 3,82s)
       '[aria-busy="true"]',          // ✔ KHỚP 09/09 — nhưng lúc ĐANG SINH, không phải lúc upload

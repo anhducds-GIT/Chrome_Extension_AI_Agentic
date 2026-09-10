@@ -566,30 +566,68 @@
   }
   function recordDetection(attempt, values) { if (attempt) attempt.detection = values; }
 
-  function attachmentPreviewCount() {
-    return Array.from(document.querySelectorAll(SEL.attachmentPreview.join(", "))).filter(isVisible).length;
-  }
-
   function uploadIsPending() {
     return Array.from(document.querySelectorAll(SEL.uploadPending.join(", "))).some(isVisible);
+  }
+
+  // B-49 · ĐỨC CHỐT 10/09. Hai vế, và chúng phải đi cùng nhau — làm nửa vời là mở cổng gửi sớm.
+  //
+  // ⑴ BỎ `!uploadIsPending()` KHỎI CỔNG NÀY. Đo live 09/09: nhóm `uploadPending` **đo sai thứ nó
+  // khai** — `[aria-busy="true"]` khớp lúc trang **ĐANG SINH ẢNH**, không phải lúc ảnh đang tải
+  // lên (trong cửa sổ gắn thật 3,82 giây với 1,83MB, ~27 lượt dò, cả ba mục **0/0/0**). Nên gắn
+  // ảnh trong lúc một lượt khác còn đang vẽ thì cổng chặn 15 giây rồi ném một lỗi **nói sai
+  // nguyên nhân**: ảnh đã sẵn, thứ chưa xong là lượt sinh của người khác. Nhóm đó vẫn dùng ở
+  // `DacChatReadiness` — nơi câu hỏi ĐÚNG LÀ *"trang có đang bận không"*; chỉ cổng này bỏ nó.
+  //
+  // ⑵ NHÌN TÊN FILE, KHÔNG ĐẾM. Phép đếm cũ (`>= previousPreviewCount + n`) trả lời được câu
+  // *"đủ mấy cái chưa"* mà không trả lời được *"đúng mấy cái đó chưa"*: một chip sót lại của
+  // lượt trước cũng được tính, và cổng mở ra khi ảnh của LƯỢT NÀY còn chưa hiện → gửi kèm nhầm
+  // ảnh, mà attribution thì không có đường sửa sau. Mỏ neo dùng ở đây là thứ đo được 09/09 ở
+  // `B-14`: chip đính kèm là `div[role="group"][aria-label]` và **`aria-label` CHÍNH LÀ tên
+  // file** — không phụ thuộc ngôn ngữ giao diện, khác hẳn nhãn `"Remove file"` tiếng Anh.
+  //
+  // KHỚP BẰNG ĐẲNG THỨC, KHÔNG BẰNG `includes`. Bản nháp đầu của chính lượt vá này dùng
+  // `label.includes(fileName)` và nó **khớp nhầm**: chip tên `"aa.png"` chứa trọn chuỗi
+  // `"a.png"`, nên một chip sót lại của file khác vẫn mở được cổng — đúng loại nhầm mà vế ⑵
+  // sinh ra để chặn. Đổi lại chỉ nhận hai dạng: nhãn ĐÚNG BẰNG tên file, hoặc nhãn có tô điểm
+  // sau dấu phẩy (`"anh.png, 1,2 MB"`) mà phần trước dấu phẩy đúng bằng tên file. Vế thứ nhất
+  // đứng trước nên tên file có sẵn dấu phẩy vẫn khớp được.
+  function chipMangTen(label, fileName) {
+    return label === fileName || label.split(",")[0].trim() === fileName;
+  }
+
+  function attachmentChipLabels() {
+    return Array.from(document.querySelectorAll(SEL.attachmentChip.join(", ")))
+      .filter(isVisible)
+      .map((node) => String(node.getAttribute("aria-label") || "").trim())
+      .filter(Boolean);
   }
 
   function fileInputHasReference(fileInput, fileName) {
     return Array.from(fileInput?.files || []).some((file) => file.name === fileName);
   }
 
-  async function waitForReferenceImagesReady(fileInput, referenceImages, previousPreviewCount, timeoutMs = 15000) {
+  async function waitForReferenceImagesReady(fileInput, referenceImages, timeoutMs = 15000) {
     const deadline = Date.now() + timeoutMs;
+    let thieuChip = referenceImages.map((referenceImage) => referenceImage.fileName);
+    let thieuFile = thieuChip;
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       const blocker = securityBlockerText();
       if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
-      const previewsReady = attachmentPreviewCount() >= previousPreviewCount + referenceImages.length;
-      const filesReady = referenceImages.every((referenceImage) => fileInputHasReference(fileInput, referenceImage.fileName));
-      if (filesReady && previewsReady && !uploadIsPending()) return;
+      const labels = attachmentChipLabels();
+      thieuFile = referenceImages.filter((referenceImage) => !fileInputHasReference(fileInput, referenceImage.fileName)).map((referenceImage) => referenceImage.fileName);
+      thieuChip = referenceImages.filter((referenceImage) => !labels.some((label) => chipMangTen(label, referenceImage.fileName))).map((referenceImage) => referenceImage.fileName);
+      if (!thieuFile.length && !thieuChip.length) return;
       await sleep(100);
     }
-    throw new Error("Required reference images did not all become ready before the prompt was sent.");
+    // Câu báo cũ chỉ nói "không sẵn sàng", nên hai phiên đã đi tìm nhầm chỗ. Nêu đích danh, và
+    // tách hai vế: thiếu ở ô nhập file là chuyện khác hẳn thiếu chip trên trang.
+    const chiTiet = [
+      thieuFile.length ? `chưa nằm trong ô nhập file: ${thieuFile.join(", ")}` : "",
+      thieuChip.length ? `chưa thấy chip trên trang: ${thieuChip.join(", ")}` : ""
+    ].filter(Boolean).join(" · ");
+    throw new Error(`Required reference images did not all become ready before the prompt was sent. ${chiTiet}`);
   }
 
   async function attachReferenceImages(referenceImages) {
@@ -599,7 +637,6 @@
     const composer = findComposer();
     const fileInput = composer?.closest("form")?.querySelector('input[type="file"]') || document.querySelector(SEL.fileInput);
     if (!fileInput) throw new Error("ChatGPT image attachment input was not found.");
-    const previousPreviewCount = attachmentPreviewCount();
     const data = new DataTransfer();
     for (const referenceImage of images) {
       const response = await fetch(referenceImage.dataUrl);
@@ -608,7 +645,7 @@
     }
     fileInput.files = data.files;
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
-    await waitForReferenceImagesReady(fileInput, images, previousPreviewCount);
+    await waitForReferenceImagesReady(fileInput, images);
   }
 
   // ĐỨC CHỐT 09/09, hai việc, và chúng bù cho nhau:
