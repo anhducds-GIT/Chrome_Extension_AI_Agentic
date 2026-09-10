@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T13:36:19.339Z",
-      "task": "nut bam .bat cho bo chay chuoi",
+      "claimed_at": "2026-09-10T14:15:40.148Z",
+      "task": "B-64 khoa mot-ban-chay dang khoa nham chieu",
       "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-10T13:39:50.488Z",
       "task": "khai .bat eol=crlf va day phep kiem phan biet",
-      "released_at": null,
+      "released_at": "2026-09-10T13:44:38.068Z",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -96,23 +96,11 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "ae9484fd9d8b1fb0",
+  "_fingerprint": "66d4119a8c36c8c6",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
-    },
-    ".gitattributes": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T13:39:50.588Z"
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/content.js": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T13:42:00.223Z"
-    },
-    ".gitignore": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T13:42:34.942Z"
     }
   }
 }

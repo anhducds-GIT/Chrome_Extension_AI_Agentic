@@ -3028,6 +3028,23 @@ làm chuỗi **chạy nhầm chỗ**, và nó ghi đè lên việc của ngườ
   nhận ra lượt người: lượt `user` cuối mà **không** phải khối nó vừa gửi thì dừng bằng
   `NGUOI_DANG_DUNG`, không gửi. Ghim: dựng một lượt `user` lạ, đòi `DUNG`.
 
+### B-64 · (P1) Khoá một-bản-chạy khoá NHẦM CHIỀU — theo thư mục, không theo tab
+
+`B-61` chiếm `DANG-CHAY.json` trong **thư mục nhật ký**. Nhưng thứ hai bản chạy giành nhau
+không phải thư mục — là **cái tab**. Hai chuỗi khác `--nhan` thì khác thư mục, khoá không
+nổ, và cả hai cùng gõ vào một hội thoại.
+
+Xảy ra gần đúng như thế 10/09 14:12: `ark-luat` vừa dừng lúc 14:08 thì `Template_collect_luat`
+khởi động trên cùng tab. Lần này không va vì bản trước đã thoát — **may, không phải nhờ chặn**.
+
+`B-63` chặn được người gõ, không chặn được bộ chạy thứ hai: lượt của bản kia cũng là lượt
+`user`, nên bản này sẽ dừng bằng `NGUOI_DANG_DUNG` — đúng kết quả, **sai lý do**, và người
+đọc nhật ký sẽ đi tìm nhầm chỗ.
+
+- **đóng khi:** khoá đặt theo **đích** chứ không theo thư mục — một tệp cạnh tệp ghép cặp,
+  đặt tên theo `--target`, ghi kèm `conversation_id` đã ghim. Ghim: hai lượt chạy khác `--nhan`
+  cùng một `--target`, bản thứ hai phải thoát khác 0 và **không gửi gì**.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
