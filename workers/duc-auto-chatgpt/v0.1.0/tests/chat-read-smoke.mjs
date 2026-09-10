@@ -373,4 +373,52 @@ const doiThoai = (blocks, { text = "câu trả lời có khối copy ở cuối.
   assert.ok(!("generating" in r), "`readTurns` KHÔNG được trả `generating` — nó sẽ đè lên trường thật lúc trải object");
 }
 
+/* ---- ⓘ CHẠY CHÍNH CỬA `DAC_CHAT_READ`, không đếm chữ trong mã nguồn ------
+   Mép này sinh ra từ một lượt audit Codex 10/09 và nó đã bắt được lỗi thật của tôi. Ba khẳng
+   định TĨNH của mép ⓗ đều XANH trong khi tính năng bị vô hiệu hoàn toàn: chỉ cần thêm
+   `, generating: false` vào SAU dấu trải `...readTurns(...)` là mọi lượt đọc đều báo "đã xong",
+   kể cả lúc trang còn đang sinh. Tôi đã chạy đúng đột biến đó — **132/132 XANH**. Một phép ghim
+   đếm cách viết thì không kiểm được thứ hàm TRẢ VỀ.
+
+   Nên mép này cắt cả nhánh `DAC_CHAT_READ` rồi CHẠY nó, với `findStopButton()` giả ở cả hai
+   trạng thái, và đọc `generating` trong payload thật. */
+{
+  const dau = content.indexOf('    if (message.type === "DAC_CHAT_READ") {');
+  const cuoi = content.indexOf('    if (message.type === "DAC_RECONCILE_TEXT_JOB") {', dau + 1);
+  assert.ok(dau > 0 && cuoi > dau, "nhánh DAC_CHAT_READ còn nằm giữa hai mỏ neo này — nếu nó dời, mép này phải ĐI THEO, không được xoá");
+  const nhanh = content.slice(dau, cuoi);
+
+  const chay = (dangSinh) => {
+    let traVe = null;
+    const ctx = {
+      message: { type: "DAC_CHAT_READ", limit: 10, maxCharsPerTurn: 8000 },
+      sendResponse: (payload) => { traVe = payload; },
+      surfaceAllowedNow: () => true,
+      findStopButton: () => (dangSinh ? { nut: "Stop" } : null),
+      readTurns: () => ({ status: "OK", turns: [], matched: 0 }),
+      assistantSelector: () => "[data-turn=\"assistant\"]",
+      userSelector: () => "[data-turn=\"user\"]",
+      answerBlockSelector: () => "pre",
+      location: { href: "https://chatgpt.com/c/abc" },
+      // Nhánh truyền `document` thẳng vào `readTurns`; ở đây `readTurns` là hàng giả nên
+      // `document` chỉ cần TỒN TẠI. Thiếu nó thì `try/catch` nuốt thành CHAT_READ_FAILED và
+      // mép này đỏ vì lý do sai.
+      document: {},
+      Number
+    };
+    // Bọc trong một hàm: nhánh đã ship kết bằng `return false;` của listener, mà `return` trần
+    // ở tầng script là lỗi cú pháp trong `vm`.
+    vm.runInNewContext(`(function () {\n${nhanh}\n})()`, ctx);
+    return traVe;
+  };
+
+  const dang = chay(true);
+  const xong = chay(false);
+  assert.equal(dang?.ok, true, "cửa phải trả lời được khi trang còn đang sinh");
+  assert.equal(dang.read.generating, true, "còn nút Stop ⇒ generating PHẢI là true — đây là mép mà đột biến `, generating: false` chết");
+  assert.equal(xong.read.generating, false, "hết nút Stop ⇒ generating là false");
+  // Và đòi nó thật sự HỎI cái nút, không phải trả hằng số: hai trạng thái phải cho hai kết quả.
+  assert.notEqual(dang.read.generating, xong.read.generating, "hai trạng thái nút Stop phải cho hai kết quả khác nhau — bằng nhau nghĩa là ai đó đóng cứng một hằng số");
+}
+
 console.log("chat read smoke tests: PASS");

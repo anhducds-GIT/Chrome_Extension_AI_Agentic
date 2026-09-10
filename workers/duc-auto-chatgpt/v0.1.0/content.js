@@ -1121,6 +1121,10 @@
            đều đang trả lời bình thường). Chữ ngừng dài ra KHÔNG có nghĩa là đã xong.
            Dùng ĐÚNG `findStopButton()` mà runner dùng để biết trang còn đang sinh — không dựng
            bộ đọc thứ hai, vì hai bộ đọc là hai chỗ để chúng nói khác nhau.
+           ĐỌC HẸP THÔI, và đây là chỗ bản đầu của tôi nói quá: trường này chỉ khai *"lúc đọc
+           có thấy nút Stop hay không"*. `true` là lệnh chờ tiếp, đáng tin. `false` KHÔNG phải
+           giấy chứng nhận câu trả lời đã đủ — 10/09 đo được 3/4 lượt trả `false` trong khi DOM
+           sống mới có 48–173 ký tự của một câu trả lời mà nạp lại thì hiện đủ 2934–3450 (`B-59`).
          Khối này nằm TRÊN `try {`, không trong lòng nó: `chat-read-smoke` cắt tới đúng mỏ neo
          `try {` rồi biên dịch lát cắt bằng `vm`, nên một chú thích chen vào giữa làm gãy neo. */
       try {

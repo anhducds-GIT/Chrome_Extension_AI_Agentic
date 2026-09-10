@@ -2875,6 +2875,31 @@ Bridge không đọc ra được* — nay lặp lại ở một cửa khác. Câ
   chưa có workbook · và câu chỉ đường chỉ nhắc `run.stop` khi `run.stop` **thật sự** gỡ được.
 - **cần một lượt đo riêng trước khi vá.** Không đoán — chính chỗ này tôi vừa đoán sai một lần.
 
+### Audit Codex 10/09 trên `~~B-57~~` — FAIL, và cả hai chỗ nó chỉ đều ĐÚNG
+
+Tôi đưa Codex bản vá kèm **ba lời tuyên bố để công kích** (khuôn của `docs/briefs/AUDIT-PROMPT-S2-GPT.md`).
+Nó trả `FAIL`. Không phải nhặt sạn — hai lỗi thật của tôi:
+
+**⑴ Phép ghim của tôi là TRANG TRÍ.** Codex chỉ đúng một đột biến: thêm `, generating: false`
+vào **SAU** dấu trải `...readTurns(...)`. Cả ba khẳng định tĩnh của mép ⓗ vẫn xanh — thành ngữ
+vẫn đếm được đúng một lần, `SEL.stop` vẫn một chỗ, `readTurns` không đổi. **Tôi chạy đúng đột
+biến đó: 132/132 XANH với tính năng bị vô hiệu hoàn toàn.** Một phép ghim đếm *cách viết* không
+kiểm được thứ hàm *trả về*.
+
+**Vá:** mép ⓘ cắt cả nhánh `DAC_CHAT_READ` rồi **CHẠY** nó với `findStopButton()` giả ở hai
+trạng thái, đọc `generating` trong payload thật, và đòi hai trạng thái cho hai kết quả khác nhau
+(chặn đóng cứng hằng số). **Thử phá 5/5 đỏ**, gồm đúng đột biến của Codex.
+
+**⑵ Câu luật tôi viết là SAI.** Tôi ghi vào mô tả method: *"`generating: false` là tuyên bố duy
+nhất rằng câu trả lời đã kết thúc."* Codex bác, và nó tìm ra **độc lập** đúng cảnh `B-59` mà tôi
+không hề đưa vào brief: hết nút Stop chỉ nói *đã sinh xong*, không nói *đã hiện đủ*. Nay mô tả
+đọc hẹp lại: `true` là lệnh chờ tiếp đáng tin; `false` **không** phải giấy chứng nhận, và bên
+gọi không thấy nội dung mong đợi thì phải **nạp lại một lần rồi đọc lại**.
+
+**Bài học cho các bản vá sau:** khẳng định tĩnh chỉ dùng để chặn *kiến thức selector đi lạc*.
+Với **dây nối**, phép ghim phải chạy đúng cửa đã ship. Và một lời tuyên bố mạnh trong tài liệu
+là một chỗ để sai — Codex bác được nó chỉ bằng cách đọc chính câu tôi viết.
+
 ### B-59 · (P1) Trang ĐÃ trả lời xong mà DOM sống vẫn cụt — chỉ nạp lại mới hiện đủ
 
 **Đo live 10/09, thấy BA lần trong một chuỗi năm vòng.** Sau một lượt GPT gọi tool nhiều lần,
