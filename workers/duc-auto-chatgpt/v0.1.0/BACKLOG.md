@@ -2875,6 +2875,58 @@ Bridge không đọc ra được* — nay lặp lại ở một cửa khác. Câ
   chưa có workbook · và câu chỉ đường chỉ nhắc `run.stop` khi `run.stop` **thật sự** gỡ được.
 - **cần một lượt đo riêng trước khi vá.** Không đoán — chính chỗ này tôi vừa đoán sai một lần.
 
+### B-59 · (P1) Trang ĐÃ trả lời xong mà DOM sống vẫn cụt — chỉ nạp lại mới hiện đủ
+
+**Đo live 10/09, thấy BA lần trong một chuỗi năm vòng.** Sau một lượt GPT gọi tool nhiều lần,
+`chat.read` đọc được đúng phần vệt tool đã gập lại cộng khoảng 15 ký tự đầu của câu trả lời, rồi
+**đứng yên vĩnh viễn**. Nạp lại tab thì cả câu trả lời hiện ra đủ.
+
+| vòng | trước khi nạp lại | sau khi nạp lại |
+|---|---|---|
+| 1 | 173 ký tự, không khối | **3450** ký tự, khối **805** |
+| 3 | 86 ký tự, không khối | **2934** ký tự, khối **1213** |
+| 4 | 48 ký tự, không khối | **3183** ký tự, khối **1206** |
+| 5 | — | **3564** ký tự, khối **1331** (không cần nạp lại) |
+
+**Không phải `chat.read` mù, và cũng không phải câu trả lời chết.** Máy dò DOM ở vòng 1 đo được
+`innerText` 172 / `textContent` 174 / 0 shadow root — chữ **thật sự không có trong DOM sống**.
+Vòng 5 hiện đủ mà không cần nạp lại, nên đây là điều kiện **thỉnh thoảng**, không phải luôn luôn.
+
+**Hệ quả trực tiếp lên `B-56`⓶ — đây mới là chỗ đắt.** Luật dừng của chuỗi là *"không có khối thì
+dừng"*. Nếu đọc đúng vào lúc DOM còn cụt thì **không có khối** là SAI, và chuỗi sẽ dừng giữa
+chừng trong khi GPT đã trả lời xong. Ba trên bốn vòng gặp đúng cảnh đó.
+
+**Luật đọc phải thêm một bước, và bước này rẻ:** `generating: false` + **không có khối** thì
+**nạp lại một lần rồi đọc lại**, xong mới được kết luận DỪNG. Đã chạy tay ba lần trong pilot,
+đúng cả ba.
+
+- `generating` (`~~B-57~~`) vẫn cần: nó tách *"đang chạy"* khỏi *"đã xong"*. Nhưng nó **không đủ**
+  — cả ba lần trên đều `generating: false` trong lúc DOM còn cụt.
+- **đóng khi:** đường đọc tự làm bước nạp-lại-một-lần đó, có phép ghim, và có một lần đo live
+  chứng minh nó cứu được đúng ca này.
+
+### Kết quả pilot 5 vòng — kiểm toán việc MÓC luật (10/09)
+
+**Chuỗi chạy được thật:** năm vòng, mỗi vòng máy đọc khối copy GPT tự soạn rồi **máy gửi tiếp**,
+Đức không dán tay lần nào. Khối lấy được: 805 → 1069 → 1213 → 1206 → 1331 ký tự.
+
+**GPT kết luận** trên 27 nhóm luật: **CỨNG 7 · MỀM 3 · RỖNG 11 · chưa đủ bằng chứng 6** — tức chỉ
+khoảng **26%** có cưỡng chế rõ. Ba khoảng trống lớn nhất nó nêu: lệnh git trần · `--soat` trước
+commit · và nhóm an toàn mã (`innerHTML`, bằng chứng selector, tự nghiệm thu).
+
+**Tôi kiểm lại ba kết luận sắc nhất — hai đúng, một SAI:**
+- ✅ **Không có git hook nào được cài** (`.git/hooks/` trống, chỉ còn `.sample`). Nên `--soat`
+  trước commit và `git push` trần **thật sự không bị chặn** ở mức máy. Kèm theo: `--no-verify`
+  tôi ghi trong commit `38d8f356` là **vô nghĩa** — không có hook nào để bỏ qua. Câu đó sai.
+- ✅ `safe-push.mjs` chỉ bảo vệ khi chính nó được gọi.
+- ❌ **`innerHTML` KHÔNG rỗng.** `tests/artifact-integrity-smoke.mjs:71` có
+  `assert.doesNotMatch(…, /\.innerHTML\s*=/)` và nó chạy trong suite. GPT audit từ gốc repo nên
+  **không thấy phép ghim mức gói**. Đây đúng loại lỗi *"cổng chỉ chạy suite của vùng đang giữ"*:
+  luật CÓ móc, nhưng móc chỉ phủ **một gói**, và từ gốc nhìn xuống thì nó vô hình.
+
+**Nên đọc bảng của GPT là "chưa tìm thấy hook từ gốc", không phải "không có hook".** Danh sách
+RỖNG 11 nhiều khả năng còn vài mục cùng dạng — có ghim mức gói mà audit gốc không thấy.
+
 ## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
 > Thay khối *KẾ HOẠCH TRIỂN KHAI* cũ: hai mục của nó (`~~B-20~~`, và lượt đo ba câu `B-14`/`B-15`/
