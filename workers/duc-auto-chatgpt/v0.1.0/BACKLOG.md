@@ -2541,6 +2541,19 @@ Rồi **cùng những lệnh đó trả lời trong một giây** khi panel rả
 Và một lần nữa hôm nay, `output.configure` **báo timeout mà đã ăn** (`v02` +
 `BRIDGE_OUTPUT_CONFIGURED` nằm trên đĩa). Khoá `--request-id` giữ cho lần thử lại không ăn hai lần.
 
+**ĐO LẦN BA, CHIỀU 10/09 — và nó BÁC luôn cái kết luận tôi vừa ghi ở đoạn trên.** Một lượt
+`chat.say` (lượt **chữ**: không ảnh, không checkpoint XLSX, không dòng ledger — chính chú thích
+của cửa đó khai vậy) làm panel **không trả lời suốt ~6 phút**: `chat.read` timeout **4 lần**,
+`run.status` timeout, rồi cả hai trả lời bình thường khi lượt gõ kết thúc.
+
+Nên **cả hai nghi phạm đều bị bác**: không phải gallery (không có ảnh mẫu), cũng không phải lượt
+ghi checkpoint (lượt này không ghi cái nào). Thứ CÒN LẠI và khớp cả ba lần đo là **panel bận suốt
+lúc trang đang sinh** — nhiều khả năng một vòng dò dày đang giữ luồng.
+
+*Tôi ghi lại chỗ này thay vì sửa lặng: sáng nay tôi tuyên bố đã loại được một nửa nghi phạm và
+chỉ tay vào checkpoint. Phép đo chiều nay nói tôi loại đúng nhưng chỉ sai — và một mục backlog
+giấu đi lần chỉ sai thì lần sau có người tin nó.*
+
 **Vì sao đáng ghi chứ không bỏ qua:** *"timeout"* đọc y hệt *"thất bại"*, mà thật ra là **thành
 công**. Thứ cứu buổi hôm nay là **mọi mutation đều idempotent theo `request-id`** — nếu không, một
 lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI khác, hoặc chính Đức, rất dễ đọc sai chỗ này.
@@ -2661,6 +2674,74 @@ chất của hệ thống** — Đức chạy thật với `uniquify` thì mất
 
 - **đóng khi:** đường thư mục ghi `landed_as_requested` là `true`/`false` thật, và có ghim cắt hàm
   ghi ảnh để đòi nó khai đúng khi tên bị đổi.
+
+### B-55 · (P1) `chat.read` MÙ trước thân câu trả lời, và nó tự báo `status: OK`
+**Đo live 10/09**, gửi một lượt chữ rồi đọc lại sau khi `dom_probe` xác nhận `busy: false`,
+`stopFound: false` (tức đã gõ xong):
+
+| | |
+|---|---|
+| `selector` | `[data-turn="assistant"], [data-turn="user"]` — **đúng khung**, không phải selector chết |
+| `status` · `matched` · `with_text` | `OK` · **9** · **9** — mọi con số đều khai là khoẻ |
+| lượt **user** đọc được | **233 ký tự**, nguyên văn, đúng |
+| lượt **assistant** đọc được | **`"ChatGPT said:"` — 13 ký tự**, `truncated: false`, cho MỌI lượt |
+
+**Đây không phải selector chết, nên `NO_TURNS_MATCHED` không bao giờ nổ.** Khung khớp, đếm ra 9,
+`with_text` đếm ra 9 — chỉ có điều thứ nó đọc được là **nhãn cho trình đọc màn hình**, không phải
+thân câu trả lời. Đúng lớp lỗi mà chính chú thích của `chat.read` cảnh báo (*lỗi #5: một trường
+vừa mù vừa tự báo khoẻ, sống một tuần ngay trong hồ sơ bằng chứng*), và cũng chính là *"selector
+mục một phần"* mà ADR-0050 nêu tên.
+
+**Vì sao nó nghiêm trọng hơn vẻ ngoài:** `chat.read` là **cửa DUY NHẤT** để đọc câu trả lời —
+`chat.say` cố ý không chờ trả lời và chỉ sang đây. Nên mọi việc dạng *đọc câu trả lời rồi làm
+tiếp* hiện **không có nền**, kể cả `B-56`. Và vì nó báo `OK`, một tác nhân đọc payload sẽ kết luận
+*"ChatGPT trả lời ngắn thế thôi"* chứ không kết luận *"tôi đang mù"*.
+
+**Đừng đoán selector thân bài.** Cần một lượt `dom_probe` soi **bên trong** một khung
+`[data-turn="assistant"]` — probe hiện chỉ trả `txtHead` 60 ký tự của chính khung đó (đo được:
+`""` cho 3/4 khung lấy mẫu), nên nó chưa đủ để chỉ ra thân bài nằm ở đâu. Cùng cách đã làm ở
+`~~B-48~~`: nới probe **theo phạm vi**, đo, rồi mới vá.
+
+- **đóng khi:** `chat.read` trả về thân câu trả lời thật, và có phép ghim đòi một lượt chỉ đọc
+  được đúng cái nhãn phải báo **mù**, không được báo `OK`.
+
+### B-56 · (P1, CẦN ĐỨC CHỐT phần ⓶) Reasoning nhiều vòng: đọc khối copy cuối câu trả lời rồi gửi tiếp
+**Đức nêu 10/09.** Cách làm việc của Đức: mỗi phiên, sau khi reasoning xong, **GPT tự soạn prompt
+cho bước tiếp theo** và đặt vào một khối copy-một-chạm ở cuối câu trả lời; Đức dán sang lượt sau.
+Nhờ vậy lượt sau **đủ ngữ cảnh và đúng hướng**. Đức muốn tự động hoá đúng lối làm việc đó để
+reasoning một vấn đề **qua nhiều vòng**.
+
+**Việc này tách làm hai nửa, và hai nửa có tình trạng KHÁC HẲN nhau. Đừng gộp.**
+
+**⓵ ĐỌC được khối copy — không vướng luật nào, nhưng đang bị `B-55` chặn.**
+Cần: lấy **khối cuối cùng** của lượt trả lời mới nhất, nguyên văn, không cắt, có ranh giới rõ.
+Hôm nay `chat.read` trả `innerText` phẳng của cả lượt, không đánh dấu đâu là khối — mà tệ hơn,
+theo `B-55` nó **chưa đọc được thân bài**. Nên thứ tự bắt buộc: **`B-55` trước, `⓵` sau.**
+
+**⓶ TỰ ĐỘNG gửi khối đó đi — đây đúng là `run.start`, thứ đang bị CẤM VĨNH VIỄN.**
+`B-42` định nghĩa `run.start` là *"chạy tiếp không ai nhìn: một lệnh, N lượt gửi, không cần cấp
+phép thêm"*, và `chat.say` được thiết kế để **không** có vòng lặp bên trong: *"một lệnh = tối đa
+MỘT lượt gửi, và lượt thứ hai cần một lệnh RPC thứ hai đi qua đủ ba phanh."* Một vòng nhiều round
+tự chạy là **đúng cái đó**, gọi tên khác. Nên nó cần Đức chốt ở mức **luật**, không phải mức tính
+năng.
+
+**Và có một rủi ro thật, không phải rủi ro giấy tờ:** chữ được gõ đi **đến từ trang**. Trong lối
+làm việc của Đức, GPT đọc Google Sheet và GitHub — nếu một tài liệu nào đó chứa câu ra lệnh, câu
+ấy có thể đi vào khối copy, và vòng lặp sẽ gõ nó ra **như thể lời của Đức**. Vòng có người ở giữa
+thì Đức nhìn thấy trước khi dán; vòng tự chạy thì không ai nhìn.
+
+**Hình dạng tôi đề xuất cho ⓶, nếu Đức chốt làm** (mỗi điều là một cái phanh, không phải trang trí):
+- **Trần số vòng do người đặt**, đi kèm mỗi lệnh — không có mặc định vô hạn.
+- **Chỉ lấy chữ TRONG khối copy**, không bao giờ lấy văn xuôi quanh nó. Khối là thứ GPT cố ý đóng
+  gói; văn xuôi là chỗ chữ lạ trôi vào.
+- **Mỗi vòng một dòng sổ**, ghi nguyên văn thứ đã gửi — để sau đọc lại được vòng nào lệch hướng.
+- **Không có khối copy thì DỪNG**, không tự chế prompt thay GPT. Đây là điều kiện dừng tự nhiên và
+  nó nằm sẵn trong lối làm việc của Đức.
+- **Ba loại dừng hẳn của ADR-0050 giữ nguyên** (CAPTCHA · hết hạn mức · nghi ngờ tài khoản).
+- **Đức dừng được giữa chừng** bằng đúng nút Dừng đang có.
+
+- **đóng khi:** `B-55` đóng · ⓵ có phép ghim trên DOM thật · và ⓶ có quyết định của Đức được ghi
+  thành ADR trước khi viết dòng mã đầu tiên.
 
 ## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
