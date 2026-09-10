@@ -16,9 +16,9 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, FILE_HANH_CHINH, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { napContext } from "./rule-compiler.mjs";
-import { fingerprintState, readClaims } from "./claim.mjs";
+import { fingerprintState, readClaims, xetCuaIndex } from "./claim.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDau, xetDau, ghiDauCong, xoaDauCong, moiTruongNay } from "./chay-test.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
 import { parseBacklog } from "./what-next.mjs";
@@ -188,14 +188,34 @@ if (originMainResolves) {
     }
   }
 }
-// "Của lane khác" chỉ đúng khi: không nằm trong cây làm việc của tôi, VÀ mọi nguồn đã chạm nó
-// đều là commit mang nhãn của người khác. Một nguồn không nhãn là đủ để KHÔNG miễn.
-const cuaLaneKhac = (file) => !workingFiles.has(file)
-  && nhanCuaFile.has(file)
-  && [...nhanCuaFile.get(file)].every((nhan) => nhan && nhan !== asLabel);
+/* QUY THUỘC ĐƯỢC = việc này ĐÃ CÓ NGƯỜI ĐỨNG TÊN. Đó là câu duy nhất mục "phạm vi" hỏi.
+ *
+ * KHUNG-53, đo 08/09. Từ 08/09 mặc định là khoá mức FILE, và khoá file trả NGAY sau commit —
+ * nên tới lúc chạy cổng, bảng khoá VÙNG trống một cách hoàn toàn hợp lệ. Cổng cũ đi tìm câu
+ * trả lời trong bảng khoá vùng, nên nó ĐỎ ở đúng con đường Đức vừa chốt: một phiên làm đúng
+ * luật mới phải nhận lại **4 khoá vùng cho 6 lượt commit**, mỗi lượt chặn lane khác vô ích.
+ * `ADR-0012` mục ⑷ nói rõ chỗ mang trách nhiệm truy nguồn là nhãn `Lane:` trong commit, KHÔNG
+ * phải bảng khoá. Cổng đang hỏi bảng khoá một câu mà bảng khoá không còn là chỗ trả lời.
+ *
+ * ĐỔI ĐÚNG MỘT ĐIỀU: nhãn của CHÍNH TÔI cũng là một câu trả lời, y như nhãn của người khác.
+ * Bản cũ chỉ miễn cho nhãn NGƯỜI KHÁC — tức cổng tin lời khai của mọi lane trừ lane đang hỏi.
+ *
+ * KHÔNG PHẢI NỚI, và chiều fail-closed giữ nguyên từng vế:
+ *   · một nguồn KHÔNG nhãn (hoặc nhãn HỎNG) là đủ để KHÔNG quy thuộc được → vẫn ĐỎ;
+ *   · file còn trong CÂY LÀM VIỆC thì chưa commit nào đứng tên nó → vẫn phải có khoá, vẫn ĐỎ.
+ * Cả hai vế có ca hỏng dựng sẵn ở `tests/cong-do-that.mjs` khối 1. */
+/* `size > 0` KHÔNG dư: `[].every(Boolean)` trả `true`, nên một mục Map rỗng sẽ nói "quy thuộc
+   được" khi KHÔNG nhãn nào đứng tên. Hôm nay không tới được (chỗ điền Map luôn `.add` ngay sau
+   khi `set`), nhưng hướng hỏng là fail-OPEN, và audit độc lập nêu đúng chỗ này 10/09. Không có
+   fixture vì không dựng nổi ca hỏng — ghi ra đây để lượt sau đọc được lý do, không phải để tin. */
+const nhanHopLe = (file) => nhanCuaFile.has(file) && nhanCuaFile.get(file).size > 0
+  && [...nhanCuaFile.get(file)].every(Boolean);
+const daQuyThuoc = (file) => !workingFiles.has(file) && nhanHopLe(file);
+// Nhãn của TÔI trên một file đã commit → vùng đó là việc của tôi, dù tôi không giữ khoá vùng nào.
+const nhanCuaToi = (file) => daQuyThuoc(file) && [...nhanCuaFile.get(file)].some((nhan) => nhan === asLabel);
 // Chỉ dùng cho việc dò MỒ CÔI. Các phép kiểm khác vẫn thấy `touched` đầy đủ — thu hẹp phạm vi
 // của chúng là một bản vá khác, và trộn hai việc vào một là cách làm mất dấu cái nào gây ra gì.
-const touchedToiPhaiTraLoi = touched.filter((f) => !cuaLaneKhac(f));
+const touchedToiPhaiTraLoi = touched.filter((f) => !daQuyThuoc(f));
 
 // CÙNG HỌ VỚI FAIL-OPEN VỪA VÁ Ở `safe-push`, khác chỗ. `git()` nuốt lỗi, nên nếu `origin/main`
 // không phân giải được (repo mới dựng từ bộ khung chưa có remote, nhánh mặc định tên khác) thì
@@ -243,7 +263,13 @@ const hasRootTestScript = () => {
   try { return Boolean(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test); }
   catch { return false; }
 };
-const myPackages = packagesTouched.filter((pkg) => ownedBy(pkg) === asLabel);
+/* HAI ĐƯỜNG ĐỨNG TÊN, không một. Khoá vùng là đường cũ; nhãn `Lane:` của chính tôi trên một
+   commit là đường mới (KHUNG-53) — xem khối `daQuyThuoc` ở trên. Mọi phép kiểm dưới đây suy ra
+   từ `myPackages` / `myRootAreas`, nên nới ở ĐÂY là nới đúng một chỗ: suite gốc chạy, cổng đòi
+   Log HANDOFF, và phép kiểm vùng chỉ-thêm soi việc của tôi — cả ba đều SIẾT LẠI, không lỏng ra.
+   Trước bản này, một phiên chỉ dùng khoá file thoát cả ba trong im lặng. */
+const goiCoNhanCuaToi = new Set(touched.filter(nhanCuaToi).map((f) => areaOf(f, claimPrefixes)).filter((a) => a !== "_root"));
+const myPackages = packagesTouched.filter((pkg) => ownedBy(pkg) === asLabel || goiCoNhanCuaToi.has(pkg));
 const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(pkg) !== asLabel);
 // Mồ côi = KHÔNG có mục trong bảng, HOẶC có mục nhưng owner = null (vừa được
 // trả quyền). Bản đầu chỉ xét trường hợp thứ nhất, nên một package đã trả
@@ -313,17 +339,20 @@ const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 // trong repo-structure.mjs. Khoá gốc luôn bắt đầu bằng "_"; vùng chia-theo-gói thì không.
 const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
-const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
+const khoaGocCoNhanCuaToi = new Set(
+  ownershipKeys(touched.filter(nhanCuaToi), structure, claimPrefixes, adminFile).filter((k) => k.startsWith("_"))
+);
+const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel || khoaGocCoNhanCuaToi.has(k));
 // Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
 // push được" biến mất: một phiên nay trả khoá xong vẫn đẩy được sau, mà cổng phiên kế không đỏ oan.
 const orphanRootAreas = ownershipKeys(touchedToiPhaiTraLoi, structure, claimPrefixes, adminFile)
   .filter((k) => k.startsWith("_"))
   .filter((k) => !CLAIMS?.[k] || !CLAIMS[k].owner);
 const foreignRootAreas = rootAreasTouched.filter((k) => ownedBy(k) && ownedBy(k) !== asLabel);
-const rootTouched = rootAreasTouched.length > 0;
-// "Gốc là của tôi" chỉ đúng khi MỌI khoá gốc đã chạm đều của tôi. Một khoá của người khác là
-// đủ để phần đó không phải trách nhiệm của tôi.
-const rootMine = rootTouched && myRootAreas.length === rootAreasTouched.length;
+/* `rootTouched` / `rootMine` ĐÃ XOÁ 10/09. `rootMine` chỉ còn một chỗ dùng là `rootIsMine`, mà
+   biến đó không ai đọc — code chết từ lâu. Audit độc lập nêu nó như một chỗ nghĩa CÓ THỂ lệch sau
+   khi `myRootAreas` được nới; nghĩa của một biến chết thì không lệch được, nên đường rẻ nhất là
+   xoá. Cần lại thì `git log` có. */
 const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`))
   || (areaOf(file, claimPrefixes) === "_root" && myRootAreas.includes(keyOf(file)));
 
@@ -372,7 +401,6 @@ const doPhamVi = () => {
   if (orphanRootAreas.length) {
     return { ok: false, msg: `Vùng gốc repo bị sửa nhưng chưa ai đứng tên: ${orphanRootAreas.join(", ")}. Nhận bằng: node scripts/claim.mjs --take ${orphanRootAreas[0]} --as ${asLabel} --task "…"` };
   }
-  const rootIsMine = rootMine;
   // Việc của phiên khác trong cùng thư mục KHÔNG phải lỗi của bạn — báo cho
   // biết rồi loại khỏi mọi phép kiểm sau. Cổng không thể biết ai gõ phím nào;
   // giả vờ biết chỉ tạo ra lời buộc tội sai.
@@ -882,7 +910,7 @@ check("Test xanh", () => {
     /* CHỈ SINH LẠI ARTIFACT THÌ KHÔNG CÓ GÌ ĐỂ CHẠY TEST — và đó là một câu trả lời, không phải
      * một dấu hỏi.
      *
-     * Bốn artifact máy sinh không đòi khoá nào (luật mục 1), nên chúng không vào `myRootAreas`,
+     * Artifact máy sinh không đòi khoá nào (luật mục 1), nên chúng không vào `myRootAreas`,
      * nên `rootSuite` false, nên phiên **chỉ sinh lại artifact** rơi thẳng vào nhánh "chưa kiểm"
      * — và không có cách nào thoát: chạy `npm test` cũng không đổi được kết luận. Tức một loại
      * commit rất thường (`chore: sinh lai artifact`) **không bao giờ đóng phiên được**.
@@ -895,10 +923,48 @@ check("Test xanh", () => {
        đúng: nhánh ngay trên (`myRootAreas.length > 0 && !hasRootTestScript()`) đã chặn mọi ca
        đổi file thật trước khi tới đây, nên biến thể sai đó bị che. Giữ điều kiện chặt vì nó
        ĐÚNG, không vì có phép kiểm ghim nó. Bỏ nhánh trên thì phải viết phép kiểm cho dòng này. */
-    const dsMaySinh = new Set(generatedFrom(structure));
+    /* AUDIT 10/09 (R1) — LỜI MIỄN TRỪ NÀY CHỈ ĐỨNG ĐƯỢC KHI CÓ AI CANH THAY.
+     * Chú thích ngay trên tự nêu tiền đề của nó: *"đã có phép kiểm riêng canh chúng"*. R1 cho
+     * repo khai `generators: []` — tức TẮT đúng phép kiểm đó. Lúc ấy `generated` một mình mở
+     * một lỗ: commit bất cứ gì vào DASHBOARD.md rồi được miễn suite, mà không còn ai đối chiếu
+     * nội dung. Tổ hợp `generated` KHÔNG RỖNG + `generators` RỖNG là hợp lệ về cú pháp, nên
+     * lỗ này mở được bằng cấu hình, không cần sửa mã. Kiểm toán độc lập bắt được, không phải tôi.
+     * Nên: không có bộ sinh nào canh thì KHÔNG miễn trừ — rơi về "chưa kiểm", đúng như trước R1.
+     *
+     * GIỚI HẠN, NÓI TRƯỚC KHI AI HỎI (kiểm toán vòng hai): điều kiện này chứng minh CÓ bộ sinh,
+     * KHÔNG chứng minh bộ sinh đó canh ĐÚNG file đang được miễn. Repo khai thêm một file vào
+     * `generated` mà không bộ sinh nào sinh ra nó thì file đó vẫn được miễn suite mà chẳng ai
+     * đối chiếu. Phủ sóng từng-file đòi một bảng "bộ sinh nào đẻ ra file nào" mà repo chưa có —
+     * dựng nó bây giờ là thêm máy giữa lúc đang đóng băng. Ghi nợ `KHUNG-64`, không giả vờ đủ. */
+    /* HAI NGUỒN MIỄN TRỪ, VÀ CHÚNG KHÁC LÝ DO — 10/09, sau khi gộp chúng làm một và gãy.
+     *
+     * ⑴ ARTIFACT MÁY SINH được miễn vì CÓ bộ sinh nào đó đang bị đối chiếu với HEAD (mục "còn
+     *   tươi"). Bỏ người canh đi — `generators: []` — là lời miễn mất chỗ dựa, nên nó chết theo.
+     *   Đó là lỗ P1-2. NÓI ĐÚNG MỨC (kiểm toán vòng ba): điều kiện này bảo đảm CÓ ÍT NHẤT MỘT bộ
+     *   sinh bị đối chiếu, KHÔNG bảo đảm file đang được miễn nằm trong số được đối chiếu. Lỗ đó
+     *   còn mở và có tên: `KHUNG-64`.
+     *
+     * ⑵ FILE HÀNH CHÍNH (`.agents/claims.json`) được miễn vì lý do KHÁC HẲN: nó không phải
+     *   file hành vi (`isBehaviourFile` false, ca thật 06/09), nó có DẤU NIÊM PHONG riêng canh,
+     *   và mọi suite tự dựng bảng quyền trong fixture của nó — nên chạy suite cho nó không
+     *   chứng minh thêm gì. Lời miễn này KHÔNG dựa vào `generators`.
+     *
+     * Bản vá lỗ P1-2 của tôi gộp hai thứ này làm một, nên nó gỡ luôn ⑵: một phiên chỉ NHẬN hay
+     * TRẢ KHOÁ bị cổng báo "chưa kiểm". Mà mỗi lượt `--sua`/`--xong` đều ghi lại file đó, tức
+     * gần như MỌI phiên. `tests/khoa-dau-vet.mjs` vế 7 bắt được — nhưng chỉ bắt được SAU khi R1
+     * làm fixture xanh lên; trước đó fixture đỏ vì lý do khác nên hai lượt đều đỏ và vế đó xanh
+     * mà chẳng đo gì. Một phép ghim chỉ đúng nhờ nền đang hỏng thì nó đang ghim số 0. */
+    const dsMaySinh = new Set([
+      ...(generatorsFrom(structure).length ? generatedFrom(structure) : []),
+      ...FILE_HANH_CHINH
+    ]);
     const chiLaArtifact = sessionChanges.length > 0 && sessionChanges.every((c) => dsMaySinh.has(c.file ?? c));
     if (chiLaArtifact) {
-      return { ok: true, msg: `Phiên này chỉ sinh lại ${sessionChanges.length} artifact máy sinh — suite không áp dụng; phép kiểm "Sự thật máy sinh còn tươi" mới là chỗ canh chúng.` };
+      return { ok: true, msg: "Phiên này chỉ đổi " + sessionChanges.length
+        + " file máy sinh hoặc hành chính — suite không áp dụng. Bảng quyền thì dấu niêm phong canh."
+        + " Artifact thì mục \"Sự thật máy sinh còn tươi\" canh BẢN RA CỦA TỪNG BỘ SINH ĐÃ KHAI: một"
+        + " file khai trong `generated` mà không bộ sinh nào nhận là bản ra của mình thì KHÔNG ai"
+        + " đối chiếu nó (nợ `KHUNG-64`)." };
     }
     const coThayDoi = sessionChanges.length > 0;
     if (!coThayDoi) return { ok: true, msg: "Phiên này không đổi file nào — không có gì phải kiểm." };
@@ -954,6 +1020,43 @@ check("Test xanh", () => {
       const raw = `${String(error.stdout || "")}${String(error.stderr || "")}` || String(error.message);
       const NL2 = String.fromCharCode(10);
       const ten = [...raw.matchAll(/──\s*(.+?)\s*\(mã\s*\d+\)\s*──/g)].map((m) => m[1].trim());
+      /* SUITE XANH MÀ BỘ CHẠY THOÁT MÃ ≠ 0 — KHÔNG được gọi là "suite đỏ". `KHUNG-15`.
+       *
+       * Đo 09→10/09: 22/22 suite xanh, `chay-test.mjs` trả mã 2 vì chưa ghi được dấu, và cổng in
+       * *"suite gốc repo ĐỎ → không đọc được TÊN suite đỏ"*. Không đọc được tên vì **không có
+       * suite nào đỏ**. Đó là kiểu hỏng tệ nhất của một cổng: nó không im lặng, nó nói sai một
+       * cách tự tin — và người đọc đi tìm một suite không tồn tại.
+       *
+       * KHÔNG PHẢI NỚI, vì nó KHÔNG thành XANH: trả `skipped` → cổng thoát mã 2 → *"CHƯA ĐỦ BẰNG
+       * CHỨNG"*, vẫn không được báo xong. Chỉ đổi LỜI: từ một lời buộc tội sai sang đúng lý do.
+       *
+       * FAIL-CLOSED hai lớp: chỉ hạ xuống `skipped` khi (a) KHÔNG bắt được tên suite đỏ nào, VÀ
+       * (b) có dòng tổng xanh tường minh do bộ chạy in ra. Thiếu một trong hai thì giữ ĐỎ như cũ
+       * — không đo được thì nói không đo được, đừng đoán về phía nhẹ hơn. */
+      /* ĐÒI DẤU HIỆU CỦA CHÍNH BỘ CHẠY, KHÔNG PHẢI MỘT DÒNG TỔNG BẤT KỲ — audit độc lập bắt
+       * được, 10/09, và đây là lỗi FAIL-OPEN nên nó nặng.
+       *
+       * Bản 1.8.2 khớp `/(\d+) passed, 0 failed, \d+ total/`. Ở repo NHÀ thì vô hại: bộ chạy chỉ
+       * in dòng tổng khi cả chuỗi xanh, và mọi lượt đỏ đều in `── <suite> (mã N) ──`. Nhưng cổng
+       * này ĐƯỢC PHÁT ĐI, và ở repo tiêu thụ `scripts.test` là **runner khác** — jest, vitest,
+       * script riêng. Đo được ca hỏng: một runner in `12 passed, 0 failed, 12 total` cho dự án
+       * thứ nhất rồi `FAIL` dự án thứ hai và thoát 1 → không có tiêu đề `──` nào → bản 1.8.2
+       * HẠ một suite ĐỎ THẬT xuống BỎ.
+       *
+       * Nên hai vế, và cả hai là bằng chứng DƯƠNG của bộ chạy này: hậu tố `— SUITE XANH` (chỉ
+       * `chay-test.mjs` in, và chỉ khi CẢ chuỗi xanh) và KHÔNG có chuỗi `SUITE ĐỎ`. Runner lạ
+       * không in hậu tố đó, nên nó rơi về ĐỎ — đúng chiều fail-closed. */
+      const xanh = raw.match(/(\d+) passed, 0 failed, \d+ total — SUITE XANH/);
+      const coSuiteDo = raw.includes("SUITE ĐỎ");
+      if (!ten.length && xanh && !coSuiteDo) {
+        const viSao = (raw.match(/^[A-Z_]{4,}:.*$/m) || ["bộ chạy không nêu lý do"])[0].trim();
+        return {
+          ok: true,
+          skipped: true,
+          msg: `suite gốc repo XANH (${xanh[1]}/${xanh[1]}, 0 đỏ) nhưng bộ chạy thoát mã ≠ 0 nên KHÔNG có dấu xác nhận → ${viSao}`
+            + NL2 + "Đây KHÔNG phải suite đỏ. Chạy lại trên cây ổn định — hoặc xem lane nào đang ghi cùng lúc.",
+        };
+      }
       const moTa = ten.length
         ? `${ten.length} suite ĐỎ: ${ten.join(" · ")}`
         : `không đọc được TÊN suite đỏ từ bản ghi — đuôi: ${raw.trim().split(NL2).slice(-3).join(" | ")}`;
@@ -1027,6 +1130,16 @@ check("Sự thật máy sinh còn tươi", () => {
   // một repo dựng từ bộ khung chạy cổng này là hỏng ngay ở cổng của chính nó. Audit độc lập
   // bắt được; phép thử repo rỗng của tôi thì không, vì nó chỉ chạy cổng CẤU TRÚC.
   const scripts = generatorsFrom(structure);
+  /* AUDIT 10/09 (R1) — RỖNG THÌ NÓI RÕ LÀ KHÔNG ÁP DỤNG.
+   * Trước bản này, `scripts = []` đi hết vòng lặp mà không kiểm gì rồi trả câu "Artifact do
+   * sinh ra đã commit đều khớp với HEAD" — một câu XANH nói rằng đã kiểm, trong khi chưa kiểm
+   * gì cả. Đó là kiểu dối tệ nhất của một cổng: nó không sai, nó chỉ khiến người đọc tin sai.
+   * Và đây là MẤT BẢO VỆ THẬT, không phải "không áp dụng cho vui": ba artifact (DASHBOARD.md,
+   * llms.txt, repo-map.json) vẫn nằm trong git mà nay không còn ai đối chiếu với HEAD. Đánh đổi
+   * có chủ ý — đổi lấy việc bỏ vòng lặp 37% commit — nên phải NÓI RA ở đúng chỗ người ta đọc. */
+  if (!scripts.length) {
+    return { ok: true, msg: "KHÔNG ÁP DỤNG: repo khai `generators: []`, nên KHÔNG có gì được đối chiếu với HEAD. Artifact đã commit (nếu có) hiện KHÔNG ai canh — đó là đánh đổi cố ý của R1, không phải đã kiểm và thấy sạch." };
+  }
   const failures = [];
   const verdicts = scripts.map((script) => ({ script, clean: verifierMatchesHead(script) }));
   const unknown = verdicts.filter((entry) => entry.clean === null);
@@ -1407,7 +1520,24 @@ const doNiemPhong = () => {
   return { ok: true, msg: "dấu niêm phong còn nguyên" };
 };
 
-ghepKiem("Ai đứng tên việc này", ["khoá file", doKhoaFile], ["phạm vi", doPhamVi], ["niêm phong", doNiemPhong]);
+/* CỬA INDEX đã bật chưa — KHUNG-59, 10/09.
+   Cơ chế nằm ở `.githooks/commit-msg`, nhưng `core.hooksPath` là cấu hình MỖI BẢN SAO nên nó
+   KHÔNG theo git. Không kiểm thì bản sao nào quên bật sẽ chạy cả phiên với cửa tắt, và triệu
+   chứng y hệt lúc chưa có cửa: việc lane A vào commit dưới tên lane B, chỉ mắt người bắt được.
+   Gộp vào mục QUYỀN, không thành mục thứ 26 — cùng câu hỏi *"ai đứng tên việc này"*. */
+/* CỬA INDEX đã bật chưa — KHUNG-59, 10/09.
+   Cơ chế nằm ở `.githooks/commit-msg`, nhưng `core.hooksPath` là cấu hình MỖI BẢN SAO nên nó
+   KHÔNG theo git. Không kiểm thì bản sao nào quên bật sẽ chạy cả phiên với cửa tắt, và triệu
+   chứng y hệt lúc chưa có cửa: việc lane A vào commit dưới tên lane B, chỉ mắt người bắt được.
+   Gộp vào mục QUYỀN, không thành mục thứ 26 — cùng câu hỏi *"ai đứng tên việc này"*.
+   Quyết định ở `xetCuaIndex` (hàm thuần, ghim ở `tests/cua-index.mjs`); đây chỉ đi lấy số. */
+const doCuaIndex = () => xetCuaIndex({
+  coTrenDia: fs.existsSync(path.join(ROOT, ".githooks", "commit-msg")),
+  daTheoDoi: gitLoiLaBinhThuong("ls-files", "--error-unmatch", ".githooks/commit-msg").trim() !== "",
+  hooksPath: gitLoiLaBinhThuong("config", "--get", "core.hooksPath"),
+});
+
+ghepKiem("Ai đứng tên việc này", ["khoá file", doKhoaFile], ["phạm vi", doPhamVi], ["niêm phong", doNiemPhong], ["cửa index", doCuaIndex]);
 ghepKiem("Vùng CHỈ-THÊM không bị viết lại", ["bằng chứng", doBangChung], ["sổ quyết định", doSoQuyetDinh]);
 ghepKiem("HANDOFF đã ghi Log, đúng trần, đúng tháng", ["ghi Log", doGhiLog], ["trần/tháng", doTranHandoff]);
 /* PHẦN NẠP — CONTEXT COMPILER, gắn vào cổng ở ĐÂY chứ không thành một mục riêng.

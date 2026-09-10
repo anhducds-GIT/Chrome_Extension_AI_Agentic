@@ -619,12 +619,16 @@ kiem("artifactSoVoiHead: bộ sinh đã khai mà KHÔNG có file → khop null, 
     });
 
     kiem("FIXTURE · CẤU HÌNH HỎNG → state-check vẫn ra UNKNOWN, KHÔNG chết với vết ngăn xếp", () => {
-      // Bản đầu gọi `generatorsFrom` không bọc, nên `generators: []` làm cả lệnh chết với mã
+      // Bản đầu gọi `generatorsFrom` không bọc, nên cấu hình hỏng làm cả lệnh chết với mã
       // thoát 1 — tức nó BÁO CÓ SAI LỆCH trong khi thật ra chưa nhìn được gì. Ca này bắt được
       // trên chính fixture này, không phải suy luận.
+      //
+      // 10/09 (R1): ca hỏng CŨ là `generators: []`, nay `[]` là cách khai hợp lệ "repo không
+      // commit artifact nào". Đổi sang tên có dấu `/` — vẫn hỏng, và hỏng vì lý do khác hẳn,
+      // nên ca này vẫn ghim đúng thứ nó sinh ra để ghim: lệnh KHÔNG được chết vì cấu hình.
       const cau = join(kho, ".repo-structure.json");
       const luu = readFileSync(cau, "utf8");
-      writeFileSync(cau, luu.replace('"bo-sinh-chua-co.mjs"', ""), "utf8");
+      writeFileSync(cau, luu.replace('"bo-sinh-chua-co.mjs"', '"scripts/bo-sinh-chua-co.mjs"'), "utf8");
       try {
         const r = chay("state-check.mjs");
         assert.equal(r.status, MA_THOAT[TRANG_THAI.UNKNOWN], "cấu hình hỏng phải ra 2 (UNKNOWN), đang là " + r.status);

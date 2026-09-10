@@ -99,6 +99,30 @@ const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
  * FAIL-CLOSED, không fail-open. Lùi về `new Date()` khi không hỏi được git thì đúng một chỗ
  * này mở lại cửa hậu mà cả đoạn ghi chú ở `ngay:` vừa đóng: sang ngày là lệch HEAD, cổng đỏ
  * với mọi phiên, và không ai lần ra vì sao. Chết ngay tại chỗ kèm tên nguyên nhân thì rẻ hơn. */
+/* MỐC ĐẦY ĐỦ (có giờ phút) — cho ô "giữ khoá bao lâu".
+ *
+ * `mocHEAD()` chỉ trả NGÀY, đủ cho "hôm nay" trên trang nhưng không đủ cho một con số tính bằng
+ * PHÚT. Đó là vì sao ô thời-gian-giữ-khoá vẫn còn đọc `Date.now()` sau khi cả file này đã học
+ * bài "bộ sinh không nhìn đồng hồ" ở hai chỗ khác.
+ *
+ * `KHUNG-63`, đo 10/09: cổng đòi trang tươi → sinh lại rồi commit → commit làm mất hiệu lực dấu
+ * xác nhận → suite chạy ~19 phút → 19 phút sau con số phút đã đổi → trang lại cũ. **Lane nào giữ
+ * khoá vùng thì KHÔNG BAO GIỜ đóng được phiên**, trong khi luật lại bắt giữ khoá cho tới khi đã
+ * đẩy. Một vòng không lối ra, và nó chỉ nổ ở repo khai `build-overview.mjs` trong `generators`.
+ *
+ * FAIL-CLOSED y như `mocHEAD`: không hỏi được git thì KHÔNG sinh. Lùi về `new Date()` là dựng
+ * lại đúng cửa hậu vừa đóng. */
+export function mocHEADLuc() {
+  let ra;
+  try { ra = gitRa("log", "-1", "--format=%cI").trim(); }
+  catch (e) { throw new Error(`MOC_HEAD_HONG: không hỏi được git về LÚC của HEAD (${String(e.message).split(NL)[0]}). Trang này phải suy mốc từ HEAD chứ không từ đồng hồ — không suy được thì KHÔNG sinh.`); }
+  const d = new Date(ra);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`MOC_HEAD_HONG: lúc của HEAD đọc ra "${ra}", không phải một mốc thời gian. Trang này phải suy mốc từ HEAD — đọc không ra thì KHÔNG sinh.`);
+  }
+  return d;
+}
+
 export function mocHEAD() {
   let ra;
   try { ra = gitRa("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(); }
@@ -1307,7 +1331,16 @@ export function khoiCanDuc(canDuc, tenNguoi) {
 }
 
 /* "Ngay lúc này có mấy luồng đang chạy, và chúng đang làm gì?" */
-export function khoiDangLamGi(khoa, ngay, vet = new Map()) {
+/* `luc` = MỐC ĐỂ TRỪ RA TUỔI KHOÁ, và nó phải đến từ CÙNG NGUỒN với `khoa`.
+ *
+ * Đây là chỗ `KHUNG-63` nổ: khối này lấy bảng quyền từ HEAD (bản đem commit) rồi trừ bằng
+ * `Date.now()`. Trộn dữ liệu-của-HEAD với đồng-hồ-bây-giờ là trang không bao giờ tất định, nên
+ * cổng "Sự thật máy sinh còn tươi" đỏ lại sau mỗi phút trôi qua.
+ *
+ * LUẬT RÚT RA, ghi ở đây vì đây là chỗ trả giá: **bảng đọc dữ liệu ở đâu thì phải đọc đồng hồ ở
+ * đó.** Bản commit đọc HEAD → mốc là lúc của HEAD. Bản sống `--khoa-song` đọc đĩa → mốc là bây
+ * giờ, và đúng như vậy: câu duy nhất đáng hỏi ở bảng sống là câu về BÂY GIỜ. */
+export function khoiDangLamGi(khoa, ngay, vet = new Map(), luc = new Date()) {
   const giu = khoa.filter((k) => k.owner);
   /* CÂU IN RA LẤY TỪ `noiDauVet`, không viết lại ở đây.
    *
@@ -1317,7 +1350,7 @@ export function khoiDangLamGi(khoa, ngay, vet = new Map()) {
   const noi = (k) => {
     // Tuổi thay cho mốc thô: "giữ 40 phút" đọc được ngay, "2026-09-06T09:40:00Z" thì phải tự trừ.
     // Không tính được tuổi thì mới in mốc — thà xấu còn hơn giấu.
-    const gio = ageHours(k.tu);
+    const gio = ageHours(k.tu, luc);
     const coGio = mocCoGio(k.tu);
     // Mốc chỉ có ngày thì KHÔNG nói giờ — xem `mocCoGio` ở `claim.mjs`, con số ma đã bật ⚠ thật.
     const phan = [gio != null ? (coGio ? "giữ " + ageLabel(gio, true) : ageLabel(gio, false)) : k.tu ? "từ " + k.tu : null];
@@ -1954,7 +1987,7 @@ export function trang(dl) {
 
   <section class="tab" id="tab-cong-viec" hidden>
     ${khoiCanDuc(canDuc, tenNguoi)}
-    ${khoiDangLamGi(khoa, ngay, vetKhoa)}
+    ${khoiDangLamGi(khoa, ngay, vetKhoa, KHOA_SONG ? new Date() : mocHEADLuc())}
     ${khoiKhoa(khoa)}
     ${khoiSucKhoeNo(so, noMo, noMuc)}
     ${ideas.length ? `<div class="the"><h2>Sổ ý tưởng — phòng chờ của cả repo</h2>

@@ -124,7 +124,13 @@ const SAU = "2026-09-06T11:00:00Z";
    `import` nó. Kết quả: cổng kiểm cấu trúc CHẾT lúc nạp (`ERR_MODULE_NOT_FOUND`) trong mọi
    fixture, suốt cả ngày, **mà toàn bộ suite vẫn XANH** — vì không vế nào đòi cổng đó chạy được.
    Một lớp bảo vệ không bao giờ đỏ vì nó không bao giờ CHẠY là hình dạng lỗi tệ nhất ở đây.
-   Chép cả thư mục thì lớp lỗi này biến mất theo cấu trúc, không cần ai nhớ. */
+   Quét thư mục thì lớp lỗi này biến mất theo cấu trúc, không cần ai nhớ.
+
+   CHÍNH XÁC LÀ QUÉT, KHÔNG PHẢI "CHÉP CẢ THƯ MỤC" — kiểm toán vòng năm (10/09) bắt được câu cũ
+   nói sai so với mã: dòng dưới chỉ lấy file `.mjs` ở TẦNG ĐẦU của `scripts/`, không đệ quy và
+   không lấy đuôi khác. Đủ cho hôm nay vì `scripts/` phẳng và toàn `.mjs`; sẽ THIẾU nếu bộ khung
+   mọc thêm thư mục con hoặc một file chạy được không đuôi (đúng ca `.githooks/commit-msg` đã
+   xảy ra một lần). Một chú thích chống lỗi mà tự nói sai thì nó là lỗi tiếp theo. */
 const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mjs"));
   const cha = mkdtempSync(join(tmpdir(), "dau-vet-"));
   try {
@@ -193,7 +199,52 @@ const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mj
      * câu kết luận thì độc lập với nền: biến ghi chú thành `check(...)` là đổi cả hai ngay. */
     const soMuc = (t) => (t.match(/^ {2}\[(XANH|ĐỎ {2}|BỎ {2})\]/gm) || []).length;
     assert.equal(soMuc(co.out), soMuc(nen.out), "so phep kiem phai y nguyen — day la GHI CHU, khong phai phep kiem");
+    /* NỀN CÓ THỂ ĐỎ — NHƯNG KHÔNG ĐƯỢC CHE. Kiểm toán vòng ba (10/09) chỉ ra chỗ này, và vế
+     * này chính là nạn nhân của nó.
+     *
+     * Vế này so hai lượt chạy với NHAU. Nền ở đây là một repo TỐI GIẢN nên dãy B đỏ (B1, B4) —
+     * đo được: `nen.ma = 1`. Khi cả hai lượt đều đỏ, mã thoát khớp, số mục khớp, câu kết luận
+     * khớp, và vế gần như không đo gì. Đúng chuyện đã xảy ra: nó che một lỗi thật — phiên
+     * CHỈ nhận/trả khoá bị cổng báo "chưa kiểm" — cho tới khi R1 tình cờ làm nền xanh lên.
+     *
+     * KHÔNG chữa bằng cách đòi nền phải XANH: làm một repo tối giản đi qua cả dãy B là một việc
+     * khác hẳn, và một phép ghim đòi điều kiện nó không dựng nổi thì sẽ bị ai đó nới ra.
+     * Chữa bằng cách THU HẸP cơ chế che: so TỪNG MỤC theo TÊN, không chỉ so tổng số. Lúc đó một mục
+     * đổi trạng thái là đỏ ngay, dù nền xanh hay đỏ — và bản so này BẮT ĐƯỢC đúng lỗi nói trên
+     * (mục "Test xanh" đi từ XANH sang BỎ).
+     *
+     * Một phép ghim chỉ đúng nhờ nền đang hỏng thì nó đang ghim số 0. */
+    /* NHÃN GIỚI HẠN VÀO BA GIÁ TRỊ, ĐỆM THÌ TỰ DO — kiểm toán vòng năm sửa đúng chỗ tôi làm sai.
+     *
+     * Bản trước tôi đổi `(XANH|ĐỎ {2}|BỎ {2})` thành `([^\]]{1,8})` để "bất biến với độ đệm". Đó
+     * là NỚI, không phải siết: `[^\]]` nhận mọi ký tự kể cả xuống dòng, nên một dòng chi tiết
+     * dạng `  [B1] …` lọt vào bản đồ như một MỤC GIẢ. Tôi đã đo trên một báo cáo thật và thấy
+     * không lọt — nhưng đó chỉ chứng minh HÔM NAY không lọt, không chứng minh KHÔNG THỂ lọt.
+     * Đúng cách: giữ ba nhãn có thật (`session-check.mjs`: `r.ok ? (r.skipped ? "BỎ  " : "XANH")
+     * : "ĐỎ  "`) và chỉ cho phần ĐỆM tự do. */
+    const bangMuc = (t) => {
+      const hang = [...t.matchAll(/^ {2}\[(XANH|ĐỎ|BỎ) *\] (.+)$/gm)].map((m) => [m[2].trim(), m[1].trim()]);
+      const map = Object.fromEntries(hang);
+      assert.equal(Object.keys(map).length, hang.length,
+        "hai muc TRUNG TEN thi ban do nuot mot cai va phep so nay mat rang");
+      assert.ok(hang.length > 0, "khong doc duoc muc nao tu bao cao cong — nhan co doi dinh dang khong?");
+      return map;
+    };
+    /* NEO MỘT GIÁ TRỊ KỲ VỌNG, KHÔNG CHỈ SO HAI LƯỢT — kiểm toán vòng năm.
+     *
+     * So từng mục bắt được KHÁC BIỆT, nhưng **cùng một mục sai giống nhau ở cả hai lượt vẫn
+     * qua**. Đó vẫn là họ "xanh nhờ nền hỏng", chỉ hẹp hơn. Nên neo thẳng mục có liên quan:
+     * lượt nền không đổi file nào, lượt tín hiệu chỉ đổi `.agents/claims.json` (được miễn) —
+     * cả hai đều phải cho `Test xanh` = XANH. Gỡ `FILE_HANH_CHINH` là lượt tín hiệu thành BỎ. */
+    assert.equal(bangMuc(nen.out)["Test xanh"], "XANH",
+      "luot nen khong doi file nao thi `Test xanh` phai XANH");
+    assert.equal(bangMuc(co.out)["Test xanh"], "XANH",
+      "chi doi .agents/claims.json thi `Test xanh` phai VAN XANH — file hanh chinh duoc mien suite");
+    assert.deepEqual(bangMuc(co.out), bangMuc(nen.out),
+      "tin hieu VANG khong duoc doi TRANG THAI cua bat ky muc nao — so tung muc theo ten, khong chi so tong so");
     const ketLuan = (t) => (t.match(/^(XANH TOÀN BỘ|CHƯA XONG|CHƯA ĐỦ BẰNG CHỨNG|CỔNG BỊ SỬA).*/m) || [""])[0];
+    assert.notEqual(ketLuan(nen.out), "",
+      "khong tim thay CAU KET LUAN o luot nen — vay thi moi so sanh o day dang so hai chuoi rong");
     assert.equal(ketLuan(co.out), ketLuan(nen.out),
       `cau ket luan cua cong phai y nguyen — tin hieu nay la VANG${NL}  nen: ${ketLuan(nen.out)}${NL}  co : ${ketLuan(co.out)}`);
     ok(`7 · cổng hiện tín hiệu, tự khai VÀNG, mã thoát y nguyên (${nen.ma})`);
@@ -222,6 +273,39 @@ const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mj
     assert.ok(d.trimStart().startsWith("<!--khoa-->"), `dong mang du lieu khoa ma khong co nhan de doi: ${d.slice(0, 70)}`);
   }
   ok("8 · bảng: đúng vùng được gắn nhãn, cùng một câu, và mọi dòng đều dễ đổi");
+}
+
+/* ---- 12. `KHUNG-63` — CÙNG HEAD, CÙNG bảng quyền thì trang phải RA Y HỆT --
+ *
+ * CA HỎNG THẬT, 10/09, và nó là một VÒNG KHÔNG LỐI RA — không phải một ô hiển thị xấu:
+ *   cổng đòi trang tươi → sinh lại rồi commit → commit làm mất hiệu lực dấu xác nhận →
+ *   suite chạy ~19 phút → 19 phút sau con số phút đã đổi → trang lại cũ → quay lại đầu.
+ * Lane nào giữ khoá VÙNG thì không bao giờ đóng được phiên, trong khi luật lại bắt giữ khoá cho
+ * tới khi ĐÃ ĐẨY. Lỗi này đã có tên sẵn ở đầu `build-so-migrate.mjs` — *"bộ sinh nhìn ĐỒNG HỒ
+ * thì bản sinh lại lệch bản đã commit dù không một dữ liệu nào đổi"* — và file đó đã chữa bằng
+ * `mocHEAD()`. Cùng một bài học, hai file, một file chưa học.
+ *
+ * VẾ NÀY GHIM CÁI VÒNG, KHÔNG GHIM MỘT CHUỖI: sinh hai lần với hai "bây giờ" cách nhau 19 phút,
+ * và đòi hai bản RA Y HỆT. Một vế chỉ so chuỗi "giữ 44 phút" sẽ xanh cả khi bệnh còn nguyên. */
+{
+  const khoa = [{ khoa: "_code", owner: "lane-a", task: "giu suot luot lam viec", tu: MOC }];
+  const mocA = new Date(Date.parse(MOC) + 44 * 60000);
+  const mocB = new Date(Date.parse(MOC) + 63 * 60000);   // 19 phút sau — đúng một lượt suite
+
+  const a = khoiDangLamGi(khoa, "2026-09-06", new Map(), mocA);
+  const b = khoiDangLamGi(khoa, "2026-09-06", new Map(), mocB);
+  assert.notEqual(a, b, "hai moc KHAC nhau ma trang giong nhau thi ve duoi khong chung minh gi");
+
+  const lai = khoiDangLamGi(khoa, "2026-09-06", new Map(), mocA);
+  assert.equal(lai, a, "CUNG mot moc phai ra Y HET — do la dieu kien de trang tat dinh tu HEAD");
+  assert.match(a, /giữ 44 phút/, "moc truyen vao phai duoc DUNG that, khong phai bi bo qua");
+
+  /* VÀ MẶC ĐỊNH PHẢI LÀ ĐỒNG HỒ — bảng sống (`--khoa-song`) đọc đĩa nên nó HỎI VỀ BÂY GIỜ, và
+     đó là chủ ý ghi từ 06/09. Bỏ vế này thì có người "sửa" bằng cách đóng cứng mốc HEAD cho cả
+     hai bản ra, và bảng sống thôi nói được câu duy nhất nó sinh ra để nói. */
+  const macDinh = khoiDangLamGi(khoa, "2026-09-06", new Map());
+  assert.notEqual(macDinh, a, "mac dinh phai la DONG HO bay gio, khong phai moc HEAD dong cung");
+  ok("12 · KHUNG-63: cùng mốc ra y hệt · khác mốc thì khác · mặc định vẫn là đồng hồ cho bảng sống");
 }
 
 /* ---- 9. CON SỐ MA: mốc chỉ có NGÀY không được báo giờ ------------------

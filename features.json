@@ -19,7 +19,9 @@
               "scripts/build-overview.mjs",
               "scripts/overview-doc.mjs",
               "scripts/md-mini.mjs",
-              "scripts/luu-do.mjs"
+              "scripts/luu-do.mjs",
+              "tests/overview-doc-smoke.mjs",
+              "tests/luu-do-smoke.mjs"
             ],
             "lenh": [
               "overview"
@@ -53,7 +55,10 @@
               "bang-song/may-chu.mjs",
               "bang-song/mot-luot.mjs",
               "bang-song/Bat-tu-chay.cmd",
-              "bang-song/Tat-tu-chay.cmd"
+              "bang-song/Tat-tu-chay.cmd",
+              "bang-song/Xem-bang.cmd",
+              "bang-song/Mo-may-chu.cmd",
+              "tests/bang-song.mjs"
             ],
             "lenh": [
               "bang-song"
@@ -154,7 +159,8 @@
           "can": {
             "file": [
               ".agents/claims.json",
-              "scripts/claim.mjs"
+              "scripts/claim.mjs",
+              "tests/khoa-file.mjs"
             ]
           },
           "khong_co_thi": "Sửa tay là đọc-sửa-ghi: hai phiên cùng thấy 'trống' rồi cùng ghi tên mình, người ghi sau thắng, người ghi trước không hề biết. Đã xảy ra thật 02/09."
@@ -212,6 +218,31 @@
             ]
           },
           "khong_co_thi": "Trả khoá xong để lại commit chưa công bố mà không ai đứng tên, và lane kế bị cổng xuất bản chặn với một lời khuyên SAI ('chờ phiên đó tự push' — nó đã đi rồi)."
+        },
+        {
+          "ma": "F3.6",
+          "ten": "Cửa index — `git commit` thôi cuốn được việc lane khác",
+          "tu_ban": "1.8.8",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".githooks/commit-msg",
+              "tests/cua-index.mjs"
+            ]
+          },
+          "khong_co_thi": "Một cây làm việc có ĐÚNG MỘT index: mẻ `git add` của lane này nằm trong `git commit` của lane kia. Xảy ra THẬT hai lần trong một ngày (10/09), hai chiều ngược nhau, và `safe-push` không cứu được vì hai việc đã nằm trong CÙNG một commit."
+        },
+        {
+          "ma": "F3.7",
+          "ten": "Tự trả khoá file ngay sau commit",
+          "tu_ban": "1.9.10",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".githooks/post-commit"
+            ]
+          },
+          "khong_co_thi": "Luật nói khoá FILE trả NGAY SAU commit, nhưng chỉ CỔNG cưỡng chế — tức cuối phiên, và cổng đỏ chỉ là lưới đỡ. Đo 10/09 ở chính repo nhà: một phiên giữ hai khoá 47 phút dù luật ghi 'vài phút'. Hook chạy trong chính lượt commit nên không có chỗ để quên. Nó chỉ trả khoá của file ĐÃ SẠCH trên cây — file còn sửa dở thì giữ, vì lượt ghi chưa xong."
         }
       ]
     },
@@ -581,6 +612,22 @@
             ]
           },
           "khong_co_thi": "Đề bài viết trước khi đo repo đích đã dạy sai một lượt thật. Một đề bài dựng trên số liệu đoán còn nguy hiểm hơn không có đề bài."
+        },
+        {
+          "ma": "F7.8",
+          "ten": "Quét CẢ ĐỘI HÌNH — repo nào đang tụt lại bản khung nào",
+          "tu_ban": "1.8.11",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/doi-hinh.mjs",
+              "tests/doi-hinh.mjs"
+            ],
+            "lenh": [
+              "doi-hinh"
+            ]
+          },
+          "khong_co_thi": "Câu \"repo nào đang tụt lại\" chỉ trả lời được ở repo nhà, nên không có lệnh này thì nó phụ thuộc vào việc ai đó NHỚ RA. Đo 10/09: 5 repo đã migrate, 5 repo tụt lại, 0 repo khớp — và không cổng nào ở đó đỏ."
         }
       ]
     },
@@ -681,7 +728,8 @@
           "can": {
             "file": [
               "features.json",
-              "scripts/features.mjs"
+              "scripts/features.mjs",
+              "tests/features-smoke.mjs"
             ],
             "lenh": [
               "features"
@@ -707,5 +755,17 @@
         }
       ]
     }
-  ]
+  ],
+  "luat_nha": {
+    "_doc": "MỖI MỤC LUẬT Ở `AGENTS.md` CỦA REPO NHÀ PHẢI CÓ MỘT PHÉP DÒ, HOẶC MỘT LỜI MIỄN CÓ LÝ DO. Vì sao: tầng LUẬT là chữ nằm trong file mà repo đích TỰ SỞ HỮU, nên `upgrade.mjs` không bao giờ ghi nó — đúng, đó là file của họ. Hệ quả: luật mới thêm ở nhà KHÔNG có đường nào tới repo đích, và cách duy nhất để nó không biến mất im lặng là một phép dò `trong_file` kể tên chuỗi còn thiếu. Đã xảy ra hai lần: `F4.7` (luật hai vai) báo `[x]` ở 4 repo trong khi grep ra 0/4; `F5.1` (BẢN DUY NHẤT) thiếu ở cả 3 repo migrate ngày 09/09. MIỄN LÀ MỘT QUYẾT ĐỊNH, KHÔNG PHẢI CHỖ ĐỂ TRỐN: mục nào ở đây là mục đã có người nhìn và nói 'chưa/không mang sang, vì...'. Mục mới thêm vào AGENTS.md mà không dò cũng không miễn thì cổng ĐỎ.",
+    "mien": {
+      "0. Ba việc phải làm, theo đúng thứ tự": "NỢ — mang được, chưa chọn chuỗi. Chuỗi phải đo NĂNG LỰC (có cổng đóng phiên và có thứ tự đọc) chứ không đo cách hành văn của repo nhà, nếu không mọi repo đỏ vì diễn đạt khác. Xem KHUNG-61.",
+      "1. Ai giữ package nào — chống hai AI giẫm chân": "NỢ — cùng lý do mục 0. Xem KHUNG-61.",
+      "3. Năm luật vàng": "NỢ — cùng lý do mục 0. Xem KHUNG-61.",
+      "4. Vùng cấm sửa": "NỢ — cùng lý do mục 0. Xem KHUNG-61.",
+      "6. Sổ tay mở khi cần — Tầng 2": "KHÔNG mang: bảng cửa vào của repo nhà trỏ tới file của repo nhà. Repo đích có bảng riêng, và `docs.file_map` của nó mới là nguồn.",
+      "7. Đóng phiên — ghi lại 3 thứ": "NỢ — cùng lý do mục 0. Xem KHUNG-61.",
+      "8. Thêm một luật thì phải bớt một luật": "NỢ — cùng lý do mục 0. Xem KHUNG-61."
+    }
+  }
 }

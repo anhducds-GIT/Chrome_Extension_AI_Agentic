@@ -34,7 +34,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
   DAU_HIEU_PHAT_HANH, demTheoTrangThai, do1Repo, docDanhMuc, docLenh, khoiMigrate,
@@ -201,22 +201,38 @@ const danhMuc = docDanhMuc(ROOT);
    * trong danh mục suốt từ lúc phát; hậu quả đo được: đo một repo vừa nhận cơ chế đó hôm trước,
    * bảng in ra `20 xong · 3 một phần · 12 thiếu` mà **không một dòng nào** nói tới nó.
    *
-   * Vế này bịt chiều đó: mọi script bộ khung PHÁT ĐI được thì phải xuất hiện trong ít nhất một
-   * phép đo. Không đòi mỗi script một mục — nhiều script thuộc cùng một cơ chế. Chỉ đòi: không
-   * script nào phát đi mà danh mục **chưa từng nhắc tới**. */
-  /* ĐỌC CÓ THỂ NÉM — và nó đã ném thật, ngay lượt chạy đầu ở repo hạt giống (08/09).
-   * `build-template.mjs` là công cụ của NƠI PHÁT HÀNH; repo tiêu thụ không có nó, nên
-   * `readFileSync` ném ENOENT và **cả suite chết** — không phải đỏ một vế, mà chết cả file, ở
-   * một repo hoàn toàn khoẻ mạnh. Kiểm sự tồn tại TRƯỚC khi đọc, rồi bỏ qua CÓ TÊN.
-   * Đây là lần thứ BA trong một phiên tôi vấp đúng chỗ này. */
-  let nguon = null;
-  try { nguon = readFileSync(join(ROOT, "scripts", "build-template.mjs"), "utf8"); } catch { nguon = null; }
-  const khoi = nguon === null ? null : /const PORTABLE_SCRIPTS = \[([\s\S]*?)\];/.exec(nguon);
-  if (!khoi) {
-    boQuaVi("chiều ngược: script phát đi phải được khai", "repo này không có build-template.mjs (không phải nơi phát hành)");
+   * Vế này bịt chiều đó: mọi thứ bộ khung PHÁT ĐI được thì phải xuất hiện trong ít nhất một
+   * phép đo. Không đòi mỗi file một mục — nhiều file thuộc cùng một cơ chế. Chỉ đòi: không file
+   * nào phát đi mà danh mục **chưa từng nhắc tới**.
+   *
+   * ================== VÌ SAO HỎI BỘ DỰNG, KHÔNG ĐỌC MÃ NGUỒN ==================
+   *
+   * Bản đầu (1.3.x) đọc `scripts/build-template.mjs` bằng `readFileSync` rồi bới đúng MỘT mảng
+   * `PORTABLE_SCRIPTS` bằng regex. Nó bắt được scripts, và **mù với mọi thứ còn lại**: đo
+   * 10/09 trên bản 1.8.10, tầng máy có 38 file thì **9 file không phép đo nào chạm tới** —
+   * `tests/cua-index.mjs` + `.githooks/commit-msg` (nguyên cơ chế cửa index, bản vá KHUNG-59),
+   * `bang-song/Xem-bang.cmd` (**cửa CHÍNH** của đúng cái tính năng tự gọi mình là "ba cửa"),
+   * và bốn phép ghim khác. Cả 9 đều xanh suốt, vì vế này không hỏi tới chúng.
+   *
+   * Gốc bệnh: hỏi MỘT MẢNG trong mã nguồn là hỏi *chi tiết triển khai*, và chi tiết đó đã đổi
+   * ba lần (`bang-song/` 1.3.26 · `features.json` 07/09 · `.githooks/` 1.8.10) — mỗi lần lại
+   * mọc thêm một chỗ mà vế này không biết. Nên hỏi **bộ dựng**: `fileMay(buildTemplateFiles())`
+   * là định nghĩa DUY NHẤT của tầng máy, cũng chính cái mà `bamBanTrich` và `upgrade.mjs` dùng.
+   * Bộ khung mọc thêm thư mục, đuôi file hay hook mới thì vế này tự thấy, không đợi ai nhớ. */
+  /* NHẬP CÓ THỂ NÉM — và nó đã ném thật, ngay lượt chạy đầu ở repo hạt giống (08/09).
+   * `build-template.mjs` là công cụ của NƠI PHÁT HÀNH; repo tiêu thụ không có nó, nên phép nhập
+   * ném và **cả suite chết** — không phải đỏ một vế, mà chết cả file, ở một repo hoàn toàn khoẻ
+   * mạnh. Nhập động trong try/catch, rồi bỏ qua CÓ TÊN. */
+  let boDung = null;
+  try { boDung = await import(pathToFileURL(join(ROOT, "scripts", "build-template.mjs")).href); }
+  catch { boDung = null; }
+  if (!boDung?.buildTemplateFiles || !boDung?.fileMay) {
+    boQuaVi("chiều ngược: thứ phát đi phải được khai", "repo này không có build-template.mjs (không phải nơi phát hành)");
   } else {
-    const phatDi = [...khoi[1].matchAll(/"([\w.-]+\.mjs)"/g)].map((m) => m[1]);
-    assert.ok(phatDi.length >= 5, `doc duoc qua it script phat di (${phatDi.length}) — regex hong chu khong phai repo hong`);
+    const phatDi = boDung.fileMay(boDung.buildTemplateFiles());
+    /* Chặn ca NHẬP ĐƯỢC MÀ TRẢ RỖNG: một danh sách rỗng làm vế này xanh tuyệt đối mà không hỏi
+     * gì — đúng kiểu FAIL-OPEN mà bản 1.8.3 vừa phải vá ở chỗ khác. */
+    assert.ok(phatDi.length >= 20, `tầng máy chỉ có ${phatDi.length} file — bộ dựng hỏng chứ không phải repo hỏng`);
     /* CHỈ đọc khối `can`, KHÔNG đọc cả JSON. Bản đầu `JSON.stringify` toàn danh mục, và một đột
      * biến gỡ `scripts/luu-do.mjs` khỏi `can.file` của F1.1 vẫn SỐNG SÓT — vì tên file đó còn
      * nằm trong văn xuôi `khong_co_thi` của chính mục ấy. Tức vế nhận NHẮC TỚI là đủ, trong khi
@@ -224,10 +240,66 @@ const danhMuc = docDanhMuc(ROOT);
     const daDo = JSON.stringify(danhMuc.blocks.flatMap((b) => b.muc.map((m) => m.can ?? {})));
     const chuaKhai = phatDi.filter((f) => !daDo.includes(f));
     assert.deepEqual(chuaKhai, [],
-      `script bộ khung PHÁT ĐI được mà không PHÉP ĐO nào của danh mục chạm tới: ${chuaKhai.join(" · ")}`
-      + " → thêm nó vào một mục của features.json. Danh mục nói THIẾU thì mọi báo cáo migrate dựng trên nó thiếu theo.");
-    ok(`5b · chiều ngược: ${phatDi.length}/${phatDi.length} script phát đi đều nằm trong một phép ĐO (không tính văn xuôi)`);
+      `bộ khung PHÁT ĐI được mà không PHÉP ĐO nào của danh mục chạm tới: ${chuaKhai.join(" · ")}`
+      + " → thêm nó vào `can` của một mục trong features.json. Danh mục nói THIẾU thì mọi báo cáo migrate dựng trên nó thiếu theo.");
+    ok(`5b · chiều ngược: ${phatDi.length}/${phatDi.length} file tầng MÁY đều nằm trong một phép ĐO (không tính văn xuôi)`);
   }
+}
+
+/* ---- 2b. TRẠNG THÁI THỨ NĂM — "có, nhưng bản CŨ" ------------------------
+ *
+ * Lỗ đo được 10/09: ba repo vừa migrate xong đọc `33 xong · 0 một phần` — xanh tuyệt đối — trong
+ * khi `upgrade --plan` cùng ngày kể **7 file CŨ** ở cả ba, gồm `session-check.mjs` và
+ * `chay-test.mjs` (bản 1.8.3 vừa vá một FAIL-OPEN trong đó). `[x]` trả lời *"có chưa"*; nó không
+ * trả lời *"có bản nào"*, và với một bộ khung phát hành liên tục thì câu sau mới tốn tiền.
+ *
+ * Vế này ghim BỐN điều, và điều thứ hai với thứ tư là chỗ dễ làm sai nhất. */
+{
+  const muc = { ma: "T.9", pham_vi: "ca-hai", can: { file: ["a", "b"] } };
+
+  // ⑴ đủ file, nhưng một file là bản cũ → CU, và phải KỂ TÊN file cũ
+  const rCu = xetMuc(muc, "/r", false, {}, () => true, undefined, new Set(["b"]));
+  assert.equal(rCu.trangThai, TRANG_THAI.CU, "du file ma co file CU thi phai la CU, khong duoc bao XONG");
+  assert.deepEqual(rCu.cu, ["b"], "phai KE TEN file cu — 'co gi do cu' thi khong ai di sua duoc");
+
+  /* ⑵ CU KHÔNG ĐƯỢC CHE một ca nặng hơn. Thứ tự nặng nhẹ: một phần > cũ > đủ. Một mục vừa thiếu
+   * một nửa vừa có file cũ thì thứ phải xử trước vẫn là nửa đang thiếu; báo `[!]` ở đó là hạ mức
+   * báo động. Đột biến `tongCo === tongCan ? ... : (cuTrongMuc.length ? CU : MOT_PHAN)` chết ở đây. */
+  const chiCoA = (_r, f) => f === "a";
+  assert.equal(xetMuc(muc, "/r", false, {}, chiCoA, undefined, new Set(["a"])).trangThai,
+    TRANG_THAI.MOT_PHAN, "dang MOT PHAN ma co file cu thi VAN la MOT PHAN — CU khong duoc che ca nang hon");
+  assert.equal(xetMuc(muc, "/r", false, {}, () => false, undefined, new Set(["a", "b"])).trangThai,
+    TRANG_THAI.THIEU, "khong co gi thi THIEU, du ten file nam trong tap CU");
+
+  // ⑶ không truyền tập cũ → y nguyên hành vi cũ. Repo đích chạy nhánh này, không được đổi gì.
+  assert.equal(xetMuc(muc, "/r", false, {}, () => true).trangThai, TRANG_THAI.XONG,
+    "khong doi chieu thi phai XONG y nhu truoc — repo dich khong duoc doi hanh vi");
+  assert.equal(xetMuc(muc, "/r", false, {}, () => true, undefined, new Set()).trangThai,
+    TRANG_THAI.XONG, "tap RONG = da doi chieu, khong co gi cu");
+
+  /* ⑷ KHÔNG ĐO ĐƯỢC phải NÓI RA. Một bảng `0 bản cũ` trông y hệt nhau ở hai ca ngược nhau:
+   * *đã đối chiếu và sạch*, và *chưa đối chiếu lần nào*. Đây đúng là hình dạng của một FAIL-OPEN:
+   * im lặng thì người đọc tự điền ca dễ chịu hơn. Bản in phải phân biệt được hai ca. */
+  const kq = [{ ma: "K", ten: "k", muc: [{ ...muc, ket: xetMuc(muc, "/r", false, {}, () => true) }] }];
+  const chuaDo = khoiMigrate({ version: "9.9.9" }, kq, "2026-01-01", null, "9.9.9");
+  const daDo = khoiMigrate({ version: "9.9.9" }, kq, "2026-01-01", new Set(), "9.9.9");
+  assert.match(chuaDo, /CHƯA đối chiếu bản chuẩn/, "chua doi chieu thi phai NOI RA la chua do");
+  assert.match(daDo, /Đã đối chiếu với bản chuẩn/, "da doi chieu thi phai noi ro doi voi ban nao");
+  assert.notEqual(chuaDo, daDo, "hai ca nguoc nhau ma in ra giong het nhau la mot FAIL-OPEN");
+
+  /* ⑸ THIẾU VÌ CHƯA LẮP khác THIẾU VÌ REPO ĐANG CŨ — hai ca ấy đi về hai lượt việc khác nhau,
+   * và đổ nhầm cột là đổ việc cho nhầm người. `tu_ban` tới trước bản 1.8.11 chỉ được IN RA
+   * (hai chỗ dùng, cả hai đều `console`); đây là chỗ nó gánh việc thật. */
+  const thieu = { ma: "T.10", ten: "t", tu_ban: "1.8.8", pham_vi: "ca-hai", can: { file: ["z"] } };
+  const kqT = [{ ma: "K", ten: "k", muc: [{ ...thieu, ket: xetMuc(thieu, "/r", false, {}, () => false) }] }];
+  assert.match(khoiMigrate({ version: "9" }, kqT, "2026-01-01", new Set(), "1.8.11", "1.8.0"),
+    /việc NÂNG, không phải việc migrate/, "thieu mot co che ra doi SAU ban repo dang ghim la viec NANG");
+  assert.doesNotMatch(khoiMigrate({ version: "9" }, kqT, "2026-01-01", new Set(), "1.8.11", "1.9.0"),
+    /việc NÂNG/, "repo ghim MOI hon ma van thieu thi do la thieu that, dung do sang viec nang");
+  assert.doesNotMatch(khoiMigrate({ version: "9" }, kqT, "2026-01-01", new Set(), "1.8.11", null),
+    /việc NÂNG/, "khong doc duoc so ghim thi KHONG doan");
+
+  ok("2b · trạng thái CŨ: kể tên file · không che ca nặng hơn · không đối chiếu thì NÓI RA · thiếu-vì-cũ tách khỏi thiếu-thật");
 }
 
 /* ---- 5c. File repo đích TỰ SỞ HỮU thì phải đo NỘI DUNG, không đo sự có mặt --- */
@@ -273,6 +345,54 @@ const danhMuc = docDanhMuc(ROOT);
   assert.match(xetMuc(muc, "/r", false, {}, coFile, () => "khong co gi").thieu[0], /① Giữ lõi/,
     "phai KE TEN chuoi con thieu, khong chi noi 'thieu noi dung'");
   ok("5d · phép đo nội dung: có XONG · file có mà chữ không THIẾU · đọc không được THIẾU · kể tên chữ thiếu");
+}
+
+/* ---- 5e. TẦNG LUẬT — mỗi mục ở AGENTS.md nhà phải CÓ DÒ hoặc CÓ MIỄN -----
+ *
+ * Ba tầng dưới (máy · sổ tay · hạt giống) đều có đường tới repo đích. Tầng LUẬT thì không:
+ * nó là chữ nằm trong `AGENTS.md`, file mà repo đích TỰ SỞ HỮU và `upgrade.mjs` **không bao
+ * giờ ghi** — đúng, đó là file của họ. Nên luật mới thêm ở nhà không có đường nào tự tới, và
+ * thứ duy nhất ngăn nó biến mất im lặng là một phép dò `trong_file` kể tên chuỗi còn thiếu.
+ *
+ * Đã hỏng hai lần theo đúng kiểu đó: `F4.7` báo `[x]` ở 4 repo trong khi `grep` ra 0/4, và
+ * `F5.1` thiếu ở cả 3 repo migrate 09/09 — cả hai chỉ lộ ra khi có người NGỒI XUỐNG khai phép dò.
+ *
+ * Vế này bịt chiều OMISSION, không phải chiều xoá: thêm một mục vào `AGENTS.md` của repo nhà mà
+ * không khai gì thì mục đó **không dò cũng không miễn** → ĐỎ ngay lượt sau. Miễn là một quyết
+ * định có lý do ghi lại, không phải chỗ để trốn — nên lời miễn rỗng cũng ĐỎ. */
+if (!laNoiPhatHanh(ROOT)) {
+  boQuaVi("tầng luật: mỗi mục AGENTS.md phải có dò hoặc có miễn", "câu này hỏi về AGENTS.md của repo NHÀ");
+} else {
+  const luat = readFileSync(join(ROOT, "AGENTS.md"), "utf8");
+  /* Cắt theo `## ` ở đầu dòng. `### ` là mục con, đi theo mục cha — chia nhỏ hơn thì mỗi lần
+   * ai đó thêm một tiểu mục lại phải khai một lần, và cái giá đó mua về rất ít. */
+  const khuc = luat.split(/^## /m).slice(1).map((k) => ({ ten: k.split("\n")[0].trim(), than: k }));
+  assert.ok(khuc.length >= 5, `doc duoc qua it muc trong AGENTS.md (${khuc.length}) — phep cat hong chu khong phai repo hong`);
+
+  const doAgents = danhMuc.blocks.flatMap((b) => b.muc.flatMap((m) => (m.can?.trong_file ?? [])
+    .filter((t) => t.file === "AGENTS.md").map((t) => ({ ma: m.ma, chuoi: t.chuoi ?? [] }))));
+  const mien = danhMuc.luat_nha?.mien ?? {};
+
+  const hoDoi = [];
+  for (const k of khuc) {
+    const coDo = doAgents.some((t) => t.chuoi.length > 0 && t.chuoi.every((c) => k.than.includes(c)));
+    const loiMien = String(mien[k.ten] ?? "").trim();
+    if (coDo) continue;
+    if (loiMien.length >= 20) continue;                 // miễn phải NÊU LÝ DO, không phải gõ ""
+    hoDoi.push(k.ten + (loiMien ? " (lời miễn quá ngắn, không phải một lý do)" : ""));
+  }
+  assert.deepEqual(hoDoi, [],
+    `mục luật ở AGENTS.md của repo nhà KHÔNG có phép dò và cũng KHÔNG có lời miễn: ${hoDoi.join(" · ")}`
+    + " → hoặc thêm một `trong_file` vào features.json, hoặc khai vào `luat_nha.mien` kèm lý do."
+    + " Không khai thì luật đó không có đường nào tới repo đích, và không ai biết.");
+
+  /* Miễn cho một mục KHÔNG CÒN TỒN TẠI là rác: nó làm danh sách miễn dài ra và che mất mục thật. */
+  const tenKhuc = new Set(khuc.map((k) => k.ten));
+  const mienThua = Object.keys(mien).filter((t) => !tenKhuc.has(t));
+  assert.deepEqual(mienThua, [], `\`luat_nha.mien\` còn miễn cho mục đã biến mất khỏi AGENTS.md: ${mienThua.join(" · ")}`);
+
+  const soDo = khuc.length - Object.keys(mien).length;
+  ok(`5e · tầng luật: ${khuc.length} mục ở AGENTS.md nhà — ${soDo} có phép dò · ${Object.keys(mien).length} miễn có lý do`);
 }
 
 /* ---- 6. Khối markdown dán vào hồ sơ migrate ----------------------------- */

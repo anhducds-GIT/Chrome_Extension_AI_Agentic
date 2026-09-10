@@ -32,14 +32,17 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { once } from "node:events";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { canSinh, chenBang, khoaChanSinhFrom, KHOA_CHAN_SINH, NHAN_BANG, xetChot } from "../bang-song/loi.mjs";
 import { DUONG, PHUONG_THUC, xuLy } from "../bang-song/may-chu.mjs";
+import { generatorsFrom } from "../scripts/repo-structure.mjs";
+import { collectModel, createHeadDeps, runDashboard } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -204,6 +207,59 @@ const bang = (khoa) => JSON.stringify({ claims: khoa });
   assert.equal(hoiGit("bang-song/loi.mjs"), false, "ma nguon cua ba cua thi phai duoc git theo doi");
   ok("8 · git tự xác nhận: ba file bản ra nằm ngoài, mã nguồn nằm trong");
 }
+/* VẾ 8b — R1 (10/09): CỔNG THÔI ĐÒI BẢNG KHỚP HEAD, VÀ TRANG HTML RA KHỎI GIT.
+ *
+ * Trước 10/09 cổng "Sự thật máy sinh còn tươi" đòi artifact ĐÃ COMMIT khớp HEAD. Vòng lặp:
+ * commit → HEAD đổi → bảng cũ → sinh lại → commit → HEAD đổi. Đo 7 ngày: 191/522 commit (37%)
+ * chỉ để sinh lại bảng, và mỗi cái còn làm hỏng dấu xác nhận suite (~10 phút một lượt).
+ *
+ * BẢN GHIM ĐẦU CỦA VẾ NÀY LÀ ĐỒ TRANG TRÍ, và kiểm toán độc lập bắt được: nó chỉ so
+ * `.repo-structure.json` với `[]`, tức chép lại CẤU HÌNH. Khôi phục điều kiện cũ
+ * `value.length === 0` trong `generatorsFrom` — đúng cái bug R1 chữa — thì nó VẪN XANH. Đã dựng
+ * lại ca hỏng và xác nhận: xanh. Nên nay vế này gọi THẲNG hàm và đòi HÀNH VI.
+ *
+ * Và đọc `git ls-files` là đọc INDEX — index dùng CHUNG với mọi lane, nên một lane khác `git add`
+ * là kết quả đổi dù HEAD chưa đổi. Muốn nói "một bản clone mới có gì" thì phải hỏi CÂY HEAD.
+ */
+{
+  /* `--no-index`: không có cờ này thì `check-ignore` chịu ảnh hưởng của INDEX — một lane khác
+     `git add -f` là vế này đỏ dù HEAD không đổi. Ta đang hỏi QUY TẮC .gitignore, không hỏi
+     trạng thái index. Kiểm toán vòng hai chỉ ra; cùng họ với việc đổi ls-files sang ls-tree. */
+  const biBoQua = (p) => {
+    try { execFileSync("git", ["check-ignore", "--no-index", "-q", p], { cwd: ROOT }); return true; }
+    catch (_) { return false; }
+  };
+  const trongHEAD = new Set(
+    execFileSync("git", ["ls-tree", "-r", "HEAD", "--name-only"], { cwd: ROOT, encoding: "utf8" })
+      .split(String.fromCharCode(10)).map((s) => s.trim()).filter(Boolean)
+  );
+
+  // (1) HÀNH VI của bộ đọc cấu hình — đây là thứ R1 thật sự sửa.
+  assert.deepEqual(generatorsFrom({ generators: [] }), [],
+    "`[]` PHAI hop le: cach DUY NHAT mot repo khai 'dung doi chieu artifact nao voi HEAD' — no KHONG noi repo thoi commit chung");
+  assert.ok(generatorsFrom({}).length > 0,
+    "VANG khoa thi VAN dung mac dinh — bo quen khac khai rong, tat bao ve phai la hanh dong co y");
+  assert.throws(() => generatorsFrom({ generators: "build-dashboard.mjs" }), /GENERATORS_HONG/,
+    "khong phai mang thi van phai nem loi");
+  assert.throws(() => generatorsFrom({ generators: ["scripts/build-dashboard.mjs"] }), /GENERATORS_HONG/,
+    "ten co dau / thi van phai nem loi");
+
+  // (2) LỜI MIỄN TRỪ SUITE phải chết theo khi không còn ai canh — lỗ audit tìm ra.
+  assert.equal(generatorsFrom({ generators: [] }).length, 0,
+    "co so cua le mien tru: rong nghia la khong ai canh, nen khong duoc mien suite");
+
+  // (3) CÂY HEAD, không phải index.
+  assert.equal(biBoQua("DASHBOARD-Ark-Repo-Harness.html"), true, "trang HTML PHAI bi .gitignore bo qua");
+  assert.ok(!trongHEAD.has("DASHBOARD-Ark-Repo-Harness.html"), "trang HTML KHONG duoc nam trong cay HEAD");
+  for (const f of ["llms.txt", "DASHBOARD.md", "repo-map.json"]) {
+    assert.ok(trongHEAD.has(f), f + " PHAI o lai trong cay HEAD — llms.txt la goc dieu huong cua B6");
+  }
+
+  // (4) Và repo này thật sự đã khai rỗng.
+  assert.deepEqual(JSON.parse(readFileSync(join(ROOT, ".repo-structure.json"), "utf8")).generators, [],
+    "repo nay phai khai `generators: []` — khai lai la dung lai vong lap 37%");
+  ok("8b · `[]` hợp lệ mà vắng khoá vẫn mặc định · HTML ngoài cây HEAD · ba file text ở lại");
+}
 
 /* ---- 9. BĂNG: gỡ được, không chồng, và NÓI RA thứ nó không thấy ---------- */
 {
@@ -289,6 +345,135 @@ const bang = (khoa) => JSON.stringify({ claims: khoa });
     assert.ok(crlf > 0, `bang-song/${f} khong co dong nao?`);
   }
   ok(`11 · ${cmds.length} file lệnh Windows đều là CRLF thật trên đĩa`);
+}
+
+
+/* VẾ 13 — T1: BỘ ĐỌC HEAD MỘT-LƯỢT PHẢI KHỚP TỪNG-FILE, KHÔNG CHỈ NHANH HƠN.
+ *
+ * T1 đổi ba đường đọc của `createHeadDeps` từ "một tiến trình git mỗi file" sang "một lệnh cho
+ * cả cây": kiểu ← `ls-tree -r -t` · nội dung ← `cat-file --batch` · ngày ← một lượt `log`.
+ * Cổng 12,2s → 3,0s. Nhưng ba đường đó chỉ có PHÉP ĐO, không có phép ghim — kiểm toán độc lập
+ * nêu đúng chỗ đó ([#5]).
+ *
+ * Ghim bằng ĐỐI CHỨNG với đường cũ, trên chính repo này: `git show HEAD:<f>` và
+ * `git log -1 -- <f>`. Bất biến cần giữ là *"nhanh hơn mà trả về Y HỆT"*; hỏng nó là mọi phép
+ * kiểm dựa trên bộ đọc này đều nói dối mà vẫn xanh.
+ *
+ * ƯU TIÊN FILE CÓ TÊN KHÓ, không lấy 25 file đầu bảng chữ cái: tên có dấu cách hoặc tiếng Việt
+ * là chỗ `cat-file --batch` (tách yêu cầu theo DÒNG) và `-z` từng vấp. Repo này có sẵn một danh
+ * sách `grandfathered` toàn đường dẫn như thế, nên đây không phải ca giả định. */
+{
+  const gitTho = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a],
+    { cwd: ROOT, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  const deps = createHeadDeps(ROOT);
+  const tatCa = gitTho("ls-tree", "-r", "-z", "--name-only", "HEAD").split(String.fromCharCode(0)).filter(Boolean);
+  assert.ok(tatCa.length > 50, `repo phai co du file de doi chieu, dang co ${tatCa.length}`);
+  const kho = tatCa.filter((p) => /[^\x20-\x7e]/.test(p) || p.includes(" "));
+  const mau = [...new Set([...kho, ...tatCa.filter((p) => !kho.includes(p)).slice(0, 20)])];
+  let lechND = 0;
+  let lechNgay = 0;
+  for (const p of mau) {
+    if (gitTho("show", `HEAD:${p}`) !== deps.readFile(p)) lechND += 1;
+    if (gitTho("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", p).trim() !== deps.git.lastCommitDate(p)) lechNgay += 1;
+  }
+  assert.equal(lechND, 0, `noi dung tu \`cat-file --batch\` phai khop \`git show\` tung file (${mau.length} file)`);
+  assert.equal(lechNgay, 0, `ngay tu mot luot \`log\` phai khop \`git log -1 --\` tung file (${mau.length} file)`);
+  // Và bảng KIỂU: thư mục phải là thư mục. Thiếu `-t` trong `ls-tree -r` là mọi thư mục thành
+  // "không tồn tại", `listDirs` rỗng sạch, và số "chưa khai chủ" âm thầm về 0.
+  assert.equal(deps.fileExists("scripts"), true, "thu muc `scripts` phai TON TAI — thieu `-t` la ca nay do");
+  assert.equal(deps.isFile("scripts"), false, "`scripts` la thu muc, khong phai file");
+  assert.ok(deps.listDirs("").includes("docs"), "listDirs o goc repo phai thay `docs`");
+  ok(`13 · bộ đọc HEAD một-lượt khớp từng-file trên ${mau.length} file, và thư mục vẫn là thư mục`);
+  /* VÀ MỘT KHO RIÊNG CHO TÊN KHÓ. Repo này hiện KHÔNG có file nào tên có dấu cách hay tiếng
+   * Việt (`grandfathered` rỗng), nên nhánh tôi lo nhất — `cat-file --batch` tách yêu cầu theo
+   * DÒNG — không được ghim bởi phần trên. Dựng kho thật, tên thật, rồi đối chiếu.
+   *
+   * Lý do đọc theo SHA chứ không theo đường dẫn nằm đúng ở đây: một đường dẫn có ký tự lạ là
+   * một yêu cầu hỏng mà không ai thấy; SHA thì luôn 40 ký tự hex. */
+  {
+    const kh = mkdtempSync(join(tmpdir(), "ark-ten-kho-"));
+    const gk = (...a) => execFileSync("git", a, { cwd: kh, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    try {
+      gk("init", "-q", ".");
+      gk("config", "user.email", "t@t");
+      gk("config", "user.name", "t");
+      gk("config", "core.autocrlf", "false");
+      const ten = ["docs/kế hoạch đợt 1.md", "scripts/bộ sinh.mjs", "docs/a b c.txt"];
+      for (const t of ten) {
+        const abs = join(kh, t);
+        mkdirSync(dirname(abs), { recursive: true });
+        writeFileSync(abs, `noi dung cua ${t}\nhai dong\n`, "utf8");
+      }
+      gk("add", "-A");
+      gk("commit", "-q", "-m", "ten kho");
+      const dk = createHeadDeps(kh);
+      const gkTho = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: kh, encoding: "utf8" });
+      let lech = 0;
+      for (const t of ten) {
+        if (gkTho("show", `HEAD:${t}`) !== dk.readFile(t)) lech += 1;
+        if (!dk.fileExists(t)) lech += 1;
+        if (!dk.isFile(t)) lech += 1;
+      }
+      assert.equal(lech, 0, "ten co dau cach / tieng Viet phai doc dung y het duong cu");
+      assert.equal(dk.git.trackedPaths().length, ten.length, "trackedPaths phai thay du ca ba file ten kho");
+      ok(`13b · tên có dấu cách và tiếng Việt: ${ten.length} file, đọc qua \`cat-file --batch\` khớp \`git show\` từng file`);
+    } finally {
+      rmSync(kh, { recursive: true, force: true });
+    }
+  }
+}
+
+/* VẾ 14 — CÂU CẢNH BÁO "có file .js sửa dở" KHÔNG ĐƯỢC GIẾT CẢ LƯỢT SINH.
+ * Ca thật 10/09 ở một repo đích: `runDashboard` đọc `behaviourOpts` ở PHẠM VI KHÁC nơi nó được
+ * khai (`collectModel`), nên nhánh cảnh báo ném `behaviourOpts is not defined` và cả bộ sinh
+ * chết. Nhánh đó chỉ chạy khi có **ít nhất một vùng KHÁC `_root` đang bẩn** — repo này khai
+ * `units.root_dir: null` nên `rows` chỉ có `_root`, và lỗi NẰM NGỦ ở đây suốt. Vế này vì thế
+ * phải DỰNG một repo có vùng con; đo trên repo thật thì nó xanh mà không kiểm được gì.
+ * Đột biến đã chạy: đổi `model.behaviourOpts` về `behaviourOpts` → mã trả 1 (trước: 0).
+ */
+{
+  const kh = mkdtempSync(join(tmpdir(), "ark-vung-con-"));
+  const gk = (...a) => execFileSync("git", a, { cwd: kh, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  try {
+    gk("init", "-q", "."); gk("config", "user.email", "t@t"); gk("config", "user.name", "t");
+    const ghi = (rel, noi) => {
+      const abs = join(kh, rel);
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, noi, "utf8");
+    };
+    ghi(".repo-structure.json", JSON.stringify({
+      units: { root_dir: "goi", marker: "package.json", depth: 1, ten: "Gói" },
+      areas: { _root: { dirs: [] }, _goi: { dirs: ["goi"] } }
+    }, null, 1));
+    ghi("package.json", JSON.stringify({ name: "thu", version: "0.0.1" }));
+    ghi(".agents/claims.json", JSON.stringify({ version: 1, claims: {}, tam: {} }, null, 1));
+    ghi("goi/mot/package.json", JSON.stringify({ name: "mot", version: "0.0.1" }));
+    gk("add", "-A"); gk("commit", "-q", "-m", "dung vung con");
+
+    const deps = createHeadDeps(kh);
+    const khoa = collectModel(deps, { tolerant: true }).rows.map((r) => r.key);
+    assert.ok(khoa.some((k) => k !== "_root"),
+      `fixture phai co it nhat mot vung KHAC _root, khong thi ve nay do rong — dang: ${khoa.join("|")}`);
+
+    // Thay ĐÚNG MỘT công tắc: vùng con báo có một file .js sửa dở.
+    const loi = [];
+    const noi = [];
+    const ma = runDashboard({
+      deps: { ...deps, writeFile: () => {}, git: { ...deps.git, dirtyFiles: () => ["goi/mot/a.js"] } },
+      output: { log(...a) { noi.push(a.join(" ")); }, error(...a) { loi.push(a.join(" ")); } }
+    });
+    assert.equal(ma, 0,
+      `vung con ban -> ca luot sinh trang phai VAN xong: ${loi.join(" / ").slice(0, 300)}`);
+    /* KHONG chi doi "khong chet". Bo het log thi XOA CA NHANH canh bao van xanh — Codex neu
+       10/09, va do dung: nhanh do la thu duy nhat doc `behaviourOpts`, nen mot ve khong doi
+       cau canh bao la mot ve khong con doi tuong do. Doi ca NOI DUNG: dung vung, dung so. */
+    const canh = noi.filter((d) => d.includes("CẢNH BÁO") && d.includes("goi/mot"));
+    assert.equal(canh.length, 1,
+      `phai co DUNG MOT canh bao cho vung "goi/mot", dang ${canh.length}: ${noi.join(" / ").slice(0, 300)}`);
+    assert.match(canh[0], /1 file \.js/,
+      `canh bao phai dem dung 1 file .js: ${canh[0]}`);
+  } finally { rmSync(kh, { recursive: true, force: true }); }
+  ok("14 · vùng con đang bẩn: câu cảnh báo `.js` sửa dở KHÔNG giết lượt sinh (`behaviourOpts` sai phạm vi)");
 }
 
 console.log(`bang-song: ${passed} vế xanh`);

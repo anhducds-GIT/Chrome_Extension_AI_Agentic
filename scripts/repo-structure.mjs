@@ -363,6 +363,93 @@ export function laneFromMessage(text) {
   return { lane: unique[0], problem: null };
 }
 
+/* NHÃN AUDIT — `KHUNG-56`, và nó vá một lỗ đo được ngày 10/09.
+ *
+ * `AGENTS.md` mục 2 cho tự đẩy khi đủ ba, trong đó điều ⑵ là *"cổng XANH TOÀN BỘ, **code thì đã
+ * qua audit độc lập**"*. Vế cổng-xanh có máy canh: `safe-push` đọc dấu cổng. Vế đã-qua-audit thì
+ * KHÔNG có gì canh — không cờ, không trường, không phép kiểm.
+ *
+ * Ca thật 10/09: lane `harness-loi-02` commit 5 lượt bản vá lõi, ghi rõ trong `HANDOFF.md`
+ * *"chưa qua audit — đừng --carry"*, rồi lane `harness-migrate-3repo` chạy `safe-push` và cuốn cả
+ * 5 lên `origin/main` sau **20 phút**. Lane đó không làm gì sai: cổng của họ xanh, mọi commit đều
+ * có nhãn `Lane:`. Lời cảnh báo nằm ở `HANDOFF.md` — Tầng 2, không nạp mặc định — và không lane
+ * nào phải đọc nhật ký của lane khác trước khi đẩy.
+ *
+ * GIỚI HẠN, nói thẳng để không ai tưởng đây là lớp thép: nhãn này do **người sửa TỰ KHAI**. Nó
+ * không chứng minh đã có audit; nó chỉ làm cho một lời tự khai *"chưa duyệt"* đi được tới máy,
+ * thay vì chết trong một quyển sổ Tầng 2. Bản chặt hơn (dấu cổng mang trường `audit` do một lệnh
+ * nghiệm thu riêng đặt) là `Y-02`, và nó đắt hơn nhiều.
+ *
+ * KHÔNG khai gì = KHÔNG chặn. Chặn mọi commit thiếu nhãn là khoá repo ngay lượt đầu — cùng cái
+ * bẫy `laneFromMessage` đã tránh với 509 commit cũ không nhãn. */
+export const AUDIT_TRAILER = "Audit:";
+export const AUDIT_CHUA_CO = "chua-co";
+
+/** Ai được coi là NGƯỜI DUYỆT — đọc từ `.repo-structure.json`, không đoán từ chữ.
+ *
+ *  TRẢ CẢ TÊN SAI KHUÔN, KHÔNG BỎ IM LẶNG. Audit vòng 4 nêu: bản đầu `filter` thẳng, nên repo
+ *  khai `Duc` (hoa) hay `nguyen van a` (có khoảng trắng) thì tên đó **rơi mất không một tiếng
+ *  nào** — người khai tưởng mình đã cấp quyền duyệt, mà thật ra chưa. Đây không phải lỗ nhận
+ *  nhầm; nó là chỗ **fail SILENT**, và repo này có luật riêng cho đúng chuyện đó.
+ *  Không tự chuẩn hoá (không tự hạ về chữ thường): đoán ý người khai là một cửa khác. */
+export function nguoiDuyetFrom(structure) {
+  const ds = structure?.audit?.nguoi_duyet;
+  if (!Array.isArray(ds)) return [];
+  return ds.filter((x) => typeof x === "string" && /^[a-z0-9][a-z0-9._-]*$/.test(x));
+}
+
+/** Tên khai trong `audit.nguoi_duyet` mà SAI KHUÔN, nên không có hiệu lực. Để cổng nêu tên. */
+export function nguoiDuyetSaiKhuon(structure) {
+  const ds = structure?.audit?.nguoi_duyet;
+  if (!Array.isArray(ds)) return [];
+  return ds.filter((x) => typeof x !== "string" || !/^[a-z0-9][a-z0-9._-]*$/.test(x)).map((x) => String(x));
+}
+
+/** Đọc nhãn `Audit:`. **CHỈ một tên trong DANH SÁCH KHAI mới là "đã duyệt"; mọi thứ khác là CHƯA.**
+ *
+ *  BA VÒNG AUDIT ĐỘC LẬP MỚI TỚI ĐƯỢC HÌNH DẠNG NÀY, và hai vòng đầu tôi vá sai chỗ:
+ *    · 1.8.4 hỏi *"có đúng bằng `chua-co` không? không thì là tên người duyệt"* → `chua-co (dang
+ *      cho)` và `chua co` thành **ĐÃ DUYỆT**.
+ *    · 1.8.5 hỏi *"có đúng khuôn một thẻ không?"* → `pending`, `none`, `todo`, `not-reviewed`
+ *      thành **ĐÃ DUYỆT**. Đo được cả bốn. Và mẹo `/^chua/` chặn oan một tên hợp lệ như `chuan`.
+ *
+ *  GỐC BỆNH của cả hai: tôi để **người viết commit** tự định nghĩa cái gì là "đã duyệt". Một
+ *  chuỗi tự do thì không có cách nào phân biệt `codex-r03` với `pending` — cả hai chỉ là chữ.
+ *  Nên câu hỏi phải đổi chủ: **repo khai trước ai được duyệt**, và mọi thứ ngoài danh sách là
+ *  CHƯA. Một phép so danh sách THAY CHỖ hai mẹo dò chuỗi, nên bản này vừa chặt hơn vừa ít luật
+ *  hơn — không phải thêm một lớp nữa.
+ *
+ *  Hậu tố vòng `-rNN` được phép (`codex` khai một lần, `codex-r03` dùng được) — không thì mỗi
+ *  vòng audit lại phải sửa cấu hình.
+ *
+ *  Repo KHÔNG khai danh sách → KHÔNG ai là người duyệt → lời khai `chua-co` chỉ gỡ được bằng
+ *  `--duc-duyet-chua-audit`. Fail-closed, và nói rõ bằng mã lỗi. */
+export function auditFromMessage(text, dsNguoiDuyet = []) {
+  const values = String(text ?? "").split("\n")
+    .filter((line) => /^\s*audit\s*:/i.test(line))
+    .map((line) => line.slice(line.indexOf(":") + 1).trim().toLowerCase());
+  if (!values.length) return { chuaAudit: false, khai: null, problem: null };
+  const khai = values.join(" · ");
+  /* Hậu tố vòng `-rNN`: `codex` khai một lần thì `codex-r03` dùng được. So bằng CẮT HẬU TỐ chứ
+     không dựng RegExp từ chuỗi cấu hình — `.` trong một tên như `a.b` là ký tự đặc biệt của
+     RegExp, và dựng biểu thức từ dữ liệu là cách tự mở một cửa mình không nhìn thấy. */
+  const hopLe = (v) => {
+    const goc = v.replace(/-r\d+$/, "");
+    return dsNguoiDuyet.includes(v) || dsNguoiDuyet.includes(goc);
+  };
+  /* MỘT commit MỘT lời khai. Hai dòng `Audit:` khác nhau là hai câu trả lời cho một câu hỏi, và
+     phiên sau bốc trúng câu nào thì tuỳ — cùng lý do `laneFromMessage` chặn `LANE_XUNG_DOT`. */
+  if (new Set(values).size > 1) {
+    return { chuaAudit: true, khai, problem: `AUDIT_XUNG_DOT: một commit mang ${new Set(values).size} nhãn \`${AUDIT_TRAILER}\` khác nhau (${khai}). Không quy được là đã duyệt hay chưa.` };
+  }
+  if (values.every(hopLe)) return { chuaAudit: false, khai, problem: null };
+  return {
+    chuaAudit: true,
+    khai,
+    problem: `AUDIT_NGOAI_DANH_SACH: "${khai}" không có trong \`audit.nguoi_duyet\` của .repo-structure.json${dsNguoiDuyet.length ? ` (đang khai: ${dsNguoiDuyet.join(", ")})` : " (repo CHƯA khai ai)"}. Ngoài danh sách thì coi là CHƯA duyệt.`,
+  };
+}
+
 /* BẤT BIẾN BA TẦNG — LAW `steward` ↔ STATE khoá quyền ↔ MÁY một hàm duy nhất.
 
    Yêu cầu bởi audit GPT 02/09, và nó không phải luật di-trú mà là bất biến: A2 đổi tầng LAW
@@ -500,6 +587,21 @@ export function behaviourGlobsFrom(parsed) {
    FAIL CLOSED với đầu vào sai: khai `"generated_names": "khac"` mà lặng lẽ lùi về mặc định thì
    người viết tưởng tên riêng đang có hiệu lực, còn bộ sinh vẫn ghi đè file cũ. Đúng cái lỗ
    `budget` đã mắc và đã vá 05/09. */
+/* FILE HÀNH CHÍNH — thao tác quyền, KHÔNG phải hành vi của repo.
+ *
+ * NHÀ DUY NHẤT của khái niệm này. Trước 10/09 nó nằm trong `build-dashboard.mjs` dưới tên
+ * `HANH_CHINH`, nên chỉ bộ đếm hành vi biết tới nó, còn `chay-test.mjs` thì không — và cái
+ * giá đo được ở phiên 09→10/09: dấu xác nhận suite băm CẢ `.agents/claims.json`, mà file đó
+ * bị MỌI lane ghi lại ở mỗi lượt `--sua` / `--xong`. Trong một repo có hai lane cùng làm, dấu
+ * **không bao giờ ghi được**: ba lượt chạy đủ bộ (514.8s + 524.2s + 702s = **29 phút**) không
+ * lượt nào cấp được dấu, và cổng còn báo *"suite gốc repo ĐỎ"* trong khi 22/22 suite xanh.
+ *
+ * Repo này đã có một phép ghim cho đúng ý đó ở `tests/core-contract.mjs`:
+ * `isBehaviourFile(".agents/claims.json") === false`, kèm ca thật 06/09 (commit `fa7e8a7`
+ * chạm đúng một file là `claims.json` và bộ đếm hành vi nhảy 4 → 5). Nên đây không phải luật
+ * mới — nó là luật ĐÃ CÓ, nay được mang tới chỗ thứ hai đang cần nó. */
+export const FILE_HANH_CHINH = Object.freeze([".agents/claims.json"]);
+
 export const TEN_MAY_SINH_MAC_DINH = Object.freeze({
   dashboard: "DASHBOARD.md",
   llms: "llms.txt",
@@ -569,8 +671,16 @@ export function tenMaySinhFrom(parsed) {
 export function generatorsFrom(parsed) {
   const value = parsed?.generators;
   if (value === undefined) return DEFAULT_GENERATORS;
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new Error("GENERATORS_HONG: `generators` phải là mảng không rỗng các tên script trong scripts/ (hoặc bỏ hẳn để dùng mặc định).");
+  /* MẢNG RỖNG LÀ HỢP LỆ TỪ 10/09 (R1), và đó là cả một quyết định: nó là cách DUY NHẤT để một
+     repo nói "ĐỪNG đối chiếu artifact nào của tôi với HEAD".
+     KHÔNG đồng nghĩa "repo không commit artifact nào" — repo này VẪN commit DASHBOARD.md,
+     llms.txt, repo-map.json; chúng chỉ thôi bị canh. Lẫn hai câu đó là hiểu sai cả hai chiều.
+     Trước đó `[]` bị coi là gõ sai, nên repo bắt buộc
+     phải có ít nhất một bộ sinh bị cổng đối chiếu với HEAD mỗi lượt — tức vòng lặp 37% commit
+     không có đường thoát nào ngoài việc sửa chính hàm này. Vắng khoá thì VẪN dùng mặc định:
+     bỏ quên khác với khai rỗng, và im lặng tắt một lớp bảo vệ thì phải là hành động cố ý. */
+  if (!Array.isArray(value)) {
+    throw new Error("GENERATORS_HONG: `generators` phải là MẢNG tên script trong scripts/ — `[]` nghĩa là KHÔNG đối chiếu artifact nào với HEAD (repo vẫn có thể commit chúng), bỏ hẳn khoá thì dùng mặc định.");
   }
   for (const name of value) {
     if (typeof name !== "string" || name === "" || name.includes("/") || name.includes("\\")) {

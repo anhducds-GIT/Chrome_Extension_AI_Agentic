@@ -1,44 +1,19 @@
 #!/bin/sh
-# commit-msg — chốt cuối của N-40/N-05. Đọc AGENTS.md mục 1 trước khi sửa file này.
+# CỬA INDEX — chặn KHUNG-59: một cây làm việc có ĐÚNG MỘT index, nên `git commit` của lane này
+# cuốn trọn thứ lane kia vừa `git add`. Xảy ra HAI LẦN ngày 10/09, hai chiều, hai lane.
 #
-# VÌ SAO LÀ HOOK, và vì sao là `commit-msg` chứ không `pre-commit`:
+# VÌ SAO Ở `commit-msg` CHỨ KHÔNG `pre-commit`: cửa cần biết AI đang commit, và câu trả lời duy
+# nhất máy đọc được là nhãn `Lane:` trong lời nhắn — chỉ `commit-msg` mới thấy lời nhắn.
 #
-# `claim.mjs --soat` đo đúng, nhưng nó chạy TRƯỚC `git commit`. Ngày 08/09 lane
-# claude-gpt-no-ky-thuat đo được cửa sổ giữa hai lệnh: `--soat` trả "tất cả thuộc quyền ghi",
-# rồi `git commit` trả mã 1 "no changes added" — vì lane thứ ba đã mang file đã dàn của họ đi
-# trong đúng khoảng đó. Một phép đo đứng TRƯỚC không bao giờ bịt được một cửa sổ thời gian;
-# nó phải nằm TRONG lượt commit.
+# HOOK KHÔNG ĐỌC NHÃN. Nó chuyển nguyên FILE lời nhắn cho `claim.mjs`, và bên đó dùng
+# `laneFromMessage` — bộ đọc mà cổng đóng phiên và `safe-push` đang dùng. Vòng audit 10/09 bắt
+# đúng chỗ này: bản đầu tôi tự viết một bộ đọc thứ hai bằng `sed`, và nó đọc `lane:` chữ thường
+# trong khi `laneFromMessage` chỉ nhận `Lane:` — hai bộ đọc trên cùng một lời nhắn trả HAI TÊN
+# khác nhau, tức một lượt commit lọt cửa dưới tên này rồi được cổng quy cho tên kia.
 #
-# `commit-msg` chứ không `pre-commit`: `--soat` cần biết bạn là lane nào, và chỗ duy nhất
-# ghi tên lane là nhãn `Lane:` trong thông điệp — thứ chỉ `commit-msg` đọc được. Index ở
-# `commit-msg` vẫn đúng là index sắp được commit, nên phép đo không mất gì.
-#
-# BA CHỐT FAIL-OPEN, cố ý. Hook này chạy trên MỌI lượt commit của MỌI lane; một hook hỏng là
-# cả repo không commit được, và cái giá đó lớn hơn cái nó canh:
-#   1. không có `node` trên PATH  -> cho qua
-#   2. không tìm thấy nhãn `Lane:` -> cho qua (merge, revert, squash tự sinh thông điệp
-#      không nhãn; và commit thiếu nhãn đã bị cổng đóng phiên + safe-push chặn ở sau)
-#   3. `claim.mjs` ném lỗi lạ (mã khác 3) -> cho qua, chỉ in ra
-# Chỉ mã thoát 3 (SOAT_LA / SOAT_SO_CHUNG — vi phạm THẬT) mới chặn.
-#
-# Cửa thoát khi kẹt: `git commit --no-verify`. Cố ý để mở — một chốt không thể vượt trong
-# lúc khẩn thì nó sẽ bị gỡ hẳn.
-
-[ -n "$ARK_BO_QUA_HOOK" ] && exit 0
-command -v node >/dev/null 2>&1 || exit 0
-[ -f scripts/claim.mjs ] || exit 0
-
-lane=$(sed -n 's/^Lane:[[:space:]]*\([^[:space:]][^[:space:]]*\)[[:space:]]*$/\1/p' "$1" | tail -1)
-[ -z "$lane" ] && exit 0
-
-node scripts/claim.mjs --soat --as "$lane"
-ma=$?
-[ "$ma" -eq 3 ] && {
-  echo ""
-  echo "commit-msg: DUNG LAI — index dang chua file ngoai quyen ghi cua lane \"$lane\"."
-  echo "  Xem ly do ngay tren. Go ra: git restore --staged <duong-dan>"
-  echo "  Dung la viec cua ban? Nhan truoc: node scripts/claim.mjs --sua <duong-dan> --as $lane"
-  echo "  That su phai di tiep? git commit --no-verify  (va noi ra trong nhat ky phien)"
-  exit 1
-}
-exit 0
+# ĐO 10/09: git đặt `GIT_INDEX_FILE` sang index TẠM cho cả `commit --only` và `commit -a`, nên
+# `git diff --cached` trong hook thấy ĐÚNG mẻ sắp vào commit. Hook thoát khác 0 thì commit bị
+# huỷ và index còn nguyên.
+set -e
+goc=$(git rev-parse --show-toplevel) || exit 0
+exec node "$goc/scripts/claim.mjs" --cua-index --goc "$goc" --loi-nhan "$1"

@@ -1,0 +1,15 @@
+#!/bin/sh
+# TỰ TRẢ KHOÁ FILE SAU COMMIT — T2 (10/09).
+#
+# Luật mục 1: khoá FILE trả NGAY SAU commit chứa lượt ghi. Trước hook này, luật đó chỉ được
+# CỔNG cưỡng chế — tức cuối phiên, và cổng đỏ chỉ là lưới đỡ. Đức nói hai lần: "khoá phải nhả
+# ngay khi hết sửa, cố gắng hook tốt vào".
+#
+# `post-commit` là mốc ĐÚNG: commit đã hình thành nên "lượt ghi đã xong" là sự thật, không phải
+# dự đoán. Và mã thoát của hook này KHÔNG ảnh hưởng `git commit` (đo 10/09: hook thoát 7 → git
+# thoát 0), nên nó KHÔNG THỂ chặn oan ai — đó là lý do nó được phép tự động.
+#
+# `|| true` và `exit 0`: một tiện ích hỏng không được làm người ta tưởng commit hỏng.
+goc=$(git rev-parse --show-toplevel) || exit 0
+node "$goc/scripts/claim.mjs" --sau-commit --goc "$goc" || true
+exit 0
