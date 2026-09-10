@@ -49,11 +49,16 @@ assert.match(blockKhongChuThich, /SEL\.attachmentChip/, "vế ⑵: phải đọc
 assert.ok(dem(src, "attachmentPending: uploadIsPending()") >= 1, "`uploadIsPending` vẫn phải được `DacChatReadiness` dùng — ở đó câu hỏi 'trang có đang bận không' là ĐÚNG");
 
 /* ---- DOM giả ------------------------------------------------------------ */
+// `chips` nhận chuỗi (chip hiện) hoặc `{ label, an: true }` (chip còn trong DOM
+// nhưng đã ẩn). Phân biệt này KHÔNG phải trang trí: thử phá cho thấy bỏ hẳn
+// `.filter(isVisible)` vẫn LỌT qua bản đầu của file này — tức một chip đã gỡ mà
+// còn sót node vẫn mở được cổng gửi. Mép 9 giữ chỗ đó.
 function moiTruong({ chips = [], files = [], abort = false, blocker = "", busy = true }) {
-  const nodes = chips.map((label) => ({
-    __label: label,
-    getAttribute: (ten) => (ten === "aria-label" ? label : null)
-  }));
+  const nodes = chips.map((chip) => {
+    const label = typeof chip === "string" ? chip : chip.label;
+    const hien = typeof chip === "string" ? true : !chip.an;
+    return { __hien: hien, getAttribute: (ten) => (ten === "aria-label" ? label : null) };
+  });
   // `busy` mặc định BẬT: mọi mép dưới đây chạy trong đúng cảnh vế ⑴ nói tới —
   // trang đang sinh dở một lượt khác. Cổng mới phải không thèm biết tới nó.
   const goiY = { busy };
@@ -67,7 +72,7 @@ function moiTruong({ chips = [], files = [], abort = false, blocker = "", busy =
       }
     },
     SEL: { attachmentChip: ['form div[role="group"][aria-label]', 'form div[data-default-action="true"]'] },
-    isVisible: () => true,
+    isVisible: (node) => node.__hien,
     STATE: { get abortRequested() { return abort; } },
     securityBlockerText: () => blocker,
     sleep: () => Promise.resolve()
@@ -148,6 +153,23 @@ const anh = (...ten) => ten.map((fileName) => ({ fileName }));
 {
   const m = moiTruong({ chips: [], files: [] });
   await m.waitForReferenceImagesReady(m.fileInput, [], 300);
+}
+
+/* ---- mép 9: chip ĐÃ ẨN không được tính là chip ------------------------- */
+{
+  // Mép này sinh ra TỪ một lượt thử phá: bỏ hẳn `.filter(isVisible)` mà bản đầu
+  // của file này vẫn XANH. Một chip vừa bị gỡ nhưng node còn nằm lại trong DOM
+  // sẽ mở được cổng, và lượt gửi đi không có ảnh nào cả.
+  const m = moiTruong({ chips: [{ label: "a.png", an: true }], files: ["a.png"] });
+  await assert.rejects(
+    () => m.waitForReferenceImagesReady(m.fileInput, anh("a.png"), 200),
+    /a\.png/,
+    "chip đã ẩn KHÔNG được tính — node còn trong DOM không có nghĩa là ảnh còn đính"
+  );
+  // Và cùng cái tên đó, khi chip HIỆN, thì phải mở — nếu không thì mép trên
+  // xanh vì một lý do sai (chẳng hạn tên không bao giờ khớp).
+  const hien = moiTruong({ chips: ["a.png"], files: ["a.png"] });
+  await hien.waitForReferenceImagesReady(hien.fileInput, anh("a.png"), 300);
 }
 
 console.log("attach gate by filename (B-49): PASS");

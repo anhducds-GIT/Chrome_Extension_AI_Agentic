@@ -710,7 +710,13 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     // Danh tính repo. Đóng cứng ở đây là mọi repo dùng bộ khung đều sinh ra một trang tự nhận
     // là repo gốc — audit độc lập bắt đúng chỗ này 2026-09-02.
     repo,
-    profile
+    profile,
+    // Lượt migrate 1.8.0 để `runDashboard` đọc `behaviourOpts` ở phạm vi KHÁC nơi nó được khai
+    // (đây, trong `collectModel`), nên câu cảnh báo "có file .js sửa dở" ném
+    // `behaviourOpts is not defined` và **cả bộ sinh trang chết**. Nó chỉ nổ khi có ít nhất
+    // một vùng đang bẩn, nên nó qua mặt được những lượt sinh trên cây sạch. Đưa vào model
+    // theo đúng luật file này tự đặt cho tên artifact: một nguồn, đọc lại chứ không dựng lại.
+    behaviourOpts
   };
   model.gatewayLinks = gatewayLinks(model, deps);
   model.health = {
@@ -1402,7 +1408,7 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
         output.log(`Nợ điều hướng [ĐO]: chưa khai STATUS ${model.health.units_without_status} · link chết ${model.health.dead_links} · thư mục chưa khai chủ ${model.health.undeclared_dirs} · tài liệu quá hạn ${model.health.draft_debt}. Chi tiết ở Khối D của ${model.ten.dashboard}.`);
       }
       for (const row of model.rows.filter((item) => item.key !== "_root")) {
-        const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter((f) => isBehaviourFile(f, behaviourOpts)).length;
+        const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter((f) => isBehaviourFile(f, model.behaviourOpts)).length;
         if (dirtyCount > 0) {
           output.log(`CẢNH BÁO: ${row.key} đang có ${dirtyCount} file .js sửa dở chưa commit. Trang này dựng HOÀN TOÀN TỪ HEAD, nên phần đang sửa KHÔNG có ở đây — commit trước rồi sinh lại.`);
         }
