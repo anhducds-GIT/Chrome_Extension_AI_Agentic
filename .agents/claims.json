@@ -28,9 +28,9 @@
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-10T16:04:52.277Z",
-      "task": "bat URL hoi thoai + go gon 2 protocol + cum giac quan",
-      "released_at": "2026-09-10T16:35:00.336Z",
+      "claimed_at": "2026-09-10T17:25:35.944Z",
+      "task": "do DOM tim tin hieu da-xong; B-40/41; chot B-56",
+      "released_at": "2026-09-10T17:34:53.730Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -96,7 +96,7 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "d14d65e75f4cb1dd",
+  "_fingerprint": "142713135ad3ac8b",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
