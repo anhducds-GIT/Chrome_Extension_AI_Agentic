@@ -176,3 +176,46 @@ const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
 }
 
 console.log("chuoi reasoning smoke tests: PASS");
+
+/* ⓛ B-62 — khối giao cho CC thì KHÔNG được chuyển tiếp về GPT. Chuỗi luat-audit dừng sau
+   Vòng 6 với nhãn `HET_CHUOI` trong khi GPT đã trả lời và từ chối đúng vai. */
+{
+  const khoiCC = { found: true, turn_id: "t9", chars: 1671, truncated: false,
+    text: "NGƯỜI NHẬN/THỰC THI: Claude Code (CC) — MỐC ② trước VÒNG 7/12.\n\nLàm gì đó." };
+  const r = quyetDinh({ generating: false, khoi: khoiCC, khoiCu: "t8", daNapLai: false, daThayDangChay: true });
+  assert.equal(r.viec, "DUNG", "khối giao cho CC mà vẫn GUI");
+  assert.match(r.vi, /CAN_NGUOI/);
+  assert.match(r.vi, /Claude Code/); // cắt trước "(" nên tên là "Claude Code", không kèm "(CC)"
+
+  const khoiGPT = { found: true, turn_id: "t9", chars: 1388, truncated: false,
+    text: "NGƯỜI NHẬN/THỰC THI: GPT Web — Repo Rule Audit, VÒNG 6/12.\n\nLàm gì đó." };
+  assert.equal(quyetDinh({ generating: false, khoi: khoiGPT, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+    "GUI", "khối giao cho GPT phải đi tiếp");
+
+  // Không khai người nhận thì chạy như cũ — chuỗi khác không bắt buộc theo mẫu này.
+  const khoiTron = { found: true, turn_id: "t9", chars: 40, truncated: false, text: "Vòng tiếp theo: làm X." };
+  assert.equal(quyetDinh({ generating: false, khoi: khoiTron, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec, "GUI");
+
+  /* Bẫy đã lường: dòng giao cho CC mà có nhắc chữ GPT ở phần mô tả. So cả dòng thì lọt. */
+  const khoiBay = { found: true, turn_id: "t9", chars: 60, truncated: false,
+    text: "NGƯỜI NHẬN/THỰC THI: Claude Code (CC) — đối chiếu kết quả GPT\n\nLàm gì đó." };
+  assert.equal(quyetDinh({ generating: false, khoi: khoiBay, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+    "DUNG", "so cả dòng nên tưởng khối này của GPT");
+
+  // CHIỀU NGƯỢC: logic cũ (không hỏi người nhận) phải GUI đúng cái khối CC — tức lỗi tái hiện được.
+  assert.equal(quyetDinh({ generating: false, khoi: { ...khoiCC, text: "Làm gì đó." }, khoiCu: "t8", daNapLai: false, daThayDangChay: true }).viec,
+    "GUI", "bỏ dòng NGƯỜI NHẬN đi mà vẫn DUNG thì phép ghim này không đo dòng đó");
+  console.log("  ok  ⓛ khối giao cho CC dừng bằng CAN_NGUOI, khối của GPT vẫn đi tiếp");
+}
+
+/* ⓜ B-61 — hai bản chạy cùng một thư mục: bản thứ hai phải thoát khác 0 và KHÔNG gửi gì. */
+{
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  assert.match(src, /flag:\s*"wx"/, "khoá phải tạo bằng cờ wx — kiểm-và-tạo nguyên tử");
+  assert.match(src, /EEXIST/, "phải phân biệt khoá đã có với lỗi hệ tệp khác");
+  assert.match(src, /process\.exit\(3\)/, "bản thứ hai phải thoát khác 0");
+  const iKhoa = src.indexOf('flag: "wx"');
+  const iGui = src.indexOf('"chat-say"');
+  assert.ok(iKhoa > 0 && iGui > iKhoa, "khoá phải đặt TRƯỚC mọi đường gửi");
+  console.log("  ok  ⓜ khoá một-bản-chạy đặt trước mọi đường gửi");
+}

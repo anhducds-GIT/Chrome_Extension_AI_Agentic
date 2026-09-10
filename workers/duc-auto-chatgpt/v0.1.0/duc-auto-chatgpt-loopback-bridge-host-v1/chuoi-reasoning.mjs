@@ -43,6 +43,18 @@ export const TRAN_KY_TU_KHOI = 12000;
    kịp khởi động, đủ ngắn để không phí nửa tiếng. */
 export const NGUONG_YEN = 6;
 
+/* Dòng đầu khối nối vòng khai NGƯỜI NHẬN. Đọc đúng một dòng, không đoán từ nội dung —
+   nội dung trang là dữ liệu không tin được, chỉ dùng để PHÂN LOẠI, không để quyết định gõ gì.
+   Không có dòng này thì trả `null`, và chuỗi chạy như cũ: chuỗi khác không bắt buộc theo mẫu. */
+export function nguoiNhanCuaKhoi(text) {
+  const m = /^[ \t]*NGƯỜI NHẬN(?:\/THỰC THI)?[ \t]*:[ \t]*(.+)$/mu.exec(String(text ?? ""));
+  if (!m) return null;
+  /* Chỉ lấy phần TÊN, cắt trước dấu ngăn đầu tiên. Cả dòng thì phần mô tả phía sau kéo theo
+     chữ lạ: một dòng `Claude Code (CC) — đối chiếu kết quả GPT` mà đem so với /gpt/ sẽ ra
+     "gửi cho GPT" — đúng cái lỗi mà mép này sinh ra để chặn. */
+  return m[1].split(/[—–,.(]/u)[0].trim() || null;
+}
+
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
 export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0 }) {
@@ -62,6 +74,15 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
     if (khoi.truncated) return { viec: "DUNG", vi: "KHOI_BI_CAT — không gửi đi một prompt cụt" };
     if (!khoi.text?.trim()) return { viec: "DUNG", vi: "KHOI_RONG" };
     if (khoi.text.length > TRAN_KY_TU_KHOI) return { viec: "DUNG", vi: `KHOI_QUA_DAI ${khoi.text.length} > ${TRAN_KY_TU_KHOI}` };
+    /* B-62 — KHỐI NÀY GỬI CHO AI. Chuỗi `luat-audit` dừng sau Vòng 6 và bộ chạy chấm là
+       `HET_CHUOI`, trong khi sự thật là GPT ĐÃ trả lời: khối nối vòng ghi
+       `NGƯỜI NHẬN/THỰC THI: Claude Code (CC)` — một chốt kiểm do người/CC làm — nên GPT từ
+       chối tự thực thi. Chuyển khối đó ngược về GPT là hỏi sai người. "Hết lời" và "tới lượt
+       CC" phải là hai lý do dừng khác nhau, vì người đọc nhật ký xử lý chúng khác hẳn. */
+    const nguoiNhan = nguoiNhanCuaKhoi(khoi.text);
+    if (nguoiNhan && !/gpt/i.test(nguoiNhan)) {
+      return { viec: "DUNG", vi: `CAN_NGUOI — khối này giao cho "${nguoiNhan}", không phải GPT` };
+    }
     return { viec: "GUI", vi: `khối mới ${khoi.chars} ký tự` };
   }
 
@@ -111,6 +132,28 @@ async function chinh() {
   if (!nhan || !pairing) { console.error("Thiếu --nhan hoặc --pairing."); process.exit(2); }
 
   fs.mkdirSync(thuMuc, { recursive: true });
+
+  /* B-61 — MỘT BẢN CHẠY MỘT LÚC. 10/09 hai tiến trình chạy song song trên cùng một tab: nhật
+     ký đan xen thành vô nghĩa, hai lượt gửi cùng một prompt cách nhau 59 giây, và chúng nạp
+     lại tab của nhau giữa lúc GPT đang sinh. Không có prompt trùng nào vào hội thoại — chốt
+     `RUN_ACTIVE` chặn được — nhưng nó chặn TÌNH CỜ: đọc-lại-thấy-đã-bay chứng minh MỘT lượt
+     gửi đã bay, không chứng minh LƯỢT CỦA TÔI đã bay. Một tiến trình thì hai câu đó trùng
+     nhau; hai tiến trình thì không. `wx` là phép kiểm-và-tạo nguyên tử của hệ tệp. */
+  const soKhoa = path.join(thuMuc, "DANG-CHAY.json");
+  try {
+    fs.writeFileSync(soKhoa, JSON.stringify({ pid: process.pid, tu: new Date().toISOString(), nhan }, null, 1), { flag: "wx" });
+  } catch (e) {
+    if (e?.code !== "EEXIST") throw e;
+    let cu = "(không đọc được)";
+    try { cu = fs.readFileSync(soKhoa, "utf8").replace(/\s+/g, " ").trim(); } catch { /* giữ nguyên */ }
+    console.error(`ĐÃ CÓ MỘT BẢN CHẠY GIỮ THƯ MỤC NÀY: ${cu}`);
+    console.error(`Nó chết rồi thì xoá tay: ${soKhoa}`);
+    process.exit(3);
+  }
+  const traKhoa = () => { try { fs.unlinkSync(soKhoa); } catch { /* đã mất thì thôi */ } };
+  process.on("exit", traKhoa);
+  for (const tinHieu of ["SIGINT", "SIGTERM"]) process.on(tinHieu, () => { traKhoa(); process.exit(130); });
+
   const soNhatKy = path.join(thuMuc, "nhat-ky.jsonl");
   const ghi = (o) => fs.appendFileSync(soNhatKy, JSON.stringify({ luc: new Date().toISOString(), ...o }) + "\n");
 
