@@ -96,19 +96,11 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "17a1d82de97e0a8d",
+  "_fingerprint": "1a601bfc2b52a3be",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
-    },
-    "drafts/GPT-REASONING-8-ROUND-PROTOCOL-V1.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T16:21:32.754Z"
-    },
-    "drafts/PILOT-DIEU-PHOI-V0.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T16:21:32.754Z"
     }
   }
 }
