@@ -676,3 +676,24 @@ Từ khung 1.8.0, **mở phiên đọc `STATUS.md`**, không đọc đuôi `HAND
 
 **CHƯA ĐẨY.** Cổng đỏ ở B12 thì không được đẩy — luật mục 3 của repo này và mục 2 của bộ khung
 đều nói vậy. Ba commit nằm local, chờ lane của repo này xử `KHUNG-M1` hoặc Đức chốt.
+
+## 2026-09-10 · `harness-loi-02` — nâng bộ khung 1.9.22, hai cửa máy bật thật
+
+**Số đo.** Bản ghim: **1.8.0 → 1.9.22** (hoặc 1.3.x → 1.9.22 tùy repo). Lượt `--apply`: **6–8 giây**.
+`git config --local --get core.hooksPath` = `.githooks` — **cửa index bật thật**, đo được.
+
+**Hai lỗi của BỘ KHUNG đã ảnh hưởng repo này, nay đã vá ở lõi:**
+
+1. `upgrade.mjs` thiếu `import execFileSync`, `try/catch` nuốt `ReferenceError` thành một dòng cảnh
+   báo → **`core.hooksPath` chưa từng được đặt ở bất kỳ repo nào đã nâng cấp**. Mang `.githooks/`
+   sang mà cơ chế vẫn TẮT, triệu chứng y hệt lúc chưa mang gì.
+2. `git config --get` đọc cả global → máy có khoá global thì `upgrade` báo *"đã bật từ trước"*
+   và không bao giờ đặt local. Nay đọc `--local`.
+
+**VẤP đáng ghi — lượt migrate KHÔNG tự làm repo đích xanh lại:** `upgrade --apply` mang file mới
+sang nhưng **không khai vào Bản đồ file**, và **không sinh lại artifact**. Nên sau mọi lượt nâng,
+cổng ở đây Đỏ ở đúng ba mục đó — **theo thiết kế, không phải sự cố**. Ba bước tay:
+khai `.githooks/` một dòng · `build-dashboard` + `build-overview` · ghi Log này. Khả năng tự
+động hoá vướng một nguyên tắc đang có: **`upgrade` không ghi vào tầng chữ của repo đích**. Đức chốt.
+
+**Còn mở:** `npm test` của repo này — xem kết quả cổng ở lượt đóng tiếp theo.

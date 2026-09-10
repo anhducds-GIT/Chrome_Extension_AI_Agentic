@@ -102,6 +102,8 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 
 ## 8. Đọc TRƯỚC KHI làm — bắt buộc
 
+<!-- BAN-DO:BEGIN -->
+
 | Sắp làm | Đọc trước |
 |---|---|
 | Đụng một gói `duc-auto-*` | `AGENTS.md` của **chính gói đó**. **Ba gói là fork của nhau** — một lỗi thường có **ba** bản sao |
@@ -121,3 +123,6 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | **Mới vào, chưa biết bắt đầu từ đâu** | [docs/HUONG-DAN.md](docs/HUONG-DAN.md) |
 | **Đến hạn bảo trì · repo im ắng lâu · muốn biết repo NẶNG bao nhiêu** | [docs/BAO-TRI-DINH-KY.md](docs/BAO-TRI-DINH-KY.md) · `npm run can-nang` · `npm run luat -- --nap` |
 | **Xem bảng trạng thái chạy tại chỗ** | [bang-song/Xem-bang.cmd](bang-song/Xem-bang.cmd) — `npm run bang-song` |
+| **Sắp commit — hai cửa MÁY** | `.githooks/` — `commit-msg` từ chối lượt commit cuốn theo file lane khác đang khoá; `post-commit` **tự trả khoá file**. Bật bằng `core.hooksPath=.githooks` — lượt `upgrade` đặt hộ, kiểm bằng `git config --local --get core.hooksPath`. **Cấu hình MỖI BẢN SAO, không đi theo file.** |
+| **Bộ biên dịch luật / đo phần nạp bằng token** | `scripts/rule-compiler.mjs` — `npm run luat` |
+<!-- BAN-DO:END -->
