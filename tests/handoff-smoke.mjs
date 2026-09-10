@@ -15,6 +15,7 @@ import {
   thangCua, thangHienTai, vuotTran, xoay
 } from "../scripts/handoff.mjs";
 import { handoffCapFrom } from "../scripts/repo-structure.mjs";
+import { laNoiPhatHanh } from "../scripts/features.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const doc = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -149,7 +150,16 @@ for (const f of CAC_FILE) {
   /* Trần phải chặn THẬT: mục dài nhất trong lịch sử repo phải vượt nó — một trần cao hơn mọi
      thứ từng viết là một trần trang trí. Nhưng repo VỪA DỰNG chưa có mục nào, và ở đó câu hỏi
      này không trả lời được; khẳng định bừa sẽ làm repo mới đỏ vì một lỗi nó không có. */
-  const moiByte = CAC_FILE.flatMap((f) => docMucTuFile(doc(f)).map((m) => m.byte));
+  /* CÂU NÀY CHỈ TRẢ LỌI ĐƯỢC Ở REPO NHÀ. "Trần phải chặn thật" là một tính chất của DỮ LIỆU,
+     không phải của mã: ở repo nhà trần 2600 sinh ra VÌ có mục dài hơn thế, nên nó đúng. Nhưng bản
+     trích mang vế này sang mọi repo đích, và một repo có nhật ký VỐN GỌN thì Đỏ — trong khi nó
+     không sai gì cả, trần ở đó chỉ là CHƯA ràng buộc. Đo 10/09 ở `n8n_Local host`.
+     Khả năng phân biệt của `handoffCapFrom` đã được bốn dòng trên ghim bằng FIXTURE, nên chỗ này
+     không mất lưới nào. Dùng `laNoiPhatHanh` — cơ chế repo này đã dựng cho đúng lớp câu hỏi
+     "chỉ có nghĩa ở nhà". */
+  const moiByte = laNoiPhatHanh(ROOT)
+    ? CAC_FILE.flatMap((f) => docMucTuFile(doc(f)).map((m) => m.byte))
+    : [];
   if (moiByte.length) {
     assert.ok(Math.max(...moiByte) > tran, "tran khong chan duoc muc nao trong lich su thi no khong phai tran");
   }

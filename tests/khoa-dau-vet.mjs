@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 
 import { ageHours, ageLabel, dangNhac, DAU_VET, decide, EXIT, GIO_NHAC, mocCoGio, noiDauVet, xetDauVet } from "../scripts/claim.mjs";
 import { khoiDangLamGi } from "../scripts/build-overview.mjs";
-import { loiKhuyenKhiChan } from "../scripts/repo-structure.mjs";
+import { auditFromMessage, loiKhuyenKhiChan } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -408,6 +408,34 @@ const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mj
   assert.doesNotMatch(co, /tự động|bỏ qua|không cần hỏi/,
     "sua mot cau khuyen KHONG duoc bien thanh tu cap phep — --carry van phai hoi nguoi chot");
   ok("11 · lane đã trả khoá rồi đi: lời khuyên nói đúng sự thật, và vẫn KHÔNG tự cho qua");
+}
+
+/* VẾ 13 — `Audit:` LÀ TRAILER, KHÔNG PHẢI KIỂU COMMIT.
+ * Ca thật 10/09, tìm ra ở một repo đích (họ tự vá, lõi thì chưa): `auditFromMessage` quét cả
+ * dòng đầu, nên một commit theo lối conventional-commit với kiểu `audit:` bị đọc thành lời khai
+ * người duyệt — rơi ra ngoài `audit.nguoi_duyet` và bị chặn push. Ca NỢNG NHẤT là ca thứ ba:
+ * một commit có nhãn `Audit: codex` HỢP LỆ mà tiêu đề tình cờ là `audit:` thì thành HAI nhãn
+ * → `AUDIT_XUNG_DOT`, tức cản đúng cái commit đã làm đúng. Không có ca ba thì bản vá chỉ đỡ
+ * được nửa đường.
+ */
+{
+  const ds = ["codex", "duc"];
+  const D = String.fromCharCode(10);
+  const tieuDe = auditFromMessage("audit: MOC 2 FAIL - thieu ghim" + D + D + "Lane: x" + D, ds);
+  assert.equal(tieuDe.khai, null,
+    `kiểu commit \`audit:\` ở DÒNG ĐẦU không được tính là nhãn: khai=${tieuDe.khai}`);
+  assert.equal(tieuDe.problem, null, `và vì thế không được chặn: ${tieuDe.problem}`);
+
+  const that = auditFromMessage("fix(x): abc" + D + D + "Lane: x" + D + "Audit: codex" + D, ds);
+  assert.equal(that.khai, "codex", "trailer THẬT vẫn phải đọc được — không thì bản vá làm tắt cả cửa");
+  assert.equal(that.problem, null, `trailer thật không được báo lỗi: ${that.problem}`);
+
+  const caHai = auditFromMessage("audit: MOC 2 FAIL" + D + D + "Lane: x" + D + "Audit: codex" + D, ds);
+  assert.equal(caHai.khai, "codex",
+    `tiêu đề \`audit:\` CỘNG trailer thật chỉ được tính MỘT nhãn: khai=${caHai.khai}`);
+  assert.equal(caHai.problem, null,
+    `commit đã làm ĐÚNG không được báo AUDIT_XUNG_DOT: ${caHai.problem}`);
+  ok("13 · `Audit:` là trailer, không phải kiểu commit — 3 ca, kể cả tiêu đề `audit:` cộng nhãn thật");
 }
 
 console.log(`khoa-dau-vet: ${passed} vế xanh`);

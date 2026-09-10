@@ -13,9 +13,10 @@
  */
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { docLuuDo, veLuuDo } from "../scripts/luu-do.mjs";
 import { md } from "../scripts/md-mini.mjs";
@@ -269,5 +270,38 @@ const RAO = "`".repeat(3);
  * trình duyệt đo được chữ thật. Ước lượng đã đối chiếu MỘT LẦN với số đo thật trong trình duyệt
  * (08/09: 7 lưu đồ · 0 chỗ chữ tràn hộp · 0 cặp nhãn đè nhau); đổi con số đó thì phải đo lại như
  * thế, đừng tin suite. */
+
+/* VẾ 11 — `md()` PHẢI LUÔN KẾT THÚC. Không phải "ra đúng", mà **ra**.
+ *
+ * Ca thật 10/09: nhánh đoạn văn của `md()` dừng ở mọi dòng mở bằng `|`, nhưng nhánh bảng chỉ
+ * vào khi DÒNG SAU là hàng ngăn cách. Gặp một dòng `|` đơn lẻ thì không nhánh nào ăn nó, `i`
+ * không tăng, vòng ngoài quay VÔ HẠN. Một tiến trình `build-overview.mjs` ở repo đích đốt
+ * **65.765 giây CPU (18 tiếng)** trước khi bị phát hiện — vì biểu hiện của nó là *"lệnh chưa
+ * xong"*, không phải một thông báo lỗi.
+ *
+ * PHẢI CHẠY Ở TIẾN TRÌNH CON. Vòng lặp là đồng bộ, nên `setTimeout` trong cùng tiến trình
+ * **không bao giờ nổ** — một vế viết kiểu đó sẽ TREO CẢ SUITE thay vì báo Đỏ, và một suite treo
+ * không bằng một suite đỏ: nó không nói gì cả.
+ */
+{
+  const cas = [
+    ["mot dong | don le", "| chi mot hang, khong co hang ngan cach" + NL + "mot dong thuong" + NL],
+    ["| o cuoi file", "van ban" + NL + "| hang bang cut"],
+    ["chi mot dau |", "|"]
+  ];
+  for (const [ten, vao] of cas) {
+    const ra = spawnSync(process.execPath, [
+      "-e",
+      "const{md}=await import(process.argv[1]);process.stdout.write(md(process.argv[2]))",
+      pathToFileURL(join(ROOT, "scripts", "md-mini.mjs")).href,
+      vao
+    ], { encoding: "utf8", timeout: 8000 });
+    assert.notEqual(ra.signal, "SIGTERM",
+      `md() KHONG KET THUC voi ca "${ten}" — vong lap khong tien, dung ca that 10/09`);
+    assert.equal(ra.status, 0, `md() phai chay xong voi ca "${ten}": ${ra.stderr}`);
+    assert.ok(ra.stdout.length > 0, `md() phai tra ra chu voi ca "${ten}", dang rong`);
+  }
+  ok(`11 · \`md()\` luôn kết thúc — ${cas.length} ca dòng \`|\` không thành bảng, đo ở tiến trình con`);
+}
 
 console.log(`luu-do-smoke: ${passed} vế xanh` + (boQua ? ` · ${boQua} vế BỎ QUA (kể tên ở trên)` : ""));

@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url";
 import { canSinh, chenBang, khoaChanSinhFrom, KHOA_CHAN_SINH, NHAN_BANG, xetChot } from "../bang-song/loi.mjs";
 import { DUONG, PHUONG_THUC, xuLy } from "../bang-song/may-chu.mjs";
 import { generatorsFrom } from "../scripts/repo-structure.mjs";
+import { tenTrang } from "../scripts/build-overview.mjs";
 import { collectModel, createHeadDeps, runDashboard } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
@@ -248,17 +249,29 @@ const bang = (khoa) => JSON.stringify({ claims: khoa });
   assert.equal(generatorsFrom({ generators: [] }).length, 0,
     "co so cua le mien tru: rong nghia la khong ai canh, nen khong duoc mien suite");
 
-  // (3) CÂY HEAD, không phải index.
-  assert.equal(biBoQua("DASHBOARD-Ark-Repo-Harness.html"), true, "trang HTML PHAI bi .gitignore bo qua");
-  assert.ok(!trongHEAD.has("DASHBOARD-Ark-Repo-Harness.html"), "trang HTML KHONG duoc nam trong cay HEAD");
-  for (const f of ["llms.txt", "DASHBOARD.md", "repo-map.json"]) {
-    assert.ok(trongHEAD.has(f), f + " PHAI o lai trong cay HEAD — llms.txt la goc dieu huong cua B6");
+  /* (3)(4) LÀ CHÍNH SÁCH CỢA REPO, KHÔNG PHẢI HÀNH VI CỢA MÃ — nên chỉ đòi ở nơi đã KHAI chính
+     sách đó. Bản cũ đóng cứng `DASHBOARD-Ark-Repo-Harness.html`, tức tên trang của RIÊNG repo nhà.
+     Bản trích mang vế này sang mọi repo đích, nên ở đó nó đỏ vì **một tên file không tồn tại** — không
+     phải vì repo đó sai. Đo 10/09 ở `n8n_Local host`: *"trang HTML PHAI bi .gitignore bo qua"*
+     Đỏ trong khi trang của nó tên khác. Một phép kiểm cưỡng chế chính sách mà repo chưa nhận thì
+     không phải lưới, nó là **thuế bắt buộc đóng mà không ai báo trước**.
+     Tên trang suy từ khai báo của chính repo, không đóng cứng. */
+  const khai = JSON.parse(readFileSync(join(ROOT, ".repo-structure.json"), "utf8"));
+  /* MỘT vế = MỘT lời gọi `ok()`. Hai nhánh mỗi nhánh một `ok()` thì SỐ VẾ ĐẾM ĐƯỢC lệch số
+     vế CHẠY ĐƯỢC, và `core-contract` Đỏ — tôi mắc đúng lỗi này hai lần trong ngày. */
+  let nhan8b = "8b · `[]` hợp lệ mà vắng khoá vẫn mặc định";
+  if (!Array.isArray(khai.generators) || khai.generators.length > 0) {
+    nhan8b += " (repo này chưa khai `generators: []` — bỏ phần chính sách R1)";
+  } else {
+    const trang = tenTrang(readFileSync(join(ROOT, ".repo-structure.json"), "utf8"));
+    assert.equal(biBoQua(trang), true, `trang HTML ${trang} PHAI bi .gitignore bo qua`);
+    assert.ok(!trongHEAD.has(trang), `trang HTML ${trang} KHONG duoc nam trong cay HEAD`);
+    for (const f of ["llms.txt", "DASHBOARD.md", "repo-map.json"]) {
+      assert.ok(trongHEAD.has(f), f + " PHAI o lai trong cay HEAD — llms.txt la goc dieu huong cua B6");
+    }
+    nhan8b += ` · ${trang} ngoài cây HEAD · ba file text ở lại`;
   }
-
-  // (4) Và repo này thật sự đã khai rỗng.
-  assert.deepEqual(JSON.parse(readFileSync(join(ROOT, ".repo-structure.json"), "utf8")).generators, [],
-    "repo nay phai khai `generators: []` — khai lai la dung lai vong lap 37%");
-  ok("8b · `[]` hợp lệ mà vắng khoá vẫn mặc định · HTML ngoài cây HEAD · ba file text ở lại");
+  ok(nhan8b);
 }
 
 /* ---- 9. BĂNG: gỡ được, không chồng, và NÓI RA thứ nó không thấy ---------- */

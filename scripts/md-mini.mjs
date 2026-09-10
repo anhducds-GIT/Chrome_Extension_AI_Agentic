@@ -120,7 +120,20 @@ export function md(text) {
     while (i < dong.length && dong[i].trim() !== "" && !/^(#{1,4}\s|\||>|```|\s*[-*]\s|\d+\.\s)/.test(dong[i])) {
       doan.push(dong[i]); i += 1;
     }
+    /* VÒNG NÀY PHẢI LUÔN TIẾN — đây là chỗ nó từng không.
+     *
+     * Mẫu dừng của nhánh đoạn văn RỘNG HƠN tập mà các nhánh trên thật sự nhận. Rõ nhất là `|`:
+     * nhánh bảng chỉ vào khi DÒNG SAU là hàng ngăn cách, còn mẫu dừng chặn MỌI dòng mở bằng `|`. Gặp
+     * một dòng như thế thì `doan` rỗng, `i` KHÔNG tăng, và vòng ngoài quay vô hạn.
+     *
+     * Đo 10/09: một tiến trình `build-overview.mjs` ở một repo đích đã đốt **65.765 giây CPU
+     * (18 tiếng)** — một lõi CPU chạy hết công suất suốt đêm trên máy Đức, không ai thấy, vì biểu
+     * hiện của nó là *"lệnh chưa xong"* chứ không phải một thông báo lỗi.
+     *
+     * Sửa bằng MỘT chốt ở đây chứ không đi nới từng mẫu dừng: nhứng mẫu cho khớp nhau là việc phải
+     * làm lại mỗi lần thêm một nhánh, còn bất biến *"mỗi vòng ăn ít nhất một dòng"* thì đúng mãi. */
     if (doan.length) ra.push(`<p>${inline(doan.join(" "))}</p>`);
+    else { ra.push(`<p>${inline(dong[i])}</p>`); i += 1; }
   }
   return ra.join(NL);
 }
