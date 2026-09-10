@@ -1244,6 +1244,62 @@
           .map((image) => ({ alt: (image.alt || "").slice(0, 50), chain: dataChain(image) }));
         const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
         const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
+        /* B-55 · SOI BÊN TRONG khung trả lời cuối. `chat.read` khớp đúng khung
+           `[data-turn="assistant"]` mà chỉ lấy ra 13 ký tự `"ChatGPT said:"` —
+           đo live 10/09 — trong khi trên màn hình là cả một câu trả lời dài. Ba
+           khả năng, và chúng chữa KHÁC NHAU hẳn, nên phải phân biệt được trước
+           khi vá:
+             ⓐ thân bài nằm trong khung, mà `innerText` bỏ qua nó;
+             ⓑ thân bài KHÔNG nằm trong khung, nó là anh em cạnh khung;
+             ⓒ thân bài nằm trong shadow DOM, `querySelectorAll` không với tới.
+           Nên khối này đo `innerText` VÀ `textContent` cạnh nhau (lệch nhau là
+           ⓐ), liệt kê con cháu có chữ (chỉ ra chỗ thật), VÀ đo cả anh em của
+           khung (ⓑ), VÀ đếm shadow root (ⓒ). Đo cả ba mới loại được hai. */
+        const answerScope = (() => {
+          const khung = messageContainers.filter((element) => element.getAttribute("data-turn") === "assistant").pop();
+          if (!khung) return { found: false };
+          const chuHien = (element) => (element.innerText || "").replace(/\s+/g, " ").trim();
+          const chuTho = (element) => (element.textContent || "").replace(/\s+/g, " ").trim();
+          const taNut = (element) => ({
+            tag: element.tagName.toLowerCase(),
+            attrs: Array.from(element.attributes || []).map((a) => `${a.name}=${String(a.value).slice(0, 24)}`).filter((a) => /^(data-|class=|aria-)/.test(a)).slice(0, 3),
+            inner: chuHien(element).length,
+            raw: chuTho(element).length,
+            // 40 ký tự đầu là đủ để NHẬN RA đây có phải thân bài không; dài hơn
+            // là biến máy soi cấu trúc thành máy chở nội dung — đúng chỗ ADR
+            // của `chat.read` cấm.
+            head: chuTho(element).slice(0, 40)
+          });
+          const conCoChu = Array.from(khung.querySelectorAll("*"))
+            .filter((element) => chuTho(element).length > 20)
+            .slice(0, 12)
+            .map(taNut);
+          const anhEm = Array.from(khung.parentElement?.children || [])
+            .filter((element) => element !== khung)
+            .slice(0, 6)
+            .map(taNut);
+          return {
+            found: true,
+            khung: taNut(khung),
+            // Số này là câu trả lời cho ⓐ: lệch nhau nghĩa là chữ CÓ trong khung.
+            khungInner: chuHien(khung).length,
+            khungRaw: chuTho(khung).length,
+            conCoChu,
+            anhEm,
+            // ⓒ: đếm chứ không mở — mở shadow root là việc của bản vá, không
+            // phải của máy soi.
+            shadowRoots: Array.from(khung.querySelectorAll("*")).filter((element) => element.shadowRoot).length,
+            // Cho `B-56` nửa ⓵ luôn, vì cùng một lượt đo: khối copy-được nằm đâu.
+            pre: khung.querySelectorAll("pre").length,
+            code: khung.querySelectorAll("code").length,
+            nutCopy: Array.from(khung.querySelectorAll('button, [role="button"]')).slice(0, 8).map((button) => ({
+              aria: (button.getAttribute("aria-label") || "").slice(0, 40),
+              testid: button.getAttribute("data-testid") || "",
+              txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 24)
+            }))
+          };
+        })();
+
         // B-48 · SOI RIÊNG TRONG Ô SOẠN THẢO, và đây là lý do nó phải là một trường RIÊNG chứ
         // không phải một nắp to hơn. Đo live 09/09: `buttons` ở trên nắp 40 mục, và thanh bên
         // ChatGPT của Đức (10 project + lịch sử hội thoại) CHIẾM HẾT 40 — nên bốn nút
@@ -1309,7 +1365,7 @@
           abPollPending: abPollPending(),
           abPoll: poll ? poll.diagnostics : null,
           busy: STATE.busy,
-          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, messageSample, messageSampleDiag, customTags, fileInputs, composerScope,
+          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, messageSample, messageSampleDiag, customTags, fileInputs, composerScope, answerScope,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
