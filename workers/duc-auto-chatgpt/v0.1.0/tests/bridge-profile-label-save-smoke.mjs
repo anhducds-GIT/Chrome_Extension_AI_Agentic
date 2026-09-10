@@ -59,17 +59,28 @@ const chromeMock = {
 };
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+/* CHỜ THEO ĐIỀU KIỆN, KHÔNG THEO ĐỒNG HỒ — cùng bệnh với
+ * `bridge-multiprofile-transport-async-smoke.mjs`, đo cùng ngày 2026-09-10: PASS khi chạy một
+ * mình, FAIL trong suite ba lượt liên tiếp, vì 5ms không đủ cho lượt đọc danh tính bất đồng bộ
+ * trên một máy đang bận. Nâng con số chỉ dời chỗ đỏ sang một máy chậm hơn. */
+const doiDen = async (dieuKien, viSao, hanMs = 3000) => {
+  const han = Date.now() + hanMs;
+  while (!dieuKien()) {
+    if (Date.now() > han) throw new Error(`QUA_HAN_CHO sau ${hanMs}ms: ${viSao}`);
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+};
 
 globalThis.DacBridgeLoopbackTransport.create({ chrome: chromeMock, WebSocket: FakeWebSocket });
 await tick();
 
 async function fullHandshake(socket) {
   socket.emit("open");
-  await tick();
+  await doiDen(() => socket.sent.length > 0, "socket phải phát ra khung thách thức");
   const challenge = socket.sent[0];
   assert.equal(challenge.type, "auth_challenge", "this branch challenges the host first");
   socket.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: hostProofFor(token, challenge.nonce) }) });
-  await tick();
+  await doiDen(() => socket.sent.some((frame) => frame.type === "auth"), "khung `auth` phải được gửi sau một chứng minh hợp lệ");
   const auth = socket.sent.find((frame) => frame.type === "auth");
   assert.ok(auth, "auth follows a valid proof");
   socket.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: `s-${FakeWebSocket.instances.length}` }) });

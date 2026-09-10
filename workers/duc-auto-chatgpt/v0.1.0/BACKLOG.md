@@ -2774,8 +2774,24 @@ cả trang rồi lấy `pre` cuối sẽ **xanh ở mọi mép khác** và đỏ
 nhiều vòng sẽ gửi lại đúng prompt cũ, **im lặng, mãi mãi**. Suite **132/132**, thử phá **10/10 đỏ**,
 0 mỏ neo hỏng.
 
-- **⓵ đóng khi:** một lượt `chat.read` **live** trả `last_copy_block.found: true` với đúng nội
-  dung khối trên màn hình.
+**⓵ NGHIỆM THU LIVE 10/09 — ĐẠT.** Đức nạp lại, `chat.read` trả:
+
+```
+found: true · turn_id: 466d766a-… · chars: 143 · truncated: false · blocks_in_turn: 2
+"Trong kiểm thử phần mềm, hãy nêu 3 dấu hiệu để phân biệt một metric đang đo outcome
+ thật hay chỉ đo proxy. Trả lời ngắn, mỗi dấu hiệu một dòng."
+```
+
+Đúng **143 ký tự** — khớp chính xác con số máy dò đếm được cho `pre` trong khung đó, và `turn_id`
+quy đúng về lượt trả lời mới nhất.
+
+**Và `blocks_in_turn: 2` đã trả công ngay lượt đầu.** Máy dò đếm `pre: 2` trong khi chỉ có **một**
+khối nhìn thấy được — nghĩa là cấu trúc có một lớp `pre` lồng. Lần này *"lấy cái cuối"* ra đúng,
+nhưng con số 2 nói cho người đọc biết **họ đang tin vào một lựa chọn**, chứ không phải vào một sự
+thật hiển nhiên. Nếu tôi không khai con số đó, ngày cấu trúc đổi sẽ không ai biết mình đã tin gì.
+
+- **⓵ đóng khi:** ~~một lượt `chat.read` live trả `last_copy_block.found: true` với đúng nội dung
+  khối trên màn hình.~~ **ĐÃ ĐẠT 10/09.**
 
 **⓶ TỰ ĐỘNG gửi khối đó đi — đây đúng là `run.start`, thứ đang bị CẤM VĨNH VIỄN.**
 `B-42` định nghĩa `run.start` là *"chạy tiếp không ai nhìn: một lệnh, N lượt gửi, không cần cấp
