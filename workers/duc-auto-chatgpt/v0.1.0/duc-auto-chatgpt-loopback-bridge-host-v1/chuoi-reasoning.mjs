@@ -162,6 +162,14 @@ async function chinh() {
         ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi });
         goi(["chat-reload", "--request-id", `${nhan}-v${vong}-reload`]);
         daNapLai = true;
+        /* ĐẶT LẠI CỬA SỔ QUAN SÁT SAU KHI NẠP LẠI. Bản đầu nạp lại rồi kết luận DỪNG ở
+           lượt đọc kế tiếp — 60 giây sau. Đo 10:02 ngày 10/09: nó chấm HET_CHUOI trong khi
+           câu trả lời vòng 5 đã xong đủ 2245 ký tự và khối 1388 ký tự đang nằm đó.
+           Lý do sâu hơn: `generating` đọc nút Stop, mà nút Stop BIẾN MẤT trong lúc model
+           chạy tool — nên "false" giữa chuỗi tool không phải "đã xong". Đặt lại hai biến
+           này bắt nó quan sát thêm trọn một cửa sổ ~90 giây trước khi được phép kết luận. */
+        daThayDangChay = false;
+        soLanYen = 0;
         await ngu(15000);
         continue;
       }

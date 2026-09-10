@@ -73,6 +73,23 @@ const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
   assert.match(daNap.vi, /HET_CHUOI/);
 }
 
+/* ---- ⓔ2 sau khi NẠP LẠI phải quan sát thêm trọn một cửa sổ, không kết luận ngay
+   Lỗi thật lúc 10:02 ngày 10/09: bộ chạy nạp lại rồi chấm `HET_CHUOI` ở lượt đọc kế tiếp,
+   **60 giây sau** — trong khi câu trả lời vòng 5 đã xong đủ 2245 ký tự và khối 1388 ký tự
+   đang nằm đó. Lý do sâu hơn cả B-59: `generating` đọc **nút Stop**, mà nút Stop BIẾN MẤT
+   trong lúc model chạy tool. Nên `false` giữa một chuỗi tool KHÔNG phải "đã xong".
+   Bản vá đặt lại `daThayDangChay` và `soLanYen` ngay sau lượt nạp lại — mép này ghim đúng
+   trạng thái đó: đã nạp lại NHƯNG cửa sổ quan sát vừa mở lại thì chưa được kết luận. */
+{
+  const vuaNap = quyetDinh({ generating: false, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: true, daThayDangChay: false, soLanYen: 1 });
+  assert.equal(vuaNap.viec, "CHO", "vừa nạp lại xong thì phải quan sát thêm, không được kết luận HET_CHUOI ngay");
+
+  const nguon = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const sauNapLai = nguon.slice(nguon.indexOf("daNapLai = true;"), nguon.indexOf("daNapLai = true;") + 700);
+  assert.match(sauNapLai, /daThayDangChay = false;/, "nạp lại phải ĐẶT LẠI cửa sổ quan sát");
+  assert.match(sauNapLai, /soLanYen = 0;/, "nạp lại phải đặt lại bộ đếm yên");
+}
+
 /* ---- ⓕ khối CŨ không phải khối mới — chống gửi lại đúng một prompt hai lần --- */
 {
   const qd = quyetDinh({ generating: false, khoi: khoiTot("y hệt", KHOI_CU), khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true });
