@@ -1704,7 +1704,17 @@ mục đích phải dùng hai ảnh khác nhau:** ảnh **to** (nhiễu) để �
 (hình khối, màu phẳng, mốc đối chiếu) để kiểm đường chạy. Luật vàng của gói vốn đã dặn ảnh mẫu
 phải *"tự tố cáo"* — tôi bỏ qua chính dòng đó.
 
-### B-40 · (P1) Lỗi CHỮA ĐƯỢC của nhà cung cấp nằm ngay trong chữ hội thoại, mà lớp phân loại lỗi không đọc
+### ~~B-40~~ · (ĐÃ VÁ 09/09 — gạch muộn 11/09) Lỗi CHỮA ĐƯỢC của nhà cung cấp nằm ngay trong chữ hội thoại, mà lớp phân loại lỗi không đọc
+
+> **Đóng.** Đức chốt **đường ⒝** ngày 09/09 (*"phương án 2… trừ khi bị captcha hoặc báo hết
+> credit"*) → [ADR-0053](docs/adr/0053-loi-nha-cung-cap-la-mot-nguon-doi-soat-cau-chua-lay-tu-ma-cua-ta.md).
+> Kiểm lại 11/09 **bằng mã, không bằng lời khai**: `REPAIR_PHRASES` là **hằng trong
+> `provider-adapter.js`** (chữ nhà cung cấp chỉ dùng để NHẬN DẠNG, không bao giờ để gõ),
+> `providerRepairRequest()` đối chiếu ngược danh sách đó ở `content.js`, và nắp
+> `MAX_PROVIDER_REPAIRS_PER_JOB` **đếm theo job** — nối dây thật ở `sidepanel.js:6511`, tăng ở
+> `:6532`, xoá đầu run ở `:6618`. Ghim `tests/provider-repair-b40b-smoke.mjs` chạy XANH.
+> **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — cần một lỗi tạm thật của nhà cung cấp, và
+> luật của gói cấm giả lập nó.
 
 **Đây là chỗ thật sự chặn vòng CC ↔ GPT tự chạy**, và nó không phải một lỗi trong mã — mọi lớp
 đều xử đúng. Chuỗi sự kiện đo được 08/09:
@@ -1755,7 +1765,22 @@ cần cho ⒝ về sau (không báo được thì cũng không nới an toàn đ
 - **ĐÓNG B-37** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `adoptAuthorizedOutputProfile()` nay ghi **lý do** kèm hai con số đếm được vào `state.outputAdoptDiag` ở **từng** đường trả `null`, và câu báo dựng từ đó — bốn nhánh, bốn câu khác nhau: chưa có settings · **không hồ sơ nào còn quyền** (kèm số hồ sơ tìm thấy và số còn quyền) · **có từ hai hồ sơ trở lên** nên cố ý không chọn hộ (kèm con số, và chỉ đường ra bằng `output.configure`) · **kho hồ sơ không đọc được** (nói rõ *bấm cũng không chữa*, vì nhánh này dễ bị nhập nhèm nhất). **Không đổi một nhánh quyết định nào** — vẫn nhận khi và chỉ khi có đúng một hồ sơ được cấp quyền. Xoá luôn hằng `AUDIT_HELD_NOTE` vì nó thành mã chết; để lại là một bản sao thứ hai của cùng câu báo, và hai bản sao sẽ lệch nhau. Ghim: `tests/output-adopt-reason-smoke.mjs` — **chín mép**, và bốn mép cuối là **dây nối**: chạy chính `adoptAuthorizedOutputProfile()` với kho hồ sơ giả để đòi nó THẬT SỰ ghi chẩn đoán. Bốn mép đó sinh ra vì thử phá vòng đầu cho thấy phần kiểm hàm-lá **để lọt** việc xoá hẳn lượt ghi chẩn đoán — hàm dựng câu đúng mà không ai điền dữ liệu thì câu vẫn sai. Mép ⑼ còn phải viết lại lần hai: bản đầu bắt đầu với chẩn đoán `null` nên xoá hẳn dòng dọn vẫn xanh; nay bắt đầu bằng một chẩn đoán CŨ, đúng cảnh thật. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — cần Đức nạp lại tiện ích rồi gọi `jobs.add` lúc chưa bind thư mục.
 - **ĐÓNG B-39** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `run.status` nay trả `last_failure` — job nào, attempt nào, `INTERRUPTED` hay `FAILED`, mã lỗi, câu lỗi, `retry_count`, `run_id`, mốc thời gian. Ghi ở **đúng hai cửa settle cuối** (`markInterrupted` và nhánh FAILED của `resolveJobFailure`), và **xoá lúc bắt đầu run mới**. **Cố ý KHÔNG ghi ở đường thử lại:** một job thử lại rồi thành công thì lượt lỗi giữa đường không phải kết cục, khai nó ra sẽ làm agent kết luận run hỏng trong khi nó xong sạch. **Cố ý KHÔNG tích luỹ qua nhiều run:** câu hỏi trường này trả lời là *"run vừa rồi kết thúc thế nào"*, không phải *"kể hết lịch sử lỗi"* — lịch sử nằm ở sổ audit và ledger; giữ lại là mời agent đọc một lỗi cũ rồi tưởng nó vừa xảy ra. Ghim: mở rộng `tests/run-status-stale-current-smoke.mjs` từ 4 lên **tám mép** — cộng `last_failure` đi qua payload, mép ngược `null` khi chưa có lỗi, **chạy `markInterrupted` thật** để đòi nó ghi đúng `INTERRUPTED` (không phải `FAILED`), và một khẳng định **tĩnh, có khai là tĩnh** cho lượt xoá đầu run. Ba mép sau sinh ra vì thử phá vòng đầu để lọt cả ba. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — lượt chạy live 08/09 trả `last_failure: null` vì tiện ích đang chạy mã cũ, đúng như phải vậy.
 
-### B-41 · (P1) Thi hành ADR-0050 mục ⒝⒞⒟ — tự chữa để chạy hết job
+### ~~B-41~~ · (ĐÃ VÁ 09/09 — gạch muộn 11/09) Thi hành ADR-0050 mục ⒝⒞⒟ — tự chữa để chạy hết job
+
+> **Đóng cả ba phần.** Kiểm lại 11/09 **bằng mã và bằng cách CHẠY từng phép ghim**, không bằng
+> lời khai:
+> ⑴ `RECEIVER_LOST`/`WRONG_SURFACE` chữa được, nắp `MAX_REPAIRS_PER_RUN = 3` **đếm riêng từng
+> loại**, nối dây ở `sidepanel.js:6080` — `tests/workspace-repair-adr0050b-smoke.mjs` XANH.
+> ⑵ `DETECTION_BLIND` **đối soát trước, gửi lại sau cùng** (`DAC_RECONCILE_TEXT_JOB`, chỉ đọc) —
+> `tests/blind-reconcile-b41-2-smoke.mjs` XANH.
+> ⑶ lời nhà cung cấp là nguồn đối soát — xem `~~B-40~~`.
+> `tests/post-submit-no-resend-smoke.mjs` **đã viết lại và đếm THẲNG cả hai đường**, đúng điều
+> nó tự dặn; XANH. `submissionMayExist()` và `canRetry()` **không bị sửa một dòng** — các cửa
+> đối soát đứng TRƯỚC chúng, đúng ràng buộc kiến trúc của mục này.
+> **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE.** Vế live của điều kiện đóng — *"một loạt job
+> đi qua được ít nhất một lần tự chữa"* — **chưa xảy ra**, và nó chỉ xảy ra khi có một lỗi tạm
+> thật; luật của gói cấm giả lập. Đức chốt 11/09 *"vẫn dùng bình thường"*, nên lượt live sẽ tự
+> đến. Gặp rồi thì ghi vào đây.
 
 [ADR-0050](docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md) đã `Accepted` 08/09, nhưng mới thi
 hành **mục ⒠** (hạ nắp chờ xuống 90 giây, đã ghim
@@ -2622,8 +2647,39 @@ giấu đi lần chỉ sai thì lần sau có người tin nó.*
 công**. Thứ cứu buổi hôm nay là **mọi mutation đều idempotent theo `request-id`** — nếu không, một
 lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI khác, hoặc chính Đức, rất dễ đọc sai chỗ này.
 
-- **đóng khi:** tách được nguyên nhân bằng phép đo (gallery hay checkpoint), và panel còn trả lời
-  được các method chỉ đọc trong lúc nạp ảnh lớn.
+**ĐO LẠI 11/09 — và hình dạng thật KHÁC hẳn tiêu đề mục này.** Đức mở tab, bảo dò DOM. Không dò
+được lần nào. Số liệu:
+
+| cửa | đường đi | kết quả |
+|---|---|---|
+| `bridge.sessions` | **host** trả lời | OK, tức thì |
+| `system.capabilities` | **router** trong panel | OK, **166 ms** |
+| `system.ping` · `chat.read` · `run.status` | **executor** trong panel | **11/11 REQUEST_TIMEOUT**, mỗi lượt đúng 10,2–10,4 giây |
+
+Kéo dài **hơn 10 phút**, không tự khỏi. Profile `Ark` thì trả `EXECUTOR_UNAVAILABLE` (panel đóng)
+— một bệnh khác, và cửa đó **nói đúng bệnh**.
+
+Ba điều số liệu này nói ra, không cái nào nằm trong mô tả cũ:
+
+⑴ **Panel không "chậm", nó CHẾT MỘT NỬA.** Cùng một panel: cửa router trả lời trong 166 ms, cửa
+executor trả lời **không bao giờ**. Vậy *"Bridge nối được"* và *"panel nói được gì về trang"* là
+**hai sự thật khác nhau**, và hiện chỉ đo được cái thứ nhất từ bên ngoài.
+
+⑵ **Không liên quan gì tới ảnh mẫu lớn.** Tiêu đề mục này gán nguyên nhân cho *"ảnh mẫu lớn"* —
+lúc đo hôm nay **không có run nào, không có ảnh nào**. Nguyên nhân giả định đó **sai hoặc chỉ là
+một trong nhiều đường**.
+
+⑶ **Đây là cái chặn `B-58` `B-59` `B-60`.** Cả ba đều cần một lượt `diagnostics.dom_probe`, mà
+`dom_probe` đi qua đúng cửa executor đang chết. Nên `B-50` **không phải mục ngang hàng** với ba
+mục kia — nó là **cửa vào** của cả cụm.
+
+Lối thoát tạm cho người: **đóng rồi mở lại side panel** (nạp lại tab thì không đủ nếu panel mới
+là chỗ kẹt).
+
+- **đóng khi:** ⓐ tách được nguyên nhân bằng phép đo — **ưu tiên đúng cảnh 11/09: không run,
+  không ảnh, executor chết mà router sống**; ⓑ panel còn trả lời các method chỉ đọc trong lúc
+  nạp ảnh lớn; và ⓒ **một cửa chẩn đoán phân biệt được "panel bận" với "executor chết"** —
+  hôm nay cả hai đều hiện ra là `REQUEST_TIMEOUT`, nên người ngoài chỉ biết ngồi đợi.
 
 ### ~~B-51~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P3) `dom_probe` giấu mất ảnh MỚI NHẤT khi hội thoại đã có từ 15 ảnh
 
@@ -2808,7 +2864,16 @@ tiếp* hiện **không có nền**, kể cả `B-56`. Và vì nó báo `OK`, m�
 - **đóng khi:** `chat.read` trả về thân câu trả lời thật, và có phép ghim đòi một lượt chỉ đọc
   được đúng cái nhãn phải báo **mù**, không được báo `OK`.
 
-### B-56 · (P1, CẦN ĐỨC CHỐT phần ⓶) Reasoning nhiều vòng: đọc khối copy cuối câu trả lời rồi gửi tiếp
+### ~~B-56~~ · (ĐÓNG 11/09 — Đức chốt ⓶) Reasoning nhiều vòng: đọc khối copy cuối câu trả lời rồi gửi tiếp
+
+> **Đóng cả hai nửa.** ⓵ nghiệm thu live 10/09. ⓶ Đức chốt 10/09 (*"được phép chạy tự động trọn
+> chuỗi"*) và chốt lại 11/09 (*"B56 ok chốt"*) →
+> [ADR-0054](docs/adr/0054-vong-reasoning-tu-noi-chi-chuyen-tiep-nguyen-van-khoi-copy.md).
+> **Thứ tự đã làm ngược:** mục này đòi ADR **trước** dòng mã đầu tiên; bộ chạy được viết trước,
+> nên ADR-0054 là hồi tố và tự khai điều đó. Kiểm 11/09 bằng mã, tám điều của ADR đều có mặt —
+> gồm cả việc ba lớp dừng hẳn của ADR-0050 được **kế thừa** qua `runPrompt`, không viết lại.
+> **Rủi ro tiêm lệnh vẫn CHƯA đóng** và ADR ghi rõ giá của nó: ba mép hiện có chặn thiệt hại
+> *kéo dài*, không chặn thiệt hại *một lượt*.
 **Đức nêu 10/09.** Cách làm việc của Đức: mỗi phiên, sau khi reasoning xong, **GPT tự soạn prompt
 cho bước tiếp theo** và đặt vào một khối copy-một-chạm ở cuối câu trả lời; Đức dán sang lượt sau.
 Nhờ vậy lượt sau **đủ ngữ cảnh và đúng hướng**. Đức muốn tự động hoá đúng lối làm việc đó để
@@ -3153,7 +3218,12 @@ tôi** đã bay.
   chỉ nhận là "đã bay" nếu xuất hiện một `turn_id` MỚI mang đúng nội dung ấy. Ghim: dựng
   cảnh "khối giống hệt đã có sẵn từ trước", đòi kết quả là CHƯA BAY.
 
-### B-66 · (P2) `build-overview.mjs` nhúng TRẠNG THÁI SỐNG nên không bao giờ "tươi" được
+### ~~B-66~~ · (KHÔNG LÀM — Đức chốt 11/09) `build-overview.mjs` nhúng TRẠNG THÁI SỐNG nên không bao giờ "tươi" được
+
+> **Đóng không sửa.** Thuộc vùng `_code`/`_root`, và Đức cắt để khỏi ôm nợ của lane khác.
+> **Cái phải trả:** hàng cổng *"Sự thật máy sinh còn tươi"* sẽ **ĐỎ vĩnh viễn** với mọi phiên
+> chạm gốc repo, vì trang nhúng số phút đã giữ khoá. Đừng đọc hàng đỏ đó thành "artifact hỏng";
+> mở mục này ra xem trước.
 
 Cổng `Sự thật máy sinh còn tươi` báo ĐỎ cho `DASHBOARD-Chrome-Extension-AI-Agentic.html`, và
 sinh lại **không** gỡ được. Xem diff thì rõ: trang nhúng **ai đang giữ khoá** và **giữ bao lâu**
@@ -3219,7 +3289,11 @@ Cộng chiều ngược: logic cũ (so nguyên văn) phải DỪNG ở ca `?mode
 **Trần tuyên bố: SUITE + chạy tay ba đường của `.bat`, CHƯA LIVE trên tab thật.** Phần
 `system.ping` cần Đức nạp lại tiện ích mới có hiệu lực.
 
-### B-69 · (P2) Cửa ra để cắt `HANDOFF.md` theo SỐ MỤC được khai nhưng KHÔNG tồn tại
+### ~~B-69~~ · (KHÔNG LÀM — Đức chốt 11/09) Cửa ra để cắt `HANDOFF.md` theo SỐ MỤC được khai nhưng KHÔNG tồn tại
+
+> **Đóng không sửa.** Thuộc vùng `_code`. **Cái phải trả:** lane nào chạm trần 25 mục sẽ lại
+> phải cắt tay như tôi hôm 10/09 — và lượt cắt tay của tôi đã ghi đè mất một file CHỈ-THÊM.
+> Ai gặp lại: đọc cách làm ở dưới, và **luôn dùng cờ `wx`** khi ghi tệp lưu trữ mới.
 
 `.repo-structure.json` (`handoff._tran_so_muc_cua_ra`) khai nguyên văn:
 *"node scripts/handoff.mjs --cat <file> --giu 20 — cắt theo SO MUC (ADR-0008)"*. Và

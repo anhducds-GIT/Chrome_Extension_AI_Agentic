@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0053
 date: 2026-09-09
 deciders: Đức
