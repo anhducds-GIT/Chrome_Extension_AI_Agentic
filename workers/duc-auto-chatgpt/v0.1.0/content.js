@@ -1113,8 +1113,18 @@
         sendResponse({ ok: false, error: "CHAT_READ_FAILED: thiếu limit / maxCharsPerTurn hợp lệ. Hai nắp này bắt buộc — envelope tối đa 1MB." });
         return false;
       }
+      /* B-57 · `generating` — CÂU TRẢ LỜI ĐÃ XONG CHƯA. Không có trường này thì mọi bên gọi
+           tự chế một phép đoán, và tôi đã chế sai HAI lần trên cùng một hội thoại: `busy: false`
+           (nó nói về PANEL, không nói về câu trả lời — B-55), rồi "số ký tự đứng yên hai lượt
+           đọc" (10/09: GPT gọi tool giữa chừng, chữ đứng yên hơn ba phút trong lúc nó vẫn đang
+           làm việc; tôi kết luận "chết giữa chừng", gửi lại prompt HAI lần, và cả hai lần GPT
+           đều đang trả lời bình thường). Chữ ngừng dài ra KHÔNG có nghĩa là đã xong.
+           Dùng ĐÚNG `findStopButton()` mà runner dùng để biết trang còn đang sinh — không dựng
+           bộ đọc thứ hai, vì hai bộ đọc là hai chỗ để chúng nói khác nhau.
+         Khối này nằm TRÊN `try {`, không trong lòng nó: `chat-read-smoke` cắt tới đúng mỏ neo
+         `try {` rồi biên dịch lát cắt bằng `vm`, nên một chú thích chen vào giữa làm gãy neo. */
       try {
-        sendResponse({ ok: true, read: { url: location.href, ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars, answerBlockSelector()) } });
+        sendResponse({ ok: true, read: { url: location.href, generating: Boolean(findStopButton()), ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars, answerBlockSelector()) } });
       } catch (error) {
         sendResponse({ ok: false, error: `CHAT_READ_FAILED: ${error?.message || error}` });
       }

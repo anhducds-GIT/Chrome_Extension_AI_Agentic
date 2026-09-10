@@ -57,6 +57,9 @@ const runRead = vm.runInNewContext(`(function () {\n${readBlock}\nreturn readTur
    ra `slice(NaN)` = `slice(0)` = ĐỌC TẤT CẢ — vỡ envelope 1MB một cách im lặng. */
 const capBlock = slice(
   "      const limit = Number(message.limit);",
+  // Mỏ neo phải DỪNG TRƯỚC `try {`, không đi qua nó: lát cắt này được `vm` biên dịch, nên ôm
+  // một `try` không có `catch` là lỗi cú pháp. Hệ quả: chú thích cho dòng `sendResponse` phải
+  // nằm TRÊN `try {` trong `content.js`, không nằm trong lòng nó (B-57 đã va đúng chỗ này).
   "      try {\n        sendResponse({ ok: true, read: { url: location.href",
   "cửa chặn thiếu nắp nằm ngay trước lời gọi readTurns"
 );
@@ -344,6 +347,30 @@ const doiThoai = (blocks, { text = "câu trả lời có khối copy ở cuối.
   // bắt nó hỏi adapter là bắt nó chỉ tìm được thứ ta đã biết. Ranh giới đó do
   // `provider-adapter-static` cưỡng chế cho cả file; mép này chỉ lo đường ĐỌC.
   assert.doesNotMatch(readBlock, /"pre"|'pre'/, "đường đọc KHÔNG được đóng cứng `pre` — nó nhận selector đã phân giải từ adapter");
+}
+
+/* ---- ⓗ `generating` — CÂU TRẢ LỜI XONG CHƯA, hỏi đúng chỗ runner hỏi -----
+   Mép này sinh ra từ một lỗi THẬT của tôi, hai lần trên cùng một hội thoại (10/09): không có
+   trường này thì bên gọi tự chế phép đoán "xong". Lần đầu tôi lấy `busy: false` — nó nói về
+   PANEL. Lần hai tôi lấy "số ký tự đứng yên hai lượt đọc" — GPT gọi tool giữa chừng, chữ đứng
+   yên hơn ba phút, tôi kết luận "chết giữa chừng" và gửi lại prompt hai lần trong khi nó vẫn
+   đang trả lời bình thường. Câu trả lời thật dài 3450 ký tự và khối copy có đủ 805 ký tự. */
+{
+  const NGAT = String.fromCharCode(10);
+  const khongChuThich = content.split(NGAT).filter((dong) => !dong.trim().startsWith("//") && !dong.trim().startsWith("*") && !dong.trim().startsWith("/*")).join(NGAT);
+  // Đếm trên ĐÚNG payload của `chat.read`, không đếm cả file: `generating: Boolean(findStopButton())`
+  // là một thành ngữ đã có sẵn ba chỗ khác (hai lần trong `DacChatReadiness`, một lần trong
+  // `DAC_PING`). Bản đầu của mép này đếm cả file, ra 4, và báo đỏ cho một bản vá đúng.
+  const lanKhai = khongChuThich.split("read: { url: location.href, generating: Boolean(findStopButton())").length - 1;
+  assert.equal(lanKhai, 1, "`chat.read` phải khai `generating` ngay trong payload của nó, lấy từ chính `findStopButton()`");
+  // MỘT bộ đọc nút Stop, không hai. Hai bộ đọc là hai chỗ để chúng nói khác nhau — và cái sai
+  // sẽ là cái im lặng.
+  const lanDocSel = khongChuThich.split("SEL.stop").length - 1;
+  assert.equal(lanDocSel, 1, "`SEL.stop` chỉ được đọc trong `findStopButton()` — thêm bộ đọc thứ hai là mở đường cho hai câu trả lời khác nhau");
+  // HÀNH VI: `...readTurns(...)` trải SAU `generating`, nên một ngày nào đó `readTurns` trả về
+  // khoá cùng tên là nó ĐÈ mất — im lặng, và đúng vào trường quyết định dừng hay chạy tiếp.
+  const r = runRead(doiThoai(["gì đó"]), A, U, 10, 8000, BLOCK);
+  assert.ok(!("generating" in r), "`readTurns` KHÔNG được trả `generating` — nó sẽ đè lên trường thật lúc trải object");
 }
 
 console.log("chat read smoke tests: PASS");

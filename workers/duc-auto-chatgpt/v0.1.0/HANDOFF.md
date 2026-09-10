@@ -662,3 +662,33 @@ bỏ `.filter(isVisible)` mà bản đầu vẫn **XANH** — chip đã gỡ cò
 
 Suite **132/132** · thử phá **10/10 đỏ** · 0 mỏ neo hỏng. **CHƯA nghiệm thu live** — cần một job có
 ảnh mẫu sau khi Đức nạp lại.
+
+
+## 2026-09-10 (lượt 18) · `claude-gpt-chay-het-job` — B-57: `chat.read` nay nói CÂU TRẢ LỜI XONG CHƯA
+
+**Vá này sinh ra từ một lỗi thật của tôi, lần thứ ba cùng một kiểu.** Pilot chuỗi reasoning nhiều
+vòng: gửi vòng 1, GPT gọi `@github` 10 lượt trong 6 phút 3 giây. Tôi thấy chữ đứng yên ở 173 ký tự
+suốt hơn ba phút, kết luận **"lượt trả lời chết giữa chừng"**, rồi gửi lại prompt — **hai lần**.
+Đức mở màn hình cho xem: cả ba lần GPT đều trả lời bình thường, câu trả lời thật dài **3450 ký tự**
+và khối copy có đủ **805 ký tự** đúng prompt vòng 2.
+
+**Chữ ngừng dài ra KHÔNG có nghĩa là đã xong** — nó có nghĩa model đang chạy tool. Đây là phép đoán
+"xong" sai **thứ ba** tôi tự chế trên cùng một cửa: `busy: false` (nói về PANEL — B-55), rồi "số ký
+tự đứng yên hai lượt đọc". `chat.read` không có trường nào nói câu trả lời đã kết thúc, nên mọi bên
+gọi **buộc phải** tự chế một cái — và tự chế thì sai.
+
+**Vá:** `chat.read` trả thêm `generating`, lấy từ **đúng** `findStopButton()` mà runner dùng, và đi
+kèm **cùng một lượt đọc** chứ không phải RPC thứ hai — hai lượt đọc rời nhau là một cuộc đua, và
+trường quyết định dừng-hay-chạy-tiếp không được phép đua. Luật đọc nay một câu: **`generating: false`
+là tuyên bố duy nhất rằng câu trả lời đã kết thúc.**
+
+**Ghim** (`chat-read-smoke`, mép ⓗ): payload phải khai `generating` đúng một lần · `SEL.stop` chỉ
+được đọc ở **một** chỗ · và một mép **hành vi**: `readTurns` không được trả khoá cùng tên, vì nó
+trải SAU `generating` nên sẽ **đè im lặng** đúng trường quyết định.
+
+**Hai lỗi của chính phép ghim, cả hai tự bắt.** ⑴ Đếm thành ngữ trên **cả file** → ra 4, báo đỏ cho
+một bản vá đúng. ⑵ Chú thích chen vào **giữa** `try {` và `sendResponse`, gãy mỏ neo mà test cắt để
+nạp vào `vm`.
+
+Suite **132/132**. **CHƯA nghiệm thu live** — cần Đức nạp lại tiện ích thì `generating` mới có.
+Bốn cửa nói bốn chuyện khác nhau lúc bị chặn: xem **`B-58`** trong `BACKLOG.md`, chưa giải thích được.

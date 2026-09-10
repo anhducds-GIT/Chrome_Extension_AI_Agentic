@@ -2818,6 +2818,63 @@ thì Đức nhìn thấy trước khi dán; vòng tự chạy thì không ai nh�
 - **đóng khi:** `B-55` đóng · ⓵ có phép ghim trên DOM thật · và ⓶ có quyết định của Đức được ghi
   thành ADR trước khi viết dòng mã đầu tiên.
 
+### ~~B-57~~ · (P1, VÁ 10/09) `chat.read` không nói được câu trả lời đã xong chưa
+
+**Đo live 10/09, và người bắt được là Đức, không phải tôi.** Pilot chuỗi reasoning: gửi vòng 1,
+GPT gọi `@github` 10 lượt trong **6 phút 3 giây**. Tôi đọc thấy chữ đứng yên ở **173 ký tự** hơn
+ba phút, kết luận *"lượt trả lời chết giữa chừng"*, và **gửi lại prompt hai lần**. Đức chụp màn
+hình: cả ba lần GPT đều trả lời bình thường. Câu trả lời thật **3450 ký tự**, khối copy **805 ký
+tự** đúng prompt vòng 2. Tôi còn soi DOM ra *"trang chỉ có 172 ký tự"* và tưởng đó là bằng chứng
+— nó chỉ là ảnh chụp **giữa lúc model đang chạy tool**.
+
+**Chữ ngừng dài ra ≠ đã xong.** Model gọi tool giữa câu trả lời thì phần chữ đứng yên hàng phút
+trong khi nó vẫn đang làm việc. Đây là phép đoán *"xong"* sai **thứ ba** tôi tự chế trên cùng một
+cửa — trước đó là `busy: false` (nói về PANEL, không về câu trả lời — `~~B-55~~`) và *"số ký tự
+đứng yên hai lượt đọc"*. Ba lần sai cùng chỗ **không phải ba lần bất cẩn**: cửa `chat.read` không
+có trường nào trả lời câu hỏi *"xong chưa"*, nên mỗi bên gọi **buộc phải** tự chế một phép đoán.
+
+**Vá:** `chat.read` trả thêm `generating`, lấy từ **đúng** `findStopButton()` mà runner dùng —
+không dựng bộ đọc thứ hai, vì hai bộ đọc là hai chỗ để chúng nói khác nhau. Nó đi **cùng một lượt
+đọc** với `turns` và `last_copy_block`, không phải một RPC thứ hai: hai lượt đọc rời nhau là một
+cuộc đua, và đúng trường quyết định *dừng hay chạy tiếp* thì không được phép đua.
+
+**Luật đọc nay chỉ một câu:** `generating: false` là **tuyên bố duy nhất** rằng câu trả lời đã kết
+thúc. `generating: true` thì cứ chờ, bất kể chữ có dài thêm hay không.
+
+- **Ghim** `chat-read-smoke` mép ⓗ: payload khai `generating` đúng một lần · `SEL.stop` chỉ đọc ở
+  **một** chỗ · và một mép **hành vi**: `readTurns` không được trả khoá cùng tên, vì nó trải SAU
+  `generating` nên sẽ **đè im lặng** đúng trường quyết định. Suite **132/132**.
+- **CHƯA nghiệm thu live** — cần Đức nạp lại tiện ích. @Đức:bấm(B-57)
+
+### B-58 · (P1, CHƯA GIẢI THÍCH ĐƯỢC — đừng tin giả thuyết nào ở đây) Bốn cửa nói bốn chuyện khác nhau cho cùng một lúc bị chặn
+
+**Đo live 10/09.** Sau lượt gửi đầu, tôi không gửi tiếp được. Bốn lời từ chối, trong vòng vài phút:
+
+| gọi | trả lời |
+|---|---|
+| `chat.say` | `RUN_ACTIVE` — *"đang có run chạy… **Gọi run.stop trước**"* |
+| `run.status` | `WORKBOOK_NOT_LOADED` — không có phiên workbook nào |
+| `run.stop` | `was_running: false` — *"không có run nào đang chạy, không có gì để dừng"* |
+| `chat.say` (lượt sau) | *"tab này đang chạy một prompt tự động"* — từ content script |
+
+**Đi theo đúng chỉ dẫn của chính hệ thống là đi vào ngõ cụt.** Máy bảo gọi `run.stop`, tôi gọi,
+máy bảo *không có gì để dừng*, rồi vẫn chặn tiếp. Tôi mất khoảng mười phút ở đó và **kết luận sai
+là deadlock vĩnh viễn** — thật ra chốt tự nhả, nó chỉ tạm.
+
+**Điều đọc được từ mã, chưa phải nguyên nhân:** `tryBeginMutation()` chặn khi **một trong ba**
+cờ bật (`queueMutationRunning`, `running`, `runStarting`), còn `run.stop` chỉ đọc **hai** cờ sau
+để tính `was_running`. Nên một chốt do cờ **thứ nhất** giữ sẽ hiện ra đúng như quan sát trên.
+**Nhưng tôi chưa đo được cờ nào thật sự giữ** — không cửa nào khai ba cờ đó ra, và mọi cửa có thể
+thăm dò (`chat.say`, `chat.reload`) đều **tự lấy cùng cái chốt** nên hỏi tức là chiếm.
+
+**Vì sao đáng vá:** đây đúng loại lỗi `~~B-37~~` đã đóng — *nhiều nguyên nhân gộp vào một câu, và
+Bridge không đọc ra được* — nay lặp lại ở một cửa khác. Câu `RUN_ACTIVE` nêu **một** nguồn trong
+**ba**, và chỉ đường tới một cửa không chữa được nguồn nó nêu.
+
+- **đóng khi:** `RUN_ACTIVE` nói **cờ nào** đang giữ · `run.status` đọc được ba cờ đó kể cả khi
+  chưa có workbook · và câu chỉ đường chỉ nhắc `run.stop` khi `run.stop` **thật sự** gỡ được.
+- **cần một lượt đo riêng trước khi vá.** Không đoán — chính chỗ này tôi vừa đoán sai một lần.
+
 ## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
 > Thay khối *KẾ HOẠCH TRIỂN KHAI* cũ: hai mục của nó (`~~B-20~~`, và lượt đo ba câu `B-14`/`B-15`/
