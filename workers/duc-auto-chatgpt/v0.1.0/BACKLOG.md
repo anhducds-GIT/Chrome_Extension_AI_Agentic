@@ -2463,7 +2463,11 @@ ngay ở lượt dò **nền**, chưa cần gắn ảnh.
 
 - **đóng khi:** đã đóng.
 
-### ~~B-49~~ · (ĐÃ VÁ 10/09, Đức chốt · chờ nghiệm thu live) `uploadPending` đo SAI THỨ nó khai
+### ~~B-49~~ · (ĐÓNG — Đức HUỶ nghiệm thu live 10/09) `uploadPending` đo SAI THỨ nó khai
+
+> **Đức chốt 10/09: không cần nghiệm thu live nữa, đóng luôn.** Bản vá đã ship và có phép
+> ghim; thứ còn thiếu chỉ là một lượt chạy thật có ảnh mẫu, và Đức quyết không bỏ công cho
+> nó. Đừng mở lại mục này để "chờ ảnh" — muốn kiểm thì mở một mục mới.
 Đo live 09/09 (số đầy đủ ở `~~B-15~~`): trong cửa sổ upload thật (1,83MB, **3,82 giây**, ~27 lượt
 dò) cả ba mục **0/0/0**; nhưng lúc **đang sinh ảnh** thì `[aria-busy="true"]` **khớp**. Nên nhóm này
 đo **"trang đang bận"**, không phải **"ảnh đang upload"**.
