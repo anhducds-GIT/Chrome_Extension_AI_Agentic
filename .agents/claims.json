@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T14:51:02.509Z",
-      "task": "dong goi cuoi phien: HANDOFF luot 20 + STATUS + artifact",
+      "claimed_at": "2026-09-10T15:03:04.954Z",
+      "task": "ghi not hai phat hien cuoi phien",
       "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -96,15 +96,11 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "deaec2c453fcb9cf",
+  "_fingerprint": "1fb33ad01191cb74",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-10T14:55:08.152Z"
     }
   }
 }

@@ -3065,6 +3065,34 @@ tôi** đã bay.
   chỉ nhận là "đã bay" nếu xuất hiện một `turn_id` MỚI mang đúng nội dung ấy. Ghim: dựng
   cảnh "khối giống hệt đã có sẵn từ trước", đòi kết quả là CHƯA BAY.
 
+### B-66 · (P2) `build-overview.mjs` nhúng TRẠNG THÁI SỐNG nên không bao giờ "tươi" được
+
+Cổng `Sự thật máy sinh còn tươi` báo ĐỎ cho `DASHBOARD-Chrome-Extension-AI-Agentic.html`, và
+sinh lại **không** gỡ được. Xem diff thì rõ: trang nhúng **ai đang giữ khoá** và **giữ bao lâu**
+— `giữ 6 phút` → `giữ 7 phút`. Nó đổi mỗi phút, không liên quan gì tới commit.
+
+Nên hàng này ĐỎ vĩnh viễn với mọi phiên, và một cổng đỏ vĩnh viễn thì chẳng mấy ai còn đọc.
+Đúng cái luật *"artifact máy sinh phải tất định, không được nhúng chủ khoá"* mà repo tự đặt.
+
+**Không thuộc gói này** — `scripts/build-overview.mjs` là vùng `_code`/`_root`. Ghi ở đây vì
+tôi là người đo được, không phải để tự sửa.
+
+- **đóng khi:** trang bỏ phút-đã-giữ và danh sách chủ khoá, hoặc chuyển chúng sang một tệp
+  riêng không nằm trong phép kiểm tươi.
+
+### B-67 · (P2) `nghiem-thu-artifact.mjs` chạy hai lượt QUÁ SÁT NHAU nên không thấy trôi theo phút
+
+Chính công cụ tôi viết hôm nay chấm **DAT: 4 bộ sinh tất định** trong khi `build-overview` thật
+sự **không** tất định (`B-66`). Lý do: hai lượt chạy cách nhau vài giây, mà thứ trôi lại tính
+theo **phút** — nên cả hai lượt cho ra cùng một chuỗi.
+
+Đây là một *dấu hiệu vắng mặt bị lấy làm bằng chứng* nữa, lần này trong công cụ đo. Nó nguy hơn
+lỗi thường: một cái thước nói dối làm mọi phép đo sau đó vô nghĩa.
+
+- **đóng khi:** lượt hai cách lượt một đủ để vượt mọi hạt thời gian đang nhúng (≥70 giây), hoặc
+  bộ sinh khai rõ trường nào là sống và phép kiểm bỏ qua đúng trường đó. Ghim: dựng một bộ sinh
+  giả in ra phút hiện tại, đòi phép kiểm chấm KHÔNG TẤT ĐỊNH.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
