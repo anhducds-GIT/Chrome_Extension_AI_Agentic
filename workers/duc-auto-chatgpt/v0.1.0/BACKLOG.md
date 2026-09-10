@@ -2463,7 +2463,7 @@ ngay ở lượt dò **nền**, chưa cần gắn ảnh.
 
 - **đóng khi:** đã đóng.
 
-### B-49 · (P2) `uploadPending` đo SAI THỨ nó khai, và nó có thể làm job gắn ảnh chết oan
+### ~~B-49~~ · (ĐÃ VÁ 10/09, Đức chốt · chờ nghiệm thu live) `uploadPending` đo SAI THỨ nó khai
 Đo live 09/09 (số đầy đủ ở `~~B-15~~`): trong cửa sổ upload thật (1,83MB, **3,82 giây**, ~27 lượt
 dò) cả ba mục **0/0/0**; nhưng lúc **đang sinh ảnh** thì `[aria-busy="true"]` **khớp**. Nên nhóm này
 đo **"trang đang bận"**, không phải **"ảnh đang upload"**.
@@ -2486,8 +2486,35 @@ tính** chứ không chỉ **số lượng**, và nó thoát khỏi nhãn tiến
 ⚠️ **Đừng làm nửa vời:** thêm selector vào `attachmentPreview` mà **không** đổi phép đếm là mở cổng
 SỚM (số đo ở `~~B-14~~`: 1 chip trên 2 ảnh cho `3 >= 2`). Nên hai việc này **phải đi cùng nhau**.
 
-- **đóng khi:** Đức chốt, vá xong, và có phép ghim cho **cả hai** ca: "gắn ảnh khi trang đang sinh"
-  và "mới gắn xong một nửa số ảnh".
+**ĐỨC CHỐT 10/09 — *"sửa cả hai đi"*. Đã vá cùng lượt.**
+
+| vế | trước | sau |
+|---|---|---|
+| ⑴ | `&& !uploadIsPending()` trong cổng | **gỡ hẳn.** Nhóm đó vẫn sống ở `DacChatReadiness`, nơi câu hỏi *"trang có đang bận không"* là ĐÚNG — nó không sai, nó **bị hỏi sai câu** |
+| ⑵ | `attachmentPreviewCount() >= previousPreviewCount + n` | đối chiếu **từng TÊN FILE** với `aria-label` của chip. `attachmentPreviewCount()` xoá hẳn — mã chết là lời mời nối nó về |
+
+**Câu báo lỗi nay nêu đích danh**, và tách hai vế: *"chưa nằm trong ô nhập file"* khác hẳn *"chưa
+thấy chip trên trang"*. Câu cũ chỉ nói *"không sẵn sàng"* — và hai phiên đã đi tìm nhầm chỗ vì nó.
+
+**MỘT LỖ TRONG CHÍNH BẢN VÁ NÀY, bắt được trước khi nó kịp chạy.** Bản nháp đầu khớp bằng
+`label.includes(fileName)`, mà `"aa.png".includes("a.png")` là **TRUE** — một chip của file khác vẫn
+mở được cổng, **đúng loại nhầm mà vế ⑵ sinh ra để chặn**. Nay chỉ nhận nhãn **đúng bằng** tên file,
+hoặc phần trước dấu phẩy đúng bằng tên file (nhãn có tô điểm cỡ file). Vế đẳng thức đứng trước nên
+tên file có sẵn dấu phẩy vẫn khớp.
+
+**Hai phép ghim cũ đối chiếu — không xoá, ĐẢO CHIỀU.** `attachment-chip-anchor-smoke` từng khẳng
+định *"KHÔNG file nào được đọc `attachmentChip`"* kèm cửa ra *"nối vào cổng thì phải qua B-49 và Đức
+chốt"*. Đức chốt rồi, nên nay nó đòi ngược lại: `content.js` **bắt buộc** đọc và **đúng một mình
+nó**; sáu file kia vẫn cấm. `content-image-static` ghim hình dạng cổng mới với cùng độ chặt.
+
+**Ghim mới:** `tests/attach-gate-by-filename-smoke.mjs` — cắt ba hàm đã ship rồi **chạy** trên DOM
+giả, **chín mép**. Mép ⑶ là mép chịu tải: dựng đúng cảnh phép đếm cũ mở cổng sai (một chip sót của
+lượt trước + một ảnh của lượt này chưa hiện) và đòi cổng mới **đóng**. Mép ⑼ sinh ra **từ một lượt
+thử phá**: bỏ hẳn `.filter(isVisible)` mà bản đầu của file vẫn **XANH** — một chip vừa gỡ nhưng node
+còn sót vẫn mở được cổng. Suite **132/132**, thử phá **10/10 đỏ**, 0 mỏ neo hỏng.
+
+- **đóng khi:** ~~Đức chốt, vá xong, và có phép ghim cho **cả hai** ca.~~ Còn lại **một** việc:
+  nghiệm thu **live** một job có ảnh mẫu — suite và thử phá không thay được lượt chạy thật.
 
 ### B-50 · (P2) Ảnh mẫu lớn làm side panel không phản hồi hàng phút — bridge báo timeout trong khi mutation VẪN LÀNH
 Đo live 09/09, lặp lại suốt buổi. Sau khi nạp ~1,9MB ảnh mẫu, **mọi** lời gọi bridge báo

@@ -636,3 +636,29 @@ một mẫu tên chưa từng tồn tại. **Đó là mẹo của người đo, 
 **chưa nghiệm thu**.
 
 **Cổng còn 5 đỏ, KHÔNG cái nào của lượt này** — chi tiết và ai sở hữu: xem nhật ký phiên.
+
+## 2026-09-10 (lượt 17) · `claude-gpt-chay-het-job` — B-49 vá cả hai vế, Đức chốt
+
+**Đức chốt *"sửa cả hai đi"*.** Cổng chờ trước-khi-gửi nay: **bỏ `!uploadIsPending()`** (nhóm đó
+khớp lúc **đang sinh ảnh**, không phải lúc upload — nên gắn ảnh trong lúc lượt khác còn vẽ thì chết
+oan 15 giây kèm lỗi nói sai nguyên nhân), và **đối chiếu TÊN FILE** trên `aria-label` của chip thay
+cho phép đếm. Phép đếm cũ trả lời được *"đủ mấy cái chưa"* mà không trả lời được *"đúng mấy cái đó
+chưa"* — chip sót của lượt trước cũng được tính, và cổng mở khi ảnh của lượt này chưa hiện.
+
+**Nhóm `uploadPending` KHÔNG SAI, nó bị HỎI SAI CÂU.** Vẫn sống ở `DacChatReadiness`, nơi câu hỏi
+đúng là *"trang có đang bận không"*. Đừng xoá nó vì thấy nó bị gỡ khỏi một chỗ.
+
+**Một lỗ trong chính bản vá này, bắt được trước khi nó kịp chạy.** Bản nháp đầu dùng
+`label.includes(fileName)`, mà `"aa.png".includes("a.png")` là **TRUE** — chip của file khác vẫn mở
+được cổng, đúng loại nhầm vế ⑵ sinh ra để chặn. Nay chỉ nhận đẳng thức, hoặc phần trước dấu phẩy.
+
+**Câu báo lỗi nay nêu đích danh file**, và tách *"chưa vào ô nhập file"* khỏi *"chưa thấy chip"*.
+Câu cũ chỉ nói *"không sẵn sàng"*, và hai phiên đã đi tìm nhầm chỗ vì nó.
+
+**Hai phép ghim cũ ĐẢO CHIỀU chứ không xoá** — bản cũ cấm mọi file đọc `attachmentChip` kèm cửa ra
+*"nối vào cổng thì phải qua B-49 và Đức chốt"*; Đức chốt rồi nên nay nó **đòi** `content.js` đọc, và
+**đúng một mình nó**. Ghim mới cắt ba hàm đã ship, chín mép. **Mép ⑼ sinh ra TỪ một lượt thử phá:**
+bỏ `.filter(isVisible)` mà bản đầu vẫn **XANH** — chip đã gỡ còn sót node vẫn mở được cổng.
+
+Suite **132/132** · thử phá **10/10 đỏ** · 0 mỏ neo hỏng. **CHƯA nghiệm thu live** — cần một job có
+ảnh mẫu sau khi Đức nạp lại.
