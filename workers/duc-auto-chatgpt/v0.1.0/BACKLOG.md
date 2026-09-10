@@ -3032,7 +3032,11 @@ làm chuỗi **chạy nhầm chỗ**, và nó ghi đè lên việc của ngườ
   nhận ra lượt người: lượt `user` cuối mà **không** phải khối nó vừa gửi thì dừng bằng
   `NGUOI_DANG_DUNG`, không gửi. Ghim: dựng một lượt `user` lạ, đòi `DUNG`.
 
-### B-64 · (P1) Khoá một-bản-chạy khoá NHẦM CHIỀU — theo thư mục, không theo tab
+### ~~B-64~~ · (KHÔNG LÀM — Đức chốt 10/09) Khoá một-bản-chạy khoá theo thư mục, không theo tab
+
+> **Đóng không sửa.** `B-63` đã chặn được ca này rồi: lượt của bộ chạy kia cũng là lượt `user`
+> lạ nên chuỗi dừng. Thiệt hại còn lại chỉ là **một dòng nhật ký ghi sai lý do**. Sửa cho đúng
+> nhãn không đáng thêm một cơ chế khoá thứ hai. Cách tránh: mỗi lúc một chuỗi trên một profile.
 
 `B-61` chiếm `DANG-CHAY.json` trong **thư mục nhật ký**. Nhưng thứ hai bản chạy giành nhau
 không phải thư mục — là **cái tab**. Hai chuỗi khác `--nhan` thì khác thư mục, khoá không
@@ -3049,7 +3053,11 @@ khởi động trên cùng tab. Lần này không va vì bản trước đã tho
   đặt tên theo `--target`, ghi kèm `conversation_id` đã ghim. Ghim: hai lượt chạy khác `--nhan`
   cùng một `--target`, bản thứ hai phải thoát khác 0 và **không gửi gì**.
 
-### B-65 · (P1) Đọc-lại không phân biệt được "tin của tôi" với "tin y hệt do người dán"
+### ~~B-65~~ · (KHÔNG LÀM — Đức chốt 10/09) Đọc-lại không phân biệt "tin của tôi" với "tin y hệt do người dán"
+
+> **Đóng không sửa.** Chỉ xảy ra khi nối bộ chạy vào một hội thoại vừa được dán tay đúng khối
+> đó. Cách tránh không tốn dòng mã nào: **nối vào giữa chừng thì truyền `--tu-turn <turn_id>`**
+> của khối đã gửi. Đây là luật vận hành, không phải lỗi cần vá.
 
 `daVaoChua()` so **60 ký tự đầu của khối** với lượt `user` cuối để biết lượt gửi đã bay chưa.
 Nó so **nội dung**, không so **danh tính**.
@@ -3081,10 +3089,15 @@ Nên hàng này ĐỎ vĩnh viễn với mọi phiên, và một cổng đỏ v�
 **Không thuộc gói này** — `scripts/build-overview.mjs` là vùng `_code`/`_root`. Ghi ở đây vì
 tôi là người đo được, không phải để tự sửa.
 
-- **đóng khi:** trang bỏ phút-đã-giữ và danh sách chủ khoá, hoặc chuyển chúng sang một tệp
-  riêng không nằm trong phép kiểm tươi.
+- **đóng khi:** **XOÁ** phút-đã-giữ và danh sách chủ khoá khỏi trang. Đây là việc CẮT, không
+  phải việc thêm — và nó bật lại một hàng cổng đang đỏ vĩnh viễn. Đức chốt 10/09: đáng làm,
+  nhưng thuộc vùng `_code`/`_root`, chờ lane sở hữu.
 
-### B-67 · (P2) `nghiem-thu-artifact.mjs` chạy hai lượt QUÁ SÁT NHAU nên không thấy trôi theo phút
+### ~~B-67~~ · (KHÔNG LÀM — Đức chốt 10/09) `nghiem-thu-artifact.mjs` chạy hai lượt quá sát nhau
+
+> **Đóng không sửa.** Bộ sinh duy nhất trôi theo phút là `build-overview` (`B-66`). Cắt phần
+> trôi ở đó thì điểm mù này hết đối tượng. Thêm 70 giây chờ vào mọi lượt kiểm để phòng một
+> trường hợp giả định là trả giá sai chỗ.
 
 Chính công cụ tôi viết hôm nay chấm **DAT: 4 bộ sinh tất định** trong khi `build-overview` thật
 sự **không** tất định (`B-66`). Lý do: hai lượt chạy cách nhau vài giây, mà thứ trôi lại tính
