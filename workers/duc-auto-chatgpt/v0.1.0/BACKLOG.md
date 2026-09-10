@@ -2940,9 +2940,19 @@ khoảng **26%** có cưỡng chế rõ. Ba khoảng trống lớn nhất nó n�
 commit · và nhóm an toàn mã (`innerHTML`, bằng chứng selector, tự nghiệm thu).
 
 **Tôi kiểm lại ba kết luận sắc nhất — hai đúng, một SAI:**
-- ✅ **Không có git hook nào được cài** (`.git/hooks/` trống, chỉ còn `.sample`). Nên `--soat`
-  trước commit và `git push` trần **thật sự không bị chặn** ở mức máy. Kèm theo: `--no-verify`
-  tôi ghi trong commit `38d8f356` là **vô nghĩa** — không có hook nào để bỏ qua. Câu đó sai.
+- ❌ **CÂU NÀY CỦA TÔI SAI — tự sửa cùng phiên, 10/09.** Tôi đã viết *"không có git hook nào
+  được cài (`.git/hooks/` trống), nên `--soat` trước commit không bị chặn"*. Sự thật:
+  **`core.hooksPath = .githooks`**, và `.githooks/commit-msg` chạy `claim.mjs --soat --as <lane>`
+  (lane đọc từ nhãn `Lane:`), **chặn thật** khi mã thoát là 3 — nó chặn tôi một lần ngay trong
+  phiên này. Tôi chỉ chạy `ls .git/hooks/` rồi kết luận, **không kiểm `core.hooksPath`**.
+  **Hai hệ quả:** kết luận `--soat → RỖNG` của GPT cũng **sai**, và hạng đúng là **MỀM** — có
+  chặn thật, nhưng **fail-open ba đường có chủ ý** (không có `node` · không có nhãn `Lane:` ·
+  `claim.mjs` ném lỗi lạ) cộng cửa thoát `--no-verify` cố ý để mở. Và `--no-verify` trong commit
+  `38d8f356` **không** vô nghĩa như tôi đã nói — nó bỏ qua một phép kiểm thật.
+  **Đây đúng loại lỗi mà `V1` của tôi đặt luật để chặn** — *"không tìm thấy trong phạm vi đã
+  tìm" ≠ "không có"*. Tôi viết luật đó cho GPT rồi vi phạm nó trong cùng một phiên, nên nó
+  không phải luật thừa.
+- ✅ **`git push` trần thì vẫn KHÔNG bị chặn** — không có `pre-push` hook. Phần này đứng vững.
 - ✅ `safe-push.mjs` chỉ bảo vệ khi chính nó được gọi.
 - ❌ **`innerHTML` KHÔNG rỗng.** `tests/artifact-integrity-smoke.mjs:71` có
   `assert.doesNotMatch(…, /\.innerHTML\s*=/)` và nó chạy trong suite. GPT audit từ gốc repo nên
