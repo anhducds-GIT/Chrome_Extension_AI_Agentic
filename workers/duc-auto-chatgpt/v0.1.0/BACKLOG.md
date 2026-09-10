@@ -3011,6 +3011,23 @@ chỉ nhãn sai.
   phải GPT thì dừng với `CAN_NGUOI` kèm tên người nhận, không gửi đi. Ghim: khối ghi
   `Claude Code (CC)` phải cho `CAN_NGUOI`, khối ghi `GPT Web` phải cho `GUI`.
 
+### B-63 · (P0) Bộ chạy không hỏi "người có đang dùng tab này không"
+
+11:32 ngày 10/09 tôi gửi prompt Vòng 7, `chat.say` từ chối: *"ChatGPT is already generating"*.
+Đọc lại: **đúng hội thoại đó** (`6aa23606-…`), nhưng ba lượt cuối là của **Đức**, đang hỏi GPT
+về cột D của Sheet. `generating: true` là **Đức đang chờ câu trả lời của mình**.
+
+Chốt `RUN_ACTIVE` và cửa `generating` đã chặn — lần này. Nhưng cả hai chỉ đo *"trang có bận
+không"*, không đo *"ai đang dùng"*. Đức gõ xong, trang lặng, bộ chạy chạy nền sẽ **chèn prompt
+Vòng 7 vào giữa cuộc nói chuyện của Đức** và coi câu trả lời cho Đức là khối nối vòng của nó.
+
+Đây là mép nguy hiểm nhất tìm được trong ngày: năm lỗi trước làm chuỗi **dừng nhầm**; lỗi này
+làm chuỗi **chạy nhầm chỗ**, và nó ghi đè lên việc của người.
+
+- **đóng khi:** bộ chạy ghim `conversation_id` lúc khởi động và **từ chối** khi URL đổi; và
+  nhận ra lượt người: lượt `user` cuối mà **không** phải khối nó vừa gửi thì dừng bằng
+  `NGUOI_DANG_DUNG`, không gửi. Ghim: dựng một lượt `user` lạ, đòi `DUNG`.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
