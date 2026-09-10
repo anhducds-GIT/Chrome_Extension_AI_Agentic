@@ -20,6 +20,10 @@
  * Dùng:
  *   node chuoi-reasoning.mjs --so-vong 12 --nhan luat-audit \
  *        --pairing "<đường dẫn>" --target anhducds [--tran-phut 240] [--nhat-ky <thư mục>]
+ *        [--url https://chatgpt.com/c/<id>] [--tu-turn <turn_id>]
+ *
+ * `--url` khai TRƯỚC hội thoại muốn chạy. Không khai thì nó ghim đúng tab đang mở ở lượt đọc
+ * đầu — tiện, nhưng mở nhầm tab là gõ nhầm chỗ, và cái đó không hoàn tác được.
  *
  * Dừng bằng tay: tạo file `DUNG` trong thư mục nhật ký.
  */
@@ -56,6 +60,17 @@ export function nguoiNhanCuaKhoi(text) {
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
 }
 
+/* ĐỊNH DANH HỘI THOẠI TỪ MỘT ĐỊA CHỈ. Bản sao có chủ ý của `conversationId` trong
+   `provider-adapter.js` — bộ chạy là một tiến trình node, không nạp được mã của tiện ích.
+   `tests/chuoi-url-smoke.mjs` đọc regex THẬT trong adapter và bắt hai bên phải trùng, nên
+   nó là bản sao CÓ MÁY CANH chứ không phải bản sao thứ hai để trôi. Repo này đã trả giá
+   đúng một lần cho bản sao không có máy canh: `sidepanel.js` giữ regex riêng neo ở đầu
+   đường dẫn, hội thoại trong Project trả `null`, và một lớp chặn tắt lặng lẽ bảy ngày. */
+export function hoiThoaiCua(url) {
+  const m = /(?:^|\/)c\/([^/?#]+)/i.exec(String(url ?? "").split("?")[0].split("#")[0]);
+  return m ? m[1] : null;
+}
+
 /* B-63 — TAB NÀY CÒN LÀ CỦA TÔI KHÔNG. Đo 11:32 ngày 10/09: đúng hội thoại đang chạy chuỗi,
    nhưng ba lượt cuối là của Đức đang hỏi GPT chuyện khác, và `generating: true` là Đức đang
    chờ câu trả lời của mình. `RUN_ACTIVE` với cửa `generating` chỉ đo "trang có bận không",
@@ -68,8 +83,15 @@ export function nguoiNhanCuaKhoi(text) {
       gửi xong, nên mọi thay đổi khác đều là người.
    Dừng, không gửi. Đây là mép duy nhất trong tệp này bảo vệ NGƯỜI chứ không bảo vệ chuỗi. */
 export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
-  if (urlGhim && url && url !== urlGhim) {
-    return { dung: true, vi: `DOI_HOI_THOAI — ghim ${urlGhim}, giờ là ${url}` };
+  /* SO BẰNG ĐỊNH DANH HỘI THOẠI, KHÔNG SO CẢ ĐỊA CHỈ. So cả địa chỉ là dương tính giả:
+     ChatGPT tự gắn thêm/bỏ bớt phần `?...` sau lưng người dùng, và một chuỗi đang chạy
+     ngon sẽ dừng với `DOI_HOI_THOAI` mà không có ai đổi gì. Hai bên không rút ra được
+     định danh thì mới lùi về so nguyên văn — thà dừng nhầm còn hơn gõ nhầm hội thoại. */
+  if (urlGhim && url) {
+    const idGhim = hoiThoaiCua(urlGhim);
+    const idNay = hoiThoaiCua(url);
+    const khac = idGhim && idNay ? idGhim !== idNay : urlGhim !== url;
+    if (khac) return { dung: true, vi: `DOI_HOI_THOAI — ghim ${idGhim || urlGhim}, giờ là ${idNay || url}` };
   }
   if (idLuotNguoiCuoi && mocLuotNguoi !== undefined && idLuotNguoiCuoi !== mocLuotNguoi) {
     return { dung: true, vi: `NGUOI_DANG_DUNG — có lượt gõ lạ (${idLuotNguoiCuoi}), không phải lượt tôi gửi` };
@@ -158,6 +180,18 @@ async function chinh() {
   }
   if (!nhan || !pairing) { console.error("Thiếu --nhan hoặc --pairing."); process.exit(2); }
 
+  /* --url — KHAI TRƯỚC HỘI THOẠI MUỐN CHẠY. Không khai thì bộ chạy ghim đúng cái tab đang
+     mở ở lượt đọc đầu, và nó KHÔNG có cách nào biết đó có phải hội thoại Đức định chạy hay
+     không — mở nhầm tab thì chuỗi gõ vào nhầm chỗ, và cái đó không hoàn tác được. Khai thì
+     lệch một cái là dừng ngay ở lượt đọc đầu, chưa gửi gì. */
+  const urlMuon = docCo(argv, "url", "");
+  if (urlMuon && !hoiThoaiCua(urlMuon)) {
+    console.error(`--url không phải một hội thoại: ${urlMuon}`);
+    console.error("Địa chỉ phải có dạng chatgpt.com/c/<id>. Một chat MỚI chưa gõ câu nào thì chưa có địa chỉ đó —");
+    console.error("gõ một câu vào nó trước, địa chỉ sẽ hiện ra, rồi chạy lại.");
+    process.exit(2);
+  }
+
   fs.mkdirSync(thuMuc, { recursive: true });
 
   /* B-61 — MỘT BẢN CHẠY MỘT LÚC. 10/09 hai tiến trình chạy song song trên cùng một tab: nhật
@@ -198,13 +232,16 @@ async function chinh() {
   let khoiCu = docCo(argv, "tu-turn", "");
   let daGui = 0;
   let lyDo = "HET_SO_VONG";
-  /* Ghim ở LƯỢT ĐỌC ĐẦU, không phải từ tham số: bộ chạy nối vào một tab đang mở sẵn, và
-     tham số dòng lệnh không biết tab ấy đang ở hội thoại nào. `undefined` = chưa ghim. */
-  let urlGhim = null;
+  /* Có `--url` thì ghim từ đó — lệch là dừng ở lượt đọc đầu. Không có thì ghim ở LƯỢT ĐỌC
+     ĐẦU: bộ chạy nối vào một tab đang mở sẵn và không biết trước tab ấy ở hội thoại nào. */
+  let urlGhim = urlMuon || null;
   let mocLuotNguoi;
 
   console.log(`chuỗi "${nhan}" · trần ${soVong} vòng · trần ${tranPhut} phút · nhật ký ${soNhatKy}`);
-  ghi({ su_kien: "BAT_DAU", so_vong: soVong, tran_phut: tranPhut, tu_turn: khoiCu || null });
+  console.log(urlMuon
+    ? `hội thoại đã khai: ${hoiThoaiCua(urlMuon)} — lệch là dừng ngay, chưa gửi gì`
+    : "hội thoại: ghim theo tab đang mở ở lượt đọc đầu (khai --url nếu muốn chắc)");
+  ghi({ su_kien: "BAT_DAU", so_vong: soVong, tran_phut: tranPhut, tu_turn: khoiCu || null, hoi_thoai: hoiThoaiCua(urlMuon) });
 
   for (let vong = 1; vong <= soVong; vong += 1) {
     let daNapLai = false;
@@ -220,6 +257,22 @@ async function chinh() {
 
       const d = doc();
       if (!d.ok) {
+        /* SAI TRANG KHÔNG PHẢI PANEL BẬN — và chờ thêm không bao giờ chữa được nó.
+           Đo 10/09: một chat MỚI (chưa gõ câu nào) nằm ở `chatgpt.com/`, không phải
+           `chatgpt.com/c/<id>`, nên `chat.read` từ chối bằng `WRONG_SURFACE`. Bản trước gộp
+           mọi lỗi đọc vào một rọ và in "panel đang bận" — một chẩn đoán SAI BỆNH, bảo người
+           ta ngồi đợi trong khi việc cần làm là mở đúng hội thoại. `system.ping` là cửa duy
+           nhất còn trả lời được ở trạng thái này, nên hỏi nó xem tab đang ở đâu rồi nói thật. */
+        if (/WRONG_SURFACE/.test(JSON.stringify(d.error ?? ""))) {
+          const p = goi(["ping", "--request-id", `${nhan}-v${vong}-ping`]);
+          const dangO = p?.result?.chatgpt?.url || "(ping cũng không trả lời)";
+          lyDo = `SAI_TRANG — tab đang ở ${dangO}, đây không phải một hội thoại`;
+          console.log(`  vòng ${vong}: ${lyDo}`);
+          console.log("  Một chat MỚI chưa gõ câu nào thì chưa có địa chỉ chatgpt.com/c/<id>.");
+          console.log("  Gõ một câu vào nó trước, rồi chạy lại.");
+          ghi({ su_kien: "SAI_TRANG", vong, url: p?.result?.chatgpt?.url || null });
+          break;
+        }
         /* ĐƯỜNG IM CUỐI CÙNG, và nó đã che mất một lượt đứng 10 phút: bản trước `continue`
            không in gì, nên khi panel hết giờ liên tục thì bộ chạy quay vòng vô hình — nhịp
            tim ở dưới không bao giờ chạy tới. Mọi nhánh `continue` phải nói ra mình là ai. */

@@ -42,6 +42,11 @@ const COMMANDS = Object.freeze({
   "chat-say": "chat.say",
   // Also argument-free: which tab it reloads is reported back, not chosen here.
   "chat-reload": "chat.reload",
+  // BẮT ĐỊA CHỈ. Cửa duy nhất còn trả lời khi tab KHÔNG ở một hội thoại — `chat-read` từ
+  // chối thẳng bằng `WRONG_SURFACE` ở đó, nên nó không dùng được để trả lời câu hỏi đầu
+  // tiên của một bên đang nối vào: TAB NÀY ĐANG Ở HỘI THOẠI NÀO. Trả `chatgpt.url` và
+  // `chatgpt.conversation_id`. Chỉ đọc, không tham số.
+  ping: "system.ping",
   // Multi-profile: the host answers this itself — who is connected right now.
   sessions: "bridge.sessions"
 });

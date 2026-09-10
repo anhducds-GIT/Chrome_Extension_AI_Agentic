@@ -289,14 +289,20 @@ GPT tự soạn prompt cho vòng sau và đặt vào **một khối mã cuối c
 
 ### Chạy
 
+Đức chạy bằng cách **nhấp đôi `chay-chuoi.bat`** — nó hỏi tên chuỗi, số vòng, rồi cho **chọn
+hồ sơ** và **xác nhận hội thoại** từ danh sách, không phải gõ tay. Dòng lệnh dưới đây là cùng
+một thứ, dành cho phiên CC:
+
 ```bash
 node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
   --so-vong 12 --nhan <tên-việc> --tran-phut 240 \
   --pairing "<đường dẫn pairing>" --target <hồ sơ> \
-  --nhat-ky "<thư mục nhật ký>"
+  --nhat-ky "<thư mục nhật ký>" --url "https://chatgpt.com/c/<id>"
 ```
 
 - `--so-vong` trần cứng **30** trong mã, không nới bằng cờ.
+- `--url` khai TRƯỚC hội thoại muốn chạy; lệch là dừng ở lượt đọc đầu, **chưa gửi gì**. Bỏ
+  qua thì bộ chạy ghim đúng tab đang mở — tiện, nhưng mở nhầm tab là gõ nhầm hội thoại.
 - `--tu-turn <turn_id>` khi nối tiếp một chuỗi đang chạy dở.
 - **Dừng tay:** tạo file tên `DUNG` trong thư mục nhật ký.
 - Mọi vòng ghi vào `nhat-ky.jsonl`: khối đã gửi, số ký tự, `turn_id`, lý do dừng.
@@ -309,7 +315,8 @@ node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
 | `HET_CHUOI` | nạp lại rồi mà vẫn không có khối mới | **đọc chat trước khi tin** — xem ghi chú dưới |
 | `CAN_NGUOI` | khối ghi `NGƯỜI NHẬN` không phải GPT | **tới lượt CC/Đức**, làm xong rồi chạy lại |
 | `NGUOI_DANG_DUNG` | có lượt gõ lạ trong hội thoại | người đang dùng tab — **đợi, đừng chạy đè** |
-| `DOI_HOI_THOAI` | URL đổi khác hội thoại đã ghim | mở lại đúng hội thoại rồi chạy lại |
+| `DOI_HOI_THOAI` | tab đã chuyển sang **hội thoại khác** với hội thoại đã ghim | mở lại đúng hội thoại rồi chạy lại |
+| `SAI_TRANG` | tab **không ở một hội thoại nào** — hay gặp nhất là chat MỚI chưa gõ câu nào | gõ một câu vào chat đó, `/c/<id>` mới hiện ra, rồi chạy lại |
 | `KHOI_BI_CAT` / `KHOI_QUA_DAI` / `KHOI_RONG` | khối không dùng được | đọc chat, sửa tay |
 | `GUI_THAT_BAI` | gửi hai lần đều không vào | xem panel, hỏi Đức |
 | `QUA_TRAN_PHUT` / `NGUOI_DUNG` | hết giờ / có file `DUNG` | chạy tiếp bằng `--tu-turn` |
@@ -323,7 +330,7 @@ Thoát **3** thì không phải lý do dừng của chuỗi: đã có một bả
 > trả lời đầy đủ và đang **từ chối đúng vai** vì khối được giao cho CC. Thấy `HET_CHUOI` thì
 > mở chat đọc lượt cuối, đừng đóng sổ.
 
-### Ba luật đọc — ĐỪNG tự chế lại, cả ba đều mua bằng lỗi thật
+### Bốn luật đọc — ĐỪNG tự chế lại, cả bốn đều mua bằng lỗi thật
 
 1. **Chữ ngừng dài ra KHÔNG có nghĩa là xong.** Model gọi tool thì chữ đứng yên hàng phút. Chỉ
    `generating: false` mới là điều kiện cần — và nó **chưa đủ**.
@@ -336,9 +343,15 @@ Thoát **3** thì không phải lý do dừng của chuỗi: đã có một bả
 4. **Tab này chưa chắc là của bạn.** Đo 11:32 ngày 10/09: đúng hội thoại đang chạy chuỗi, nhưng
    ba lượt cuối là của Đức, và `generating: true` là **Đức đang chờ câu trả lời của mình**. Chốt
    `RUN_ACTIVE` và cửa `generating` chỉ đo *"trang có bận không"*, không đo *"ai đang dùng"*.
-   Bộ chạy ghim `conversation_id` ở lượt đọc đầu và dừng khi thấy một lượt gõ không phải của nó.
-   Ba luật trên làm chuỗi **dừng nhầm**; thiếu luật này thì chuỗi **chạy nhầm chỗ** và ghi đè
-   lên việc của người — nặng hơn hẳn.
+   Bộ chạy ghim **định danh hội thoại** (`/c/<id>`, không phải cả địa chỉ) và dừng khi thấy một
+   lượt gõ không phải của nó. Ba luật trên làm chuỗi **dừng nhầm**; thiếu luật này thì chuỗi
+   **chạy nhầm chỗ** và ghi đè lên việc của người — nặng hơn hẳn.
+
+   Ghim bằng **định danh**, không bằng địa chỉ, vì hai lý do đo được 10/09: ChatGPT tự gắn thêm
+   phần `?...` sau lưng người dùng (so nguyên văn là dừng nhầm), và một **chat MỚI** nằm ở
+   `chatgpt.com/`, chưa có `/c/<id>` — mọi lượt `chat.read` ở đó bị từ chối bằng `WRONG_SURFACE`.
+   Trước bản vá, bộ chạy gộp lỗi ấy vào rọ "panel đang bận" và ngồi đợi mãi một thứ không bao
+   giờ tự khỏi. **Gõ một câu vào chat mới trước khi nối bộ chạy vào nó.**
 
 **Và một luật vận hành:** MỘT bản chạy một lúc, cho mỗi thư mục nhật ký. Hai tiến trình cùng
 tab sẽ nạp lại trang của nhau giữa lúc model đang sinh, và mỗi bản tưởng lượt gửi của bản kia

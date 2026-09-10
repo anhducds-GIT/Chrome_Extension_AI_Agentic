@@ -1559,7 +1559,10 @@ thứ (D) tồn tại để làm.
   lên thì (D) đang chạy **đúng luật**, và mục này chỉ còn là chuyện *thông báo*. Không phân biệt
   được từ Bridge — xem mục dưới.
 
-### B-37 · (P1) `audit_durable: false` gộp BA nguyên nhân vào một câu, và Bridge không đọc ra được
+### ~~B-37~~ · (ĐÃ VÁ 08/09 — gạch muộn 10/09) `audit_durable: false` gộp BA nguyên nhân vào một câu, và Bridge không đọc ra được
+
+> **Đóng.** Xem dòng `ĐÓNG B-37` ở dưới. Kiểm lại 10/09 bằng mã: `state.outputAdoptDiag` được
+> ghi ở **từng** đường trả `null` trong `sidepanel.js` và câu báo dựng từ nó.
 
 Một AI lái từ xa nhận đúng một câu *"phiên này chưa có thư mục nào Đức cấp quyền"* cho **ba** tình
 huống cần ba hành động khác nhau: một là chưa ai từng cấp quyền, phải nhờ người bấm; hai là đã cấp
@@ -1571,7 +1574,10 @@ tôi **không kết luận được** (D) là lỗi hay là luật — đúng c�
 - **đóng khi:** payload nói rõ **số hồ sơ đã cấp quyền** (không có, một, hay nhiều), hoặc có một
   lệnh Bridge chỉ-đọc trả về danh sách hồ sơ; và một phép ghim đòi ba nguyên nhân ra ba câu khác nhau.
 
-### B-38 · (P1) Lượt ghi bị `REQUEST_TIMEOUT` VẪN có tác dụng, và công cụ tự phá lớp chống ghi-hai-lần
+### ~~B-38~~ · (ĐÃ VÁ 08/09, NGHIỆM THU LIVE — gạch muộn 10/09) Lượt ghi bị `REQUEST_TIMEOUT` VẪN có tác dụng, và công cụ tự phá lớp chống ghi-hai-lần
+
+> **Đóng.** Xem dòng `ĐÓNG B-38` ở dưới. Kiểm lại 10/09: CLI **bắt buộc** `--request-id` cho
+> mọi lượt GHI (fail closed), ghim bởi `tests/bridge-cli-mutation-key-smoke.mjs`.
 
 Đo được: `references.add` trả `REQUEST_TIMEOUT`; tôi thử lại **đúng như câu lỗi dặn** (nguyên văn
 *"retry the identical idempotency key"*) và lượt hai trả `added` rỗng kèm câu *"thay thế 2 ảnh
@@ -1585,7 +1591,13 @@ thì đổi khoá.
   phải truyền tay cho mọi mutation), và một phép ghim chứng minh hai lượt gọi liên tiếp cùng tham
   số chỉ làm checkpoint tăng **một** bậc.
 
-### B-39 · (P2) Panel không trả lời Bridge trong lúc bận, và `run.status` không nói vì sao run chết
+### ~~B-39~~ · (ĐÃ VÁ 08/09 — gạch muộn 10/09) Panel không trả lời Bridge trong lúc bận, và `run.status` không nói vì sao run chết
+
+> **Đóng.** Triệu chứng ⑵ đã vá và đã ghim — xem dòng `ĐÓNG B-39` ở dưới; kiểm lại 10/09 bằng
+> mã, không bằng lời khai: `state.lastFailure` có ở `sidepanel.js`, trả ra qua `last_failure`,
+> xoá đầu run, và `tests/run-status-stale-current-smoke.mjs` giữ tám mép.
+> **Triệu chứng ⑴ (panel không trả lời trong lúc bận) KHÔNG đóng ở đây — nó là `B-50`.** Mục
+> này gộp hai bệnh vào một mã; tách ra rồi thì phần còn sống có chủ riêng.
 
 Hai triệu chứng, một gốc. Một: suốt buổi, lời gọi Bridge phải thử lại **1 tới 6 lần**, luôn là
 `REQUEST_TIMEOUT` rồi tự khỏi; dày nhất **ngay sau mutation** và **trong lúc run đang chạy** — dấu
@@ -3173,6 +3185,70 @@ lỗi thường: một cái thước nói dối làm mọi phép đo sau đó v�
 - **đóng khi:** lượt hai cách lượt một đủ để vượt mọi hạt thời gian đang nhúng (≥70 giây), hoặc
   bộ sinh khai rõ trường nào là sống và phép kiểm bỏ qua đúng trường đó. Ghim: dựng một bộ sinh
   giả in ra phút hiện tại, đòi phép kiểm chấm KHÔNG TẤT ĐỊNH.
+
+### ~~B-68~~ · (ĐÃ VÁ 10/09) Bộ chạy mù trước một chat MỚI, và so hội thoại bằng cả địa chỉ
+
+Đức mở một chat mới trên chatgpt.com rồi định nối bộ chạy vào. Hai lỗi, cùng một gốc — **địa
+chỉ không phải định danh**:
+
+⑴ Một chat **mới tinh** nằm ở `chatgpt.com/`, chưa có `/c/<id>`. `chat.read` từ chối bằng
+`WRONG_SURFACE`, đúng theo thiết kế. Nhưng bộ chạy gộp mọi lỗi đọc vào **một rọ** và in
+*"panel đang bận"* — một chẩn đoán **nói sai bệnh**, bảo người ngồi đợi một thứ không bao giờ
+tự khỏi. Đây đúng họ với `B-58`: cửa nào cũng thiếu một mẩu.
+
+⑵ `canhTab` so **nguyên văn** hai địa chỉ. ChatGPT tự gắn/bỏ phần `?...` sau lưng người dùng,
+nên một chuỗi đang chạy ngon sẽ dừng với `DOI_HOI_THOAI` mà không ai đổi gì — **dương tính
+giả trên chính lớp bảo vệ người**, tức lớp ấy sẽ bị nghi ngờ rồi bị tắt.
+
+Chưa kể: bộ chạy **không có cách khai trước** hội thoại muốn chạy. Nó ghim đúng tab đang mở ở
+lượt đọc đầu; mở nhầm tab là gõ nhầm hội thoại, và cái đó **không hoàn tác được**.
+
+**Đã vá.** ⓐ `system.ping` nay trả `chatgpt.url` + `chatgpt.conversation_id` — cửa DUY NHẤT còn
+trả lời được khi tab chưa ở hội thoại; trước đó `bridgeSystemPing` có `ping.url` trong tay mà
+vứt đi. ⓑ CLI thêm lệnh `ping`. ⓒ Bộ chạy so bằng **định danh hội thoại**, thêm `--url` kiểm
+**ở cửa vào trước mọi đường gửi**, và tách `SAI_TRANG` khỏi rọ đọc-hỏng. ⓓ `chay-chuoi.bat`
+hỏi luôn hội thoại ngay sau khi chọn hồ sơ — chọn, không gõ.
+
+Ghim (`tests/chuoi-reasoning-smoke.mjs` ⓟ, 7 mép): khuôn định danh phải **trùng nguyên văn**
+regex thật trong `provider-adapter.js` và hai bên phải trả cùng đáp án trên 5 địa chỉ — không
+gõ lại khuôn ở đâu cả, vì repo đã trả **bảy ngày** cho đúng một bản sao không có máy canh.
+Cộng chiều ngược: logic cũ (so nguyên văn) phải DỪNG ở ca `?model=`, tức mép này bắt đúng lỗi
+đã xảy ra chứ không bắt giả định của tôi. Cộng thứ tự: `SAI_TRANG` phải đứng **trước** nhánh
+đếm đọc-hỏng, nếu không nó không bao giờ chạy tới.
+
+**Trần tuyên bố: SUITE + chạy tay ba đường của `.bat`, CHƯA LIVE trên tab thật.** Phần
+`system.ping` cần Đức nạp lại tiện ích mới có hiệu lực.
+
+### B-69 · (P2) Cửa ra để cắt `HANDOFF.md` theo SỐ MỤC được khai nhưng KHÔNG tồn tại
+
+`.repo-structure.json` (`handoff._tran_so_muc_cua_ra`) khai nguyên văn:
+*"node scripts/handoff.mjs --cat <file> --giu 20 — cắt theo SO MUC (ADR-0008)"*. Và
+`HANDOFF-ARCHIVE-05.md` ghi rằng nó **được sinh bằng đúng lệnh đó**.
+
+Lệnh đó **không có** trong `scripts/handoff.mjs`. Đọc 10/09: chỉ có `--check` và `--rotate`
+(xoay theo **THÁNG**). Mà mọi mục hiện tại đều mang mốc `2026-09`, nên `--rotate` dời **0
+dòng** — tức khi trần 25 mục cắn, **không có cửa nào mở được**.
+
+Giá đã trả thật, ngay hôm nay: HANDOFF của gói chạm 26 mục, tôi phải cắt tay bằng một script
+riêng, và **ghi đè mất 437 dòng của `HANDOFF-ARCHIVE-01.md`** — một vùng CHỈ-THÊM. Bắt được
+vì `git status` báo file đó `M`; đã `git checkout` đúng một file đó và dựng lại đúng bằng
+`HANDOFF-ARCHIVE-06.md`. Nguyên nhân: `soLuuTruTiepTheo` nhận **danh sách tên file**, tôi
+truyền **đường dẫn thư mục** — nó duyệt từng ký tự, không khớp gì, trả `1`.
+
+Hai bài học, ghi ra vì cả hai đều tổng quát:
+- **Phép kiểm của tôi canh file ĐANG CẮT, không canh file ĐANG GHI RA.** Bất biến "dựng lại
+  ra đúng bản gốc từng byte" chạy XANH trong khi một file khác vừa bị xoá. Một cái chốt phải
+  phủ **mọi** đường ghi — rẻ nhất là cờ `wx`, đã thêm.
+- **Một cửa ra được khai mà không có máy canh thì nó không tồn tại.** Đây đúng họ với luật
+  *"con số hôm nay do cổng in ra"*: chữ trong config không chạy.
+
+**Không thuộc gói này** — `scripts/handoff.mjs` là vùng `_code`. Ghi ở đây vì tôi là người
+đo được và người trả giá, không phải để tự sửa.
+
+- **đóng khi:** hoặc `scripts/handoff.mjs` có `--cat <file> --giu <N>` thật (ghim: chạy trên
+  một file 26 mục, đòi ra 20 mục + một file lưu trữ MỚI, và đòi **từ chối** khi tên lưu trữ
+  đã tồn tại), hoặc `.repo-structure.json` sửa lại cho khai đúng cửa ra đang có. **Đừng đóng
+  bằng cách xoá dòng khai** — trần 25 mục vẫn sẽ cắn, và lane sau lại cắt tay như tôi.
 
 ---
 

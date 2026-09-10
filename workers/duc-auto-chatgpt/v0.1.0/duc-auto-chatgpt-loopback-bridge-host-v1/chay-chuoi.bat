@@ -6,12 +6,17 @@ rem  NHAP DOI, khong go gi -> no hoi ten chuoi / so vong / tran phut, roi CHO
 rem  CHON profile tu danh sach cac profile dang that su noi Bridge.
 rem
 rem  Hoac goi thang, cac tham so deu co the bo qua:
-rem     chay-chuoi.bat <nhan> [so-vong] [tran-phut] [target]
+rem     chay-chuoi.bat <nhan> [so-vong] [tran-phut] [target] [dia-chi-hoi-thoai]
 rem
 rem     chay-chuoi.bat ark-luat
 rem     chay-chuoi.bat ark-luat 12
 rem     chay-chuoi.bat ark-luat 12 240
 rem     chay-chuoi.bat ark-luat 12 240 Ark
+rem     chay-chuoi.bat ark-luat 12 240 Ark https://chatgpt.com/c/<id>
+rem
+rem  THAM SO THU NAM la DIA CHI HOI THOAI, va no la thu dang khai nhat. Khong khai thi bo
+rem  chay ghim dung tab dang mo o luot doc dau — tien, nhung mo nham tab la go nham hoi
+rem  thoai, va cai do khong hoan tac duoc. Che nhap doi thi no HOI, khong phai go tay.
 rem
 rem  CUA THOAT cho moi co la, ke ca co them sau nay:
 rem     chay-chuoi.bat -- --nhan x --so-vong 3 --tu-turn abc123 --target y
@@ -22,6 +27,7 @@ rem
 rem  CHINH BANG BIEN MOI TRUONG (khong phai sua tep nay):
 rem     DUC_PAIRING    duong dan tep ghep cap
 rem     DUC_TARGET     profile mac dinh khi goi thang ma khong khai
+rem     DUC_URL        dia chi hoi thoai mac dinh, neu khong truyen tham so thu nam
 rem     DUC_CHUOI_HOME thu muc chua chuoi-reasoning.mjs, neu khong nam canh tep nay
 rem     DUC_CHUOI_SO   thu muc goc chua nhat ky (mac dinh: Documents\chuoi-gpt)
 rem
@@ -54,6 +60,7 @@ if "%DUC_PAIRING%"=="" set "DUC_PAIRING=C:\WORKING ZONE\Chrome Extension Bridge\
 if "%DUC_TARGET%"=="" set "DUC_TARGET=anhducds"
 if "%DUC_CHUOI_SO%"=="" set "DUC_CHUOI_SO=%USERPROFILE%\Documents\chuoi-gpt"
 set "TEP_CHON=%TEMP%\chon-profile-%RANDOM%%RANDOM%.txt"
+set "TEP_URL=%TEMP%\chon-url-%RANDOM%%RANDOM%.txt"
 
 rem --- Cua thoat: "--" thi chuyen nguyen van phan con lai cho bo chay ----------
 rem KHONG dung khoi ngoac o day: trong khoi, `%ERRORLEVEL%` banh truong ngay luc
@@ -67,6 +74,8 @@ set "NHAN=%~1"
 set "VONG=%~2"
 set "PHUT=%~3"
 set "DICH=%~4"
+set "DIA_CHI=%~5"
+if "%DIA_CHI%"=="" set "DIA_CHI=%DUC_URL%"
 
 if not "%NHAN%"=="" goto :dinhNghia
 
@@ -116,9 +125,17 @@ if exist "%SO%\DUNG" del /q "%SO%\DUNG"
 rem Nhac lai truoc khi chay: profile la thu de nham nhat, va nham thi phai doi
 rem het mot vong moi biet.
 echo   chuoi "%NHAN%" · %VONG% vong · tran %PHUT% phut · profile "%DICH%"
+if not "%DIA_CHI%"=="" echo   hoi thoai da ghim: %DIA_CHI%
+if "%DIA_CHI%"=="" echo   hoi thoai: ghim theo tab dang mo o luot doc dau
 echo.
 
-node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%"
+rem Truyen --url chi khi CO dia chi. Truyen mot chuoi rong thi bo chay doc co ke tiep lam
+rem gia tri va bao "--url khong phai mot hoi thoai" — dung ngay o cua vao.
+if "%DIA_CHI%"=="" (
+  node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%"
+) else (
+  node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%" --url "%DIA_CHI%"
+)
 set "MA=%ERRORLEVEL%"
 
 echo.
@@ -135,8 +152,17 @@ rem Chon profile trong mot CHUONG TRINH CON, khong trong mot khoi ngoac. Trong
 rem khoi ngoac, `if errorlevel` da mot lan khong chan duoc mot lan thoat 2 — bo
 rem chay van khoi dong voi profile mac dinh. Ra day thi luong dieu khien thang,
 rem va phep kiem la "co tep ket qua khong", khong phai doc errorlevel.
+rem Cung mot luot hoi tra loi HAI cau: profile nao, va hoi thoai nao. Cau thu hai la BAT DIA
+rem CHI — khong khai thi bo chay ghim dung tab dang mo, va mo nham tab la go nham hoi thoai,
+rem cai do khong hoan tac duoc. Khong bat duoc thi tep %TEP_URL% vang mat va chay nhu cu.
 :chonProfile
-node "%HOME_CHUOI%chon-profile.mjs" --pairing "%DUC_PAIRING%" --ra "%TEP_CHON%"
+node "%HOME_CHUOI%chon-profile.mjs" --pairing "%DUC_PAIRING%" --ra "%TEP_CHON%" --ra-url "%TEP_URL%"
+rem Khong dung khoi ngoac — cung ly do da ghi o dau tep: trong khoi, moi thu banh truong luc
+rem PHAN TICH. Luong dieu khien thang thi khong co gi de banh truong nham.
+if not exist "%TEP_URL%" goto :khongCoUrl
+for /f "usebackq delims=" %%U in ("%TEP_URL%") do set "DIA_CHI=%%U"
+del /q "%TEP_URL%" 2>nul
+:khongCoUrl
 if not exist "%TEP_CHON%" goto :eof
 for /f "usebackq delims=" %%L in ("%TEP_CHON%") do set "DICH=%%L"
 del /q "%TEP_CHON%" 2>nul

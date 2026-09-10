@@ -1259,7 +1259,13 @@
 
   async function bridgeSystemPing(params, call) {
     const workbook = state.workbook;
-    let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false };
+    /* `url` + `conversation_id` LUÔN CÓ MẶT, kể cả ở nhánh hỏng — hình dạng hằng, không lúc
+       có lúc `undefined`. Vì sao thêm (10/09): đây là cửa DUY NHẤT còn trả lời được khi tab
+       KHÔNG ở một hội thoại; `chat.read` từ chối thẳng bằng `WRONG_SURFACE`. Trước đó
+       `bridgeSystemPing` có `ping.url` trong tay mà vứt đi, nên bên ngoài biết "sai trang"
+       mà không biết ĐANG Ở TRANG NÀO — và một bộ chạy nối vào tab chỉ còn nước đoán.
+       Đó đúng là hình dạng `B-58`: bốn cửa, cửa nào cũng thiếu một mẩu. */
+    let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false, url: null, conversation_id: null };
     try {
       // A workspace call reports on ITS tab; a missing workspace tab lands in
       // the catch below and answers HARD_STOP/RECEIVER_LOST — same contract.
@@ -1280,6 +1286,11 @@
         failure_type: failureType,
         composer_found: Boolean(ping?.composerFound),
         generating: Boolean(ping?.generating || ping?.busy),
+        url: ping?.url || null,
+        // Dùng ĐÚNG `conversationIdOf` của panel, không viết lại regex ở đây. Bất biến đã
+        // ghim trong provider-adapter: `conversationId(url) !== null` phải khớp
+        // `surfaceAllowed(url)` — hai bản sao của cùng một câu hỏi đã tốn bảy ngày một lần.
+        conversation_id: conversationIdOf(ping?.url || ""),
         halt_instruction: failureType ? window.DacHaltInstructions?.findInstruction?.(failureType) || null : null
       };
     } catch (_) {

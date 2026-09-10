@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "turn-cu";
 const khoiTot = (text = "prompt vòng sau", turn = "turn-moi") =>
@@ -261,4 +261,84 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(!/mocLuotNguoi = undefined/.test(chiMa), "không được nhích mốc mù — người gõ ngay sau sẽ thành mốc");
   assert.match(src, /mocLuotNguoi = cuoi\.id/, "mốc chỉ nhích sang lượt đã nhận ra là của mình");
   console.log("  ok  ⓞ canh tab đặt trước quyết định, mốc nhích có điều kiện");
+}
+
+/* ⓟ BẮT ĐỊA CHỈ HỘI THOẠI — thêm 10/09 sau khi Đức mở một chat MỚI và bộ chạy mù.
+   Hai lỗi thật, cùng một gốc: bộ chạy so NGUYÊN VĂN địa chỉ.
+   ⑴ Dương tính giả: ChatGPT tự gắn `?...` sau lưng người dùng, chuỗi đang chạy ngon dừng
+      với `DOI_HOI_THOAI` mà không ai đổi gì.
+   ⑵ Không khai được hội thoại muốn chạy: bộ chạy ghim đúng tab đang mở, mở nhầm là gõ nhầm. */
+{
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  assert.equal(hoiThoaiCua("https://chatgpt.com/c/abc-123"), "abc-123");
+  assert.equal(hoiThoaiCua("https://chatgpt.com/c/abc-123?model=gpt-5#x"), "abc-123", "phần ? và # không thuộc định danh");
+  assert.equal(hoiThoaiCua("https://chatgpt.com/g/g-p-duan/c/abc-123"), "abc-123", "hội thoại trong Project vẫn là hội thoại");
+  assert.equal(hoiThoaiCua("https://chatgpt.com/"), null, "chat MỚI chưa gõ câu nào thì CHƯA có định danh");
+  assert.equal(hoiThoaiCua(""), null);
+  assert.equal(hoiThoaiCua(null), null);
+
+  /* CHỐNG TRÔI: đây là bản sao của `conversationId` trong provider-adapter.js — bộ chạy là
+     tiến trình node, không nạp được mã tiện ích. Đọc regex THẬT của adapter và bắt hai bên
+     trùng. Repo đã trả bảy ngày cho đúng một bản sao không có máy canh (sidepanel neo ở đầu
+     đường dẫn nên hội thoại trong Project trả null, và một lớp chặn tắt lặng lẽ). */
+  const adapter = fs.readFileSync(new URL("../provider-adapter.js", import.meta.url), "utf8");
+  const mAdapter = /const CONVERSATION_ID = \/(.+?)\/i;/.exec(adapter);
+  assert.ok(mAdapter, "không đọc được regex CONVERSATION_ID trong provider-adapter.js — mỏ neo lệch, sửa phép ghim này");
+  /* Không gõ lại khuôn ở đây — gõ lại là đẻ ra bản thứ BA. Đòi mã bộ chạy chứa NGUYÊN VĂN
+     khuôn của adapter, rồi chạy cả hai trên cùng vài địa chỉ. */
+  assert.ok(src.includes(mAdapter[1]),
+    `bộ chạy phải dùng ĐÚNG khuôn của adapter (${mAdapter[1]}); hai khuôn khác nhau là hai câu trả lời cho cùng một câu hỏi`);
+  const nhuAdapter = (u) => (new RegExp(mAdapter[1], "i").exec(String(u).split("?")[0].split("#")[0]) || [])[1] || null;
+  for (const u of ["https://chatgpt.com/c/abc", "https://chatgpt.com/g/g-p-duan/c/abc",
+    "https://chatgpt.com/c/abc?model=gpt-5", "https://chatgpt.com/", "https://chatgpt.com/gpts"]) {
+    assert.equal(hoiThoaiCua(u), nhuAdapter(u), `hai bên trả lời khác nhau cho ${u}`);
+  }
+
+  /* ⑴ Cùng hội thoại, khác phần `?` — KHÔNG được dừng. Đây là mép bản cũ để lọt. */
+  const themThamSo = canhTab({
+    url: "https://chatgpt.com/c/abc?model=gpt-5", urlGhim: "https://chatgpt.com/c/abc",
+    idLuotNguoiCuoi: "u1", mocLuotNguoi: "u1"
+  });
+  assert.equal(themThamSo.dung, false, "thêm ?model= không phải đổi hội thoại");
+  // CHIỀU NGƯỢC: logic cũ so nguyên văn, nên nó DỪNG ở đúng mép trên.
+  const cuSoNguyenVan = (u, g) => u !== g;
+  assert.equal(cuSoNguyenVan("https://chatgpt.com/c/abc?model=gpt-5", "https://chatgpt.com/c/abc"), true,
+    "bản cũ thật sự dừng nhầm ở đây — mép này bắt đúng lỗi, không phải bắt giả định của tôi");
+
+  /* Đổi hội thoại thật thì vẫn phải dừng, và lý do nêu ĐỊNH DANH chứ không nêu cả địa chỉ. */
+  const doiThat = canhTab({
+    url: "https://chatgpt.com/c/xyz", urlGhim: "https://chatgpt.com/c/abc",
+    idLuotNguoiCuoi: "u1", mocLuotNguoi: "u1"
+  });
+  assert.equal(doiThat.dung, true);
+  assert.match(doiThat.vi, /DOI_HOI_THOAI — ghim abc, giờ là xyz/);
+
+  /* Không rút được định danh ở một trong hai bên thì LÙI VỀ so nguyên văn — thà dừng nhầm
+     còn hơn gõ nhầm hội thoại. */
+  const mot_ben_khong_ro = canhTab({
+    url: "https://chatgpt.com/", urlGhim: "https://chatgpt.com/c/abc",
+    idLuotNguoiCuoi: "u1", mocLuotNguoi: "u1"
+  });
+  assert.equal(mot_ben_khong_ro.dung, true, "rơi về trang phóng là mất hội thoại, phải dừng");
+
+  /* ⑵ `--url` phải bị chặn NGAY Ở CỬA VÀO, trước mọi lượt đọc. Khai một địa chỉ không phải
+     hội thoại mà vẫn chạy thì nó sẽ ghim bừa theo tab — đúng cái nó sinh ra để chặn. */
+  const chiMa = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  assert.match(chiMa, /if \(urlMuon && !hoiThoaiCua\(urlMuon\)\)/, "--url phải được kiểm ở cửa vào");
+  const iKiem = chiMa.indexOf("if (urlMuon && !hoiThoaiCua(urlMuon))");
+  const iGui = chiMa.indexOf('"chat-say"');
+  assert.ok(iKiem > 0 && iGui > iKiem, "phép kiểm --url phải đứng TRƯỚC mọi đường gửi");
+  assert.match(chiMa, /let urlGhim = urlMuon \|\| null;/, "--url phải ghim thẳng, không chờ lượt đọc đầu ghi đè");
+
+  /* ⑶ SAI TRANG không được chấm thành "panel đang bận" — chờ thêm không bao giờ chữa nó. */
+  assert.match(chiMa, /WRONG_SURFACE/, "phải nhận ra WRONG_SURFACE riêng, không gộp vào rọ lỗi đọc");
+  const iSaiTrang = chiMa.indexOf("WRONG_SURFACE");
+  const iPanelBan = chiMa.indexOf("panel đang bận");
+  assert.ok(iSaiTrang > 0 && iPanelBan > iSaiTrang,
+    "nhánh SAI_TRANG phải đứng TRƯỚC nhánh đếm đọc-hỏng, nếu không nó không bao giờ chạy tới");
+  console.log("  ok  ⓟ bắt địa chỉ: so bằng định danh hội thoại, --url kiểm ở cửa, sai trang nói đúng bệnh");
 }
