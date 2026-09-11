@@ -150,13 +150,23 @@ async function until(check, timeoutMs, label) {
   throw new Error(`Chờ quá ${timeoutMs}ms: ${label}`);
 }
 
+/* NGƯỠNG CHỜ PHẢI LỚN HƠN KHOẢNG NGHỈ CỦA CHÍNH content.js — đọc RA TỪ NGUỒN, không gõ lại.
+   12/09 `runPrompt` nghỉ ngẫu nhiên 3–6 giây giữa lúc dán chữ và lúc bấm Gửi (Đức chốt).
+   Hai ngưỡng dưới đây vốn là 5000 và 4000, hợp lý khi khoảng nghỉ là 150ms — nay NGẮN HƠN
+   cả khoảng nghỉ. Ca 3 đỏ ngay, còn ca 2 thì tệ hơn đỏ: nó là phép kiểm PHỦ ĐỊNH, nên một
+   cửa sổ ngắn hơn khoảng nghỉ sẽ báo XANH kể cả khi cửa huỷ đã bị gỡ — cú click chỉ bắn sau
+   khi cửa sổ đã đóng. Đọc hằng số ra từ nguồn để không ai phải nhớ sửa hai chỗ. */
+const TRE_MAX = Number(/TRE_GUI_MAX_MS = (\d+)/.exec(fs.readFileSync(new URL("../content.js", import.meta.url), "utf8"))?.[1]);
+assert.ok(Number.isFinite(TRE_MAX) && TRE_MAX > 0, "không đọc được TRE_GUI_MAX_MS từ content.js — ngưỡng chờ dưới đây mất căn cứ");
+const CHO_CLICK = TRE_MAX + 6000;
+
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
 /* ---- 1. Đối chứng: harness đi được tới cú click ------------------------- */
 {
   const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q001", attempt_id: "attempt-control", prompt: "control run", timeoutMs: 15000 });
-  await until(() => sendClicks === 1, 5000, "job đối chứng phải click Send");
+  await until(() => sendClicks === 1, CHO_CLICK, "job đối chứng phải click Send");
   await deliver({ type: "DAC_ABORT", job_id: "Q001", attempt_id: "attempt-control" });
   const settled = await response;
   assert.equal(settled.ok, false, "job bị huỷ sau khi gửi phải kết thúc lỗi, không kết thúc êm");
@@ -174,7 +184,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   // 15s theo timeout của job: hoặc job trả lời (đường đúng), hoặc click bắn.
   const outcome = await Promise.race([
     response,
-    until(() => sendClicks > 1, 4000, "").then(() => "CLICKED", () => "QUIET"),
+    until(() => sendClicks > 1, CHO_CLICK, "").then(() => "CLICKED", () => "QUIET"),
   ]);
   assert.notEqual(outcome, "CLICKED", "RACE TÁI HIỆN: DAC_ABORT đã được nhận TRƯỚC job mà sendButton.click vẫn bắn — đúng lỗi B-22 (dòng reset đầu runPrompt xoá cờ huỷ)");
   const settled = outcome === "QUIET" ? await response : outcome;
@@ -191,7 +201,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 /* ---- 3. Huỷ attempt X xong, attempt Y mới vẫn phải chạy được ------------- */
 {
   const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q003", attempt_id: "attempt-after", prompt: "next run", timeoutMs: 15000 });
-  await until(() => sendClicks === 2, 5000, "attempt mới sau một lệnh huỷ cũ PHẢI vẫn click được — cờ huỷ không được ghim vĩnh viễn");
+  await until(() => sendClicks === 2, CHO_CLICK, "attempt mới sau một lệnh huỷ cũ PHẢI vẫn click được — cờ huỷ không được ghim vĩnh viễn");
   await deliver({ type: "DAC_ABORT", job_id: "Q003", attempt_id: "attempt-after" });
   const settled = await response;
   assert.ok(settled.attempt?.submittedAt, "attempt Y đã gửi thật");
@@ -201,7 +211,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 /* ---- 4. Kênh cũ không yếu đi: DAC_ABORT trần vẫn dừng run đang bay ------- */
 {
   const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q004", attempt_id: "attempt-bare", prompt: "bare abort run", timeoutMs: 15000 });
-  await until(() => sendClicks === 3, 5000, "job thứ tư phải click trước khi thử huỷ trần");
+  await until(() => sendClicks === 3, CHO_CLICK, "job thứ tư phải click trước khi thử huỷ trần");
   await deliver({ type: "DAC_ABORT" });
   const settled = await response;
   assert.equal(settled.ok, false, "DAC_ABORT trần (không kèm attempt) vẫn phải dừng được run đang bay");
@@ -218,7 +228,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 {
   await deliver({ type: "DAC_ABORT" });
   const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q005", attempt_id: "attempt-fresh-run", prompt: "fresh run after idle abort", timeoutMs: 15000 });
-  await until(() => sendClicks === 4, 5000, "run mới sau một lệnh huỷ lúc rảnh PHẢI vẫn click được");
+  await until(() => sendClicks === 4, CHO_CLICK, "run mới sau một lệnh huỷ lúc rảnh PHẢI vẫn click được");
   await deliver({ type: "DAC_ABORT", job_id: "Q005", attempt_id: "attempt-fresh-run" });
   const settled = await response;
   assert.ok(settled.attempt?.submittedAt, "run mới đã gửi thật");
@@ -231,7 +241,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 // dừng. Fail-closed: nghi ngờ thì dừng.
 {
   const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q006", attempt_id: "attempt-live", prompt: "live run", timeoutMs: 15000 });
-  await until(() => sendClicks === 5, 5000, "job thứ sáu phải click trước khi thử huỷ lệch danh tính");
+  await until(() => sendClicks === 5, CHO_CLICK, "job thứ sáu phải click trước khi thử huỷ lệch danh tính");
   await deliver({ type: "DAC_ABORT", job_id: "Q999", attempt_id: "attempt-cua-nguoi-khac" });
   const settled = await response;
   assert.equal(settled.ok, false, "huỷ lệch danh tính giữa lúc đang bay vẫn phải dừng attempt đang bay");
@@ -240,5 +250,24 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   ok("huỷ lệch danh tính giữa lúc đang bay VẪN dừng — lệnh dừng không bao giờ bị bỏ qua im lặng");
 }
 
+/* ---- 7. Huỷ tới GIỮA khoảng nghỉ dán→Gửi: cấm click (12/09) -------------- */
+// Trước 12/09 hai mốc này cách nhau 150ms, nên "huỷ giữa chừng" gần như không tồn tại.
+// Nay `runPrompt` nghỉ ngẫu nhiên 3–6 giây giữa lúc chữ vào ô soạn và lúc bấm Gửi — đó là
+// trọn một cửa sổ để Đức bấm Dừng sau khi đã thấy chữ hiện ra. Cửa huỷ ĐỌC LẠI sau khoảng
+// nghỉ là thứ duy nhất chặn cú click ấy; gỡ nó ra thì ca này đỏ.
+{
+  const truoc = sendClicks;
+  const response = deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "Q007", attempt_id: "attempt-giua-nghi", prompt: "paused run", timeoutMs: 15000 });
+  // Chờ tới khi chữ ĐÃ vào ô soạn — mốc chắc chắn nằm TRONG khoảng nghỉ, không đoán bằng đồng hồ.
+  await until(() => composer.textContent === "paused run", CHO_CLICK, "chữ phải vào ô soạn trước khi thử huỷ giữa chừng");
+  await deliver({ type: "DAC_ABORT", job_id: "Q007", attempt_id: "attempt-giua-nghi" });
+  const settled = await response;
+  assert.equal(settled.ok, false, "huỷ giữa khoảng nghỉ phải dừng attempt");
+  assert.match(settled.error, /stopped by user/i);
+  assert.equal(settled.attempt?.submittedAt ?? null, null, "chưa bấm Gửi thì submittedAt phải null — nếu có, cú click đã bắn sau lệnh dừng");
+  assert.equal(sendClicks, truoc, "TUYỆT ĐỐI không click: lệnh dừng tới trong khoảng nghỉ mà tin nhắn vẫn bay là mất một lượt không hoàn tác được");
+  ok("huỷ giữa khoảng nghỉ dán→Gửi: chữ đã vào ô soạn nhưng KHÔNG bấm Gửi");
+}
+
 assert.equal(sendClicks, 5, "tổng số click toàn file: 5 job được phép, 1 attempt bị huỷ trước gửi");
-console.log(`PASS content abort race: ${passed}/6 ca — huỷ trước gửi chặn được click, huỷ theo attempt không lây sang attempt/run sau, dừng không bao giờ bị bỏ qua`);
+console.log(`PASS content abort race: ${passed}/7 ca — huỷ trước gửi chặn được click, huỷ theo attempt không lây sang attempt/run sau, dừng không bao giờ bị bỏ qua`);

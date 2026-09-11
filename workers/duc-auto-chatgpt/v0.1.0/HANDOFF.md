@@ -672,3 +672,31 @@ Suite gói **136/136**. `~~B-74~~`.
 ## 2026-09-12 · `codex-bridge-pairing-links`
 
 Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-chatgpt\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh 136/136.
+
+## 2026-09-12 (lượt 29) · `claude-gpt-chay-het-job` — giãn nhịp gõ, và một dòng tôi viết rồi gỡ
+
+**Đức nêu:** giãn `copy → dán prompt → Enter` ra, **3–6 giây ngẫu nhiên, mỗi lượt một số khác**.
+
+**Hai khoảng, hai tiến trình, không gộp được.** ⑴ đọc được khối → dán: `chuoi-reasoning.mjs`,
+ngay trước lượt `chat-say` đầu (lượt gửi **lại** ở nhánh lỗi **không** đi qua đây — nó đã chờ
+45 giây đọc lại, thêm nghỉ chỉ làm cửa sổ mù dài thêm). ⑵ dán → bấm Gửi: `content.js`,
+`runPrompt()` — chỗ **duy nhất** mọi đường gửi đi qua, nên không đường nào vòng được.
+
+**Mép thật là "mỗi lượt một số KHÁC", không phải "có nghỉ".** Một hằng số mới vẫn là nhịp máy,
+chỉ chậm hơn. Mép ⓣ ghim tính ngẫu nhiên (200 lượt > 50 giá trị), không ghim con số.
+
+**Suýt vỡ hai chỗ, cả hai là ràng buộc thời gian có sẵn.** Hạn 25 giây tìm bằng chứng của
+`chat.say` đếm từ lúc **vào cửa** → khoảng nghỉ ăn vào nó. Phản xạ đầu của tôi là cộng bù 6
+giây, **sai**: `deadline_ms: 30000` cưỡng chế ở `bridge-transport-loopback.js:164`, nên 31 giây
+trả `REQUEST_TIMEOUT` cho một tin nhắn **đã bay**. Giữ 25. Và ngưỡng chờ trong
+`content-abort-race-behavior.mjs` (4–5 giây) nay ngắn hơn khoảng nghỉ — ca 2 là phép kiểm
+**phủ định** nên nó sẽ báo **xanh** dù cửa huỷ bị gỡ. Ngưỡng nay **đọc ra từ nguồn**.
+
+**Một dòng viết rồi gỡ, nói ra vì nó là bài học:** tôi thêm cửa `abortRequested` sau khoảng
+nghỉ — nghe rất cần. Kiểm đột biến: nó **không gánh gì**, `waitForSendButtonReady()` đã đọc
+đúng cờ ấy ngay vòng lặp đầu. Gỡ.
+
+Thêm **ca 7**: huỷ tới **giữa** khoảng nghỉ → chữ vào ô soạn nhưng **không** bấm Gửi. Kiểm đột
+biến: xoá `content.js:309` thì đúng ca 7 đỏ. Suite gói **136/136**. `~~B-75~~`.
+
+**Đức phải nạp lại extension** thì nửa `content.js` mới có hiệu lực.

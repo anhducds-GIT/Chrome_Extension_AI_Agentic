@@ -96,6 +96,22 @@ export function docNhatKy(text) {
   return { khoiCu, daGui };
 }
 
+/* GIÃN NHỊP GIỮA "ĐỌC ĐƯỢC KHỐI" VÀ "DÁN VÀO Ô SOẠN" — Đức chốt 12/09.
+ *
+ * Bản trước đọc xong khối là gọi `chat-say` ngay ở dòng kế tiếp: đọc và gõ cách nhau vài chục
+ * mili-giây, đều tăm tắp mọi vòng. Không người nào gõ như thế.
+ *
+ * NGẪU NHIÊN CHỨ KHÔNG PHẢI MỘT HẰNG SỐ MỚI: một khoảng nghỉ cố định 4 giây vẫn là một nhịp
+ * đều, chỉ chậm hơn. Mỗi lượt phải là một con số khác.
+ *
+ * THUẦN — `rnd` tiêm vào được nên kiểm được bằng số cố định, không phải chạy trăm lượt rồi
+ * đoán phân bố. Trần được CẮT chứ không lỗi: một lời gọi sai chỗ không được quyền treo chuỗi. */
+export function treNgauNhien(toiThieuMs = 3000, toiDaMs = 6000, rnd = Math.random) {
+  const min = Math.max(0, Math.floor(Number(toiThieuMs) || 0));
+  const max = Math.max(min, Math.floor(Number(toiDaMs) || 0));
+  return min + Math.floor(rnd() * (max - min + 1));
+}
+
 /* KHOÁ IDEMPOTENCY DỰNG TỪ TÊN CHUỖI — B-73, lỗi thật 12/09.
  *
  * Đức đặt tên chuỗi là `HNX audit & fill`. Bản trước ghép thẳng tên ấy vào khoá
@@ -524,6 +540,13 @@ async function chinh() {
       return null;
     };
 
+    /* NGHỈ GIỮA ĐỌC VÀ GÕ. Đặt ở đây — SAU khi đã ghi tệp tham số, TRƯỚC lượt gửi đầu — nên
+       nó chỉ giãn lượt gửi thật. Lượt gửi lại ở nhánh lỗi KHÔNG đi qua đây: nó đã chờ 45 giây
+       đọc lại, thêm nghỉ vào đó chỉ làm cửa sổ mù dài thêm. */
+    const treGui = treNgauNhien();
+    console.log(`  vòng ${vong}: nghỉ ${(treGui / 1000).toFixed(1)}s trước khi dán`);
+    await ngu(treGui);
+
     const khoaGui = khoaAnToan(nhan, `-v${vong}`);
     const lan1 = goi(["chat-say", "--params-file", fParam, "--request-id", khoaGui]);
     let ok1 = Boolean(lan1.ok), daBay1 = false, ok2 = false, daBay2 = false;
@@ -565,7 +588,7 @@ async function chinh() {
       }
     }
     console.log(`  vòng ${vong}/${soVong}: đã gửi ${khoi.chars} ký tự — ${kl.vi}`);
-    ghi({ su_kien: "DA_GUI", vong, ky_tu: khoi.chars, turn_id: khoi.turn_id, vi: kl.vi, text: khoi.text });
+    ghi({ su_kien: "DA_GUI", vong, ky_tu: khoi.chars, turn_id: khoi.turn_id, tre_ms: treGui, vi: kl.vi, text: khoi.text });
     await ngu(95000); // nắp chờ 90 giây của Bridge, cộng biên
   }
 

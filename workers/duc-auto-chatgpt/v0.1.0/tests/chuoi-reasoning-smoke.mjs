@@ -530,3 +530,59 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.match(chiMa, /replace\(\/\[%!"\\r\\n\]\/g, ""\)/, "phải lọc ký tự làm vỡ một lượt `set` của batch");
   console.log("  ok  ⓢ chạy tiếp: đọc chỗ dừng từ nhật ký, trừ vào trần vòng, dòng cụt không làm mất tất");
 }
+
+/* ⓣ — GIÃN NHỊP GÕ (Đức chốt 12/09). Hai khoảng nghỉ, không phải một:
+     ⑴ đọc được khối → dán vào ô soạn  (ở bộ chạy chuỗi, mép dưới đây)
+     ⑵ dán xong → bấm Gửi              (ở `content.js`, mép cuối khối này ghim bằng mã nguồn)
+
+   Mép thật của tính năng này KHÔNG phải "có nghỉ" mà là "MỖI LƯỢT MỘT SỐ KHÁC". Một hằng số
+   mới — dù là 4 giây — vẫn là một nhịp máy, chỉ chậm hơn; và đó đúng là thứ một bản sửa cẩu
+   thả sẽ sinh ra. Nên phần lớn khối này ghim tính NGẪU NHIÊN, không ghim con số. */
+{
+  const { treNgauNhien } = await import("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs");
+
+  // Hai mút, kiểm bằng rnd cố định — không chạy trăm lượt rồi đoán phân bố.
+  assert.equal(treNgauNhien(3000, 6000, () => 0), 3000, "rnd=0 phải ra đúng mút dưới");
+  assert.equal(treNgauNhien(3000, 6000, () => 0.999999), 6000, "rnd≈1 KHÔNG được vượt mút trên");
+  assert.equal(treNgauNhien(3000, 6000, () => 0.5), 4500);
+
+  // Mọi lượt phải nằm trong 3–6 giây, và phải THẬT SỰ đổi số giữa các lượt.
+  const mau = Array.from({ length: 200 }, () => treNgauNhien());
+  for (const ms of mau) {
+    assert.ok(Number.isInteger(ms), "phải là số nguyên mili-giây");
+    assert.ok(ms >= 3000 && ms <= 6000, `ra ngoài khoảng 3–6 giây: ${ms}`);
+  }
+  assert.ok(new Set(mau).size > 50,
+    "200 lượt mà dưới 50 giá trị khác nhau = một hằng số trá hình, đúng thứ Đức bảo đừng làm");
+
+  // Trần cắt chứ không lỗi: một lời gọi sai chỗ không được quyền treo chuỗi.
+  assert.equal(treNgauNhien(6000, 3000, () => 0.5), 6000, "min > max phải bị cắt, không ném lỗi");
+  assert.equal(treNgauNhien(0, 0, () => 0.9), 0);
+
+  const chiMa = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8")
+    .split("\n").filter((d) => { const t = d.trim(); return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*"); })
+    .join("\n");
+
+  const chuoi = chiMa("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs");
+  assert.match(chuoi, /const treGui = treNgauNhien\(\);[\s\S]{0,400}?await ngu\(treGui\);[\s\S]{0,400}?goi\(\["chat-say"/,
+    "khoảng nghỉ phải nằm NGAY TRƯỚC lượt gửi đầu, không phải ở một chỗ nào đó trong vòng lặp");
+  assert.match(chuoi, /tre_ms: treGui/, "nhật ký phải ghi lại số đã nghỉ, nếu không thì không kiểm được là nó có đổi");
+
+  /* `content.js` — ghim bằng mã nguồn vì nó chạy trong trang, không import được vào đây.
+     Ba điều, và điều thứ ba là điều dễ mất nhất khi ai đó dọn dẹp sau này. */
+  const noiDung = chiMa("../content.js");
+  assert.ok(!/setComposerValue\(composer, prompt\);\s*\n\s*await sleep\(150\);/.test(noiDung),
+    "khoảng 150ms cứng giữa dán và bấm Gửi phải biến mất");
+  assert.match(noiDung, /setComposerValue\(composer, prompt\);\s*\n\s*await sleep\(treNgauNhien\(\)\);/,
+    "và thay bằng khoảng ngẫu nhiên");
+  /* Cửa huỷ sau khoảng nghỉ do `waitForSendButtonReady` giữ — nó đọc cờ ngay vòng lặp đầu.
+     Ghim rằng cửa ấy CÒN ĐÓ: khoảng nghỉ 3–6 giây biến "bấm Dừng giữa chừng" từ chuyện gần
+     như không xảy ra được thành một cửa sổ thật. Hành vi kiểm ở ca 7 của
+     `content-abort-race-behavior.mjs`; ở đây chỉ chặn ai đó dọn mất dòng ấy. */
+  assert.match(noiDung, /while \(Date\.now\(\) < deadline\) \{\s*\n\s*if \(STATE\.abortRequested\) throw/,
+    "waitForSendButtonReady phải đọc cờ huỷ TRƯỚC khi trả nút Gửi về — đó là cửa chặn cú click sau khoảng nghỉ");
+  assert.match(noiDung, /const han = Date\.now\(\) \+ 25000;/,
+    "hạn tìm bằng chứng của chat.say KHÔNG được nới: deadline_ms 30000 cưỡng chế ở bridge-transport-loopback.js");
+
+  console.log("  ok  ⓣ giãn nhịp: 3–6 giây ngẫu nhiên ở CẢ hai khoảng, mỗi lượt một số khác, cờ huỷ đọc lại");
+}

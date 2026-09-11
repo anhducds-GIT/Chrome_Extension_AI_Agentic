@@ -23,6 +23,15 @@
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  /* NGHỈ GIỮA "DÁN CHỮ" VÀ "BẤM GỬI" — Đức chốt 12/09. Trước đó là `sleep(150)` cứng, đặt ở
+     đó chỉ để React kịp nhận chữ. 3–6 giây, mỗi lượt một con số khác: một khoảng cố định vẫn
+     là một nhịp máy, chỉ chậm hơn.
+     Nó nằm ở `runPrompt` — chỗ DUY NHẤT mọi đường gửi đi qua (hàng đợi job, run.trial,
+     chat.say, lượt chữa của nhà cung cấp) — nên không có đường nào gửi vòng qua nó. */
+  const TRE_GUI_MIN_MS = 3000;
+  const TRE_GUI_MAX_MS = 6000;
+  const treNgauNhien = () => TRE_GUI_MIN_MS + Math.floor(Math.random() * (TRE_GUI_MAX_MS - TRE_GUI_MIN_MS + 1));
   const nodeIds = new WeakMap();
   let nextNodeId = 1;
 
@@ -1017,7 +1026,12 @@
       const boundary = captureBoundary(inputEvidence);
       if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, maxImages, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING" } });
       setComposerValue(composer, prompt);
-      await sleep(150);
+      await sleep(treNgauNhien());
+      /* KHÔNG thêm cửa huỷ ở đây. Khoảng nghỉ nay dài 3–6 giây — trọn một cửa sổ để Đức bấm
+         Dừng sau khi chữ đã hiện trong ô soạn — nên cửa huỷ ở ĐÂY trông rất cần. Nó không
+         cần: `waitForSendButtonReady` đọc `STATE.abortRequested` ngay vòng lặp đầu, TRƯỚC khi
+         trả nút về. Đã thử gỡ cửa thêm ấy ra 12/09: ca 7 của `content-abort-race-behavior`
+         vẫn xanh, tức nó không gánh gì. Hai cửa cùng một luật là hai chỗ để chúng nói khác nhau. */
 
       const sendButton = await waitForSendButtonReady(composer);
       emitRuntimeStage(requestAttempt, "SENDING");
@@ -1621,6 +1635,12 @@
 
            Không xác nhận được thì câu trả lời phải nói **"CHƯA BIẾT"**, không nói "thất bại":
            tin nhắn CÓ THỂ đã bay, và một câu "thất bại" là lời mời gửi lại. */
+        /* 25 GIÂY LÀ TRẦN, KHÔNG PHẢI MỘT CON SỐ ĐỂ NỚI. Mốc đếm từ lúc VÀO CỬA, mà
+           `runPrompt` nay nghỉ tới 6 giây trước khi bấm — nên cửa sổ đi tìm bằng chứng co
+           xuống còn 19–22 giây. Đừng cộng bù: thứ cưỡng chế thật là `deadline_ms: 30000` của
+           `chat.say`, đọc ở `bridge-transport-loopback.js:164`; cộng 6 giây thành 31 là vượt
+           nó, và lượt vượt ấy trả `REQUEST_TIMEOUT` cho một tin nhắn ĐÃ BAY — đúng cái bẫy
+           cửa này sinh ra để chặn. 19 giây vẫn thừa: bằng chứng hiện sau cú bấm ~1 giây. */
         const han = Date.now() + 25000;
         let loiSom = null;
         chay.catch((error) => { loiSom = error; });

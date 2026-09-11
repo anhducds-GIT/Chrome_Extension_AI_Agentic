@@ -3828,6 +3828,53 @@ không có cách nhìn. Vế *"tab nền"* của M3 vì vậy **chưa nghiệm t
 đã che cửa sổ. Bản vá `~~B-47~~`⑵ đã nghiệm thu riêng trên tab nền hôm 09/09, nên tôi không lo, chỉ
 là chưa đo trong đúng lượt này.
 
+### ~~B-75~~ · (LÀM 12/09) Giãn nhịp copy → dán → Enter: 3–6 giây ngẫu nhiên, mỗi lượt một số khác
+
+**Đức nêu 12/09:** *"giãn hành động copy -> paste prompt -> hành động enter ra, không để nó
+thực thi liền nhau, cách một khoảng random thời gian từ 3-> 6s, mỗi lần gửi là 1 space thời
+gian khác nhau."*
+
+**Hai khoảng, không phải một** — chúng nằm ở hai tiến trình khác nhau và không gộp được:
+
+| | ở đâu | trước | nay |
+|---|---|---|---|
+| đọc được khối → dán vào ô soạn | `chuoi-reasoning.mjs`, ngay trước lượt `chat-say` đầu | ~0 | 3–6s ngẫu nhiên |
+| dán xong → bấm Gửi | `content.js`, trong `runPrompt()` | `sleep(150)` cứng | 3–6s ngẫu nhiên |
+
+**Mép thật không phải "có nghỉ" mà là "mỗi lượt một số KHÁC".** Một hằng số mới — dù là 4 giây —
+vẫn là một nhịp máy, chỉ chậm hơn; và đó đúng là thứ một bản sửa cẩu thả sẽ sinh ra. Nên mép ⓣ
+ghim **tính ngẫu nhiên** (200 lượt phải cho hơn 50 giá trị khác nhau), không ghim con số.
+
+**Đặt ở `runPrompt()` chứ không ở cửa `chat.say`,** vì đó là chỗ **duy nhất** mọi đường gửi đi
+qua — hàng đợi job, `run.trial`, `chat.say`, lượt chữa của nhà cung cấp. Một cửa, không đường
+nào vòng qua được.
+
+**Hai thứ suýt vỡ, cả hai đều là ràng buộc thời gian có sẵn:**
+- **Hạn 25 giây tìm bằng chứng của `chat.say`** đếm từ lúc **vào cửa**, nên khoảng nghỉ ăn vào
+  nó (còn 19–22 giây). Phản xạ đầu của tôi là cộng bù 6 giây — **sai**: thứ cưỡng chế thật là
+  `deadline_ms: 30000`, đọc ở `bridge-transport-loopback.js:164`; 31 giây là **vượt** nó, và
+  lượt vượt ấy trả `REQUEST_TIMEOUT` cho một tin nhắn **đã bay** — đúng cái bẫy exact-once.
+  Giữ 25 giây; 19 vẫn thừa vì bằng chứng hiện sau cú bấm ~1 giây.
+- **Ngưỡng chờ trong `content-abort-race-behavior.mjs`** là 4000–5000ms, hợp lý khi khoảng nghỉ
+  là 150ms — nay **ngắn hơn cả khoảng nghỉ**. Ca 3 đỏ ngay; ca 2 thì **tệ hơn đỏ**, vì nó là
+  phép kiểm **phủ định**: một cửa sổ ngắn hơn khoảng nghỉ sẽ báo **xanh** kể cả khi cửa huỷ đã
+  bị gỡ. Nay ngưỡng **đọc ra từ `TRE_GUI_MAX_MS` trong nguồn**, không gõ lại — hai chỗ không
+  trôi khỏi nhau được.
+
+**Một dòng tôi viết rồi gỡ, nói ra vì nó là bài học:** tôi thêm một cửa `if (STATE.abortRequested)`
+ngay sau khoảng nghỉ — nghe rất cần, vì 3–6 giây là trọn một cửa sổ để Đức bấm Dừng sau khi chữ
+đã hiện trong ô soạn. **Kiểm đột biến cho thấy nó không gánh gì:** `waitForSendButtonReady()` đọc
+đúng cờ ấy ngay vòng lặp đầu, **trước** khi trả nút về. Gỡ ra. Hai cửa cùng một luật là hai chỗ
+để chúng nói khác nhau.
+
+**Ghim:** mép ⓣ trong `tests/chuoi-reasoning-smoke.mjs` (hai mút · tính ngẫu nhiên · trần cắt
+chứ không ném lỗi · vị trí khoảng nghỉ trong cả hai tệp · hạn 25 giây **không được nới**) và
+**ca 7 mới** trong `tests/content-abort-race-behavior.mjs` — huỷ tới **giữa** khoảng nghỉ:
+chữ đã vào ô soạn nhưng **không** bấm Gửi, `submittedAt` null. Đã kiểm đột biến: xoá dòng
+`content.js:309` thì đúng ca 7 đỏ.
+
+**Đức phải NẠP LẠI extension** thì nửa `content.js` mới có hiệu lực; nửa bộ chạy chuỗi có ngay.
+
 ### Ai làm gì
 
 | | |
