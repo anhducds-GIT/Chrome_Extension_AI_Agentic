@@ -744,3 +744,28 @@ lối tắt Startup trỏ vào **bản đang chạy**, đúng khuôn lối tắt
 → cổng chết → chạy **chính lối tắt** → cổng sống, `ping` trả `READY`. Cái bẫy ghi đủ ở `~~B-70~~`.
 
 Suite **134/134**.
+
+## 2026-09-11 (lượt 25) · `claude-gpt-chay-het-job` — cửa chẩn đoán, cổng canh PHIEN, và một hàng cổng đã mất
+
+**`B-50` ⓒ + `B-58`:** một lượt `REQUEST_TIMEOUT` nay tự nói mình là `EXTENSION_VANISHED` ·
+`EXECUTOR_STUCK` · `PANEL_SILENT`, kèm cách chữa — thay cho `details` **rỗng**. Neo **tự neo**:
+host ghim mốc *nghe thấy lần cuối* trước khi gửi rồi so lại lúc hết giờ. Bản đầu của tôi lấy
+ngưỡng là `requestTimeoutMs` — một con số **trùng hợp** sẽ trôi khi ai đó chỉnh tham số chờ.
+Ghim bằng **host thật**, 4 mép; lượt viết ghim bắt được **một mép xanh vì lý do sai** (không
+khai `target` nên host trả `TARGET_AMBIGUOUS`, chưa từng chạm đường nó định đo). **Đã chép sang
+bản cài của Đức và khởi động lại** — `ping` trả `READY`. **`B-50` VẪN MỞ:** mới xong ⓒ; ⓐ/ⓑ cần
+bệnh tái phát, và tôi không dựng giả thuyết nguyên nhân.
+
+**`~~B-71~~` đóng:** `rule-compile.mjs --check-head` dựng lại bó trong bộ nhớ rồi so với đĩa,
+khai vào `generators` nên cổng gọi nó như mọi bộ sinh. **Vượt trần tính là LỆCH** — im ở tầng
+cổng là tái lập chính cái lỗ. Ghim bằng fixture.
+
+**`~~B-72~~` — thứ lớn hơn, lôi ra từ lượt ghim trên.** `tests/rule-compile-smoke.mjs` **đỏ ở
+bản HEAD**, không phải do tôi: hàng cổng **"Luật biên dịch sạch"** đã **biến mất** trong lượt
+migrate bộ khung `4da1e9e5`. `rule-compiler.mjs` (có chữ **r**) còn được nạp nhưng là module
+KHÁC — đo phần nạp, không biên dịch luật. Nên đây là **mất một lớp bảo vệ thật**, âm thầm hai
+ngày, vì `npm test` gốc chết sớm hơn nên hơn 20 tệp phía sau chưa từng chạy. Đo trước khi
+khôi phục (`--gon` → SẠCH), rồi khôi phục nguyên bản từ `95b2ec74`; cổng nay **`[XANH] Luật
+biên dịch sạch`**, test 32/32 — xanh vì lớp bảo vệ quay lại, **không** vì sửa phép kiểm.
+
+Suite gói **135/135**.

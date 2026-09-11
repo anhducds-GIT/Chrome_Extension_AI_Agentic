@@ -396,7 +396,46 @@ export function createBridgeHost(options = {}) {
     // The target field is host routing metadata; the extension never sees it.
     const relayEnvelope = { ...envelope };
     delete relayEnvelope.target;
-    const timer = setTimeout(() => settleRelay(relayId, failureEnvelope(envelope.request_id, "REQUEST_TIMEOUT")), requestTimeoutMs);
+    /* B-50 / B-58 — MỘT LƯỢT HẾT GIỜ PHẢI NÓI RA MÌNH LÀ LOẠI NÀO.
+       Đo 11/09: panel trả lời cửa router trong 166 ms trong khi cửa executor hết giờ 11/11
+       lượt suốt hơn 10 phút. Nhìn từ ngoài, ba chuyện rất khác nhau — extension rụng giữa
+       chừng · panel đơn giản đang bận · executor kẹt hẳn — đều hiện ra là **cùng một chữ**
+       `REQUEST_TIMEOUT` với `details` RỖNG. Nên người ngoài chỉ còn nước ngồi đợi một thứ
+       không bao giờ tự khỏi.
+       Host **đã có sẵn** thứ phân biệt được và chỉ là không nói ra: `lastSeenAt` nhích theo
+       MỌI khung nhận được, kể cả `keepalive`. Sáng 11/09 `bridge.sessions` báo *"thấy 9 giây
+       trước"* trong khi executor im hoàn toàn — đó chính là chữ ký của "executor kẹt".
+       Đọc mốc NGAY LÚC HẾT GIỜ, không đọc lúc gửi: cả giá trị lẫn ý nghĩa đều đổi trong
+       quãng chờ, và cái ta cần là ảnh chụp ở thời điểm phán quyết. */
+    /* Mốc "nghe thấy lần cuối" NGAY TRƯỚC KHI GỬI. Đây là neo của cả phép phân loại, và nó
+       tự neo — không cần một hằng mới nào. So mốc này với mốc lúc hết giờ trả lời đúng một
+       câu đo được: *trong lúc ta chờ, extension có gửi cho host khung nào không.*
+       Bản đầu của tôi lấy ngưỡng là `requestTimeoutMs`; đó là một con số TRÙNG HỢP (35 giây
+       mặc định, cạnh nhịp keepalive 20 giây của extension) và nó trôi ngay khi ai đó đổi
+       tham số chờ. Một ngưỡng mượn ý nghĩa từ một con số không liên quan là ngưỡng sẽ nói
+       sai vào đúng ngày người ta chỉnh nó. */
+    const nghePhutGui = sessions.get(chosen.key)?.lastSeenAt || null;
+    const timer = setTimeout(() => {
+      const con = sessions.get(chosen.key);
+      const conSong = Boolean(con && con.socket && !con.socket.destroyed);
+      const ngheLucHetGio = con?.lastSeenAt || null;
+      const imMs = ngheLucHetGio ? Math.max(0, Date.now() - Date.parse(ngheLucHetGio)) : null;
+      // Nghe thấy gì đó TRONG quãng chờ = đường truyền sống, executor thì không.
+      const ngheTrongLucCho = conSong && ngheLucHetGio !== null && ngheLucHetGio !== nghePhutGui;
+      settleRelay(relayId, failureEnvelope(envelope.request_id, "REQUEST_TIMEOUT", {
+        waited_ms: requestTimeoutMs,
+        target_connected: conSong,
+        heard_during_wait: ngheTrongLucCho,
+        last_seen_ms_ago: imMs,
+        inflight_same_target: [...inflight.values()].filter((x) => x.sessionKey === chosen.key).length,
+        diagnosis: !conSong ? "EXTENSION_VANISHED" : ngheTrongLucCho ? "EXECUTOR_STUCK" : "PANEL_SILENT",
+        remedy: !conSong
+          ? "The extension transport dropped mid-request. Reload the extension, then retry the identical request_id."
+          : ngheTrongLucCho
+            ? "The transport kept sending frames while we waited, but the side panel's executor never answered. Close and REOPEN the side panel, then retry the identical request_id. Waiting does not clear this."
+            : "Nothing at all arrived from the extension while we waited. Either the whole panel is wedged, or the wait was shorter than its 20s keepalive - check waited_ms before concluding. Close and reopen the side panel."
+      }));
+    }, requestTimeoutMs);
     inflight.set(relayId, {
       response,
       requestId: envelope.request_id,

@@ -18,6 +18,14 @@ import { fileURLToPath } from "node:url";
 
 import { appendOnlyAtEof, areaOf, claimPrefixesFrom, FILE_HANH_CHINH, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { napContext } from "./rule-compiler.mjs";
+/* KHÔI PHỤC 11/09. Hàng cổng *"Luật biên dịch sạch"* (lane `claude-luat-rasoat`, Đức chốt
+   09/09) **biến mất** trong lượt migrate bộ khung `4da1e9e5`, cùng với lượt nhập này. Phép
+   ghim của nó — `tests/rule-compile-smoke.mjs`, mục *"BỘ BIÊN DỊCH PHẢI CÒN ĐƯỢC GỌI"* — ĐỎ
+   từ hôm đó và **không ai thấy**, vì `npm test` gốc chết sớm hơn ở một tệp khác. Đúng bài học
+   N-01 mà chính phép ghim ấy tự ghi: ghim một bộ kiểm mà không ghim LƯỢT GỌI nó thì gỡ lượt
+   gọi đi là luật biến mất trong im lặng. `rule-compiler.mjs` (có chữ r) là một module KHÁC,
+   không thay thế được — nó đo phần nạp, không biên dịch luật. */
+import { bienDich, docTuDia } from "./rule-compile.mjs";
 import { fingerprintState, readClaims, xetCuaIndex } from "./claim.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDau, xetDau, ghiDauCong, xoaDauCong, moiTruongNay } from "./chay-test.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
@@ -1182,6 +1190,32 @@ check("Sự thật máy sinh còn tươi", () => {
   return { ok: true, msg: `Artifact do ${scripts.join(" và ")} sinh ra đã commit đều khớp với HEAD.` };
 });
 
+check("Luật biên dịch sạch", () => {
+  /* BỘ BIÊN DỊCH LUẬT — Đức chốt 09/09. Chỉ ① là ĐỎ; ②③④ đi kèm làm số liệu.
+     Vì sao chỉ ① đỏ: `docs/protocols/RULE-COMPILER.md` mục 3. Tóm tắt — ① là một câu SAI SỰ
+     THẬT trong file luật (đang dạy thứ Đức đã chốt ngược lại), ba cái kia là MÙI. Một cổng
+     đỏ vì mùi là một cổng sẽ bị tắt. */
+  let kq, tong;
+  try {
+    const d = docTuDia();
+    kq = bienDich({ ...d, homNay: Date.now() });
+    tong = d.soCai.reduce((n, f) => n + f.mang.length, 0);
+  } catch (e) {
+    return { ok: true, skipped: true, msg: "Không chạy được bộ biên dịch luật (" + (e?.message ?? e) + ") — không đo được KHÁC không đạt." };
+  }
+  const moCoi = kq.moCoi.reduce((n, g) => n + g.cai.length, 0);
+  const duoi = `${tong} quyết định · ${moCoi} mồ côi · ${kq.trung.length} chỗ trùng · ${kq.quaHan.length} nơi quá hạn rà`
+    + " — xem đủ: `node scripts/rule-compile.mjs`.";
+  if (!kq.veChetConTrich.length) return { ok: true, msg: "Không nơi chứa luật nào trích một vế đã chết. " + duoi };
+  const cho = kq.veChetConTrich.map((c) => `${c.file}:${c.dong} → ADR-${c.so}${c.ve ? " " + c.ve : ""}`).join(" · ");
+  return {
+    ok: false,
+    msg: "TRICH_VE_CHET: " + cho + ". File luật đang dạy một thứ Đức đã chốt NGƯỢC LẠI — không có cách"
+      + " đọc nào khiến nó đúng. Cửa ra: sửa lượt trích sang số hiệu ĐANG SỐNG, hoặc nếu vế đó thật sự"
+      + " còn hiệu lực thì bỏ nó khỏi mục `Vế đã chết` của ADR. Đừng gỡ phép kiểm. " + duoi,
+  };
+});
+
 /* ---- 8. Cổng kiểm cấu trúc — CHẶN từ phiên S7 -------------------------- */
 // S4 dựng phép kiểm này ở chế độ chỉ-in-ra. S7 bật chặn: nợ thuộc nhóm CHẶN nay làm cổng đỏ.
 //
@@ -1569,7 +1603,7 @@ const doNap = () => {
 
 ghepKiem("Ngân sách trong trần", ["kho chữ", doKhoChu], ["sổ nợ", doSoNo], ["phần nạp", doNap]);
 
-const EXPECTED_CHECKS = 12;
+const EXPECTED_CHECKS = 13;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

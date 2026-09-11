@@ -506,6 +506,56 @@ export function main(argv = process.argv.slice(2)) {
   const gon = argv.includes("--gon");
   const { soCai, banHieuLuc, dangKy } = docTuDia();
 
+  /* --check-head — B-71. `PHIEN.md` LÀ FILE DUY NHẤT một phiên đụng gói được bảo phải đọc
+     (`CLAUDE.md`), và nó máy sinh. Đường sinh có một cửa **fail-silent** đã cắn thật 11/09:
+     bản mới vượt trần cứng thì `--sinh` in `PHIEN_QUA_TRAN` rồi `continue` — **không ghi** —
+     nên bản CŨ nằm lại trên đĩa, và không cổng nào đối chiếu nó. Đo được hôm đó: `PHIEN.md`
+     của gói `duc-auto-chatgpt` lệch HAI NGÀY và mang NĂM câu đã sai (mục đã đóng vẫn ghi là
+     đang chờ Đức chốt, mục đã cắt vẫn liệt kê là còn mở).
+
+     Cửa này khai script vào `generators`, nên mục *"Sự thật máy sinh còn tươi"* của cổng đóng
+     phiên gọi nó như mọi bộ sinh khác — không dựng máy mới, không thêm hàng cổng mới.
+
+     KHÁC MỘT ĐIỂM với các bộ sinh cùng khối, và nói ra để không ai đọc nhầm tên cờ: bộ sinh
+     bảng dựng lại **từ HEAD**; bộ này dựng từ `STATUS.md` **trong cây làm việc**, vì đó chính
+     là nguồn nó đọc. Hệ quả cố ý: sửa `STATUS.md` mà quên chạy `--sinh` thì cổng ĐỎ — đúng
+     thứ ta cần, vì đó là cách bản cũ nằm lại. */
+  if (argv.includes("--check-head")) {
+    const ph = dangKy.phien_goi;
+    if (!ph?.goi?.length) {
+      console.error("KHONG_CO_GOI: chưa khai `luat.phien_goi.goi` — không đối chiếu được PHIEN.md nào.");
+      return 1;
+    }
+    const core = fs.readFileSync(path.join(ROOT, ph.core), "utf8");
+    const lech = [];
+    for (const thuMuc of ph.goi) {
+      const bo = dungBoGoi({ root: ROOT, thuMuc, ph, core });
+      if (bo.loi) { lech.push(`${thuMuc}: ${bo.loi}`); continue; }
+      /* VƯỢT TRẦN LÀ LỆCH, không phải "bỏ qua". Đây đúng là ca đã cắn: bộ sinh từ chối ghi,
+         nên thứ nằm trên đĩa KHÔNG phải thứ `STATUS.md` đang nói. Im ở đây là tái lập chính
+         cái lỗ này ở tầng cổng. */
+      if (bo.boKyTu > bo.tran) {
+        lech.push(`${thuMuc}/PHIEN.md: bản mới ${bo.boKyTu}/${bo.tran} ký tự nên --sinh TỪ CHỐI GHI`
+          + " — file trên đĩa là bản CŨ và không còn khớp STATUS.md. Cắt `next_step`/`human_action`/`current_focus`"
+          + " trong STATUS.md rồi chạy lại `node scripts/rule-compile.mjs --sinh`.");
+        continue;
+      }
+      let cu = null;
+      try { cu = fs.readFileSync(path.join(ROOT, thuMuc, "PHIEN.md"), "utf8"); } catch { /* chưa có */ }
+      if (cu !== bo.noiDung) {
+        lech.push(`${thuMuc}/PHIEN.md: ${cu === null ? "chưa tồn tại" : "khác bản sinh lại từ STATUS.md hiện tại"}`);
+      }
+    }
+    if (lech.length) {
+      console.error(`PHIEN_LECH: ${lech.length}/${ph.goi.length} gói.`);
+      for (const d of lech) console.error(`  ${d}`);
+      console.error("Sửa: node scripts/rule-compile.mjs --sinh");
+      return 1;
+    }
+    console.log(`PHIEN.md của ${ph.goi.length} gói đều khớp bản sinh lại từ STATUS.md hiện tại.`);
+    return 0;
+  }
+
   /* --sinh — bước ⑥. Đích khai ở `luat.khoi_sinh`, KHÔNG suy từ đường dẫn: suy hộ là đoán chỗ
      ghi đè vào file luật của người khác, và `docs/adr/` gốc cố ý KHÔNG có đích (bản hiệu lực
      gốc có thước cóc 252 dòng, nhét 27 dòng vào đó là vỡ ngân sách Đức đặt). */

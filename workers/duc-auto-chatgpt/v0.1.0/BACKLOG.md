@@ -2691,8 +2691,37 @@ thể **kẹt hẳn** (phải mở lại panel) và thể **chớp nhoáng** (t�
 
 - **đóng khi:** ⓐ tách được nguyên nhân bằng phép đo — **ưu tiên đúng cảnh 11/09: không run,
   không ảnh, executor chết mà router sống**; ⓑ panel còn trả lời các method chỉ đọc trong lúc
-  nạp ảnh lớn; và ⓒ **một cửa chẩn đoán phân biệt được "panel bận" với "executor chết"** —
-  hôm nay cả hai đều hiện ra là `REQUEST_TIMEOUT`, nên người ngoài chỉ biết ngồi đợi.
+  nạp ảnh lớn; và ~~ⓒ **một cửa chẩn đoán phân biệt được "panel bận" với "executor chết"**~~
+  — **ⓒ ĐÃ VÁ 11/09**, xem dưới.
+
+**ⓒ ĐÃ VÁ 11/09 — và CHỈ ⓒ. Mục này VẪN MỞ.** Một lượt `REQUEST_TIMEOUT` nay mang
+`target_connected` · `heard_during_wait` · `last_seen_ms_ago` · `waited_ms` ·
+`inflight_same_target` · `diagnosis` · `remedy`, thay cho `details` **rỗng**.
+
+Ba chẩn đoán, và neo của chúng **tự neo, không có hằng mới**: host ghim mốc *nghe thấy lần cuối*
+ngay trước khi gửi, rồi so lại lúc hết giờ — *trong quãng ta chờ, extension có gửi khung nào
+không*. Bản đầu của tôi lấy ngưỡng là `requestTimeoutMs`; đó là một con số **trùng hợp** (35
+giây mặc định, cạnh nhịp keepalive 20 giây) và nó trôi ngay khi ai đó chỉnh tham số chờ.
+
+| `diagnosis` | nghĩa | chữa |
+|---|---|---|
+| `EXTENSION_VANISHED` | ghế rụng giữa chừng | nạp lại tiện ích |
+| `EXECUTOR_STUCK` | **còn gửi khung trong lúc chờ** mà không trả lời | **mở lại side panel — chờ thêm không chữa được** |
+| `PANEL_SILENT` | không gửi gì trong cả quãng chờ | mở lại side panel; và câu chữa **tự khai điểm mù**: chờ ngắn hơn nhịp keepalive 20 giây thì chưa kết luận được |
+
+Ghim `tests/bridge-timeout-diagnosis-smoke.mjs` — lái **host thật**, 4 mép: ca kẹt (có nhịp
+keepalive giữa quãng chờ, dựng lại đúng cảnh sáng 11/09) · chiều ngược (`details` rỗng là thứ
+bản cũ trả) · rụng kênh ra chẩn đoán khác · **im hẳn ra chẩn đoán KHÁC ca kẹt** — nếu hai ca cho
+cùng một chữ thì trường này vô dụng. Lượt viết ghim còn bắt được **một phép kiểm xanh vì lý do
+sai**: ca rụng kênh không khai `target` nên host trả `TARGET_AMBIGUOUS`, chưa từng chạm đường
+nó định đo.
+
+**ĐÃ TRIỂN KHAI, không chỉ trong repo:** chép `bridge-host.mjs` sang bản cài của Đức và khởi
+động lại bằng chính lối tắt Startup; `system.ping` sau đó trả `READY` đúng hội thoại cũ.
+
+**Còn lại ⓐ và ⓑ, và chúng cần bệnh tái phát.** Nguyên nhân vì sao executor kẹt thì **vẫn chưa
+biết** — tôi không dựng giả thuyết. Khác trước ở chỗ: lần sau nó xảy ra, câu lỗi sẽ tự nói mình
+là loại nào, nên phép đo ⓐ làm được bằng một lượt gọi thay vì một buổi.
 
 ### ~~B-51~~ · (KHÔNG LÀM — Đức chốt 10/09, dọn sổ nợ) (P3) `dom_probe` giấu mất ảnh MỚI NHẤT khi hội thoại đã có từ 15 ảnh
 
@@ -3012,9 +3041,14 @@ lối thoát tạm ở `B-50`.
 (xem `~~B-59~~`). Cửa đó khai *"có khối"* trong khi khối chưa tồn tại — lại là một cửa nói một
 nửa sự thật, và nửa nó bỏ ra là nửa quyết định.
 
-**Đã bớt một mẩu:** `system.ping` nay trả `url` + `conversation_id` (`~~B-68~~`), nên cửa duy
-nhất còn sống khi tab không ở hội thoại **đã nói được mình đang ở đâu**. Trước đó nó có
-`ping.url` trong tay mà vứt đi.
+**Đã bớt hai mẩu, nhưng mục này VẪN MỞ** — điều kiện đóng của nó nói về ba cờ của `RUN_ACTIVE`,
+và tôi **chưa chạm** tới chúng. Đừng đọc hai mẩu dưới đây thành đã xong:
+
+- `system.ping` nay trả `url` + `conversation_id` (`~~B-68~~`), nên cửa duy nhất còn sống khi
+  tab không ở hội thoại **đã nói được mình đang ở đâu**. Trước đó nó có `ping.url` trong tay
+  mà vứt đi.
+- `REQUEST_TIMEOUT` nay mang chẩn đoán phân biệt được ba ca, thay cho `details` rỗng — xem
+  `B-50` ⓒ. Đây là cửa thứ năm, và là cửa từng im lặng nhất.
 
 **Đo live 10/09.** Sau lượt gửi đầu, tôi không gửi tiếp được. Bốn lời từ chối, trong vòng vài phút:
 
@@ -3494,7 +3528,53 @@ việc khác hẳn với báo cho họ biết, và nó thuộc nhóm *"tạo aut
   `AI-OPERATOR-GUIDE.md` để phiên sau không đi tìm lỗi ma. Đừng đóng bằng cách thêm một đường
   tự-bật trong công cụ.
 
-### B-71 · (P1) `PHIEN.md` quá trần thì bộ sinh TỪ CHỐI GHI — và bản CŨ SAI nằm lại, không ai biết
+### ~~B-71~~ · (ĐÓNG 11/09 — cổng đã canh) `PHIEN.md` quá trần thì bộ sinh TỪ CHỐI GHI — và bản CŨ SAI nằm lại, không ai biết
+
+> **Đóng đúng bằng điều kiện đã khai, không nới.** `rule-compile.mjs` nay nhận `--check-head`:
+> dựng lại bó của từng gói **trong bộ nhớ** và so với đĩa. Khai vào `generators` của
+> `.repo-structure.json`, nên mục *"Sự thật máy sinh còn tươi"* của cổng đóng phiên gọi nó như
+> mọi bộ sinh khác — **không dựng máy mới, không thêm hàng cổng mới**.
+>
+> **Vượt trần được tính là LỆCH**, không phải "bỏ qua" — đó chính là ca đã cắn: `--sinh` từ
+> chối ghi, nên thứ trên đĩa không còn là thứ `STATUS.md` đang nói. Im ở tầng cổng là tái lập
+> chính cái lỗ này.
+>
+> Khác một điểm với các bộ sinh cùng khối, nói ra để không ai đọc nhầm tên cờ: bảng dựng lại
+> **từ HEAD**; bộ này dựng từ `STATUS.md` **trong cây làm việc**, vì đó là nguồn nó đọc. Hệ quả
+> cố ý: sửa `STATUS.md` mà quên chạy `--sinh` thì cổng ĐỎ.
+>
+> **Nghiệm thu thật:** thêm một dòng lạ vào `PHIEN.md` → `--check-head` thoát **1** và nêu đúng
+> tên gói; chạy `--sinh` → thoát **0**. Ghim `tests/rule-compile-smoke.mjs` bằng **fixture**
+> (đúng doctrine của chính tệp đó: đo BỘ SINH, không đo repo), gồm mép "vượt trần là trạng thái
+> ĐO ĐƯỢC" và mép cấu hình đòi tên script phải nằm trong `generators` — không khai thì cửa mới
+> chỉ là mã chết.
+>
+> **Và lượt này lôi ra một thứ lớn hơn chính nó** — xem `B-72`.
+
+### ~~B-72~~ · (ĐÓNG 11/09) Một hàng cổng đã MẤT trong lượt migrate bộ khung, và phép ghim của nó đỏ suốt mà không ai thấy
+
+> Tìm ra khi ghim `B-71`: `tests/rule-compile-smoke.mjs` **đỏ ở bản HEAD**, không phải do tôi.
+> Mục *"BỘ BIÊN DỊCH PHẢI CÒN ĐƯỢC GỌI"* đòi `session-check.mjs` còn nạp `./rule-compile.mjs`.
+> Nó không còn nạp: hàng cổng **"Luật biên dịch sạch"** (lane `claude-luat-rasoat`, Đức chốt
+> 09/09) **biến mất** trong lượt migrate bộ khung `4da1e9e5`, cùng với lượt `import` của nó.
+>
+> `scripts/rule-compiler.mjs` (có chữ **r**) còn được nạp, nhưng đó là **module khác** — nó đo
+> phần nạp, **không** biên dịch luật. Nên đây là **mất một lớp bảo vệ thật**, không phải đổi tên.
+>
+> **Vì sao không ai thấy suốt hai ngày:** `npm test` gốc chết sớm hơn ở `repo-structure-smoke.mjs`,
+> nên hơn 20 tệp phía sau — gồm tệp này — **chưa từng chạy**. Đúng bài học *"hàng Test xanh chỉ
+> chạy suite của vùng bạn"*.
+>
+> **Đã khôi phục nguyên bản** hàng cổng từ `95b2ec74`, `EXPECTED_CHECKS` 12 → 13. Đo trước khi
+> khôi phục để chắc nó không đỏ cả repo: `rule-compile --gon` → **SẠCH** (173 quyết định, 19 vế
+> chết, 0 chỗ trích vế chết). Cổng chạy lại: **`[XANH] Luật biên dịch sạch`**, và
+> `tests/rule-compile-smoke.mjs` từ đỏ thành **32/32** — xanh vì lớp bảo vệ quay lại, **không**
+> vì tôi sửa phép kiểm cho vừa.
+>
+> **Bài học, ghi vì nó tổng quát:** phép ghim N-01 của chính tệp đó viết *"ghim một bộ kiểm mà
+> không ghim LƯỢT GỌI nó thì gỡ lượt gọi đi là luật biến mất trong im lặng"*. Nó đã làm đúng
+> việc — nó ĐỎ. Thứ hỏng là **không ai chạy nó**. Một phép ghim đúng nằm sau một suite chết thì
+> im lặng y như không có.
 
 **Đức nêu 11/09:** *"tôi muốn xoá các giả thuyết sai để sau này bạn không bị nạp lại thông tin
 không chính xác."* Đi tìm thì ra một cơ chế, không phải một sơ suất.

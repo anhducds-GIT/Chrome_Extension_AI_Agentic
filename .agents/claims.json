@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-11T01:59:02.594Z",
-      "task": "dong B-70",
-      "released_at": "2026-09-11T02:02:10.006Z",
+      "claimed_at": "2026-09-11T02:22:47.975Z",
+      "task": "B-50 cua chan doan",
+      "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-10T15:17:35.284Z",
-      "task": "cat 2 khoi test mo coi de npm test chay lai duoc",
-      "released_at": "2026-09-10T15:20:13.677Z",
+      "claimed_at": "2026-09-11T02:11:05.511Z",
+      "task": "B-71: cong canh PHIEN.md con tuoi",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -96,11 +96,15 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "44a563e53a1d0a2f",
+  "_fingerprint": "d6dba4c5bcb2a83a",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
       "luc": "2026-09-09T15:37:25.380Z"
+    },
+    ".repo-structure.json": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-11T02:22:53.906Z"
     }
   }
 }

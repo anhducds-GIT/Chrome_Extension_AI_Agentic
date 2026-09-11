@@ -14,10 +14,12 @@
     "depth": 2,
     "ten": "Extension"
   },
+  "_generators_doc": "Mỗi tên ở đây phải nhận cờ `--check-head` và thoát khác 0 khi bản ra đã commit không còn khớp. `rule-compile.mjs` vào danh sách 11/09 (B-71): PHIEN.md là file DUY NHẤT một phiên đụng gói được bảo phải đọc, nó máy sinh, và đường sinh có một cửa fail-silent — vượt trần cứng thì `--sinh` TỪ CHỐI GHI và bản CŨ nằm lại. Đo 11/09: một PHIEN.md lệch hai ngày, mang năm câu đã sai, không cổng nào thấy.",
   "generators": [
     "build-dashboard.mjs",
     "feature-parity.mjs",
-    "build-overview.mjs"
+    "build-overview.mjs",
+    "rule-compile.mjs"
   ],
   "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. Repo dựng từ bộ khung chỉ khai những script nó THẬT SỰ mang theo — khai thừa là cổng đỏ vì thiếu file.",
   "generated": [

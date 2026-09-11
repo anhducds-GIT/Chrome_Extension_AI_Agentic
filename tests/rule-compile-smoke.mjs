@@ -11,12 +11,13 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
   bienDich, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE,
-  sinhKhoi, thayKhoi, MOC_DAU, MOC_CUOI,
+  sinhKhoi, thayKhoi, MOC_DAU, MOC_CUOI, dungBoGoi,
 } from "../scripts/rule-compile.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -391,7 +392,68 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
  * Nên phép cuối là phép tự soi: đếm số khẳng định đã chạy. Cùng bệnh với `MUTATION_SKIP` —
  * một bộ kiểm không khẳng định gì thì im lặng, và im lặng đọc y hệt một lượt xanh.
  */
-const TOI_THIEU = 20;
+
+/* ---- B-71 · CUA `--check-head` CHO `PHIEN.md` ------------------------------
+ * `PHIEN.md` la file DUY NHAT mot phien dung goi duoc bao phai doc, va no may sinh. Duong
+ * sinh co mot cua FAIL-SILENT da can that 11/09: ban moi vuot tran cung thi `--sinh` in
+ * `PHIEN_QUA_TRAN` roi `continue` — KHONG GHI — nen ban CU nam lai tren dia, va khong cong
+ * nao doi chieu no. Do duoc hom do: mot PHIEN.md lech HAI NGAY, mang NAM cau da sai.
+ *
+ * Ghim bang FIXTURE dung theo doctrine cua chinh file nay: do BO SINH, khong do repo. */
+{
+  const goc = fs.mkdtempSync(path.join(os.tmpdir(), "phien-tran-"));
+  const thuMuc = "workers/goi-thu";
+  fs.mkdirSync(path.join(goc, thuMuc), { recursive: true });
+  fs.writeFileSync(path.join(goc, thuMuc, "AGENTS.md"),
+    ["# G", "", "## Luật vàng", "", "1. Không làm bậy.", "", "## Hết", ""].join("\n"));
+  fs.writeFileSync(path.join(goc, thuMuc, "STATUS.md"),
+    ["---", 'next_step: "ngắn"', "---", ""].join("\n"));
+  fs.writeFileSync(path.join(goc, "CLAUDE.md"), "x".repeat(100));
+  const ph = { core: "core.md", goi: [thuMuc], dinh_tuyen: ["CLAUDE.md"], tran_ky_tu: 100000,
+    truong_trang_thai: ["next_step"] };
+  const core = ["# Lõi", "", "luật chung.", ""].join("\n");
+
+  const rong = dungBoGoi({ root: goc, thuMuc, ph, core });
+  assert.equal(rong.loi, undefined, "gói đủ file thì phải dựng được");
+  assert.equal(rong.boKyTu, rong.nenKyTu + rong.noiDung.length,
+    "bó = định tuyến + PHIEN, không phải riêng PHIEN — bài học đắt nhất 09/09");
+  assert.equal(rong.nenKyTu, 100, "phần định tuyến phải được đếm vào bó");
+  ok("B-71 dựng bó một gói: bó = định tuyến + PHIEN");
+
+  /* MEP CHIU TAI: vuot tran. `--sinh` se TU CHOI GHI o day, nen `--check-head` BUOC phai coi
+     day la LECH. Im o day la tai lap chinh cai lo B-71 o tang cong. */
+  const chat = dungBoGoi({ root: goc, thuMuc, ph: { ...ph, tran_ky_tu: 10 }, core });
+  assert.ok(chat.boKyTu > chat.tran, "trần 10 ký tự thì bó phải vượt");
+  ok("B-71 vượt trần là một trạng thái ĐO ĐƯỢC, không phải một nhánh im lặng");
+
+  const thieu = dungBoGoi({ root: goc, thuMuc: "workers/khong-co", ph, core });
+  assert.match(String(thieu.loi), /THIEU_FILE/, "gói thiếu file phải báo lỗi, không trả bó rỗng");
+  ok("B-71 gói thiếu file báo THIEU_FILE thay vì im");
+
+  fs.rmSync(goc, { recursive: true, force: true });
+}
+
+/* Cua `--check-head` phai TON TAI trong ma, va phai coi vuot tran la lech. Ghim nguon vi ca
+   nhanh do can mot repo that de chay; phan so hoc thi da ghim bang fixture o tren. */
+{
+  const src = fs.readFileSync(new URL("../scripts/rule-compile.mjs", import.meta.url), "utf8");
+  const XUONG = String.fromCharCode(10);
+  const chiMa = src.split(XUONG).filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join(XUONG);
+  assert.match(chiMa, /argv\.includes\("--check-head"\)/, "phải có cửa --check-head");
+  assert.match(chiMa, /bo\.boKyTu > bo\.tran/, "vượt trần PHẢI được tính là lệch — đây là chính ca đã cắn");
+  assert.match(chiMa, /cu !== bo\.noiDung/, "và phải so NỘI DUNG với bản sinh lại, không so mốc giờ");
+  ok("B-71 cua --check-head coi vuot tran la lech, va so noi dung");
+
+  const cauHinh = JSON.parse(fs.readFileSync(new URL("../.repo-structure.json", import.meta.url), "utf8"));
+  assert.ok(cauHinh.generators.includes("rule-compile.mjs"),
+    "khai vào `generators` thì cổng đóng phiên mới gọi nó — không khai thì cửa trên là mã chết");
+  ok("B-71 rule-compile.mjs da khai trong generators");
+}
+
+const TOI_THIEU = 26;
 if (passed < TOI_THIEU) {
   console.error(`\nPHEP_GHIM_RONG: chỉ chạy ${passed} khẳng định, phải có ít nhất ${TOI_THIEU}.`);
   console.error("File này đã bị cắt hoặc rút ruột. Một phép ghim không khẳng định gì thì thoát 0 và đọc y hệt một lượt xanh.\n");
