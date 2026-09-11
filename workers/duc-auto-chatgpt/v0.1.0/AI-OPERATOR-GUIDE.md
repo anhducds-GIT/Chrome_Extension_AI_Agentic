@@ -304,6 +304,10 @@ node duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs \
 - `--url` khai TRƯỚC hội thoại muốn chạy; lệch là dừng ở lượt đọc đầu, **chưa gửi gì**. Bỏ
   qua thì bộ chạy ghim đúng tab đang mở — tiện, nhưng mở nhầm tab là gõ nhầm hội thoại.
 - `--tu-turn <turn_id>` khi nối tiếp một chuỗi đang chạy dở.
+- `--tiep` **chạy TIẾP, không chạy lại**: đọc `nhat-ky.jsonl` trong thư mục nhật ký, nối từ
+  lượt gửi cuối, và **trừ** số vòng đã gửi vào trần vòng. Chạy lại từ số không trên một hội
+  thoại đang dở sẽ đọc lại đúng khối vừa gửi trước khi chết và **gửi nó lần hai**.
+  Số vòng đã gửi **cộng dồn qua mọi lượt chạy cùng tên chuỗi** — việc mới thì đặt tên mới.
 - **Dừng tay:** tạo file tên `DUNG` trong thư mục nhật ký.
 - Mọi vòng ghi vào `nhat-ky.jsonl`: khối đã gửi, số ký tự, `turn_id`, lý do dừng.
 

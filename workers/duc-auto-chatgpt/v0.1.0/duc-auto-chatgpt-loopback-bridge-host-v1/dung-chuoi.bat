@@ -35,7 +35,9 @@ if "%NHAN%"=="" (
 set "SO=%DUC_CHUOI_SO%\%NHAN%"
 if not exist "%SO%" (
   echo Khong thay thu muc nhat ky cua chuoi "%NHAN%":
-  echo   %SO%
+  rem Ngoac kep: ten chuoi cua Duc co `&` ("HNX audit & fill"), va `echo` khong ngoac thi cmd
+  rem doc `&` la DAU NOI LENH roi chay nua sau nhu mot lenh. Do 12/09 o chay-chuoi.bat.
+  echo   "%SO%"
   echo Co the ten go sai, hoac chuoi do chua chay lan nao.
   echo.
   pause

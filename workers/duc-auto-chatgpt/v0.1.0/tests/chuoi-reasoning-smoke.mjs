@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, khoaAnToan, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
@@ -476,4 +476,57 @@ console.log("chuoi reasoning smoke tests: PASS");
     "phải có đúng ba chỗ dựng khoá từ tên (ping · reload · gửi), và lượt gửi lại DÙNG LẠI khoá của lượt gửi");
   assert.match(chiMa, /const khoaGui = khoaAnToan\(nhan,/, "lượt gửi phải chốt khoá MỘT LẦN rồi dùng lại cho lượt gửi thứ hai");
   console.log("  ok  ⓡ tên chuỗi có dấu cách / tiếng Việt không còn làm vỡ khoá gửi");
+}
+
+/* ⓢ CHẠY TIẾP, KHÔNG CHẠY LẠI — Đức nêu 12/09: *"script bị chết thì tôi không phải chạy lại
+ * từ đầu rồi điền thông tin từ đầu."*
+ *
+ * Mép chịu tải không phải sự tiện nghi, mà là: chạy lại từ số không trên một hội thoại đang
+ * dở sẽ đọc lại đúng khối bộ chạy VỪA GỬI trước khi chết, và gửi nó lần hai. Nhật ký đã ghi
+ * `turn_id` của từng lượt gửi, nên chỗ dừng là thứ ĐỌC ĐƯỢC. */
+{
+  const dong = (o) => JSON.stringify(o);
+  const nk = [
+    dong({ su_kien: "BAT_DAU", so_vong: 10 }),
+    dong({ su_kien: "NAP_LAI", vong: 1 }),
+    dong({ su_kien: "DA_GUI", vong: 1, turn_id: "aaa-1" }),
+    dong({ su_kien: "CANH_TAB", vong: 2 }),
+    dong({ su_kien: "DA_GUI", vong: 2, turn_id: "bbb-2" }),
+    dong({ su_kien: "DA_GUI", vong: 3, turn_id: "ccc-3" }),
+  ].join("\n");
+
+  const r = docNhatKy(nk);
+  assert.equal(r.daGui, 3, "phải đếm ĐÚNG số lượt GỬI, không đếm mọi sự kiện");
+  assert.equal(r.khoiCu, "ccc-3", "phải nối từ lượt gửi CUỐI CÙNG, không phải lượt đầu");
+
+  /* Nhật ký là tệp CHỈ-THÊM ghi giữa lúc chạy: tắt máy giữa chừng để lại dòng cuối cụt.
+     Bỏ qua TỪNG DÒNG hỏng, không bỏ cả tệp — bỏ cả tệp là quay về "chạy lại từ số không",
+     tức đúng cái nguy hiểm mà tính năng này sinh ra để tránh. */
+  const cut = `${nk}\n{"su_kien":"DA_GUI","vong":4,"turn_`;
+  const r2 = docNhatKy(cut);
+  assert.equal(r2.daGui, 3, "dòng cụt bị bỏ qua, ba lượt trước vẫn được đếm");
+  assert.equal(r2.khoiCu, "ccc-3");
+
+  assert.deepEqual(docNhatKy(""), { khoiCu: "", daGui: 0 }, "nhật ký rỗng = lượt chạy đầu, không phải lỗi");
+  assert.deepEqual(docNhatKy(null), { khoiCu: "", daGui: 0 });
+  assert.equal(docNhatKy(dong({ su_kien: "DA_GUI", vong: 1 })).daGui, 1,
+    "lượt gửi thiếu turn_id vẫn phải ĐẾM — nếu không, ngân sách vòng bị trả lại sai");
+
+  /* Và mã phải TRỪ vào trần vòng, không cộng thêm. `--so-vong` là ngân sách cho cả VIỆC,
+     không phải cho một lượt chạy; cấp thêm vòng phải là một quyết định của Đức. */
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const chiMa = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  assert.match(chiMa, /const conLai = soVong - daXong;/, "phải TRỪ số vòng đã gửi vào trần");
+  assert.match(chiMa, /soVong = conLai;/, "và thật sự áp con số đó, không chỉ in ra");
+  assert.match(chiMa, /docCo\(argv, "tu-turn", ""\) \|\| tuNhatKy/,
+    "--tu-turn gõ tay phải THẮNG chỗ dừng đọc từ nhật ký");
+  /* Tệp nhớ thông số phải là khoá=giá trị, KHÔNG phải một tệp .cmd chạy được: nó do một cái
+     tên người gõ đẻ ra, và sinh mã chạy được từ chữ người gõ là cửa tiêm lệnh. */
+  assert.match(chiMa, /lan-truoc\.txt/, "phải nhớ thông số lần trước");
+  assert.ok(!/lan-truoc\.cmd|lan-truoc\.bat/.test(chiMa), "KHÔNG được sinh ra tệp chạy được từ chữ người gõ");
+  assert.match(chiMa, /replace\(\/\[%!"\\r\\n\]\/g, ""\)/, "phải lọc ký tự làm vỡ một lượt `set` của batch");
+  console.log("  ok  ⓢ chạy tiếp: đọc chỗ dừng từ nhật ký, trừ vào trần vòng, dòng cụt không làm mất tất");
 }

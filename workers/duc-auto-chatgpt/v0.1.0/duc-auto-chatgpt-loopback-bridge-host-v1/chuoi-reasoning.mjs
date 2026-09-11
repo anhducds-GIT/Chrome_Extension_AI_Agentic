@@ -20,7 +20,11 @@
  * Dùng:
  *   node chuoi-reasoning.mjs --so-vong 12 --nhan luat-audit \
  *        --pairing "<đường dẫn>" --target anhducds [--tran-phut 240] [--nhat-ky <thư mục>]
- *        [--url https://chatgpt.com/c/<id>] [--tu-turn <turn_id>]
+ *        [--url https://chatgpt.com/c/<id>] [--tu-turn <turn_id>] [--tiep]
+ *
+ * `--tiep` CHẠY TIẾP, không chạy lại: đọc `nhat-ky.jsonl` trong thư mục nhật ký, nối từ lượt
+ * gửi cuối cùng, và TRỪ số vòng đã gửi vào trần vòng. Chạy lại từ số không trên một hội thoại
+ * đang dở là cách gửi lại đúng một prompt đã gửi.
  *
  * `--url` khai TRƯỚC hội thoại muốn chạy. Không khai thì nó ghim đúng tab đang mở ở lượt đọc
  * đầu — tiện, nhưng mở nhầm tab là gõ nhầm chỗ, và cái đó không hoàn tác được.
@@ -59,6 +63,37 @@ export function nguoiNhanCuaKhoi(text) {
      chữ lạ: một dòng `Claude Code (CC) — đối chiếu kết quả GPT` mà đem so với /gpt/ sẽ ra
      "gửi cho GPT" — đúng cái lỗi mà mép này sinh ra để chặn. */
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
+}
+
+/* ĐỌC NHẬT KÝ ĐỂ CHẠY TIẾP — `--tiep`. Đức nêu 12/09: *"script bị chết thì tôi không phải
+ * chạy lại từ đầu rồi điền thông tin từ đầu."*
+ *
+ * "Chạy lại" và "chạy tiếp" là HAI VIỆC KHÁC NHAU, và nhầm chúng thì tốn một lượt gửi thật.
+ * Chạy lại từ số không trên một hội thoại đang dở: bộ chạy đọc trang, thấy khối mới nhất, và
+ * khối ấy có thể CHÍNH LÀ khối nó vừa gửi trước khi chết — nó sẽ gửi lần hai. Nhật ký đã ghi
+ * `turn_id` của từng lượt gửi, nên chỗ dừng là thứ ĐỌC ĐƯỢC, không phải thứ phải nhớ.
+ *
+ * Trả về:
+ *   khoiCu  — `turn_id` của lượt gửi CUỐI CÙNG, để `quyetDinh` không nhận lại đúng khối đó
+ *   daGui   — đã gửi bao nhiêu vòng, để trừ vào trần vòng
+ * Trừ vào trần chứ không cộng thêm: `--so-vong` là NGÂN SÁCH Đức đặt cho cả việc, không phải
+ * cho một lượt chạy. Muốn cấp thêm vòng thì gõ lại số, đó là một quyết định chứ không phải
+ * một hệ quả phụ của việc script chết.
+ *
+ * THUẦN — không đọc đĩa, nhận sẵn nội dung. Dòng hỏng thì BỎ QUA từng dòng, không bỏ cả tệp:
+ * nhật ký là tệp chỉ-thêm ghi giữa lúc chạy, nên một lượt tắt máy có thể để lại dòng cuối cụt. */
+export function docNhatKy(text) {
+  let khoiCu = "";
+  let daGui = 0;
+  for (const dong of String(text ?? "").split("\n")) {
+    if (!dong.trim()) continue;
+    let o;
+    try { o = JSON.parse(dong); } catch { continue; }
+    if (o?.su_kien !== "DA_GUI") continue;
+    daGui += 1;
+    if (o.turn_id) khoiCu = String(o.turn_id);
+  }
+  return { khoiCu, daGui };
 }
 
 /* KHOÁ IDEMPOTENCY DỰNG TỪ TÊN CHUỖI — B-73, lỗi thật 12/09.
@@ -243,7 +278,7 @@ function docCo(argv, ten, mac) {
 
 async function chinh() {
   const argv = process.argv.slice(2);
-  const soVong = Number(docCo(argv, "so-vong", "0"));
+  let soVong = Number(docCo(argv, "so-vong", "0"));
   const nhan = docCo(argv, "nhan", "");
   const pairing = docCo(argv, "pairing", "");
   const target = docCo(argv, "target", "");
@@ -274,6 +309,34 @@ async function chinh() {
   }
 
   fs.mkdirSync(thuMuc, { recursive: true });
+
+  /* --tiep — CHẠY TIẾP, không chạy lại. Đọc chỗ dừng từ nhật ký thay vì bắt người nhớ.
+     Đặt SAU `mkdirSync` và TRƯỚC khoá một-bản-chạy: nó chỉ đọc, và nếu thư mục chưa có nhật
+     ký thì đây là lượt chạy đầu — nói ra rồi chạy bình thường, không coi là lỗi. */
+  let tuNhatKy = "";
+  if (argv.includes("--tiep")) {
+    let cu = "";
+    try { cu = fs.readFileSync(path.join(thuMuc, "nhat-ky.jsonl"), "utf8"); } catch { /* lần đầu */ }
+    const { khoiCu: dungO, daGui: daXong } = docNhatKy(cu);
+    if (!daXong) {
+      console.log("--tiep: nhật ký chưa có lượt gửi nào — chạy như một lượt mới.");
+    } else {
+      tuNhatKy = dungO;
+      const conLai = soVong - daXong;
+      if (conLai < 1) {
+        console.error(`--tiep: thư mục nhật ký này đã ghi ${daXong} lượt gửi, --so-vong là ${soVong} — hết ngân sách vòng.`);
+        /* NÓI RA CHỖ DỄ HIỂU NHẦM: nhật ký là tệp CHỈ-THÊM và nó CỘNG DỒN qua mọi lượt chạy
+           cùng tên chuỗi, không reset theo lượt. Nên con số trên là "từ trước tới nay", không
+           phải "lượt chạy vừa rồi" — người đọc mà tưởng là lượt vừa rồi sẽ thấy nó vô lý. */
+        console.error("Con số đó CỘNG DỒN qua mọi lượt chạy cùng tên chuỗi, không phải của riêng lượt vừa rồi.");
+        console.error("Muốn chạy thêm: gõ --so-vong lớn hơn, hoặc đặt một TÊN CHUỖI MỚI cho một việc mới.");
+        console.error("Đó là một quyết định, không phải hệ quả phụ của việc script chết.");
+        process.exit(2);
+      }
+      console.log(`--tiep: đã gửi ${daXong} vòng, còn ${conLai}. Nối từ lượt "${dungO || "(không rõ)"}".`);
+      soVong = conLai;
+    }
+  }
 
   /* B-61 — MỘT BẢN CHẠY MỘT LÚC. 10/09 hai tiến trình chạy song song trên cùng một tab: nhật
      ký đan xen thành vô nghĩa, hai lượt gửi cùng một prompt cách nhau 59 giây, và chúng nạp
@@ -310,7 +373,9 @@ async function chinh() {
   const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const hanChung = Date.now() + tranPhut * 60000;
-  let khoiCu = docCo(argv, "tu-turn", "");
+  /* `--tu-turn` gõ tay THẮNG chỗ dừng đọc từ nhật ký: người khai tường minh thì người đúng.
+     Không có thì dùng chỗ dừng của `--tiep`; không có nữa thì rỗng (chạy mới). */
+  let khoiCu = docCo(argv, "tu-turn", "") || tuNhatKy;
   let daGui = 0;
   let lyDo = "HET_SO_VONG";
   /* Có `--url` thì ghim từ đó — lệch là dừng ở lượt đọc đầu. Không có thì ghim ở LƯỢT ĐỌC
@@ -323,6 +388,19 @@ async function chinh() {
     ? `hội thoại đã khai: ${hoiThoaiCua(urlMuon)} — lệch là dừng ngay, chưa gửi gì`
     : "hội thoại: ghim theo tab đang mở ở lượt đọc đầu (khai --url nếu muốn chắc)");
   ghi({ su_kien: "BAT_DAU", so_vong: soVong, tran_phut: tranPhut, tu_turn: khoiCu || null, hoi_thoai: hoiThoaiCua(urlMuon) });
+
+  /* NHỚ THÔNG SỐ LẦN NÀY, để lần sau không phải gõ lại — Đức nêu 12/09.
+     Ghi ở THƯ MỤC GỐC của kho nhật ký, không trong thư mục của chuỗi: cửa sổ đóng mất rồi thì
+     người ta không còn nhớ nổi tên chuỗi, mà tên chuỗi lại chính là thứ cần để tìm thư mục.
+     Dạng `khoá=giá trị` chứ KHÔNG sinh ra một tệp `.cmd` chạy được: tệp này do một cái tên
+     người gõ đẻ ra, và sinh mã chạy được từ chữ người gõ là cửa tiêm lệnh. `.bat` chỉ đọc nó
+     bằng `for /f`. Lọc luôn `% ! " <CR> <LF>` — bốn thứ làm vỡ hoặc bẻ hướng một lượt `set`. */
+  const sachChoBat = (v) => String(v ?? "").replace(/[%!"\r\n]/g, "");
+  try {
+    fs.writeFileSync(path.join(path.dirname(thuMuc), "lan-truoc.txt"),
+      [`NHAN=${sachChoBat(nhan)}`, `VONG=${soVong}`, `PHUT=${tranPhut}`,
+        `DICH=${sachChoBat(target)}`, `DIA_CHI=${sachChoBat(urlMuon)}`, ""].join("\r\n"));
+  } catch { /* không ghi được thì thôi — đây là tiện nghi, không phải điều kiện chạy */ }
 
   for (let vong = 1; vong <= soVong; vong += 1) {
     let daNapLai = false;

@@ -643,6 +643,32 @@ chờ side panel trả lời, và **vẫn chưa mang chẩn đoán**. Ghi vào `
 
 Suite gói **136/136**.
 
+## 2026-09-12 (lượt 27) · `claude-gpt-chay-het-job` — chạy TIẾP, và một cái `&` chạy như lệnh
+
+Đức xin tính năng chạy lại ở cuối để khỏi gõ lại thông số. Phần đáng giá hoá ra không phải sự
+tiện nghi: **chạy lại ≠ chạy tiếp**, và nhầm chúng thì tốn một lượt gửi thật — chạy lại từ số
+không trên một hội thoại đang dở sẽ đọc lại đúng khối **vừa gửi** trước khi chết rồi gửi lần
+hai. Nhật ký vốn ghi `turn_id` từng lượt, nên chỗ dừng là thứ **đọc được**.
+
+`--tiep` + `docNhatKy()`: nối từ lượt gửi cuối, **TRỪ** số vòng đã gửi vào trần. Trừ chứ không
+cộng — `--so-vong` là ngân sách cho cả **việc**; cấp thêm vòng phải là một quyết định của Đức.
+Menu cuối `.bat`: `[t]` tiếp · `[m]` mới · `[g]` gõ lại (xoá hết thông số cũ trước). Thông số
+ghi ra `lan-truoc.txt` ở **gốc** kho nhật ký, dạng `khoá=giá trị` — **cố ý không** sinh một tệp
+`.cmd` chạy được, vì tệp này do một cái tên người gõ đẻ ra.
+
+**Và lượt thử lôi ra một bug đang sống, không phải bug tôi tạo:** tên thật `HNX audit & fill`
+gặp hai dòng `echo` không đóng ngoặc → cmd đọc `&` là **dấu nối lệnh** và **chạy
+`fill\nhat-ky.jsonl` như một lệnh**; màn hình hiện hai câu lỗi **không liên quan gì tới chuỗi**.
+Đã đóng ngoặc ở cả `chay-chuoi.bat` và `dung-chuoi.bat`. Cùng họ `~~B-73~~`.
+
+**Đã thử thật:** `--tiep` trên nhật ký thật (`Template_collect_luat`, 3 lượt gửi) → đúng chỗ
+dừng; nhánh hết ngân sách thoát 2 **không ghi thêm dòng nào**; ba đường của `.bat` chạy với
+sentinel `so-vong 0` nên **không gửi gì**. Lượt thử có để lại **một dòng `BAT_DAU`** trong nhật
+ký `HNX audit & fill` — nhật ký là sổ chỉ-thêm, tôi **không xoá**; nó `da_gui: 0` nên không ăn
+vào ngân sách vòng của Đức.
+
+Suite gói **136/136**. `~~B-74~~`.
+
 ## 2026-09-12 · `codex-bridge-pairing-links`
 
 Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-chatgpt\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh 136/136.

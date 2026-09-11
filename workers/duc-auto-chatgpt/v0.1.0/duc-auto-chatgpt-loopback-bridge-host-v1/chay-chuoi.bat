@@ -24,6 +24,13 @@ rem  Sau "--" moi thu duoc chuyen NGUYEN VAN cho chuoi-reasoning.mjs.
 rem
 rem  DUNG GIUA CHUNG: nhap doi dung-chuoi.bat <nhan>, hoac dong cua so.
 rem
+rem  CHAY XONG THI NO HOI, khong bat go lai tu dau:
+rem     [t] CHAY TIEP — doc nhat ky, noi tu luot gui cuoi, TRU so vong da gui
+rem     [m] chay MOI cung thong so — dem lai tu vong 1
+rem     [g] go lai tu dau
+rem  Va moi luot chay ghi thong so vao "%DUC_CHUOI_SO%\lan-truoc.txt", nen mo lai cua so
+rem  moi van khong phai dien lai.
+rem
 rem  CHINH BANG BIEN MOI TRUONG (khong phai sua tep nay):
 rem     DUC_PAIRING    duong dan tep ghep cap
 rem     DUC_TARGET     profile mac dinh khi goi thang ma khong khai
@@ -83,6 +90,23 @@ if "%DIA_CHI%"=="" set "DIA_CHI=%DUC_URL%"
 
 if not "%NHAN%"=="" goto :dinhNghia
 
+:hoiThongSo
+rem NHO THONG SO LAN TRUOC. Duc neu 12/09: script chet thi khong phai dien lai tu dau.
+rem Bo chay ghi "lan-truoc.txt" o GOC kho nhat ky moi luot chay — dang khoa=gia tri, KHONG
+rem phai mot tep .cmd chay duoc: tep nay do mot cai ten NGUOI GO de ra, va sinh ma chay duoc
+rem tu chu nguoi go la cua tiem lenh. O day chi doc bang for /f.
+if not exist "%DUC_CHUOI_SO%\lan-truoc.txt" goto :goTay
+echo.
+echo   Thong so lan truoc:
+for /f "usebackq tokens=1,* delims==" %%A in ("%DUC_CHUOI_SO%\lan-truoc.txt") do echo      %%A = %%B
+set "DUNGLAI="
+set /p "DUNGLAI=Dung lai thong so nay? [Enter = co / k = go moi]: "
+if /i "%DUNGLAI%"=="k" goto :goTay
+for /f "usebackq tokens=1,* delims==" %%A in ("%DUC_CHUOI_SO%\lan-truoc.txt") do set "%%A=%%B"
+echo   -^> dung lai: chuoi "%NHAN%" · %VONG% vong · profile "%DICH%"
+goto :dinhNghia
+
+:goTay
 echo.
 echo   Ten chuoi dung de dat ten thu muc nhat ky. Vi du: ark-luat
 set /p "NHAN=Ten chuoi [chuoi]: "
@@ -129,27 +153,71 @@ if exist "%SO%\DUNG" del /q "%SO%\DUNG"
 rem Nhac lai truoc khi chay: profile la thu de nham nhat, va nham thi phai doi
 rem het mot vong moi biet.
 echo   chuoi "%NHAN%" · %VONG% vong · tran %PHUT% phut · profile "%DICH%"
-if not "%DIA_CHI%"=="" echo   hoi thoai da ghim: %DIA_CHI%
+rem Ngoac kep vi cung ly do: mot dia chi hoi thoai trong Project co the mang `&` o phan `?...`.
+if not "%DIA_CHI%"=="" echo   hoi thoai da ghim: "%DIA_CHI%"
 if "%DIA_CHI%"=="" echo   hoi thoai: ghim theo tab dang mo o luot doc dau
 echo.
 
 rem Truyen --url chi khi CO dia chi. Truyen mot chuoi rong thi bo chay doc co ke tiep lam
 rem gia tri va bao "--url khong phai mot hoi thoai" — dung ngay o cua vao.
-if "%DIA_CHI%"=="" (
-  node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%"
-) else (
-  node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%" --url "%DIA_CHI%"
-)
+rem KHONG dung khoi ngoac: cung ly do da ghi o dau tep.
+set "TIEP_CO="
+if "%TIEP%"=="1" set "TIEP_CO=--tiep"
+if "%DIA_CHI%"=="" goto :chayKhongUrl
+node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%" --url "%DIA_CHI%" %TIEP_CO%
+goto :xongChay
+:chayKhongUrl
+node "%BO_CHAY%" --so-vong %VONG% --nhan "%NHAN%" --tran-phut %PHUT% --pairing "%DUC_PAIRING%" --target "%DICH%" --nhat-ky "%SO%" %TIEP_CO%
+:xongChay
 set "MA=%ERRORLEVEL%"
 
 echo.
-echo Nhat ky: %SO%\nhat-ky.jsonl
-echo Dung chuoi nay: dung-chuoi.bat %NHAN%
+rem DONG NGOAC HAI DONG NAY. Do 12/09 voi ten chuoi that cua Duc — "HNX audit & fill":
+rem `echo ... %SO%\nhat-ky.jsonl` khong ngoac thi cmd doc dau `&` la DAU NOI LENH, cat cau
+rem lam doi, va CHAY `fill\nhat-ky.jsonl` nhu mot lenh. Tren man hinh hien ra
+rem "The system cannot find the path specified." va "'fill' is not recognized" — hai cau
+rem khong lien quan gi toi chuoi, lam nguoi doc di tim loi o cho khac. Ngoac kep lam `&`
+rem thanh chu binh thuong. Moi cho khac trong tep nay von da ngoac.
+echo Nhat ky: "%SO%\nhat-ky.jsonl"
+echo Dung chuoi nay: dung-chuoi.bat "%NHAN%"
 echo.
-pause
-rem `pause` lam mat errorlevel, nen goi tep nay tu mot script khac se doc duoc 0
+rem CHAY LAI MA KHONG PHAI GO LAI — Duc neu 12/09.
+rem "Chay tiep" va "chay moi" la HAI viec khac nhau, va nham chung thi ton mot luot gui that:
+rem chay moi tu so khong tren mot hoi thoai dang do se doc lai khoi minh VUA GUI truoc khi
+rem chet, va gui no lan hai. `--tiep` doc cho dung tu nhat ky nen khong gap chuyen do.
+echo   [t] CHAY TIEP tu cho vua dung — khong gui lai prompt da gui
+echo   [m] chay MOI cung thong so — dem lai tu vong 1
+echo   [g] go lai thong so tu dau
+echo   [Enter] thoat
+set "CHON="
+set /p "CHON=Chon: "
+if /i "%CHON%"=="t" goto :lapTiep
+if /i "%CHON%"=="m" goto :lapMoi
+if /i "%CHON%"=="g" goto :lapGo
+rem `pause`/`set /p` lam mat errorlevel, nen goi tep nay tu mot script khac se doc duoc 0
 rem gia va tuong la "chay xong binh thuong". Giu lai ma that.
 exit /b %MA%
+
+:lapTiep
+set "TIEP=1"
+echo.
+goto :dinhNghia
+
+:lapMoi
+set "TIEP="
+echo.
+goto :dinhNghia
+
+rem Go lai thi XOA HET thong so cu truoc. Giu lai mot nua la cach de nhat de chay nham mot
+rem hoi thoai cu voi mot ten chuoi moi — va cai do khong hoan tac duoc.
+:lapGo
+set "NHAN="
+set "VONG="
+set "PHUT="
+set "DICH="
+set "DIA_CHI="
+set "TIEP="
+goto :hoiThongSo
 
 rem --------------------------------------------------------------------------
 rem Chon profile trong mot CHUONG TRINH CON, khong trong mot khoi ngoac. Trong

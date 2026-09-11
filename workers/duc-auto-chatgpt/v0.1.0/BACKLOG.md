@@ -3670,6 +3670,51 @@ thực tế**, không phải phép kiểm sai.
 - **đóng khi:** ~~không tên chuỗi nào làm vỡ khoá, và công cụ nêu đích danh ký tự hỏng~~ —
   **ĐẠT 12/09**, đã triển khai sang bản cài của Đức và thử lại trên khoá thật.
 
+### ~~B-74~~ · (LÀM 12/09) Chạy TIẾP sau khi chuỗi kết thúc, không phải gõ lại từ đầu
+
+**Đức nêu 12/09:** *"nhiều khi script bị chết thì tôi không phải chạy lại từ đầu rồi điền
+thông tin từ đầu, ở cuối, khi script đã kết thúc."*
+
+**Phần đáng giá không phải sự tiện nghi.** *Chạy lại* và *chạy tiếp* là hai việc khác nhau, và
+nhầm chúng thì **tốn một lượt gửi thật**: chạy lại từ số không trên một hội thoại đang dở sẽ
+đọc lại đúng khối bộ chạy **vừa gửi** trước khi chết, rồi gửi nó lần hai. Nhật ký vốn đã ghi
+`turn_id` từng lượt, nên chỗ dừng là thứ **đọc được**, không phải thứ phải nhớ.
+
+**Làm ba phần:**
+- `--tiep` trong bộ chạy: `docNhatKy()` đọc chỗ dừng + số vòng đã gửi, nối từ lượt cuối và
+  **TRỪ** vào trần vòng. Trừ chứ không cộng: `--so-vong` là **ngân sách cho cả việc**, không
+  phải cho một lượt chạy — cấp thêm vòng phải là một quyết định, không phải hệ quả phụ của
+  việc script chết. `--tu-turn` gõ tay vẫn **thắng** chỗ dừng đọc từ nhật ký.
+- Menu ở **cuối** `chay-chuoi.bat`: `[t]` chạy tiếp · `[m]` chạy mới cùng thông số · `[g]` gõ
+  lại · `[Enter]` thoát. `[g]` **xoá hết** thông số cũ trước — giữ lại một nửa là cách dễ nhất
+  để chạy nhầm một hội thoại cũ với một tên chuỗi mới.
+- Nhớ thông số sang lượt sau: bộ chạy ghi `lan-truoc.txt` ở **gốc kho nhật ký** (không phải
+  trong thư mục chuỗi — đóng cửa sổ rồi thì người ta không còn nhớ nổi tên chuỗi, mà tên chuỗi
+  chính là thứ cần để tìm thư mục). Dạng `khoá=giá trị`, **cố ý KHÔNG** sinh một tệp `.cmd`
+  chạy được: tệp này do một cái tên **người gõ** đẻ ra, và sinh mã chạy được từ chữ người gõ
+  là cửa tiêm lệnh. Lọc `% ! " CR LF` khi ghi.
+
+**Và lượt thử lôi ra một bug đang sống, không phải bug tôi vừa tạo:** tên chuỗi thật của Đức là
+`HNX audit & fill`, mà hai dòng `echo` trong `chay-chuoi.bat` không đóng ngoặc. cmd đọc `&` là
+**dấu nối lệnh**, cắt câu làm đôi, và **chạy `fill\nhat-ky.jsonl` như một lệnh** — màn hình hiện
+`The system cannot find the path specified.` và `'fill' is not recognized`, hai câu **không liên
+quan gì tới chuỗi**, đủ làm người đọc đi tìm lỗi ở chỗ khác. Đã đóng ngoặc ở cả `chay-chuoi.bat`
+và `dung-chuoi.bat`. Cùng họ `~~B-73~~`: một cái tên người gõ đi vào chỗ nó không được phép làm
+thay đổi ý nghĩa.
+
+**Ghim:** mép ⓢ trong `tests/chuoi-reasoning-smoke.mjs` — đếm đúng lượt GỬI (không đếm mọi sự
+kiện) · nối từ lượt **cuối** · **dòng cụt** (tắt máy giữa lúc ghi) bị bỏ qua từng dòng chứ
+không bỏ cả tệp, vì bỏ cả tệp là quay về "chạy lại từ số không" · nhật ký rỗng là lượt chạy
+đầu chứ không phải lỗi · và mã phải **trừ** vào trần, phải để `--tu-turn` thắng, phải **không**
+sinh tệp chạy được.
+
+**Đã thử thật:** `--tiep` trên nhật ký thật của Đức (`Template_collect_luat`, 3 lượt gửi) →
+đúng chỗ dừng, và nhánh hết ngân sách thoát **2** mà không ghi thêm dòng nào; ba đường của
+`.bat` (gọi thẳng · cửa thoát `--` · mở không tham số rồi dùng lại thông số) đều chạy, với
+sentinel `so-vong 0` nên **không gửi gì**.
+
+- **đóng khi:** ~~chạy lại không phải gõ lại, và không gửi lại prompt đã gửi~~ — **ĐẠT 12/09**.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)
