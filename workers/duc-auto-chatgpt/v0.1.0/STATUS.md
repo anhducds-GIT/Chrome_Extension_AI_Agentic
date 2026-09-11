@@ -5,14 +5,14 @@ name: Duc Auto ChatGPT
 lifecycle: active
 owner: claude
 priority_rank: 2
-next_step: "**Sổ nợ: 38 → 2.** Cụm giác quan đóng gần hết bằng MỘT lượt đo live 11/09 trên tab thật của Đức. **Phát hiện chính:** hai tín hiệu bộ chạy vẫn dùng đều nói dối cùng lúc — nút Stop tắt ở giây **8,7** và số ký tự đứng yên **20 giây**, trong khi câu trả lời thật dài **85** ký tự còn DOM sống mới có **26**. Tín hiệu đúng nằm sẵn trong payload mà chưa ai đọc: trang đánh dấu lượt CHƯA hoàn tất bằng một `data-turn-id` **tạm** (`request-<hội thoại>-<n>`), lượt đã chốt mang **UUID**. Vá bằng `luotDaChot()` + cửa `LUOT_CHUA_CHOT` đứng trước mọi phán quyết về khối — đóng `~~B-59~~` và `~~B-60~~`, ghim ở mép ⓠ kèm chiều ngược. **Còn đúng 2 mục, cùng một gốc:** `B-50` panel **chết một nửa** (cửa router 166 ms, cửa executor 11/11 hết giờ; hai thể — kẹt hẳn phải mở lại panel, và chớp nhoáng tự khỏi) · `B-58` các cửa nói khác nhau, nay đo thêm được cửa thứ năm. **Chưa tách được** *hydrat muộn* khỏi *tab bị che*: cả lượt đo ở trên tab đang bị che (`visibility: hidden`) — cần một lượt đo lại trên tab HIỆN, và đó là việc kế tiếp."
-human_action: "@Đức:chốt(suite) **`npm test` vẫn chết, nay ở một chỗ KHÁC.** Đã cắt 2 khối test mồ côi (3 export bị xoá có chủ ý — **không lớp bảo vệ nào mất**, `appendOnlyAtEof` vẫn sống và vẫn được `safe-push`/`session-check` gọi). Tệp nay import được và chạy 8 ca, rồi dừng ở một phép kiểm đòi `claim.mjs` phải gọi `ownershipKeys|commitChuaDay` — nhưng `claim.mjs` đi qua cửa chung bằng `stewardOf`, và nhận `chuaDay` như **tham số**, không tự tính. Nên **rất có thể biểu thức của phép kiểm hẹp hơn ý định của chính nó**, không phải dây nối đứt. Chốt được điều đó cần đọc lịch sử thiết kế — giao lane `_code`. Đừng xoá phép kiểm để suite xanh. @Đức:chốt(F5-tab) **Bấm F5 đúng tab ChatGPT.** Đo 11/09 lượt hai: extension báo `RECEIVER_LOST`, `url: null` — tab không còn content script (hay gặp sau khi nạp lại tiện ích: tab đang mở giữ bản cũ). **Chưa có gì được gửi đi.** F5 xong thì báo, tôi đo tiếp ngay. @Đức:chốt(đo-tab-hiện) **Cùng lúc đó, để tab ChatGPT ở chỗ KHÔNG bị che** — lượt đo trước chạy trọn trên tab bị che nên chưa tách được *"lượt hydrat muộn"* khỏi *"tab nền bị bóp"*. Đã loại được một nửa: nạp lại trên tab bị che **vẫn** hiện đủ chữ, nên *"tab che thì không dựng được"* là sai; còn lại nghi vấn Chrome bóp đường **stream** của tab nền. Nếu đúng thì đó là một luật vận hành thật: **đừng thu nhỏ Chrome khi chuỗi đang chạy** — cùng họ với `~~B-46~~` (job ảnh cần tab hiện). @Đức:chốt(bật-cầu-nối) **Chạy một lượt `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1`** để cầu nối ChatGPT tự bật cùng Windows như bản Gemini (`B-70`) — hôm nay nó tắt và triệu chứng đầu tiên là `fetch failed`, đọc y như lỗi mã. @Đức:chốt(pilot) **Pilot điều phối cần một phiên CC MỚI** (Haiku/Sonnet) — chạy ở phiên cũ thì bài đo vô nghĩa vì bối cảnh đã phình. Gói việc: `drafts/pilot-dieu-phoi/GOI-VIEC.md`."
+next_step: "**Sổ nợ 38 → 3.** Còn `B-50` (panel chết một nửa: cửa router 166 ms trong khi cửa executor 11/11 hết giờ) · `B-58` (các cửa nói khác nhau) · `B-70` (cầu nối không tự bật, cần Đức bấm một lượt). **Luật mới, đắt nhất:** đừng hỏi nút Stop *"xong chưa"*. Đo 11/09: nút Stop tắt ở giây 8,7 và số ký tự đứng yên 20 giây, trong khi câu trả lời thật dài 85 ký tự còn DOM sống mới có 26. Tín hiệu đúng nằm sẵn trong payload — trang đánh dấu lượt CHƯA hoàn tất bằng `data-turn-id` **tạm**, lượt đã chốt mang **UUID**. Xem `~~B-59~~`."
+human_action: "@Đức:chốt(F5-tab) **Bấm F5 đúng tab ChatGPT** — tab đang giữ content script cũ sau khi nạp lại tiện ích (`RECEIVER_LOST`, `url: null`). **Chưa có gì được gửi đi.** @Đức:chốt(tab-hiện) **Để tab ChatGPT không bị che** khi đo lại — còn một nghi vấn chưa bác được: Chrome bóp đường stream của tab nền. Nếu đúng thì đó là luật vận hành: đừng thu nhỏ Chrome khi chuỗi đang chạy. @Đức:chốt(bật-cầu-nối) **Chạy một lượt `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1`** để cầu nối tự bật cùng Windows như bản Gemini (`B-70`). @Đức:chốt(suite) **`npm test` gốc repo vẫn chết** ở `tests/repo-structure-smoke.mjs` — việc của lane `_code`, đừng xoá phép kiểm cho suite xanh. @Đức:chốt(pilot) **Pilot điều phối cần một phiên CC MỚI** (Haiku/Sonnet): `drafts/pilot-dieu-phoi/GOI-VIEC.md`."
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-09-10
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
 last_verified_how: "Live 10/09 trên HEAD 48e9fb36: `~~M0~~` `jobs.add` trả `checkpoint.verified: true` không cần mở hộp chọn thư mục, rồi hai chuỗi 3 + 10 ảnh — **13/13 thành công, 0 hỏng, 0 thử lại**, 13 tên đúng, 13 mã băm khác nhau, mỗi job 85s–183s"
 evidence_ref: workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md
-current_focus: "**Một lượt đo live 09/09 trả lời ba câu và tìm ra bốn khiếm khuyết mới** (số đầy đủ ở `~~B-15~~`, `~~B-46~~`, `B-47`..`B-50` trong `BACKLOG.md`). Dựng 4 ảnh PNG **1,83MB**, gắn vào một job **chữ** (0 credit ảnh), dò `dom_probe` **~7 lần/giây**; rồi một job **ảnh** (1 credit). ⑴ `B-15` đóng: trong cửa sổ upload thật (**3,82 giây**, ~27 lượt dò) `uploadPending` **0/0/0**, nhưng lúc **đang sinh ảnh** thì `[aria-busy]` **khớp** — nhóm đó đo *"trang đang bận"*, không phải *"ảnh đang upload"*. Cái lo ban đầu **không** tái hiện: ChatGPT tả đúng cả bốn ảnh, `Q001` SUCCESS. ⑵ `B-46` vế cuối đóng, **nhánh xấu là nhánh xảy ra:** tab bị che **CÓ** vẽ `<img>` sinh nhưng bitmap **không giải mã xong** (`ready:false` **3/3** node) → `Q002` chết `NO_NEW_IMAGE` sau 300 giây. **Job ảnh cần tab HIỆN.** ⑶ `B-48` đã vá: probe soi **theo phạm vi** trong `form` soạn thảo; suite **129/129**, thử phá **10/10 đỏ**."
+current_focus: "**Nền chạy chuỗi reasoning đã xong và tốn 0 usage CC** — `chay-chuoi.bat` / `dung-chuoi.bat`, chọn hồ sơ và xác nhận hội thoại từ danh sách, sáu mép an toàn đã bắt được lỗi thật (`~~B-57~~` `~~B-61~~` `~~B-62~~` `~~B-63~~` `~~B-68~~` `~~B-59~~`/`~~B-60~~`). Luật và cách dùng: mục *Chuỗi reasoning nhiều vòng* trong `AI-OPERATOR-GUIDE.md`. **Chỗ hỏng không nằm ở suy luận, nằm ở GIÁC QUAN** — mọi lỗi đắt của hai ngày qua đều ở câu *bây giờ trên trang đang xảy ra chuyện gì*, và cụ thể là **một dấu hiệu VẮNG MẶT bị đọc thành bằng chứng kết thúc**."
 ref_readme: workers/duc-auto-chatgpt/v0.1.0/README.md
 ref_handoff: workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md
 ref_backlog: workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md
@@ -48,15 +48,28 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md).
 
 ## Giới hạn đã biết
 
-Ba điều Đức nên biết trước khi tin tưởng chạy việc lớn. Chi tiết ở [`BACKLOG.md`](BACKLOG.md):
+**Soát lại 11/09 bằng mã, và ba mục cũ ở đây đều đã SAI** — chúng nằm lại sau khi việc đã
+đóng. Ghi ra vì một giới hạn sai còn hại hơn không ghi giới hạn nào: nó làm người ta e dè
+đúng chỗ không cần, và yên tâm đúng chỗ cần dè.
 
-1. ~~Việc thật **không chạy được qua `run.trial`** — trần 90 giây quá ngắn (**B-17**).~~
-   **ĐÃ ĐÓNG 2026-09-07** — Đức chốt nâng trần lên **900 giây** ([ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md)).
-   `run.start` vẫn cấm. Đổi lại, đường 900 giây phải theo dõi bằng `run.status`
-   (`current.stage_elapsed_sec` / `stage_budget_sec`), đừng ngồi im chờ hết giờ.
-2. Hai selector **chưa từng khớp lần nào** trên trang thật (**B-14**, **B-15**).
-3. **"Thử lại" rộng hơn tên gọi** — lỗi sau khi đã gửi vẫn có thể gửi lại lần hai. Đổi việc
-   này là *đổi luật an toàn* → chờ Đức chốt (**B-19**).
+- ~~*"Hai selector chưa từng khớp lần nào"* (**B-14**, **B-15**)~~ — cả hai **ĐÓNG sau đo
+  live 09/09**. `B-14` tìm được mỏ neo cấu trúc (`div[role="group"]` mang **tên file**, không
+  phụ thuộc ngôn ngữ); `B-15` hoá ra nhóm đó đo *"trang đang bận"*, không phải *"ảnh đang tải
+  lên"* — đo sai THỨ, không phải đo hụt.
+- ~~*"Thử lại rộng hơn tên gọi — gửi rồi vẫn có thể gửi lại"* (**B-19**)~~ — **ĐÓNG
+  2026-09-06**. Kiểm lại hôm nay: `canRetry()` mang `!submissionMayExist(item)`, và
+  [ADR-0047](docs/adr/) đã `Accepted`. Mặc định nay là **không gửi lại sau khi đã gửi**, trừ
+  khi đối soát khẳng định được.
+
+**Bốn giới hạn còn THẬT, mỗi cái đo được:**
+
+1. **Job ảnh cần tab HIỆN.** Tab bị che *có* vẽ ảnh nhưng bitmap không giải mã xong → job chết
+   `NO_NEW_IMAGE` sau 300 giây (đo 09/09, `~~B-46~~`).
+2. **Đừng tin nút Stop, cũng đừng tin "chữ đứng yên".** Cả hai cùng nói *"xong"* trong khi câu
+   trả lời mới có 26/85 ký tự (đo 11/09, `~~B-59~~`). Bộ chạy nay hỏi dạng `data-turn-id`.
+3. **Panel có thể chết một nửa** — cửa router trả lời 166 ms trong khi cửa executor hết giờ
+   100%. Chữa: đóng rồi mở lại side panel (`B-50`).
+4. **Cầu nối không tự bật cùng Windows** như bản Gemini; tắt là kênh chết lặng (`B-70`).
 
 ## Đọc sâu ở đâu
 

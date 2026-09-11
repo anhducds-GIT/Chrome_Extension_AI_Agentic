@@ -87,6 +87,10 @@ từ `0046`. **Đừng thêm dòng vào file này nữa** — nó là mục lụ
 - [ADR-0030](docs/adr/0030-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) Sửa luật 8 AGENTS.md: cho phép xây harness test bằng Chrome THẬT (Playwright/CDP,…
 - [ADR-0033](docs/adr/0033-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) AI được commit kể cả main (chi tiết + 4 điều kiện
 - [ADR-0036](docs/adr/0036-quy-trinh-bat-buoc-cross-check-doc-lap-truoc-khi.md) Quy trình bắt buộc: cross-check độc lập trước khi đưa Đức thao tác. Sau mỗi đợt…
+
+**Chưa phân nhóm — khai `nhom:` ở frontmatter ADR**
+- [ADR-0053](docs/adr/0053-loi-nha-cung-cap-la-mot-nguon-doi-soat-cau-chua-lay-tu-ma-cua-ta.md) Lời nhà cung cấp là một nguồn đối soát, và câu chữa lấy từ mã của ta
+- [ADR-0054](docs/adr/0054-vong-reasoning-tu-noi-chi-chuyen-tiep-nguyen-van-khoi-copy.md) Vòng reasoning tự nối: được phép, và nó chỉ được chuyển tiếp NGUYÊN VĂN khối copy
 <!-- HET KHOI MAY SINH -->
 
 ## 2026-09-02 — Port multi-profile Bridge (Đức chỉ thị trong chat)

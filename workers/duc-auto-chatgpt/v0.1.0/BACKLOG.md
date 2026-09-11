@@ -2605,7 +2605,13 @@ còn sót vẫn mở được cổng. Suite **132/132**, thử phá **10/10 đ�
 - **đóng khi:** ~~Đức chốt, vá xong, và có phép ghim cho **cả hai** ca.~~ Còn lại **một** việc:
   nghiệm thu **live** một job có ảnh mẫu — suite và thử phá không thay được lượt chạy thật.
 
-### B-50 · (P2) Ảnh mẫu lớn làm side panel không phản hồi hàng phút — bridge báo timeout trong khi mutation VẪN LÀNH
+### B-50 · (P1) Panel trả lời cửa router nhưng KHÔNG trả lời cửa executor — "chết một nửa"
+
+> **ĐỔI TIÊU ĐỀ 11/09, vì tiêu đề cũ khẳng định một nguyên nhân đã bị đo BÁC.** Nguyên văn cũ:
+> *"Ảnh mẫu lớn làm side panel không phản hồi hàng phút"*. Lượt đo 11/09 tái hiện y hệt triệu
+> chứng khi **không có run nào và không có ảnh nào** — nên "ảnh mẫu lớn" hoặc sai, hoặc chỉ là
+> một trong nhiều đường. Giữ lại tiêu đề cũ là mời phiên sau đi tìm ở nhánh ảnh và không thấy gì.
+> Phần quan sát 09/09 bên dưới **vẫn đúng như một quan sát**; chỉ lời quy nguyên nhân là bỏ.
 Đo live 09/09, lặp lại suốt buổi. Sau khi nạp ~1,9MB ảnh mẫu, **mọi** lời gọi bridge báo
 `REQUEST_TIMEOUT` trong **hàng phút**, kể cả `ping` và các method **chỉ đọc** — trong khi mutation
 **vẫn vào**. Bằng chứng: `references.add` ảnh 1 và 2 báo timeout mà **vẫn lành**; `jobs.update` báo
@@ -3094,15 +3100,33 @@ là một chỗ để sai — Codex bác được nó chỉ bằng cách đọc 
 > lượt đã có id tạm trong khi khối chưa hiện). Ghim mép ⓠ, gồm **chiều ngược** chứng minh bản
 > cũ thật sự chấm `KHOI_RONG` ở đúng payload đo được. Suite **133/133**.
 >
-> **GIỚI HẠN, nói ra vì nó đổi cách đọc bảng:** cả lượt đo diễn ra trên tab **đang bị che**
-> (`visibility: hidden`, `docFocused: false`). Nên **chưa tách được** *"lượt hydrat muộn"* khỏi
-> *"tab bị che thì không hydrat"* — cùng họ với `~~B-46~~`. Luật rút ra không đổi theo hai cách
-> đọc đó, nhưng **con số 8,7 giây có thể khác trên tab hiện**. Ai có tab hiện thì đo lại và ghi
-> vào đây.
+> **GIỚI HẠN — bản CUỐI, đã thu hẹp chiều 11/09.** Cả lượt đo diễn ra trên tab **đang bị che**
+> (`visibility: hidden`). Bản đầu tôi viết là *"chưa tách được hydrat muộn khỏi tab-bị-che"*;
+> câu đó **đã hết đúng** — xem khối giả thuyết bị bác ở dưới: nạp lại **trên chính tab bị che**
+> hiện đủ chữ, hai lần. Tab nền **dựng được** bình thường.
+> **Điều còn lại chưa đo:** Chrome có bóp đường **stream** của tab nền không. Nếu có thì đó là
+> một luật vận hành thật (*đừng thu nhỏ Chrome khi chuỗi đang chạy*), cùng họ `~~B-46~~`.
+> Luật đã rút ra không đổi theo hai cách đọc; **con số 8,7 giây thì có thể**. Ai có tab hiện
+> thì đo lại và ghi vào đây.
 
 **Đo live 10/09, thấy BA lần trong một chuỗi năm vòng.** Sau một lượt GPT gọi tool nhiều lần,
 `chat.read` đọc được đúng phần vệt tool đã gập lại cộng khoảng 15 ký tự đầu của câu trả lời, rồi
 **đứng yên vĩnh viễn**. Nạp lại tab thì cả câu trả lời hiện ra đủ.
+
+> **SỬA 11/09 — "sau một lượt gọi tool" là quy nạp QUÁ HẸP, đã bị bác.** Lượt đo 11/09 tái hiện
+> đúng triệu chứng trên một prompt **không gọi tool nào** (*"đếm từ 1 đến 60"*): DOM sống đứng ở
+> 13 ký tự, nạp lại ra 170. Nên gọi tool **không phải điều kiện cần**. Đừng đi tìm nguyên nhân
+> trong đường xử lý tool.
+>
+> **Và một giả thuyết nữa đã bị BÁC, ghi ra để không ai thử lại:** *"tab bị che thì không dựng
+> được DOM"* — **sai**. Nạp lại **trên chính tab đang bị che** hiện đủ chữ, hai lần (13 → 170,
+> và 26 → 85). Tab nền dựng được bình thường. Nghi vấn còn sống hẹp hơn nhiều: Chrome bóp đường
+> **stream**, không bóp đường **dựng lại**. Chưa đo, đừng viết như đã biết.
+>
+> **Ứng viên tín hiệu đã THỬ VÀ LOẠI, đừng làm lại:** `data-testid="copy-turn-action-button"`.
+> Giả thuyết: nút Copy của một lượt chỉ hiện khi lượt đã xong. Đo 11/09: số nút đó tăng **ngay
+> nhịp dò đầu tiên**, lúc `generating` vẫn còn `true`. Nó xuất hiện theo LƯỢT, không theo
+> trạng thái hoàn tất.
 
 | vòng | trước khi nạp lại | sau khi nạp lại |
 |---|---|---|
@@ -3420,6 +3444,43 @@ việc khác hẳn với báo cho họ biết, và nó thuộc nhóm *"tạo aut
   tạo lối tắt Startup), hoặc chốt rằng **cố ý** bật tay — nếu là vế sau thì ghi vào
   `AI-OPERATOR-GUIDE.md` để phiên sau không đi tìm lỗi ma. Đừng đóng bằng cách thêm một đường
   tự-bật trong công cụ.
+
+### B-71 · (P1) `PHIEN.md` quá trần thì bộ sinh TỪ CHỐI GHI — và bản CŨ SAI nằm lại, không ai biết
+
+**Đức nêu 11/09:** *"tôi muốn xoá các giả thuyết sai để sau này bạn không bị nạp lại thông tin
+không chính xác."* Đi tìm thì ra một cơ chế, không phải một sơ suất.
+
+`CLAUDE.md` bảo: đụng một gói thì đọc **đúng một file** — `PHIEN.md`. Đó là toàn bộ bối cảnh một
+phiên mới có. Nó **máy sinh** từ `STATUS.md`. Và đường sinh có một cửa **fail-silent**:
+
+1. `STATUS.md` được cập nhật → đúng.
+2. `rule-compile --sinh` dựng `PHIEN.md` mới, thấy vượt trần cứng → in `PHIEN_QUA_TRAN` rồi
+   **`continue`**, **không ghi**.
+3. Bản **CŨ** nằm nguyên trên đĩa.
+4. Không cổng nào kiểm `PHIEN.md` còn tươi — nó **không** nằm trong khối `generated`, và
+   `rule-compile.mjs` **không** nằm trong `generators` của `.repo-structure.json`.
+5. Mọi phiên sau mở bản cũ và tin nó.
+
+**Đo 11/09, không phải giả định:** `PHIEN.md` của gói này lệch **hai ngày** và mang **năm** câu
+đã sai — `B-56`⓶ *"cần Đức chốt"* (Đức chốt 10/09) · `B-49` *"chờ nghiệm thu live"* (Đức huỷ) ·
+`B-47`⑴ `B-51` `B-54` liệt kê là còn mở (đã cắt 10/09). Lượt sinh hôm nay báo **7980 / 6600 ký
+tự — KHÔNG ghi**, đúng bước ⑵ ở trên.
+
+**Phần thuộc gói này, đã sửa:** ba trường nuôi `PHIEN.md` phình vì tôi cứ nối thêm —
+`next_step` 1026 → 523, `human_action` 1796 → 779, `current_focus` 901 → 548 (và
+`current_focus` còn đang kể chuyện 09/09). Sinh lại được: **5895 ký tự**. Nhưng đó là chữa
+*triệu chứng của lượt này*, không phải chữa cơ chế.
+
+**Phần KHÔNG thuộc gói này** (vùng `_code`/`_root`) — ghi vì tôi là người đo được:
+- `PHIEN.md` chưa vào khối `generated`, `rule-compile.mjs` chưa vào `generators` → phép kiểm
+  *"artifact máy sinh còn tươi"* **không phủ** file quan trọng nhất với một phiên mới.
+- `PHIEN_QUA_TRAN` và `THIEU_LUAT_VANG` đều `continue` **im lặng** đối với người không chạy
+  lệnh đó. Cùng họ với *"harness báo SKIP mà đọc như PASS"*.
+
+- **đóng khi:** cổng đóng phiên ĐỎ khi `PHIEN.md` trên đĩa khác bản sinh lại từ `STATUS.md`
+  hiện tại. `sinhPhienGoi()` đã export và **thuần**, nên phép kiểm là *sinh trong bộ nhớ, so
+  với đĩa* — không cần vân tay thứ hai. **Đừng đóng bằng cách nâng trần:** trần đang làm đúng
+  việc của nó; thứ hỏng là lượt từ chối ghi không ai thấy.
 
 ---
 
