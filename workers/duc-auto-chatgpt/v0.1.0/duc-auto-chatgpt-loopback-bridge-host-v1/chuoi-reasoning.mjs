@@ -28,6 +28,7 @@
  * Dừng bằng tay: tạo file `DUNG` trong thư mục nhật ký.
  */
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -58,6 +59,30 @@ export function nguoiNhanCuaKhoi(text) {
      chữ lạ: một dòng `Claude Code (CC) — đối chiếu kết quả GPT` mà đem so với /gpt/ sẽ ra
      "gửi cho GPT" — đúng cái lỗi mà mép này sinh ra để chặn. */
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
+}
+
+/* KHOÁ IDEMPOTENCY DỰNG TỪ TÊN CHUỖI — B-73, lỗi thật 12/09.
+ *
+ * Đức đặt tên chuỗi là `HNX audit & fill`. Bản trước ghép thẳng tên ấy vào khoá
+ * (`${nhan}-v${vong}`), ra `HNX audit & fill-v1`. Host đòi `/^[\x21-\x7e]{8,128}$/` — **dấu
+ * cách (0x20) KHÔNG nằm trong khoảng đó** — nên MỌI lượt gửi trả `INVALID_ENVELOPE` và chuỗi
+ * chết ngay vòng 1. Tệ hơn cả việc chết: nhật ký kết lại thành *"hai lượt gửi, hai lượt đọc
+ * lại, đều không thấy trong hội thoại"* — đọc y như trang hỏng, trong khi lỗi nằm ở CÁI TÊN.
+ * Tên có dấu tiếng Việt cũng vỡ y hệt, và đó là tên Đức hay đặt nhất.
+ *
+ * Ba điều kiện, và điều thứ ba là điều dễ quên nhất:
+ * ⑴ Chỉ ký tự an toàn — mọi thứ khác thành `-`.
+ * ⑵ Luôn đủ 8 ký tự, kể cả khi tên rút gọn còn rỗng (tên thuần tiếng Việt có dấu).
+ * ⑶ **KHÔNG ĐƯỢC ĐỤNG NHAU.** Khoá này LÀ khoá chống-gửi-hai-lần. `HNX audit & fill` và
+ *   `HNX audit / fill` cùng rút thành `HNX-audit-fill`; nếu dừng ở đó thì lượt gửi của chuỗi
+ *   này bị host nuốt như bản sao của chuỗi kia. Vân tay 8 ký tự của TÊN GỐC giữ chúng tách ra.
+ * Và nó phải TẤT ĐỊNH: lượt gửi lại sau khi hết giờ phải dùng lại đúng khoá cũ, không thì
+ * lớp chống ghi-hai-lần của host không có gì để khớp (bài học `~~B-38~~`). */
+export function khoaAnToan(nhan, hau = "") {
+  const tho = String(nhan ?? "");
+  const sach = tho.replace(/[^A-Za-z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  const vanTay = crypto.createHash("sha256").update(tho, "utf8").digest("hex").slice(0, 8);
+  return `${sach ? `${sach}-` : ""}${vanTay}${hau}`;
 }
 
 /* LƯỢT NÀY ĐỌC ĐƯỢC CHƯA — B-59/B-60. Hai lượt đo live 11/09, và lượt thứ hai **sửa lại kết
@@ -320,7 +345,7 @@ async function chinh() {
            ta ngồi đợi trong khi việc cần làm là mở đúng hội thoại. `system.ping` là cửa duy
            nhất còn trả lời được ở trạng thái này, nên hỏi nó xem tab đang ở đâu rồi nói thật. */
         if (/WRONG_SURFACE/.test(JSON.stringify(d.error ?? ""))) {
-          const p = goi(["ping", "--request-id", `${nhan}-v${vong}-ping`]);
+          const p = goi(["ping", "--request-id", khoaAnToan(nhan, `-v${vong}-ping`)]);
           const dangO = p?.result?.chatgpt?.url || "(ping cũng không trả lời)";
           lyDo = `SAI_TRANG — tab đang ở ${dangO}, đây không phải một hội thoại`;
           console.log(`  vòng ${vong}: ${lyDo}`);
@@ -333,7 +358,17 @@ async function chinh() {
            không in gì, nên khi panel hết giờ liên tục thì bộ chạy quay vòng vô hình — nhịp
            tim ở dưới không bao giờ chạy tới. Mọi nhánh `continue` phải nói ra mình là ai. */
         docHong += 1;
-        if (docHong % 10 === 1) console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp (${d.error?.code}) — panel đang bận`);
+        /* IN CHẨN ĐOÁN NẾU CÓ. Từ 11/09 host kèm `diagnosis` + `remedy` vào lượt hết giờ của
+           CHÍNH nó. Bản trước in cứng "panel đang bận" cho mọi lỗi đọc — một câu đoán, và nó
+           che mất câu thật ngay bên dưới. Không có chẩn đoán thì nói "chưa rõ vì sao", đừng
+           đoán hộ: `REQUEST_TIMEOUT` do tiện ích tự sinh (hết hạn chờ side panel) hiện VẪN
+           chưa mang chẩn đoán — xem `B-50`. */
+        const cd = d.error?.details || {};
+        if (docHong % 10 === 1) {
+          console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp (${d.error?.code})`
+            + `${cd.diagnosis ? ` — ${cd.diagnosis}` : " — chưa rõ vì sao"}`);
+          if (cd.remedy) console.log(`     ${cd.remedy}`);
+        }
         await ngu(4000);
         continue;
       }
@@ -370,7 +405,7 @@ async function chinh() {
       if (qd.viec === "NAP_LAI") {
         console.log(`  vòng ${vong}: ${qd.vi}`);
         ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi });
-        goi(["chat-reload", "--request-id", `${nhan}-v${vong}-reload`]);
+        goi(["chat-reload", "--request-id", khoaAnToan(nhan, `-v${vong}-reload`)]);
         daNapLai = true;
         /* ĐẶT LẠI CỬA SỔ QUAN SÁT SAU KHI NẠP LẠI. Bản đầu nạp lại rồi kết luận DỪNG ở
            lượt đọc kế tiếp — 60 giây sau. Đo 10:02 ngày 10/09: nó chấm HET_CHUOI trong khi
@@ -411,7 +446,8 @@ async function chinh() {
       return null;
     };
 
-    const lan1 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
+    const khoaGui = khoaAnToan(nhan, `-v${vong}`);
+    const lan1 = goi(["chat-say", "--params-file", fParam, "--request-id", khoaGui]);
     let ok1 = Boolean(lan1.ok), daBay1 = false, ok2 = false, daBay2 = false;
     if (!ok1) {
       daBay1 = await daVaoChua();
@@ -419,7 +455,7 @@ async function chinh() {
       // Chỉ gửi lại khi đọc được VÀ không thấy. `null` (không đọc được) đi thẳng xuống
       // `ketLuanGui` để dừng — gửi lại lúc mù là đúng thứ exact-once cấm.
       if (daBay1 === false) {
-        const lan2 = goi(["chat-say", "--params-file", fParam, "--request-id", `${nhan}-v${vong}`]);
+        const lan2 = goi(["chat-say", "--params-file", fParam, "--request-id", khoaGui]);
         ok2 = Boolean(lan2.ok);
         // MỖI lượt gửi báo lỗi phải có lượt đọc lại CỦA RIÊNG NÓ. Bản đầu bỏ lượt này và
         // chấm `REQUEST_TIMEOUT` ở lần hai thành thất bại, trong khi tin nhắn đã bay.

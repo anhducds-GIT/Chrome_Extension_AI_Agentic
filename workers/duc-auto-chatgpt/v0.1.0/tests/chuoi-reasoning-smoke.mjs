@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, khoaAnToan, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
@@ -423,4 +423,57 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(iChot > 0 && iKhoiMoi > iChot, "cửa LUOT_CHUA_CHOT phải đứng trước coKhoiMoi");
   assert.match(chiMa, /idLuotTraLoiCuoi: luotTL\?\.id/, "vòng chạy phải TRUYỀN id lượt trả lời cuối vào, không thì cửa này mù một nửa");
   console.log("  ok  ⓠ id tạm: nạp lại NGAY (không chờ), dừng nếu nạp rồi vẫn tạm, không chấm nhầm KHOI_RONG");
+}
+
+/* ⓡ B-73 — TÊN CHUỖI KHÔNG ĐƯỢC LÀM VỠ KHOÁ IDEMPOTENCY. Lỗi thật 12/09.
+ *
+ * Đức đặt tên `HNX audit & fill`. Bản trước ghép thẳng vào khoá → `HNX audit & fill-v1`.
+ * Luật của host là `/^[\x21-\x7e]{8,128}$/` và **dấu cách (0x20) không nằm trong đó**, nên
+ * MỌI lượt gửi trả `INVALID_ENVELOPE`, chuỗi chết ở vòng 1, và nhật ký kết lại thành
+ * *"hai lượt gửi, hai lượt đọc lại, đều không thấy trong hội thoại"* — đọc y như trang hỏng.
+ * Đây là mép đắt nhất của cả tệp: nó không chặn một lỗi kỹ thuật, nó chặn một CÁCH ĐẶT TÊN. */
+{
+  const LUAT = /^[\x21-\x7e]{8,128}$/;
+
+  /* Chính hai cái tên Đức đã dùng, giữ nguyên văn — đây là ca đã cắn, không phải ca nghĩ ra. */
+  for (const nhan of ["HNX audit & fill", "HRX audit & Fill", "Rà soát luật", "ark-luat", "   ", ""]) {
+    for (const hau of ["-v1", "-v10-reload", "-v3-ping", ""]) {
+      const k = khoaAnToan(nhan, hau);
+      assert.match(k, LUAT, `khoá vỡ với tên ${JSON.stringify(nhan)} + ${JSON.stringify(hau)} → ${JSON.stringify(k)}`);
+    }
+  }
+  assert.ok(khoaAnToan("", "").length >= 8, "tên rỗng vẫn phải ra khoá đủ 8 ký tự");
+  assert.ok(khoaAnToan("Rà soát luật").length >= 8, "tên thuần tiếng Việt có dấu rút gọn gần hết — vẫn phải đủ dài");
+
+  /* TẤT ĐỊNH. Khoá này LÀ khoá chống-gửi-hai-lần: lượt gửi lại sau khi hết giờ phải dùng lại
+     ĐÚNG khoá cũ, nếu không host không có gì để khớp (bài học `~~B-38~~`). */
+  assert.equal(khoaAnToan("HNX audit & fill", "-v1"), khoaAnToan("HNX audit & fill", "-v1"),
+    "cùng đầu vào phải ra cùng khoá — sinh ngẫu nhiên là phá lớp chống ghi-hai-lần");
+
+  /* KHÔNG ĐƯỢC ĐỤNG NHAU. Hai tên khác nhau cùng rút thành `HNX-audit-fill`; dừng ở đó thì
+     lượt gửi của chuỗi này bị host nuốt như bản sao của chuỗi kia — mất một lượt, im lặng. */
+  assert.notEqual(khoaAnToan("HNX audit & fill", "-v1"), khoaAnToan("HNX audit / fill", "-v1"),
+    "hai tên rút gọn giống nhau PHẢI ra hai khoá khác — nếu không, một chuỗi nuốt lượt gửi của chuỗi kia");
+  assert.notEqual(khoaAnToan("a", "-v1"), khoaAnToan("a", "-v2"), "hai vòng phải hai khoá");
+
+  /* CHIỀU NGƯỢC — cách ghép CŨ thật sự vi phạm luật của host, trên chính tên của Đức.
+     Không có mép này thì phần trên chỉ ghim bản vá của tôi, không ghim lỗi đã xảy ra. */
+  assert.doesNotMatch("HNX audit & fill-v1", LUAT,
+    "bản cũ thật sự sinh ra một khoá host từ chối — đây là lỗi đã làm chuỗi của Đức chết");
+
+  /* Và mã phải THẬT SỰ dùng nó ở MỌI đường gửi, không chỉ khai ra. */
+  const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const chiMa = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  assert.ok(!/["'`]--request-id["'`],\s*`\$\{nhan\}/.test(chiMa),
+    "còn chỗ ghép THẲNG tên chuỗi vào --request-id — đó đúng là lỗi vừa vá");
+  /* Đếm LƯỢT GỌI, không đếm cả dòng khai hàm — `export function khoaAnToan(nhan, …)` cũng
+     khớp nếu dò lỏng, và khi đó con số 3 sẽ đúng vì lý do sai. Mọi lượt gọi đều truyền hậu tố
+     bằng chuỗi mẫu, nên dấu backtick là mỏ neo phân biệt. */
+  assert.equal((chiMa.match(/khoaAnToan\(nhan, `/g) || []).length, 3,
+    "phải có đúng ba chỗ dựng khoá từ tên (ping · reload · gửi), và lượt gửi lại DÙNG LẠI khoá của lượt gửi");
+  assert.match(chiMa, /const khoaGui = khoaAnToan\(nhan,/, "lượt gửi phải chốt khoá MỘT LẦN rồi dùng lại cho lượt gửi thứ hai");
+  console.log("  ok  ⓡ tên chuỗi có dấu cách / tiếng Việt không còn làm vỡ khoá gửi");
 }

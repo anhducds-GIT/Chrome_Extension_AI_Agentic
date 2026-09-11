@@ -2653,6 +2653,22 @@ giấu đi lần chỉ sai thì lần sau có người tin nó.*
 công**. Thứ cứu buổi hôm nay là **mọi mutation đều idempotent theo `request-id`** — nếu không, một
 lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI khác, hoặc chính Đức, rất dễ đọc sai chỗ này.
 
+**SỬA 12/09 — tôi đã chỉ SAI NGUỒN của `REQUEST_TIMEOUT`, và bản vá 11/09 KHÔNG phủ ca đang
+xảy ra.** Hôm qua tôi vá đường hết-giờ của **relay trong host** và nói đó là chỗ sinh ra chữ
+`REQUEST_TIMEOUT` Đức thấy. Kiểm lại 12/09 trên máy thật: host đang chạy **đúng bản đã vá**, mà
+lỗi trả về vẫn có `details: {}`. Nguồn thật là `sendExecutor()` trong
+`bridge-transport-loopback.js:168` — **chạy trong chính tiện ích**, hết hạn `deadline_ms`
+(10 giây cho `chat.read`/`system.ping`) khi **side panel** không trả lời cổng nội bộ, rồi
+`reject(new BridgeProtocolError("REQUEST_TIMEOUT"))` **không kèm details**.
+
+Nên: WebSocket tới host sống (nền giữ nó) → cửa router trả lời, host **không bao giờ** thấy
+relay hết giờ → bản vá 11/09 nằm ở nhánh **không xảy ra**. Nó vẫn đúng cho ca "tiện ích im
+hẳn", nhưng ca hay gặp là ca này.
+
+**Việc còn lại của ⓒ, nói đúng mức:** gắn chẩn đoán vào `sendExecutor` — nó biết `executorPort`
+còn không, còn bao nhiêu lượt đang xếp hàng, và lần cuối panel trả lời là bao giờ. Sửa ở đó
+**đòi Đức nạp lại tiện ích** mới có hiệu lực, khác với sửa host.
+
 **ĐO LẠI 11/09 — và hình dạng thật KHÁC hẳn tiêu đề mục này.** Đức mở tab, bảo dò DOM. Không dò
 được lần nào. Số liệu:
 
@@ -3610,6 +3626,49 @@ tự — KHÔNG ghi**, đúng bước ⑵ ở trên.
   hiện tại. `sinhPhienGoi()` đã export và **thuần**, nên phép kiểm là *sinh trong bộ nhớ, so
   với đĩa* — không cần vân tay thứ hai. **Đừng đóng bằng cách nâng trần:** trần đang làm đúng
   việc của nó; thứ hỏng là lượt từ chối ghi không ai thấy.
+
+### ~~B-73~~ · (VÁ 12/09) Tên chuỗi có DẤU CÁCH làm vỡ khoá gửi — mọi lượt gửi `INVALID_ENVELOPE`
+
+**Đức báo chuỗi đứng, và nhật ký nói đúng chỗ.** Chuỗi `HNX audit & fill`, `nhat-ky.jsonl`:
+
+```
+GUI_LOI_DOC_LAI  vòng 1  lần 1  ma: "INVALID_ENVELOPE"  da_bay: false
+GUI_LOI_DOC_LAI  vòng 1  lần 2  ma: "INVALID_ENVELOPE"  da_bay: false
+KET_THUC  da_gui: 0  ly_do: "GUI_THAT_BAI: hai lượt gửi, hai lượt đọc lại, đều không thấy…"
+```
+
+Bộ chạy ghép khoá chống-gửi-hai-lần thẳng từ **tên chuỗi**: `` `${nhan}-v${vong}` `` →
+`HNX audit & fill-v1`. Luật của host là `/^[\x21-\x7e]{8,128}$/` (`bridge-core.js:862`), và
+**dấu cách 0x20 KHÔNG nằm trong khoảng đó**. Nên mọi lượt gửi bị từ chối **trước khi tới
+trang**, và chuỗi chết ở vòng 1.
+
+**Cái đắt không phải việc nó chết, mà là việc nó nói dối về nguyên nhân.** Dòng kết đọc thành
+*"hai lượt gửi đều không thấy trong hội thoại"* — y như trang hỏng hoặc GPT không nhận. Đức
+ngồi chờ script "bắt ô copy" trong khi lỗi nằm ở **cái tên**. Tên tiếng Việt có dấu vỡ y hệt,
+và đó là kiểu tên Đức hay đặt nhất.
+
+**Vá hai tầng, và cố ý hai tầng:**
+- `khoaAnToan(nhan, hau)` trong bộ chạy: rút tên về `[A-Za-z0-9_-]`, cộng **vân tay 8 ký tự
+  của tên GỐC**. Vân tay không phải trang trí — `HNX audit & fill` và `HNX audit / fill` cùng
+  rút thành `HNX-audit-fill`, và khoá này **LÀ** khoá chống-gửi-hai-lần: trùng khoá thì lượt
+  gửi của chuỗi này bị host nuốt như bản sao của chuỗi kia. Tất định, nên lượt gửi lại sau khi
+  hết giờ vẫn khớp (`~~B-38~~`). Dùng ở cả ba đường: `ping` · `chat-reload` · `chat-say`.
+- `bridge-cli.mjs` chặn ngay tại cửa, **trước khi gọi mạng**, và **nêu đích danh ký tự hỏng**
+  (`dấu cách`). Công cụ biết luật ấy; để host bắt hộ là ném đi chỗ duy nhất còn biết ký tự nào
+  sai — cùng họ `B-58`.
+
+**Ghim:** mép ⓡ trong `tests/chuoi-reasoning-smoke.mjs` (chạy đúng hai cái tên Đức đã dùng, ×4
+hậu tố; tất định; **không đụng nhau**; và chiều ngược chứng minh cách ghép cũ thật sự vi phạm
+luật host) + hai mép trong `tests/bridge-cli-host-offline-smoke.mjs` (chặn trước khi gọi mạng ·
+**khoá hợp lệ vẫn đi qua**, chống vá quá tay).
+
+**Lượt ghim còn bắt được một dữ liệu mẫu vốn đã sai:** `tests/bridge-cli-catchup-smoke.mjs`
+dùng `"same-id"` — **7 ký tự**, host thật sẽ từ chối. Nó xanh bấy lâu vì công cụ chưa kiểm và
+`fetch` giả không cưỡng chế gì. Đổi sang một khoá hợp lệ; đây là dữ liệu mẫu **không giống
+thực tế**, không phải phép kiểm sai.
+
+- **đóng khi:** ~~không tên chuỗi nào làm vỡ khoá, và công cụ nêu đích danh ký tự hỏng~~ —
+  **ĐẠT 12/09**, đã triển khai sang bản cài của Đức và thử lại trên khoá thật.
 
 ---
 

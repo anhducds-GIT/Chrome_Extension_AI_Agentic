@@ -74,6 +74,35 @@ try {
   assert.match(String(loiLa.message), /BOOM_KHONG_PHAI_MANG/,
     "lỗi không thuộc họ mạng phải đi qua nguyên vẹn, không bị đọc thành 'chưa bật cầu nối'");
   ok("lỗi lạ không bị nuốt thành chẩn đoán sai");
+
+  /* ---- B-73 · KHOÁ HỎNG PHẢI BỊ BẮT Ở CÔNG CỤ, KHÔNG PHẢI Ở HOST -------------
+     Lỗi thật 12/09: tên chuỗi `HNX audit & fill` ghép thành `HNX audit & fill-v1`. Luật của
+     host là `/^[\x21-\x7e]{8,128}$/` và **dấu cách không nằm trong đó**, nên host trả
+     `INVALID_ENVELOPE` — một câu không nói ký tự nào sai. Công cụ BIẾT luật ấy; để host bắt
+     hộ là ném đi chỗ duy nhất còn biết ký tự nào hỏng. */
+  let loiKhoa = null;
+  try {
+    await main(["run-status", "--pairing", tep, "--request-id", "HNX audit & fill-v1"],
+      { stdout: { write() {} }, stderr: { write() {} },
+        fetch: async () => { throw new Error("KHONG_DUOC_GOI_TOI_DAY"); } });
+  } catch (e) { loiKhoa = e; }
+  assert.ok(loiKhoa, "khoá có dấu cách mà lệnh không ném gì");
+  const cauKhoa = String(loiKhoa.message);
+  assert.doesNotMatch(cauKhoa, /KHONG_DUOC_GOI_TOI_DAY/,
+    "phải chặn TRƯỚC khi gọi mạng — chưa gửi gì đi");
+  assert.match(cauKhoa, /REQUEST_ID_KHONG_HOP_LE/);
+  assert.match(cauKhoa, /dấu cách/, "phải chỉ đích danh ký tự hỏng, không chỉ nói 'không hợp lệ'");
+  assert.match(cauKhoa, /Chưa gửi gì đi/, "phải khai chưa gửi — nếu không, người ta sợ trùng lặp mà không dám chạy lại");
+
+  /* Đừng vá quá tay: khoá HỢP LỆ phải đi qua và tới được tầng mạng. */
+  let toiMang = false;
+  try {
+    await main(["run-status", "--pairing", tep, "--request-id", "khoa-hop-le-12345678"],
+      { stdout: { write() {} }, stderr: { write() {} },
+        fetch: async () => { toiMang = true; throw new Error("BOOM_KHONG_PHAI_MANG"); } });
+  } catch { /* lỗi giả, không quan tâm */ }
+  assert.equal(toiMang, true, "khoá hợp lệ KHÔNG được bị chặn — vá quá tay là chặn cả đường tốt");
+  ok("B-73 khoá có dấu cách bị bắt tại công cụ, khoá hợp lệ vẫn đi qua");
 } finally {
   try { fs.unlinkSync(tep); } catch { /* đã mất thì thôi */ }
 }

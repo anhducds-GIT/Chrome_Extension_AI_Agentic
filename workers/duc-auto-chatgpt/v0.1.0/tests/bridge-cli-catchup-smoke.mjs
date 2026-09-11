@@ -31,7 +31,7 @@ try {
   }));
   const run = async (body, ok = false) => {
     let request;
-    const code = await main(["run-trial", "--params-file", paramsPath, "--pairing", pairingPath, "--request-id", "same-id", "--client-id", "agent-x"], {
+    const code = await main(["run-trial", "--params-file", paramsPath, "--pairing", pairingPath, "--request-id", "cung-mot-khoa-1", "--client-id", "agent-x"], {
       stdout: { write() {} }, stderr: { write() {} },
       fetch: async (_url, options) => { request = options; return { ok, json: async () => body }; }
     });
@@ -39,7 +39,7 @@ try {
   };
   const success = await run({ ok: true, result: {} }, true);
   assert.equal(success.code, 0);
-  assert.equal(JSON.parse(success.request.body).request_id, "same-id");
+  assert.equal(JSON.parse(success.request.body).request_id, "cung-mot-khoa-1");
   assert.equal(JSON.parse(success.request.body).client.client_id, "agent-x");
   assert.ok(success.request.signal instanceof AbortSignal);
   assert.equal((await run({ ok: false, error: { retryable: true } })).code, 3);

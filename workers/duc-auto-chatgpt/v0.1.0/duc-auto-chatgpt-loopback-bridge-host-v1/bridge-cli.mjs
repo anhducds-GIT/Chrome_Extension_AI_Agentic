@@ -216,6 +216,25 @@ export async function main(argv = process.argv.slice(2), io = { stdout: process.
       `Khoá gợi ý cho đúng tham số này: --request-id ${goiYRequestId(method, params)}`
     );
   }
+  /* KHOÁ HỎNG THÌ BẮT Ở ĐÂY, ĐỪNG ĐỂ HOST BẮT — B-73, lỗi thật 12/09.
+     Đức đặt tên chuỗi `HNX audit & fill`; bộ chạy ghép thành `HNX audit & fill-v1`, và host
+     trả `INVALID_ENVELOPE` vì luật của nó là `/^[\x21-\x7e]{8,128}$/` — **dấu cách không nằm
+     trong khoảng đó**. Câu lỗi của host chỉ nói "envelope invalid", không nói ký tự nào, nên
+     nhật ký chuỗi kết lại thành *"hai lượt gửi đều không thấy trong hội thoại"* — đọc y như
+     trang hỏng, trong khi lỗi nằm ở CÁI TÊN. Công cụ biết luật ấy; để host bắt hộ là ném đi
+     chỗ duy nhất còn biết ký tự nào sai. Cùng họ `B-58`: cửa biết mà không nói. */
+  const khoa = flags["request-id"];
+  if (khoa !== undefined && !/^[\x21-\x7e]{8,128}$/.test(String(khoa))) {
+    const xau = [...String(khoa)].filter((c) => !/[\x21-\x7e]/.test(c))
+      .map((c) => (c === " " ? "dấu cách" : `"${c}"`));
+    throw new Error(
+      `REQUEST_ID_KHONG_HOP_LE: --request-id phải là 8–128 ký tự ASCII nhìn thấy được (\\x21–\\x7e).\n` +
+      `Đang nhận: ${JSON.stringify(String(khoa))} (${String(khoa).length} ký tự)` +
+      `${xau.length ? `\nKý tự không dùng được: ${[...new Set(xau)].join(", ")} — dấu cách và chữ có dấu đều KHÔNG hợp lệ.` : ""}\n` +
+      `Khoá này là khoá CHỐNG GỬI HAI LẦN, nên nó phải ổn định giữa các lượt chạy lại — đừng sinh ngẫu nhiên.\n` +
+      `Chưa gửi gì đi.`
+    );
+  }
   const envelope = applyTarget(buildEnvelope(method, params, new Date(), flags["request-id"] || undefined, flags["client-id"] || undefined), flags);
   let response;
   try {
