@@ -685,3 +685,27 @@ che*. Cần một lượt đo trên tab hiện.
 
 Còn `B-50` (panel chết một nửa: router 166 ms, executor 11/11 hết giờ; hai thể) và `B-58`.
 Suite **133/133**.
+
+## 2026-09-11 (lượt 23) · `claude-gpt-chay-het-job` — hai cửa nói sai bệnh, cùng một buổi
+
+Định đo lại trên tab hiện thì **cả kênh chết**, và hai lớp lần lượt nói sai bệnh.
+
+**⑴ Cầu nối không chạy → công cụ in đúng hai chữ `fetch failed`** (câu của Node cho cổng đóng).
+Đọc y như một lỗi trong mã; tôi đi kiểm nhầm chỗ mấy lượt. Nguyên nhân thật: tiến trình host
+tắt, và cầu nối ChatGPT **không có lối tắt Startup** trong khi bản Gemini thì có — dù trình cài
+của nó có tạo, tức trình cài chưa từng chạy trên máy này (`B-70`, cần Đức bấm một lượt).
+Vá **nửa chẩn đoán, không phải nửa nguyên nhân**: `bridge-cli.mjs` bắt họ lỗi mạng và trả
+`KHONG_NOI_DUOC_CAU_NOI` — nêu địa chỉ đã thử, đúng một lệnh chữa, và **khai rõ chưa gửi gì**.
+Ghim `tests/bridge-cli-host-offline-smoke.mjs`: chiều ngược (bản cũ thật sự chỉ nói hai chữ đó)
++ một mép đòi lỗi **không thuộc họ mạng** đi qua nguyên vẹn. **Cố ý KHÔNG tự bật hộ** — bật một
+tiến trình nền sau lưng người dùng thuộc nhóm phải hỏi Đức.
+
+**⑵ Bật lại cầu nối xong thì tab báo `RECEIVER_LOST`, `url: null`** — tab đang mở giữ content
+script cũ sau khi nạp lại tiện ích. **Chưa gửi gì.** Cần Đức F5 đúng tab đó.
+
+**Loại được nửa giả thuyết tab-bị-che mà không cần lượt đo mới:** nạp lại trên tab **đang bị
+che** vẫn hiện đủ chữ (13 → 170, rồi 26 → 85). Nên *"tab che thì không dựng được"* **sai**. Nghi
+vấn còn lại hẹp hơn: Chrome bóp đường **stream** của tab nền. Nếu đúng thì đó là luật vận hành
+thật — **đừng thu nhỏ Chrome khi chuỗi đang chạy**, cùng họ `~~B-46~~`.
+
+Suite **134/134**.

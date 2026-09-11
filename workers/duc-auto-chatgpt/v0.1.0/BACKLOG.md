@@ -3394,6 +3394,33 @@ Hai bài học, ghi ra vì cả hai đều tổng quát:
   đã tồn tại), hoặc `.repo-structure.json` sửa lại cho khai đúng cửa ra đang có. **Đừng đóng
   bằng cách xoá dòng khai** — trần 25 mục vẫn sẽ cắn, và lane sau lại cắt tay như tôi.
 
+### B-70 · (P2, @Đức một lượt bấm) Cầu nối ChatGPT KHÔNG tự bật cùng Windows, bản Gemini thì có
+
+Đo 11/09: cổng 32147 `ECONNREFUSED`, không tiến trình host nào chạy. Trong thư mục Startup chỉ
+có `Duc Auto Gemini Bridge V1.lnk` — **không có** lối tắt cho ChatGPT, dù
+`scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1` dòng 69–75 **có** tạo nó. Nên nhiều phần
+là trình cài chưa từng chạy trên máy này; Đức vẫn bật tay bằng `duc-auto-chatgpt.START-BRIDGE.cmd`.
+
+**Giá đã trả, đo được:** mỗi lần Windows khởi động lại — hoặc cửa sổ host bị đóng — kênh ChatGPT
+**chết lặng**. Triệu chứng đầu tiên bên ngoài nhìn thấy là `fetch failed`, đúng hai chữ của Node
+cho một cổng đóng, và nó đọc **y như một lỗi trong mã**. Hôm nay tôi đi kiểm nhầm chỗ mấy lượt
+trước khi nhận ra chỉ là tiến trình chưa bật.
+
+**Đã vá nửa phần chẩn đoán** (không phải nửa nguyên nhân): `bridge-cli.mjs` nay bắt họ lỗi mạng
+và trả `KHONG_NOI_DUOC_CAU_NOI` — nêu địa chỉ đã thử, chỉ đúng một lệnh chữa, và **khai rõ chưa
+gửi gì** để không ai sợ trùng lặp mà không dám chạy lại. Ghim
+`tests/bridge-cli-host-offline-smoke.mjs`, 3 mép, gồm chiều ngược (bản cũ thật sự chỉ nói
+`fetch failed`) và một mép đòi lỗi **không thuộc họ mạng** đi qua nguyên vẹn — một chẩn đoán nói
+sai bệnh còn tệ hơn không chẩn đoán.
+
+**Cố ý KHÔNG tự khởi động hộ từ trong công cụ.** Bật một tiến trình nền sau lưng người dùng là
+việc khác hẳn với báo cho họ biết, và nó thuộc nhóm *"tạo automation tự chạy"* — phải hỏi Đức.
+
+- **đóng khi:** Đức chạy một lượt `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1` (nó tự
+  tạo lối tắt Startup), hoặc chốt rằng **cố ý** bật tay — nếu là vế sau thì ghi vào
+  `AI-OPERATOR-GUIDE.md` để phiên sau không đi tìm lỗi ma. Đừng đóng bằng cách thêm một đường
+  tự-bật trong công cụ.
+
 ---
 
 ## ROADMAP — nền tảng reasoning GPT×CC (mở 10/09, Đức chốt hướng)

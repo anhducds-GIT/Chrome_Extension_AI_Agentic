@@ -217,12 +217,32 @@ export async function main(argv = process.argv.slice(2), io = { stdout: process.
     );
   }
   const envelope = applyTarget(buildEnvelope(method, params, new Date(), flags["request-id"] || undefined, flags["client-id"] || undefined), flags);
-  const response = await io.fetch(pairing.http_url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${pairing.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(envelope),
-    signal: AbortSignal.timeout(40000)
-  });
+  let response;
+  try {
+    response = await io.fetch(pairing.http_url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${pairing.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(envelope),
+      signal: AbortSignal.timeout(40000)
+    });
+  } catch (error) {
+    /* CẦU NỐI CHƯA CHẠY THÌ PHẢI NÓI RA LÀ THẾ. Node trả đúng hai chữ `fetch failed` cho một
+       cổng đóng, và hai chữ đó đọc y như một lỗi trong mã — 11/09 tôi mất mấy lượt gọi mới
+       nhận ra tiến trình host đã tắt. Cùng họ với `B-58`: cửa biết chuyện gì xảy ra nhưng
+       trả ra một câu không ai dùng được.
+       KHÔNG tự khởi động hộ: bật một tiến trình nền sau lưng người dùng là việc khác hẳn với
+       báo cho họ biết. Chỉ nói bệnh và nói đúng một lệnh chữa. */
+    const emang = String(error?.cause?.code || error?.code || "");
+    const khongNoiDuoc = /ECONNREFUSED|ENOTFOUND|ECONNRESET|EHOSTUNREACH/.test(emang)
+      || /fetch failed/i.test(String(error?.message || ""));
+    if (!khongNoiDuoc) throw error;
+    throw new Error(
+      `KHONG_NOI_DUOC_CAU_NOI: không mở được ${pairing.http_url}${emang ? ` (${emang})` : ""}.\n` +
+      `Gần như luôn là: tiến trình cầu nối chưa chạy. Nó KHÔNG tự bật cùng Windows.\n` +
+      `Chữa: nhấp đúp "duc-auto-chatgpt.START-BRIDGE.cmd" trong thư mục chứa tệp ghép cặp, rồi chạy lại lệnh này.\n` +
+      `Đây KHÔNG phải lỗi của extension hay của tab — chưa có gì được gửi đi.`
+    );
+  }
   const body = await response.json();
   io.stdout.write(`${JSON.stringify(body, null, 2)}\n`);
   if (response.ok && body?.ok) return 0;
