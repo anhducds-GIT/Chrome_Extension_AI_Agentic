@@ -28,9 +28,9 @@
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-11T02:22:47.975Z",
-      "task": "B-50 cua chan doan",
-      "released_at": "2026-09-11T02:25:27.630Z",
+      "claimed_at": "2026-09-11T18:14:48.624Z",
+      "task": "B-73 khoa vo vi ten chuoi",
+      "released_at": "2026-09-11T18:19:21.286Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -91,12 +91,12 @@
     "workers/hnx-fetch": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T21:36",
-      "task": "ra soat luat goi",
-      "released_at": "2026-09-08T22:30"
+      "claimed_at": "2026-09-11T17:46:29.029Z",
+      "task": "ra soat va lay du lieu HNX con thieu tu 2026-09-08 den 2026-09-12",
+      "released_at": "2026-09-11T17:50:31.358Z"
     }
   },
-  "_fingerprint": "9563e59a7eff98b5",
+  "_fingerprint": "218b087ded6c29f6",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
