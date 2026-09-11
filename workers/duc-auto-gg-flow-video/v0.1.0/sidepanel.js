@@ -28,12 +28,26 @@
     "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
-    "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
+    "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput", "bridgePairingPathCopyBtn",
     "bridgeProfileLabelInput", "bridgeProfileLabelHint",
     "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
     "devModeToggle", "devModeBanner", "runDevModeBadge"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+
+  async function copyBridgePairingPath(button) {
+    const pairingPath = button?.dataset.bridgePairingPath || "";
+    if (!pairingPath) return;
+    const originalLabel = button.textContent;
+    try {
+      await navigator.clipboard.writeText(pairingPath);
+      button.textContent = "Đã sao chép";
+    } catch (_error) {
+      button.textContent = "Không thể sao chép";
+    }
+    window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+  }
+
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
   // in the imported XLSX config. A Quick Prompt session (and any workbook opened
   // without that config key) has no such id, so switching Destination mode to
@@ -5127,6 +5141,7 @@
     const file = els.bridgePairingInput.files?.[0] || null;
     pairAgentBridgeFile(file).catch((error) => log(messageOf(error), "error")).finally(() => { els.bridgePairingInput.value = ""; });
   });
+  els.bridgePairingPathCopyBtn?.addEventListener("click", () => copyBridgePairingPath(els.bridgePairingPathCopyBtn));
   els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
   els.bridgeProfileLabelInput?.addEventListener("change", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
   els.devModeToggle?.addEventListener("change", () => setDevMode(els.devModeToggle.checked).catch((error) => { renderDevMode(); log(messageOf(error), "error"); }));

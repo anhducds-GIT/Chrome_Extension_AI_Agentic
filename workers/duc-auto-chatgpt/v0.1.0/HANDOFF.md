@@ -769,3 +769,7 @@ khôi phục (`--gon` → SẠCH), rồi khôi phục nguyên bản từ `95b2ec
 biên dịch sạch`**, test 32/32 — xanh vì lớp bảo vệ quay lại, **không** vì sửa phép kiểm.
 
 Suite gói **135/135**.
+
+## 2026-09-12 · `codex-bridge-pairing-links`
+
+Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-chatgpt\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh 136/136.

@@ -794,3 +794,7 @@ luật thì phải bỏ một luật.
 
 `## Luật vàng` của gói đã rút gọn cho vừa trần; không vế luật nào bị bỏ, chỉ chuyện kể bị cắt.
 **Không đụng mã, không đụng phép ghim.**
+
+## 2026-09-12 · `codex-bridge-pairing-links`
+
+Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.

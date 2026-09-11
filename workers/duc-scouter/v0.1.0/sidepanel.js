@@ -65,6 +65,19 @@ const BRIDGE_CHU = {
 
 let bridgeStatus = "unpaired";
 
+async function copyBridgePairingPath(button) {
+  const pairingPath = button?.dataset.bridgePairingPath || "";
+  if (!pairingPath) return;
+  const originalLabel = button.textContent;
+  try {
+    await navigator.clipboard.writeText(pairingPath);
+    button.textContent = "Đã sao chép";
+  } catch (_loi) {
+    button.textContent = "Không thể sao chép";
+  }
+  window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+}
+
 async function veBridge() {
   const kho = await chrome.storage.local.get([TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]);
   bridgeStatus = kho?.[TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]?.status ?? "unpaired";
@@ -89,6 +102,7 @@ $("#pairing-file").addEventListener("change", async (su_kien) => {
   $("#bridge-state").textContent = `Đã lưu ghép cặp cho 127.0.0.1:${ghep.port}. Đang nối…`;
   window.setTimeout(veBridge, 1500);
 });
+$("#bridge-pairing-path-copy").addEventListener("click", () => copyBridgePairingPath($("#bridge-pairing-path-copy")));
 
 /* ---- CÔNG TẮC ĐƯỜNG GHI (S-05) -------------------------------------------
  * Bảng bên là chỗ DUY NHẤT bật được công tắc này, và đó là cả ý nghĩa của nó: không method

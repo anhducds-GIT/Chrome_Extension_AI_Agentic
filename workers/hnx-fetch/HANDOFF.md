@@ -452,3 +452,7 @@ chính nó là một sổ nguy hiểm. Đã ghi lý do **ngay tại chỗ** tron
 một bên thì sửa cả hai trong CÙNG lượt** — theo `docs/protocols/RULE-COMPILER.md` mục 4.
 
 **Không đụng mã, không đụng phép ghim, không đụng dữ liệu.** Sổ nợ gói không đổi.
+
+## 2026-09-12 · `codex-bridge-pairing-links`
+
+Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\hnx-fetch\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.

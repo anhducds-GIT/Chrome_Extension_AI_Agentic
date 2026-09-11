@@ -699,3 +699,7 @@ Máy sinh, tự chứa: lõi luật chung + `## Luật vàng` của gói + bản
 
 **Sửa `AGENTS.md` hay `STATUS.md` của gói thì PHẢI chạy `node scripts/rule-compile.mjs --sinh`** —
 cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự thì bộ sinh **từ chối ghi**.
+
+## 2026-09-12 · `codex-bridge-pairing-links`
+
+Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.
