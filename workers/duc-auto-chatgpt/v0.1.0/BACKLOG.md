@@ -3440,7 +3440,34 @@ Hai bài học, ghi ra vì cả hai đều tổng quát:
   đã tồn tại), hoặc `.repo-structure.json` sửa lại cho khai đúng cửa ra đang có. **Đừng đóng
   bằng cách xoá dòng khai** — trần 25 mục vẫn sẽ cắn, và lane sau lại cắt tay như tôi.
 
-### B-70 · (P2, @Đức một lượt bấm) Cầu nối ChatGPT KHÔNG tự bật cùng Windows, bản Gemini thì có
+### ~~B-70~~ · (ĐÓNG 11/09 — đã tạo lối tắt và nghiệm thu thật) Cầu nối ChatGPT KHÔNG tự bật cùng Windows, bản Gemini thì có
+
+> **ĐÃ ĐÓNG, nhưng KHÔNG bằng cách chạy trình cài — và chỗ này là một cái bẫy, đọc trước khi
+> ai đó "sửa" lại.**
+>
+> `Install-DucAutoChatGPTLoopbackBridgeV1.ps1` cài vào **`%LOCALAPPDATA%\DucAutoChatGPT\BridgeV1`**,
+> tức **KHÔNG PHẢI** chỗ máy này đang chạy (`C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-chatgpt\`).
+> Kiểm 11/09: thư mục LOCALAPPDATA **chưa tồn tại**. Nên chạy nó sẽ:
+> ⑴ sinh một tệp ghép cặp MỚI với **token mới** (nhánh `else` ở dòng 47–52, vì không có tệp cũ
+> ở đó để giữ lại) · ⑵ trỏ lối tắt Startup vào bản mới đó · ⑶ khởi động một host thứ hai tranh
+> **cùng cổng 32147** với bản đang chạy · ⑷ trong khi **tiện ích vẫn ghép cặp bằng token cũ**
+> (`created_at` 24/08). Kết cục: lần khởi động máy sau, cầu nối lên bằng một token tiện ích
+> không biết — **tệ hơn hôm nay**, và trông như một lỗi ma.
+>
+> **Cách đã làm, và nó theo đúng khuôn bản Gemini:** tạo một lối tắt Startup trỏ vào **bản đang
+> chạy** — cùng `bridge-host.mjs`, cùng tệp ghép cặp, cùng token. Không cài lại, không token
+> mới, không tranh cổng. Đối chiếu: lối tắt Gemini cũng trỏ vào `WORKING ZONE`, không vào
+> LOCALAPPDATA.
+>
+> **Nghiệm thu THẬT, không phải kiểm file có tồn tại:** tắt host đang chạy (pid 15980) → cổng
+> 32147 **chết** → chạy **chính lối tắt đó** → cổng **sống**, pid mới 26556 → `system.ping`
+> trả `state=READY` với đúng `conversation_id` cũ. Tức tiện ích vẫn ghép cặp được, token không
+> đổi.
+>
+> **Còn nợ lại cho lane `_code`/`_root`:** trình cài đang khai một đường cài khác với đường
+> máy này thật sự dùng. Hoặc sửa nó nhận `-InstallRoot`, hoặc ghi rõ trong chính nó rằng bản
+> WORKING ZONE là bản thật. Tôi **không sửa** vì nó ngoài vùng, và vì nó chưa cắn ai khi không
+> ai chạy nó.
 
 Đo 11/09: cổng 32147 `ECONNREFUSED`, không tiến trình host nào chạy. Trong thư mục Startup chỉ
 có `Duc Auto Gemini Bridge V1.lnk` — **không có** lối tắt cho ChatGPT, dù

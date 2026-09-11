@@ -737,4 +737,10 @@ trước đó đang ghim **niềm tin của tôi**, nay ghim hành vi đúng kè
 ngay khi tab bị che. Chrome bóp đường **stream** của tab nền → luật vận hành thứ tư trong
 `chay-chuoi.bat`: **đừng thu nhỏ Chrome khi chuỗi đang chạy**.
 
+**`~~B-70~~` đóng — nhưng KHÔNG bằng trình cài.** Đức bảo chạy
+`Install-DucAutoChatGPTLoopbackBridgeV1.ps1`; đọc kỹ thì nó cài sang `%LOCALAPPDATA%`, **không
+phải** chỗ máy này chạy → sẽ sinh **token mới** và tranh cổng 32147 với bản thật. Thay bằng một
+lối tắt Startup trỏ vào **bản đang chạy**, đúng khuôn lối tắt Gemini. Nghiệm thu thật: tắt host
+→ cổng chết → chạy **chính lối tắt** → cổng sống, `ping` trả `READY`. Cái bẫy ghi đủ ở `~~B-70~~`.
+
 Suite **134/134**.
