@@ -28,9 +28,9 @@
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-11T18:14:48.624Z",
-      "task": "B-73 khoa vo vi ten chuoi",
-      "released_at": "2026-09-11T18:19:21.286Z",
+      "claimed_at": "2026-09-11T18:24:41.957Z",
+      "task": "tinh nang chay tiep sau khi chuoi ket thuc",
+      "released_at": "2026-09-11T18:36:14.070Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -96,7 +96,7 @@
       "released_at": "2026-09-11T17:50:31.358Z"
     }
   },
-  "_fingerprint": "218b087ded6c29f6",
+  "_fingerprint": "4b0eee086d05e11d",
   "tam": {
     "HANDOFF.md": {
       "owner": "harness-loi-01",
