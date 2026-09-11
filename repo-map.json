@@ -70,7 +70,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "**BỘ CHẠY CHUỖI ĐÃ CHẠY LẠI ĐƯỢC** — `~~B-73~~` vá 12/09: tên chuỗi có **dấu cách** làm vỡ khoá gửi. Tên `HNX audit & fill` ghép thành `HNX audit & fill-v1`, mà host đòi `/^[\\x21-\\x7e]{8,128}$/` — **dấu cách không nằm trong đó** — nên mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1. Nhật ký lại kết thành *\"hai lượt gửi đều không thấy trong hội thoại\"* — đọc y như trang hỏng. Tên tiếng Việt có dấu vỡ y hệt. Nay khoá được rút an toàn + vân tay tên gốc (chống hai chuỗi đụng khoá), và công cụ chặn ngay tại cửa kèm **tên đích danh ký tự hỏng**. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
+      "next_step": "**Chạy tiếp được rồi** (`~~B-74~~`, Đức nêu 12/09): cuối mỗi lượt `chay-chuoi.bat` hỏi `[t]` chạy tiếp · `[m]` chạy mới cùng thông số · `[g]` gõ lại; và thông số được nhớ sang cả lần mở cửa sổ sau. `--tiep` đọc nhật ký để nối từ lượt gửi cuối và **trừ** số vòng đã gửi vào trần — chạy lại từ số không trên một hội thoại đang dở sẽ **gửi lại đúng prompt đã gửi**. **Trước đó, `~~B-73~~`:** tên chuỗi có **dấu cách** làm vỡ khoá gửi — mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1, trong khi nhật ký lại đổ cho trang. Cùng họ: hai dòng `echo` không đóng ngoặc khiến `&` trong tên **chạy `fill` như một lệnh**. Cả hai đã vá. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
       "human_action": "@Đức:chốt(suite) **`npm test` gốc repo vẫn chết** ở `tests/repo-structure-smoke.mjs` — việc của lane `_code`, đừng xoá phép kiểm cho suite xanh. @Đức:chốt(pilot) **Pilot điều phối cần một phiên CC MỚI** (Haiku/Sonnet): `drafts/pilot-dieu-phoi/GOI-VIEC.md`.",
       "priority_rank": 2,
       "superseded_by": null,
@@ -174,7 +174,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "**BỘ CHẠY CHUỖI ĐÃ CHẠY LẠI ĐƯỢC** — `~~B-73~~` vá 12/09: tên chuỗi có **dấu cách** làm vỡ khoá gửi. Tên `HNX audit & fill` ghép thành `HNX audit & fill-v1`, mà host đòi `/^[\\x21-\\x7e]{8,128}$/` — **dấu cách không nằm trong đó** — nên mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1. Nhật ký lại kết thành *\"hai lượt gửi đều không thấy trong hội thoại\"* — đọc y như trang hỏng. Tên tiếng Việt có dấu vỡ y hệt. Nay khoá được rút an toàn + vân tay tên gốc (chống hai chuỗi đụng khoá), và công cụ chặn ngay tại cửa kèm **tên đích danh ký tự hỏng**. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
+      "title": "**Chạy tiếp được rồi** (`~~B-74~~`, Đức nêu 12/09): cuối mỗi lượt `chay-chuoi.bat` hỏi `[t]` chạy tiếp · `[m]` chạy mới cùng thông số · `[g]` gõ lại; và thông số được nhớ sang cả lần mở cửa sổ sau. `--tiep` đọc nhật ký để nối từ lượt gửi cuối và **trừ** số vòng đã gửi vào trần — chạy lại từ số không trên một hội thoại đang dở sẽ **gửi lại đúng prompt đã gửi**. **Trước đó, `~~B-73~~`:** tên chuỗi có **dấu cách** làm vỡ khoá gửi — mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1, trong khi nhật ký lại đổ cho trang. Cùng họ: hai dòng `echo` không đóng ngoặc khiến `&` trong tên **chạy `fill` như một lệnh**. Cả hai đã vá. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
       "rank": 2,
       "claim": null
     },
