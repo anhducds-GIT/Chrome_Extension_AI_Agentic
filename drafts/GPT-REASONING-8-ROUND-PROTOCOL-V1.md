@@ -101,11 +101,18 @@ kết quả GPT` bị đọc thành của GPT.
 | ⒞ | Lượt GHI báo lỗi thì **không tự gửi lại** — đọc lại xem nó đã bay chưa | ba trạng thái: đã bay · không thấy · **không đọc được** (mù thì DỪNG) |
 | ⒟ | **Ghim HỘI THOẠI, không ghim địa chỉ** — địa chỉ tự mọc thêm `?...`, và một chat mới chưa có `/c/<id>` | so bằng định danh hội thoại; `--url` khai trước; sai trang nói `SAI_TRANG`, không nói "panel bận" |
 
-**Điều ⓪ mua bằng một lượt đo live 11/09, và nó đổ hai tín hiệu cũ cùng lúc:** nút Stop tắt ở
-giây **8.7** và số ký tự đứng yên **20 giây**, trong khi câu trả lời thật dài **85** ký tự còn
-DOM sống mới có **26**. Dạng id không nói sai lần nào. Bộ đọc **vốn đã** trả id ra ở
-`turns[].id` — chỉ là chưa ai đọc nó. *(Giới hạn: lượt đo ở trên một tab đang bị che, nên con
-số 8,7 giây có thể khác trên tab hiện; luật thì không đổi.)*
+**Điều ⓪ mua bằng hai lượt đo live 11/09, và lượt thứ hai sửa lại kết luận của lượt thứ nhất.**
+Trên tab **bị che**: nút Stop tắt ở giây 8,7 và chữ đứng yên 20 giây, trong khi câu trả lời thật
+dài 85 ký tự còn DOM sống mới có 26 — hai tín hiệu cũ cùng nói dối. Trên tab **hiện**: nội dung
+đã đủ 1096 ký tự từ giây 10,6 mà id **vẫn tạm** suốt 22 giây sau.
+
+Nên **`TẠM` không có nghĩa "chưa xong"** — nó chỉ nói *DOM sống chưa kết luận được*. Nút Stop
+**dương tính giả**, dạng id **âm tính giả**; không cái nào dùng một mình được. Và id **không bao
+giờ tự** thành UUID: **nạp lại** là thứ duy nhất gỡ, nên thấy tạm thì nạp lại ngay, đừng chờ.
+
+**Một luật vận hành đi kèm, đã xác nhận:** chữ chạy 13 → 909 → 1096 ký tự trong 5 giây khi tab
+**hiện**, rồi **đứng im ngay khi tab bị che**. Chrome bóp đường stream của tab nền. Chuỗi vẫn
+chạy được, nhưng mỗi vòng mất thêm một lượt nạp lại — **đừng thu nhỏ Chrome khi chuỗi đang chạy**.
 
 Điều ⒟ là luật mới 10/09: một chat **mới tinh** nằm ở `chatgpt.com/`, không phải
 `chatgpt.com/c/<id>`, nên mọi lượt đọc bị từ chối. **Gõ một câu vào chat mới trước khi nối bộ

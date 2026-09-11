@@ -333,14 +333,17 @@ Thoát **3** thì không phải lý do dừng của chuỗi: đã có một bả
 
 ### Năm luật đọc — ĐỪNG tự chế lại, cả năm đều mua bằng lỗi thật
 
-0. **HỎI "LƯỢT NÀY CHỐT CHƯA" TRƯỚC MỌI CÂU KHÁC — và đừng hỏi nút Stop.** Trang tự đánh dấu
-   một lượt chưa hoàn tất bằng `data-turn-id` **tạm** (`request-<hội thoại>-<n>` hoặc
-   `client-created-root`); lượt đã chốt mang **UUID**. `chat.read` vốn đã trả nó ra ở
-   `turns[].id` và `last_copy_block.turn_id` — không phải gọi thêm gì.
-   **Đo live 11/09, một lượt gửi:** nút Stop tắt ở giây **8.7** và số ký tự đứng yên **20
-   giây**, trong khi câu trả lời thật dài **85** ký tự và DOM sống mới có **26**. Hai tín hiệu
-   cũ đều nói dối cùng lúc; dạng id thì không. Cẩn thận: lượt đo đó ở trên một tab **đang bị
-   che**, nên con số 8,7 giây có thể khác trên tab hiện — luật thì không đổi.
+0. **HỎI "DOM NÀY CÓ KẾT LUẬN ĐƯỢC KHÔNG" TRƯỚC MỌI CÂU KHÁC.** Trang đánh dấu lượt bằng
+   `data-turn-id` **tạm** (`request-<hội thoại>-<n>` hoặc `client-created-root`) cho tới khi
+   nó được ghi nhận với một **UUID**. `chat.read` vốn đã trả nó ra ở `turns[].id` và
+   `last_copy_block.turn_id` — không phải gọi thêm gì.
+   **`TẠM` KHÔNG có nghĩa "chưa xong".** Đo 11/09 trên tab hiện: nội dung đã đủ **1096** ký tự
+   từ giây 10,6 mà id vẫn tạm suốt 22 giây sau. Nó chỉ nói *DOM sống chưa tin được*. Và id
+   **không bao giờ tự** thành UUID — **nạp lại** là thứ duy nhất gỡ, nên thấy tạm thì nạp lại
+   ngay, đừng chờ.
+   **Hai tín hiệu, hai kiểu nói dối:** nút Stop **dương tính giả** (đo trên tab che: tắt ở giây
+   8,7 khi câu trả lời mới có 26/85 ký tự) · dạng id **âm tính giả**. Không cái nào dùng một
+   mình được.
 1. **Chữ ngừng dài ra KHÔNG có nghĩa là xong.** Model gọi tool thì chữ đứng yên hàng phút. Chỉ
    `generating: false` mới là điều kiện cần — và nó **chưa đủ**.
 2. **Xong mà không có khối thì phải NẠP LẠI MỘT LẦN rồi đọc lại.** Đo được **3/4 vòng** đọc ra

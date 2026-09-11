@@ -3100,14 +3100,33 @@ là một chỗ để sai — Codex bác được nó chỉ bằng cách đọc 
 > lượt đã có id tạm trong khi khối chưa hiện). Ghim mép ⓠ, gồm **chiều ngược** chứng minh bản
 > cũ thật sự chấm `KHOI_RONG` ở đúng payload đo được. Suite **133/133**.
 >
-> **GIỚI HẠN — bản CUỐI, đã thu hẹp chiều 11/09.** Cả lượt đo diễn ra trên tab **đang bị che**
-> (`visibility: hidden`). Bản đầu tôi viết là *"chưa tách được hydrat muộn khỏi tab-bị-che"*;
-> câu đó **đã hết đúng** — xem khối giả thuyết bị bác ở dưới: nạp lại **trên chính tab bị che**
-> hiện đủ chữ, hai lần. Tab nền **dựng được** bình thường.
-> **Điều còn lại chưa đo:** Chrome có bóp đường **stream** của tab nền không. Nếu có thì đó là
-> một luật vận hành thật (*đừng thu nhỏ Chrome khi chuỗi đang chạy*), cùng họ `~~B-46~~`.
-> Luật đã rút ra không đổi theo hai cách đọc; **con số 8,7 giây thì có thể**. Ai có tab hiện
-> thì đo lại và ghi vào đây.
+> **LƯỢT ĐO THỨ HAI 11/09, TRÊN TAB HIỆN — VÀ NÓ BÁC CHÍNH KẾT LUẬN CỦA LƯỢT ĐẦU.**
+> Câu trả lời thật dài **1096** ký tự:
+>
+> | giây | tab | nút Stop | dạng id | ký tự |
+> |---:|---|---|---|---:|
+> | 7.9 | **HIỆN** | còn sinh | TẠM | **909** |
+> | 10.6 | **HIỆN** | đã tắt | TẠM | **1096** |
+> | 13.3 → 32.5 | che | đã tắt | TẠM | 1096 |
+> | *(nạp lại)* | — | — | **UUID** | **1096** |
+>
+> **Nạp lại vẫn đúng 1096** → câu trả lời **đã xong từ giây 10,6**, mà id **vẫn tạm** 22 giây
+> sau đó. Nên câu tôi viết sáng nay — *"dạng id không nói sai lần nào"* — **SAI**, và tôi gạch
+> nó ở đây chứ không sửa chỗ khác.
+>
+> **Hai tín hiệu, hai kiểu nói dối, không cái nào dùng một mình được:**
+> nút Stop → **dương tính giả** (nói xong khi chưa xong, lượt ⑴) · dạng id → **âm tính giả**
+> (nói chưa đọc được khi đã xong, lượt ⑵).
+>
+> **Nghĩa đúng của `TẠM`, hẹp hơn tôi tưởng:** *DOM sống không kết luận được, phải nạp lại rồi
+> mới đọc* — **không** phải *"chưa xong"*. Và id **không bao giờ tự** thành UUID: cả hai lượt
+> đo đều giữ TẠM tới lúc dừng đo (27 và 32,5 giây). Nên **chờ thêm là phí**; bản vá đầu của
+> tôi chờ ~90 giây rồi mới nạp lại — trên chuỗi 12 vòng là **18 phút ngồi không**. Đã sửa
+> thành nạp lại ngay.
+>
+> **Nghi vấn cuối ĐÃ XÁC NHẬN:** chữ chạy **13 → 909 → 1096 trong 5 giây khi tab HIỆN**, rồi
+> **đứng im ngay khi tab bị che**. Chrome bóp đường **stream** của tab nền. Đó là luật vận
+> hành, cùng họ `~~B-46~~`: **đừng thu nhỏ Chrome khi chuỗi đang chạy**.
 
 **Đo live 10/09, thấy BA lần trong một chuỗi năm vòng.** Sau một lượt GPT gọi tool nhiều lần,
 `chat.read` đọc được đúng phần vệt tool đã gập lại cộng khoảng 15 ký tự đầu của câu trả lời, rồi
@@ -3190,8 +3209,11 @@ RỖNG 11 nhiều khả năng còn vài mục cùng dạng — có ghim mức g�
 > cung cấp; ta không sửa được, và mọi phép đoán quanh nó đều đã sai (đây là lần thứ tư).
 > Xem khối *"ĐO LIVE 11/09"* trong `~~B-59~~` — cùng một lượt đo đóng cả hai mục.
 > Tín hiệu thay thế: **dạng `data-turn-id`**. `luotDaChot()` trong `chuoi-reasoning.mjs`,
-> ghim ở mép ⓠ. Trong lượt đo, nút Stop nói *"xong"* ở giây 8.7 khi câu trả lời mới có 26/85
-> ký tự; dạng id **không nói sai lần nào**.
+> ghim ở mép ⓠ. Trong lượt đo ⑴, nút Stop nói *"xong"* ở giây 8.7 khi câu trả lời mới có 26/85
+> ký tự.
+> **SỬA 11/09 chiều — đừng đọc quá:** dạng id **không phải** tín hiệu *"xong hay chưa"*. Lượt
+> đo ⑵ trên tab hiện cho thấy nó **âm tính giả** (id còn tạm 22 giây sau khi nội dung đã đủ).
+> Nó chỉ trả lời đúng một câu: *DOM sống này có kết luận được không*. Chi tiết ở `~~B-59~~`.
 
 **Đo 10/09, và nó sửa lại cách hiểu `~~B-57~~`.** `generating` đọc nút Stop. Trong một lượt trả
 lời có gọi tool, nút Stop **biến mất giữa các lượt gọi**, nên `generating: false` xuất hiện

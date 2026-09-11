@@ -368,12 +368,18 @@ console.log("chuoi reasoning smoke tests: PASS");
   /* Payload ĐÚNG NHƯ ĐO ĐƯỢC: found:true nhưng chars:0 và turn_id tạm. */
   const khoiTam = { found: true, chars: 0, truncated: false, text: "", turn_id: TAM, blocks_in_turn: 1 };
 
-  const cho = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 1 });
-  assert.equal(cho.viec, "CHO", "lượt chưa chốt thì chờ, không kết luận");
-  assert.match(cho.vi, /LUOT_CHUA_CHOT/);
+  /* KHÔNG CHỜ — nạp lại ngay. Bản đầu của tôi chờ hết `NGUONG_YEN` (~90 giây) rồi mới nạp
+     lại, và phép ghim này khi đó đòi `CHO`: tức nó ghim **niềm tin của tôi**, không ghim thế
+     giới. Lượt đo thứ hai 11/09 bác: id tạm **không bao giờ tự** thành UUID (giữ tạm suốt 27
+     và 32,5 giây ở hai lượt đo), chỉ nạp lại mới đổi. Trên chuỗi 12 vòng, 90 giây mỗi vòng là
+     18 phút ngồi không đổi lấy số không. */
+  const som = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 1 });
+  assert.equal(som.viec, "NAP_LAI", "id tạm thì nạp lại NGAY — chờ thêm không bao giờ gỡ được nó");
+  assert.notEqual(som.viec, "CHO", "đây là mép chống hồi quy: bản đầu chờ 90 giây vô ích");
+  assert.match(som.vi, /LUOT_CHUA_CHOT/);
 
   const napLai = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: NGUONG_YEN });
-  assert.equal(napLai.viec, "NAP_LAI", "chờ lâu mà vẫn tạm thì nạp lại — nạp lại là thứ đã chữa được, đo 11/09");
+  assert.equal(napLai.viec, "NAP_LAI", "chờ lâu hay chờ ít đều ra cùng một việc — nạp lại");
 
   const dung = quyetDinh({ generating: false, khoi: khoiTam, khoiCu: KHOI_CU, daNapLai: true, daThayDangChay: true, soLanYen: NGUONG_YEN });
   assert.equal(dung.viec, "DUNG");
@@ -397,7 +403,14 @@ console.log("chuoi reasoning smoke tests: PASS");
   /* Khối chưa hiện mà LƯỢT đã mang id tạm — đo được ở giây 6.1: khoiCo=0, dang=TẠM.
      Không nhận `idLuotTraLoiCuoi` thì cảnh này lọt xuống nhánh NAP_LAI ngay, sớm hơn cần. */
   const chuaCoKhoi = quyetDinh({ generating: false, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 1, idLuotTraLoiCuoi: TAM });
-  assert.equal(chuaCoKhoi.viec, "CHO", "lượt mang id tạm thì chưa được nạp lại, dù khối chưa hiện");
+  assert.equal(chuaCoKhoi.viec, "NAP_LAI", "khối chưa hiện mà LƯỢT mang id tạm thì vẫn phải nạp lại — đo được ở giây 6.1");
+  assert.match(chuaCoKhoi.vi, /LUOT_CHUA_CHOT/, "và phải nói đúng lý do, không lẫn với HET_CHUOI");
+
+  /* CÒN ĐANG SINH thì KHÔNG được nạp lại, dù id là tạm — nạp lại giữa lúc GPT đang trả lời
+     đúng là cái `chat.reload` sinh ra để từ chối. Đo được ở giây 7.9 lượt ⑵: tab hiện,
+     `generating` còn true, id tạm, chữ đang chạy 909 ký tự. */
+  const dangSinh = quyetDinh({ generating: true, khoi: { found: false }, khoiCu: KHOI_CU, daNapLai: false, daThayDangChay: true, soLanYen: 0, idLuotTraLoiCuoi: TAM });
+  assert.equal(dangSinh.viec, "CHO", "còn đang sinh thì chờ, cửa id tạm KHÔNG được vượt lên trước cửa generating");
 
   /* Cửa này phải đứng TRƯỚC mọi phán quyết về khối trong mã nguồn. */
   const src = fs.readFileSync(new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
@@ -409,5 +422,5 @@ console.log("chuoi reasoning smoke tests: PASS");
   const iKhoiMoi = chiMa.indexOf("const coKhoiMoi");
   assert.ok(iChot > 0 && iKhoiMoi > iChot, "cửa LUOT_CHUA_CHOT phải đứng trước coKhoiMoi");
   assert.match(chiMa, /idLuotTraLoiCuoi: luotTL\?\.id/, "vòng chạy phải TRUYỀN id lượt trả lời cuối vào, không thì cửa này mù một nửa");
-  console.log("  ok  ⓠ lượt chưa chốt: chờ → nạp lại → dừng, và không chấm nhầm thành KHOI_RONG");
+  console.log("  ok  ⓠ id tạm: nạp lại NGAY (không chờ), dừng nếu nạp rồi vẫn tạm, không chấm nhầm KHOI_RONG");
 }

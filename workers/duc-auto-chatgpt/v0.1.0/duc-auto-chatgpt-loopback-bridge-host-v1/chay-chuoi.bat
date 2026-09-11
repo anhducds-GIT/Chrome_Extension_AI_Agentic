@@ -31,10 +31,14 @@ rem     DUC_URL        dia chi hoi thoai mac dinh, neu khong truyen tham so thu 
 rem     DUC_CHUOI_HOME thu muc chua chuoi-reasoning.mjs, neu khong nam canh tep nay
 rem     DUC_CHUOI_SO   thu muc goc chua nhat ky (mac dinh: Documents\chuoi-gpt)
 rem
-rem  BA DIEU KIEN, THIEU MOT LA CHUOI DUNG NGAY:
+rem  BON DIEU KIEN, THIEU MOT LA CHUOI DUNG NGAY:
 rem     1. Tab Chrome dang MO dung hoi thoai muon chay.
 rem     2. Hoi thoai do DA CO khoi "GIAO KEO NOI VONG" (xem AI-OPERATOR-GUIDE.md).
 rem     3. Khong go them gi vao hoi thoai do trong luc chuoi chay.
+rem     4. DE CUA SO CHROME KHONG BI CHE. Do live 11/09: tab HIEN thi chu chay
+rem        13 -> 909 -> 1096 ky tu trong 5 giay; tab bi che thi no DUNG IM ngay.
+rem        Chrome bop duong stream cua tab nen. Chuoi van chay (bo chay nap lai
+rem        de doc), nhung moi vong mat them mot luot nap lai.
 rem
 rem  MOT LUC MOT CHUOI TREN MOT PROFILE. Khoa hien chi khoa theo thu muc nhat ky
 rem  (B-64), nen hai chuoi khac ten van chay chong len nhau duoc. Doi chuoi thi

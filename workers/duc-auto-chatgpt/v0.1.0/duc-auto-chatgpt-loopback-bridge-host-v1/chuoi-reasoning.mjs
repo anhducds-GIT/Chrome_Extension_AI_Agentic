@@ -60,29 +60,39 @@ export function nguoiNhanCuaKhoi(text) {
   return m[1].split(/[—–,.(]/u)[0].trim() || null;
 }
 
-/* LƯỢT NÀY ĐÃ CHỐT CHƯA — B-59/B-60, đo live 11/09.
+/* LƯỢT NÀY ĐỌC ĐƯỢC CHƯA — B-59/B-60. Hai lượt đo live 11/09, và lượt thứ hai **sửa lại kết
+ * luận của lượt thứ nhất**, nên đọc cả hai trước khi tin.
  *
- * Trang tự đánh dấu một lượt CHƯA hoàn tất bằng một `data-turn-id` **tạm**: `request-<id hội
- * thoại>-<n>`, hoặc `client-created-root`. Lượt đã chốt thì mang một UUID thật. Đây là dấu
- * hiệu của chính ChatGPT, không phải phép đoán của ta, và nó là thuộc tính cấu trúc — không
- * phải nhãn tiếng Anh, nên không chết khi Đức đổi ngôn ngữ giao diện.
+ * Trang đánh dấu một lượt bằng `data-turn-id` **tạm** (`request-<id hội thoại>-<n>`, hoặc
+ * `client-created-root`) cho tới khi lượt được ghi nhận với danh tính thật là một UUID. Đây
+ * là dấu hiệu của chính ChatGPT, và là thuộc tính cấu trúc — không phải nhãn tiếng Anh.
  *
- * VÌ SAO CẦN NÓ: nút Stop nói dối, đo được. Một lượt gửi lúc 11/09:
+ * ⑴ TAB BỊ CHE, câu trả lời thật dài 85 ký tự:
+ *      giây  nút Stop   dạng id   ký tự
+ *       8.7  ĐÃ TẮT     TẠM        26   ← nút Stop nói "xong" khi CHƯA xong
+ *      27.0  đã tắt     TẠM        26   ← chữ đứng yên 20 giây, cũng nói "xong"
  *
- *     giây  nút Stop   dạng id   ký tự
- *      3.5  còn sinh   TẠM        13
- *      6.1  còn sinh   TẠM        26
- *      8.7  ĐÃ TẮT     TẠM        26   ← nút Stop nói "xong"
- *     27.0  đã tắt     TẠM        26   ← chữ đứng yên 20 giây, cũng nói "xong"
- *     (nạp lại)        UUID       85   ← sự thật: câu trả lời dài 85 ký tự
+ * ⑵ TAB HIỆN, câu trả lời thật dài 1096 ký tự:
+ *      giây  tab    nút Stop   dạng id   ký tự
+ *       7.9  HIỆN   còn sinh   TẠM        909
+ *      10.6  HIỆN   đã tắt     TẠM       1096   ← ĐÃ XONG THẬT (nạp lại vẫn 1096)
+ *      32.5  che    đã tắt     TẠM       1096   ← id VẪN tạm sau 22 giây
  *
- * Hai tín hiệu bộ chạy vẫn dùng đều nói SAI ở giây 8.7. Dạng id **chưa nói sai lần nào**: nó
- * giữ TẠM suốt lúc chưa xong và chỉ thành UUID khi lượt thật sự chốt.
+ * **ĐỪNG ĐỌC `TẠM` THÀNH "CHƯA XONG".** Lượt ⑵ bác đúng câu đó — tôi đã viết nó sáng 11/09 và
+ * nó sai. Ở ⑵ nội dung đã đủ từ giây 10.6 mà id vẫn tạm. Và id **không bao giờ tự** thành
+ * UUID: cả hai lượt đo đều giữ TẠM tới lúc dừng đo, chỉ **nạp lại** mới đổi.
  *
- * GIỚI HẠN ĐÃ BIẾT, nói ra vì nó đổi cách đọc bảng trên: cả lượt đo diễn ra trên một tab
- * ĐANG BỊ CHE (`visibility: hidden`). Nên chưa tách được "lượt hydrat muộn" khỏi "tab bị che
- * thì không hydrat". Luật rút ra không đổi theo hai cách đọc đó — TẠM vẫn là "đừng tin lượt
- * này" — nhưng con số 8.7 giây thì có thể khác trên tab hiện. Đo lại khi có tab hiện.
+ * Nghĩa đúng, hẹp hơn: **`TẠM` = DOM sống không kết luận được, phải nạp lại rồi mới đọc.**
+ * Nên chờ thêm là phí — nạp lại là thứ duy nhất gỡ được, và nó đúng bằng luật B-59 ⒝ vốn có.
+ *
+ * Hai tín hiệu, hai kiểu nói dối, không cái nào dùng một mình được:
+ *   nút Stop  → DƯƠNG TÍNH GIẢ: nói "xong" khi chưa xong  (lượt ⑴)
+ *   dạng id   → ÂM TÍNH GIẢ:    nói "chưa đọc được" khi đã xong (lượt ⑵)
+ * Bộ chạy dùng dạng id cho việc nó làm đúng — **chặn một kết luận từ DOM chưa tin được** —
+ * chứ không dùng nó để phán "xong hay chưa".
+ *
+ * Ghi thêm, vì nó là một luật vận hành: ở lượt ⑵ chữ chạy 13 → 909 → 1096 trong 5 giây khi tab
+ * HIỆN, rồi **đứng im ngay khi tab bị che**. Tab nền bị bóp đường stream thật.
  */
 export function luotDaChot(id) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id ?? ""));
@@ -147,8 +157,12 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
      đã có id tạm — đo được ở giây 6.1. */
   const idXet = khoi?.turn_id || idLuotTraLoiCuoi;
   if (idXet && !luotDaChot(idXet)) {
-    if (soLanYen < NGUONG_YEN) return { viec: "CHO", vi: `LUOT_CHUA_CHOT — trang còn đánh dấu lượt này là "${idXet}", chưa phải danh tính thật` };
-    if (!daNapLai) return { viec: "NAP_LAI", vi: "LUOT_CHUA_CHOT quá lâu — nạp lại để trang gắn danh tính thật cho lượt" };
+    /* KHÔNG CHỜ THÊM Ở ĐÂY. Tới được dòng này nghĩa là `generating` đã false VÀ trang đã qua
+       cửa quan sát ở trên — tức nó đã lặng. Mà đo được cả hai lượt 11/09: id tạm **không bao
+       giờ tự** thành UUID (giữ tạm tới 27 và 32,5 giây), chỉ nạp lại mới đổi. Nên mọi giây
+       chờ thêm ở đây là giây phí. Bản đầu của tôi chờ hết `NGUONG_YEN` (~90 giây) trước khi
+       nạp lại — trên một chuỗi 12 vòng là 18 phút ngồi không, đổi lấy đúng số không. */
+    if (!daNapLai) return { viec: "NAP_LAI", vi: `LUOT_CHUA_CHOT — DOM sống mang id tạm "${idXet}", chỉ nạp lại mới đọc được thật` };
     return { viec: "DUNG", vi: `LUOT_CHUA_CHOT — nạp lại rồi mà lượt vẫn mang id tạm "${idXet}"` };
   }
 

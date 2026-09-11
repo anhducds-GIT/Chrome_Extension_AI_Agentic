@@ -709,3 +709,32 @@ vấn còn lại hẹp hơn: Chrome bóp đường **stream** của tab nền. N
 thật — **đừng thu nhỏ Chrome khi chuỗi đang chạy**, cùng họ `~~B-46~~`.
 
 Suite **134/134**.
+
+## 2026-09-11 (lượt 24) · `claude-gpt-chay-het-job` — lượt đo thứ hai BÁC kết luận của lượt đầu
+
+Đo lại trên tab **hiện**. Câu trả lời thật 1096 ký tự:
+
+| giây | tab | nút Stop | dạng id | ký tự |
+|---:|---|---|---|---:|
+| 7.9 | **HIỆN** | còn sinh | TẠM | **909** |
+| 10.6 | **HIỆN** | đã tắt | TẠM | **1096** |
+| 13.3 → 32.5 | che | đã tắt | TẠM | 1096 |
+| *(nạp lại)* | — | — | **UUID** | **1096** |
+
+**Nạp lại vẫn đúng 1096** → nội dung đã đủ từ giây 10,6 mà id vẫn tạm 22 giây sau. Nên câu tôi
+viết sáng nay — *"dạng id không nói sai lần nào"* — **SAI**, và tôi gạch nó tại chỗ đã viết.
+
+**Hai tín hiệu, hai kiểu nói dối:** nút Stop **dương tính giả** · dạng id **âm tính giả**.
+Không cái nào dùng một mình được. Nghĩa đúng của `TẠM` hẹp hơn tôi tưởng: **DOM sống không kết
+luận được, phải nạp lại** — không phải *"chưa xong"*.
+
+**Và bản vá đầu của tôi phí 90 giây mỗi vòng:** nó chờ hết `NGUONG_YEN` rồi mới nạp lại, trong
+khi id **không bao giờ tự** thành UUID (giữ tạm suốt 27 và 32,5 giây ở hai lượt đo) — chỉ nạp
+lại mới đổi. Trên chuỗi 12 vòng là **18 phút ngồi không**. Sửa thành nạp lại ngay; phép ghim ⓠ
+trước đó đang ghim **niềm tin của tôi**, nay ghim hành vi đúng kèm mép chống hồi quy.
+
+**Nghi vấn cuối ĐÃ XÁC NHẬN:** chữ chạy 13 → 909 → 1096 trong 5 giây khi tab **hiện**, đứng im
+ngay khi tab bị che. Chrome bóp đường **stream** của tab nền → luật vận hành thứ tư trong
+`chay-chuoi.bat`: **đừng thu nhỏ Chrome khi chuỗi đang chạy**.
+
+Suite **134/134**.
