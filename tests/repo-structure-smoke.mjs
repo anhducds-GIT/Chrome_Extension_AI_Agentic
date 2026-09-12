@@ -307,17 +307,24 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   // `ownershipKeys` THANG nua — no goi `commitChuaDay`, tuc VAN la cua chung, chi them mot
   // tang. Chap nhan ca hai TEN, nhung dong ngay cua sau ben duoi: `commitChuaDay` bat buoc
   // phai la ke goi `ownershipKeys`, neu khong thi "them mot tang" chinh la them mot cua thu hai.
+  /* CUA CHUNG DOI TEN 09/09, va phep ghim nay khong theo kip — do 12/09.
+     `commitChuaDay` BIEN MAT khoi bo khung o lan migrate 4da1e9e5; ban truoc van doi ba script
+     goi dung mot trong hai ten cu, nen `claim.mjs` DO du no van di qua cua chung (no goi
+     `stewardOf` cho TUNG file, thay vi `ownershipKeys` cho ca tap).
+     Te hon: phep kiem ngay duoi doi `commitChuaDay` phai goi `ownershipKeys`, va no XANH SAI —
+     `indexOf` tra -1, `slice(-1)` ra MOT KY TU chu khong ra chuoi rong, nen `notEqual("")` lot.
+     Mot ten da chet duoc ghim bang mot phep kiem khong the do. Nay ghim CUA THAT. */
   for (const name of ["session-check.mjs", "safe-push.mjs", "claim.mjs"]) {
-    assert.match(readScript(name), /(ownershipKeys|commitChuaDay)\(/,
-      `${name} phai di qua cua chung (ownershipKeys, hoac commitChuaDay goi no) — day la dung cai day noi da dut 02/09`);
+    assert.match(readScript(name), /(ownershipKeys|stewardOf)\(/,
+      `${name} phai di qua cua chung (ownershipKeys cho ca tap, hoac stewardOf cho tung file) — day la dung cai day noi da dut 02/09`);
   }
   const cauTruc = readScript("repo-structure.mjs");
-  const than = cauTruc.slice(cauTruc.indexOf("export function commitChuaDay("));
-  assert.notEqual(than, "", "khong tim thay commitChuaDay trong repo-structure.mjs");
-  assert.match(than, /ownershipKeys\(/,
-    "commitChuaDay PHAI goi ownershipKeys — neu khong thi no la cua quy vung thu hai, dung con bug 02/09");
+  const moc = cauTruc.indexOf("export function ownershipKeys(");
+  assert.notEqual(moc, -1, "khong tim thay ownershipKeys trong repo-structure.mjs — cua chung bien mat");
+  assert.match(cauTruc.slice(moc), /stewardOf\(/,
+    "ownershipKeys PHAI goi stewardOf — hai ham quy vung doc lap la hai cua, dung con bug 02/09");
   for (const name of ["safe-push.mjs", "claim.mjs"]) {
-    assert.doesNotMatch(readScript(name), /\bareaOf\(/,
+    assert.doesNotMatch(readScript(name), /areaOf\(/,
       `${name} KHONG duoc tu quy vung bang areaOf — do la cua thu hai, va no da lech mot lan`);
   }
   ok("K2-2b · DAY NOI: ba script deu di qua cua chung; commitChuaDay khong duoc thanh cua thu hai; khong ai co duong rieng");

@@ -67,6 +67,7 @@
     }
   },
   "areas": {
+    "drafts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "nhap DUNG CHUNG — nhieu lane duoc ghi cung luc (N-64, a7bd5518). Khai steward _root de B3 co mot muc, nhung quyen THAT nam o khoi nhap_dung_chung: khong quy file o day cho lane dang giu _root." },
     "delegations/": {
       "steward": "_root",
       "mutability": "rw",

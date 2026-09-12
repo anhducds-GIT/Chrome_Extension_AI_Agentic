@@ -18,6 +18,9 @@
  *   node scripts/claim.mjs --list
  *   node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu" [--ai Codex]
  *   node scripts/claim.mjs --release <khoá> --as <phiên> [--task "một câu"] [--du-biet "vì sao"]
+ *   node scripts/claim.mjs --xong <đường-dẫn> --as <phiên> --duc-duyet "<câu chốt của Đức>"
+ *       ↑ gỡ một khoá mức FILE bỏ quên của phiên khác. Không có cửa này thì một dòng bỏ quên
+ *         khoá luôn cả vùng bao ngoài, và không lệnh nào gỡ được (đo 12/09: 58 tiếng).
  *   node scripts/claim.mjs --take <khoá> --as <phiên> --task "…" --duc-duyet "<câu chốt của Đức>"
  *       ↑ giành vùng người khác đang giữ. Đòi câu chốt, và TỪ CHỐI nếu vùng đó còn file sửa dở.
  *
@@ -294,17 +297,34 @@ export function quyetDinhSua(bang, { duongDan, as, luc, vungCua, laMaySinh = () 
   return { code: EXIT.OK, already: dangGiu === as, next: tam };
 }
 
-export function quyetDinhXong(bang, { duongDan, as }) {
+/* KHOÁ FILE BỎ QUÊN: cửa duy nhất để gỡ, và nó đòi câu chốt của Đức.
+ *
+ * ĐO 12/09: khoá `HANDOFF.md` của `harness-loi-01` đã treo **58 tiếng** — loại khoá này tự khai
+ * là "giữ VÀI PHÚT". Nó chặn cả vùng `_root` (luật chiều hai: vùng còn khoá file của người khác
+ * thì không ai nhận được vùng), nên một dòng bỏ quên khoá luôn một phần tư repo, và **không có
+ * lệnh nào gỡ được** — khoá VÙNG của người khác thì `--take --duc-duyet` giành được, khoá FILE
+ * thì không có cửa nào. Đó là một lỗ, không phải một sự nghiêm khắc.
+ *
+ * VÌ SAO VẪN ĐÒI CÂU CHỐT chứ không mở theo thời gian: một cái hạn tự động là lời mời ngồi đợi
+ * cho hết giờ rồi lấy, và lần đó sẽ đúng vào phiên đang ghi dở thật. Chỉ Đức nhìn được cả hai
+ * phiên. Câu chốt cũng ghi lại ai gỡ và vì sao, ngay trong bảng. */
+export function quyetDinhXong(bang, { duongDan, as, ducDuyet }) {
   const d = chuanDuongDan(duongDan);
   const tam = { ...(bang.tam || {}) };
   const dangGiu = tam[d]?.owner || null;
   if (!dangGiu) return { code: EXIT.OK, already: true, next: tam };
   if (dangGiu !== as) {
-    return {
-      code: EXIT.REFUSED,
-      message: `TU_CHOI_XONG: "${d}" đang do "${dangGiu}" sửa — KHÔNG trả hộ người khác.`
-        + "\nTrả hộ là xoá dấu vết một phiên đang ghi dở, và họ sẽ không biết mình vừa mất quyền.",
-    };
+    if (typeof ducDuyet !== "string" || ducDuyet.trim().length < 10) {
+      return {
+        code: EXIT.REFUSED,
+        message: `TU_CHOI_XONG: "${d}" đang do "${dangGiu}" sửa — KHÔNG trả hộ người khác.`
+          + "\nTrả hộ là xoá dấu vết một phiên đang ghi dở, và họ sẽ không biết mình vừa mất quyền."
+          + `\n\nKhoá bỏ quên thì HỎI ĐỨC, rồi chạy lại kèm câu chốt của Đức:`
+          + `\n  node scripts/claim.mjs --xong "${d}" --as ${as} --duc-duyet "<câu chốt của Đức>"`,
+      };
+    }
+    delete tam[d];
+    return { code: EXIT.OK, next: tam, goHo: { duongDan: d, cua: dangGiu, chot: ducDuyet.trim() } };
   }
   /* XOÁ HÀNG, không để `owner: null`. Khoá file là tạm; giữ hàng trống thì sau một ngày bảng
      đầy xác đường dẫn và không ai đọc nổi nó nữa. */
@@ -1142,11 +1162,13 @@ async function main() {
     const laMaySinh = (d) => maySinh.has(d);
     const luc = new Date().toISOString();
     let tam = parsed.tam || {};
+    const daGoHo = [];
     for (const d of ds) {
       const kq = suaCo
         ? quyetDinhSua({ claims: parsed.claims, tam }, { duongDan: d, as, luc, vungCua, laMaySinh })
-        : quyetDinhXong({ claims: parsed.claims, tam }, { duongDan: d, as });
+        : quyetDinhXong({ claims: parsed.claims, tam }, { duongDan: d, as, ducDuyet: flag("duc-duyet") });
       if (kq.code !== EXIT.OK) { nhaKhoaBang(); console.error(kq.message); process.exit(kq.code); }
+      if (kq.goHo) daGoHo.push(kq.goHo);
       tam = kq.next;
     }
     /* KHỐI RỖNG THÌ XOÁ HẲN, không để `"tam": {}`. Bảng của repo chưa dùng khoá file phải giữ
@@ -1158,6 +1180,12 @@ async function main() {
     const ten = ds.map((d) => chuanDuongDan(d)).filter((d) => !boQua.includes(d)).join(" · ");
     if (boQua.length) console.log(`bỏ qua (artifact máy sinh, không đòi khoá nào): ${boQua.join(" · ")}`);
     if (ten) console.log(`${suaCo ? "đã khoá để sửa" : "đã trả"}: ${ten}${suaCo ? ` → ${as}` : ""}`);
+    /* GỠ HỘ PHẢI NÓI TO. Một dòng lặng lẽ là cách phiên kia không bao giờ biết mình mất quyền —
+       đúng cái hại mà lượt từ chối ở trên mô tả; câu chốt của Đức cho phép, nó không xoá đi. */
+    for (const g of daGoHo) {
+      console.log(`GỠ HỘ: "${g.duongDan}" vốn do "${g.cua}" giữ — Đức chốt: ${g.chot}`);
+      console.log(`  Phiên "${g.cua}" nếu còn chạy sẽ KHÔNG biết mình vừa mất quyền. Báo họ.`);
+    }
     if (suaCo) console.log(`Trả NGAY sau khi ghi xong: node scripts/claim.mjs --xong --het --as ${as}`);
     /* BẬT CỬA INDEX Ở ĐÂY, không ở một lệnh riêng. `core.hooksPath` là cấu hình mỗi BẢN SAO nên
        không theo git được; một lệnh riêng thì bản sao mới nào cũng chạy phiên đầu mà cửa chưa
