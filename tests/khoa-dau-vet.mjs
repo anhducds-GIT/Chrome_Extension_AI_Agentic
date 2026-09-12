@@ -462,8 +462,14 @@ const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mj
   const nguonCong = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
   assert.match(nguonCong, /nhapDungChungFrom\(structure\)/,
     "session-check phải đọc khối nhap_dung_chung — không đọc thì luật đó chỉ là chữ");
-  assert.match(nguonCong, /filter\(\(f\) => !laNhapDungChung\(f\)\)/,
-    "và phải LỌC tập file mới bằng nó, nếu không thì file nháp của lane khác vẫn chặn lượt đóng phiên");
+  /* HAI CHỖ GỌI, và bản khôi phục sáng 12/09 chỉ trả MỘT — cổng vẫn đỏ ở lượt chạy cuối vì
+     `_root` bị quy cho file nháp của lane khác. Đếm, đừng chỉ tìm thấy: một bản vá hai vế mà
+     trả một vế thì vế còn lại nói y như chưa từng được vá. */
+  const soLoc = [...nguonCong.matchAll(/!laNhapDungChung\(f\)/g)].length;
+  assert.ok(soLoc >= 2,
+    `chỉ thấy ${soLoc} chỗ lọc nháp dùng chung, phải có ÍT NHẤT hai: tập file MỚI (bản đồ file) và tập file CHẠM (quy vùng)`);
+  assert.match(nguonCong, /ownershipKeys\(touched\.filter\(\(f\) => !laNhapDungChung\(f\)\)/,
+    "quy vùng phải lọc nháp dùng chung — nếu không, file nháp của lane khác bắt lane giữ _root đứng tên");
 
   // Và chốt vẫn phải nổ cho mọi file KHÁC: miễn trừ này hẹp đúng một thư mục.
   const ds = nhapDungChungFrom({ nhap_dung_chung: ["drafts/"] });

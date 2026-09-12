@@ -349,7 +349,11 @@ const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 // MỘT CỬA DUY NHẤT (K2-2b): cả cổng này và `safe-push.mjs` đi qua `ownershipKeys`. Trước đó mỗi
 // bên tự gộp tập khoá, và 02/09 hai bên đã trả hai câu khác nhau cho cùng một file — xem ghi chú
 // trong repo-structure.mjs. Khoá gốc luôn bắt đầu bằng "_"; vùng chia-theo-gói thì không.
-const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
+/* NHÁP DÙNG CHUNG KHÔNG QUY CHO AI — N-64, chỗ gọi THỨ HAI.
+   Bản vá gốc (a7bd5518) lọc ở HAI nơi; lượt khôi phục sáng nay chỉ trả một, nên `_root` vẫn bị
+   quy cho `drafts/REVIEW-CONTEXT-COMPILER-V1.md` của lane khác và cổng ĐỎ ngay lượt chạy cuối.
+   Một bản vá hai vế mà trả một vế thì vế còn lại nói y như chưa từng được vá. */
+const keysTouched = ownershipKeys(touched.filter((f) => !laNhapDungChung(f)), structure, claimPrefixes, adminFile);
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const khoaGocCoNhanCuaToi = new Set(
   ownershipKeys(touched.filter(nhanCuaToi), structure, claimPrefixes, adminFile).filter((k) => k.startsWith("_"))
