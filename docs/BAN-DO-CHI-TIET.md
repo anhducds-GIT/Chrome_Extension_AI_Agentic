@@ -78,10 +78,6 @@ chạy `npm run bootstrap`
 
 [tests/harness-smoke.mjs](tests/harness-smoke.mjs) — bốn khối hạt giống · [tests/assistant-smoke.mjs](tests/assistant-smoke.mjs) — phép ghim của hai lệnh trên, khối cuối tự dựng một repo hình dạng khác hẳn rồi chạy thật trong đó. Chạy cả hai bằng `npm test`
 
-### Sắp gộp, đổi tên, hay xoá một ADR
-
-[tests/b12-so-hieu-adr-smoke.mjs](tests/b12-so-hieu-adr-smoke.mjs) — sổ SỐ HIỆU quyết định, máy canh mà [ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) đặt ra THAY cho luật bất biến-từng-byte. Gộp nhiều ADR làm một thì **khai `decides: [..]`** ở frontmatter file gộp; quyết định rời repo thì khai vào `adr.moved_out` **kèm lý do**. Ba điều B12 hỏi: mỗi số hiệu ở **đúng một** file · **không số nào** biến mất · `decides:` không nhận một số **chưa từng cấp**. Viết lại THÂN một ADR đã Accepted là **hợp lệ** — đừng cài lại luật đã chết
-
 ### Sắp THÊM một luật, hay muốn biết luật nào đang hiệu lực về một chủ đề
 
-`npm run luat` — bộ biên dịch luật. Ba tầng: **sổ cái** (`docs/adr/` · `decisions.md` · kho lưu trữ — chỉ thêm, là LỊCH SỬ) → **bộ biên dịch** → **luật hiệu lực** (thứ một phiên thật sự đọc). Mỗi ADR khai `chu_de`, mỗi chủ đề đúng một `dau_moi`, nên mở một khối là ra câu trả lời chứ không phải đọc bốn file rồi tự đoán. `--de-xuat` NÊU chỗ đáng gộp. **AI được đề xuất, KHÔNG tự sửa hay xoá luật** — chỉ khai báo tường minh mới làm đổi bộ luật. Cưỡng chế ở B16
+`npm run luat` — bộ biên dịch luật. Ba tầng: **sổ cái** (`docs/adr/` · `decisions.md` · kho lưu trữ — chỉ thêm, là LỊCH SỬ) → **bộ biên dịch** → **luật hiệu lực** (thứ một phiên thật sự đọc). Mỗi ADR khai `chu_de`, mỗi chủ đề đúng một `dau_moi`, nên mở một khối là ra câu trả lời chứ không phải đọc bốn file rồi tự đoán. `--de-xuat` NÊU chỗ đáng gộp. **Gộp/xoá một ADR:** khai `decides: [..]` ở file gộp, hoặc `adr.moved_out` kèm lý do — B12 hỏi *mỗi số hiệu ở đúng một file, không số nào biến mất*, KHÔNG còn hỏi thân file có đổi không ([ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md)); ghim ở [tests/b12-so-hieu-adr-smoke.mjs](tests/b12-so-hieu-adr-smoke.mjs). **AI được đề xuất, KHÔNG tự sửa hay xoá luật** — chỉ khai báo tường minh mới làm đổi bộ luật. Cưỡng chế ở B16

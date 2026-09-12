@@ -703,3 +703,17 @@ cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự
 ## 2026-09-12 · `codex-bridge-pairing-links`
 
 Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Agent Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.
+
+## 2026-09-12 · `claude-gpt-chay-het-job` — một byte thô làm phép ghim xanh giả
+
+Chạm **đúng một dòng** trong gói này, từ lượt dọn ở gốc repo.
+
+`tests/halt-instructions-core-smoke.mjs:27` mang một **byte 0x08 THÔ** giữa biểu thức chính quy:
+tác giả định gõ `\b` (mép từ) nhưng byte backspace thật đã vào file. Hậu quả không phải "xấu
+chữ" — biểu thức ấy **không bao giờ khớp**, nên `doesNotMatch` qua vô điều kiện: một phép ghim
+xanh mà chưa từng kiểm gì. Cùng bệnh với 4 chỗ khác ở gốc repo, một trong số đó do chính lượt
+dọn hôm nay đẻ ra.
+
+Thay bằng escape `\\b`. **Suite gói 102/102 xanh** trước và sau — đúng như phải thế, vì mép đó
+vốn có kiểm gì đâu. Canh bởi `tests/khong-byte-dieu-khien-smoke.mjs` ở gốc repo, nay đã nằm
+trong chuỗi `npm test` (trước đó nó không thuộc chuỗi nào).
