@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, chanDung, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
@@ -470,10 +470,24 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(!/["'`]--request-id["'`],\s*`\$\{nhan\}/.test(chiMa),
     "còn chỗ ghép THẲNG tên chuỗi vào --request-id — đó đúng là lỗi vừa vá");
   /* Đếm LƯỢT GỌI, không đếm cả dòng khai hàm — `export function khoaAnToan(nhan, …)` cũng
-     khớp nếu dò lỏng, và khi đó con số 3 sẽ đúng vì lý do sai. Mọi lượt gọi đều truyền hậu tố
-     bằng chuỗi mẫu, nên dấu backtick là mỏ neo phân biệt. */
-  assert.equal((chiMa.match(/khoaAnToan\(nhan, `/g) || []).length, 3,
-    "phải có đúng ba chỗ dựng khoá từ tên (ping · reload · gửi), và lượt gửi lại DÙNG LẠI khoá của lượt gửi");
+     khớp nếu dò lỏng, và khi đó con số sẽ đúng vì lý do sai. Mọi lượt gọi đều truyền hậu tố
+     bằng chuỗi mẫu, nên dấu backtick là mỏ neo phân biệt.
+
+     ĐẾM HAI TẦNG, không đếm tổng. Bản trước ghim "đúng 3 chỗ" và con số ấy vỡ ngay lượt B-76
+     thêm một lượt PING khi đọc hỏng — một lượt CHỈ ĐỌC, không đụng gì tới exact-once. Một phép
+     ghim vỡ vì việc hợp lệ là phép ghim sẽ bị người ta sửa cho qua, và lần sửa đó mới là lúc
+     mất bảo vệ thật. Nên tầng dưới ghim đúng điều câu comment nói: CHỈ MỘT chỗ dựng khoá GỬI. */
+  const goiKhoa = chiMa.match(/khoaAnToan\(nhan, `[^`]*`/g) || [];
+  assert.ok(goiKhoa.length >= 3, `phải còn các chỗ dựng khoá từ tên, đang là ${goiKhoa.length}`);
+  const khoaGui = goiKhoa.filter((x) => /`-v\$\{vong\}`$/.test(x));
+  assert.equal(khoaGui.length, 1,
+    "phải có ĐÚNG MỘT chỗ dựng khoá cho lượt GỬI — lượt gửi lại DÙNG LẠI khoá đó, đó là exact-once");
+  /* Mọi chỗ còn lại phải là lượt CHỈ ĐỌC và phải tự khai mình là ai trong hậu tố. Một khoá mới
+     không tên là một đường gửi mới chưa ai xét. */
+  for (const g of goiKhoa.filter((x) => !/`-v\$\{vong\}`$/.test(x))) {
+    assert.match(g, /-(ping|reload)/,
+      `chỗ dựng khoá không phải lượt gửi thì phải khai rõ là ping hay reload: ${g}`);
+  }
   assert.match(chiMa, /const khoaGui = khoaAnToan\(nhan,/, "lượt gửi phải chốt khoá MỘT LẦN rồi dùng lại cho lượt gửi thứ hai");
   console.log("  ok  ⓡ tên chuỗi có dấu cách / tiếng Việt không còn làm vỡ khoá gửi");
 }
@@ -585,4 +599,66 @@ console.log("chuoi reasoning smoke tests: PASS");
     "hạn tìm bằng chứng của chat.say KHÔNG được nới: deadline_ms 30000 cưỡng chế ở bridge-transport-loopback.js");
 
   console.log("  ok  ⓣ giãn nhịp: 3–6 giây ngẫu nhiên ở CẢ hai khoảng, mỗi lượt một số khác, cờ huỷ đọc lại");
+}
+
+/* ⓤ B-76 — ĐỌC HỎNG: nghe tiện ích khai dừng cứng, giãn nhịp, ghi nhật ký.
+ *
+ * Bắt tại trận 12/09 trên profile `kaito`: `chat.read` hỏng liên tục, bộ chạy in "chưa rõ vì
+ * sao" và thử lại đều 4 giây suốt 60 phút; `system.ping` cùng lúc trả lời NGAY với
+ * `state: HARD_STOP` · `failure_type: RECEIVER_LOST`, và `halt_instruction.retry` của chính
+ * tiện ích viết *"No — hard stop"*. Bộ chạy không đọc trường đó.
+ */
+{
+  // ⒜ Tiện ích khai dừng cứng ⇒ DỪNG, và mang theo NGUYÊN VĂN câu của nó.
+  const pingChet = { ok: true, result: { chatgpt: {
+    state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, url: null,
+    halt_instruction: { retry: "No -- hard stop, whole batch stops",
+      meaning: "The extension lost its connection to the ChatGPT tab, composer, or content receiver." },
+  } } };
+  const ch = chanDung(pingChet);
+  assert.equal(ch.dung, true, "state HARD_STOP thì phải dừng");
+  assert.match(ch.vi, /RECEIVER_LOST/, "lý do dừng phải nêu loại hỏng tiện ích khai");
+  assert.match(ch.vi, /lost its connection/, "phải chuyển NGUYÊN VĂN `meaning`, không tóm tắt lại");
+  assert.match(ch.khuyen, /hard stop/, "phải chuyển cả lời khuyên thử-lại của tiện ích");
+
+  // ⒝ VÀ VẾ NGƯỢC — thiếu vế này thì một đột biến "luôn luôn dừng" sẽ thoát, và nó biến mọi
+  //    lượt panel hết giờ lẻ tẻ (rất thường, B-50) thành một chuỗi chết oan.
+  assert.equal(chanDung({ ok: true, result: { chatgpt: { state: "UNKNOWN" } } }).dung, false,
+    "state UNKNOWN KHÔNG phải dừng cứng — panel bận là chuyện thường");
+  assert.equal(chanDung({ ok: false, error: { code: "REQUEST_TIMEOUT" } }).dung, false,
+    "ping hỏng KHÔNG được suy ra dừng cứng: không biết thì không kết luận");
+  assert.equal(chanDung(null).dung, false, "không có ping thì không kết luận gì");
+
+  // ⒞ Nhịp: giãn dần, CÓ TRẦN, và trần phải thật sự chạm tới.
+  const t1 = nhipDocHong(1).treMs;
+  const t3 = nhipDocHong(3).treMs;
+  assert.ok(t3 > t1, `phải giãn dần: lượt 3 (${t3}ms) phải lâu hơn lượt 1 (${t1}ms)`);
+  assert.equal(nhipDocHong(50).treMs, TRE_DOC_HONG_TRAN_MS, "phải có trần, không giãn vô hạn");
+  assert.ok(nhipDocHong(99).treMs <= TRE_DOC_HONG_TRAN_MS, "trần là trần");
+  /* Ghim cái GIÁ, không ghim con số: trần 60 phút mà nhịp phẳng 4 giây là ~900 lượt gõ cửa.
+     Đếm thật số lượt trong 60 phút theo nhịp hiện tại. */
+  let tong = 0, luot = 0;
+  while (tong < 60 * 60 * 1000 && luot < 5000) { tong += nhipDocHong(luot + 1).treMs; luot += 1; }
+  assert.ok(luot < 300, `trong trần 60 phút phải dưới 300 lượt đọc hỏng, đang là ${luot}`);
+
+  // ⒟ Hỏi ping: KHÔNG hỏi ngay lượt đầu (hết giờ lẻ tẻ là chuyện thường), nhưng phải hỏi sớm.
+  assert.equal(nhipDocHong(1).hoiPing, false, "một lượt hỏng chưa phải triệu chứng");
+  assert.equal(nhipDocHong(NGUONG_PING_DOC_HONG).hoiPing, true, "tới ngưỡng thì phải hỏi ping");
+  assert.ok(NGUONG_PING_DOC_HONG <= 5, "ngưỡng hỏi ping phải sớm — ping là cửa duy nhất còn trả lời");
+
+  // ⒠ Ghim ĐƯỜNG DÂY, không chỉ hàm thuần: hàm đúng mà không ai gọi thì bộ chạy vẫn nện 900 lượt.
+  const boChay = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  assert.ok(boChay.includes("chanDung(p)"),
+    "vòng lặp đọc hỏng phải THẬT SỰ gọi chanDung với kết quả ping");
+  assert.ok(boChay.includes("nhipHong.treMs"),
+    "phải nghỉ theo nhịp giãn dần, không phải một hằng số phẳng");
+  assert.ok(!boChay.includes("await ngu(4000);"),
+    "không còn chỗ nào nghỉ phẳng 4 giây ở đường đọc hỏng");
+  assert.ok(boChay.includes('su_kien: "DOC_HONG"'),
+    "lượt đọc hỏng phải vào nhật ký — nhìn nhật ký phải phân biệt được 'đang nện' với 'đã chết'");
+  assert.ok(boChay.includes("cd.debug"),
+    "phải in `details.debug` — sidepanel.js:707 cố ý gửi nguyên nhân thật qua trường đó");
+
+  console.log("  ok  ⓤ đọc hỏng: HARD_STOP thì dừng, giãn nhịp có trần, ghi nhật ký, in debug");
 }

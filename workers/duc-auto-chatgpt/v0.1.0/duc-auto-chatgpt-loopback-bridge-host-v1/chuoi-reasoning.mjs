@@ -213,6 +213,57 @@ export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
   return { dung: false, vi: null };
 }
 
+/* ---- NHỊP THỬ LẠI KHI ĐỌC HỎNG — B-76, mua bằng một lượt live 12/09 ------------
+ *
+ * Chuỗi "Mo rong Scouter" trên profile `kaito`: `chat.read` hỏng liên tục, bộ chạy in
+ * "chưa rõ vì sao" và thử lại ĐỀU 4 giây, không giãn, không trần. `system.ping` cùng lúc trả
+ * lời NGAY và nói rõ `state: HARD_STOP` · `failure_type: RECEIVER_LOST` — tiện ích mất kết nối
+ * với tab, và `halt_instruction.retry` của chính nó viết: *"No — hard stop, whole batch stops"*,
+ * kèm lý do: *"auto-retrying would just fail every remaining job back-to-back without producing
+ * anything."* Bộ chạy không đọc trường đó, nên nó đốt trọn 60 phút ngân sách: 60' ÷ 4" ≈ 900
+ * lượt gõ cửa một cánh cửa đã khoá.
+ *
+ * Ba vế, và vế thứ ba là vế dễ bỏ quên nhất:
+ *   ⒜ HỎI PING khi đọc hỏng lặp lại, không chỉ khi `WRONG_SURFACE`. Ping là cửa DUY NHẤT còn
+ *      trả lời ở trạng thái này — lượt đo 12/09 chứng minh: `chat.read` hết giờ, ping trả lời
+ *      trong chưa tới một giây, mang theo nguyên văn bệnh án.
+ *   ⒝ GIÃN NHỊP. 4 giây phẳng là một vòng lặp bận đội lốt chờ.
+ *   ⒞ TIỆN ÍCH KHAI DỪNG CỨNG thì DỪNG. Không cãi. Nó biết trạng thái tab, bộ chạy thì không.
+ */
+export const NGUONG_PING_DOC_HONG = 3;
+export const TRE_DOC_HONG_NEN_MS = 4000;
+export const TRE_DOC_HONG_TRAN_MS = 30000;
+
+/** Thuần: lượt đọc hỏng thứ `docHong` thì nghỉ bao lâu, có in ra không, có hỏi ping không. */
+export function nhipDocHong(docHong, nen = TRE_DOC_HONG_NEN_MS, tran = TRE_DOC_HONG_TRAN_MS) {
+  const n = Math.max(1, Math.floor(Number(docHong) || 1));
+  return {
+    /* In ở lượt 1, 11, 21… — giữ nguyên nhịp cũ để người quen đọc màn hình không phải học lại. */
+    inRa: n % 10 === 1,
+    /* Hỏi ping ở lượt 3, 13, 23… — LỆCH khỏi nhịp in một cách cố ý: hỏi ngay lượt đầu thì mọi
+       lượt hết giờ lẻ tẻ (rất thường, B-50) đều kéo theo một RPC thừa. Ba lượt liên tiếp mới
+       là một triệu chứng. */
+    hoiPing: n >= NGUONG_PING_DOC_HONG && (n - NGUONG_PING_DOC_HONG) % 10 === 0,
+    /* Giãn dần 1,5× từ 4 giây, trần 30 giây — chạm trần ở lượt 6, tức khoảng 80 giây. Trong
+       trần 60 phút: ~120 lượt thay vì 900. */
+    treMs: Math.min(tran, Math.round(nen * 1.5 ** (n - 1))),
+  };
+}
+
+/** Thuần: tiện ích có tự khai DỪNG CỨNG không. Đọc `system.ping`, không đoán từ mã lỗi. */
+export function chanDung(ping) {
+  const c = ping?.result?.chatgpt ?? ping?.chatgpt ?? null;
+  if (!c || c.state !== "HARD_STOP") return { dung: false, vi: null, khuyen: null };
+  const h = c.halt_instruction || {};
+  /* Đọc NGUYÊN VĂN `meaning` của tiện ích, không dịch lại, không tóm tắt. Nó biết tab đang ở
+     đâu; bộ chạy chỉ biết một mã lỗi đã bị giặt qua hai tầng. */
+  return {
+    dung: true,
+    vi: `DUNG_CUNG — ${c.failure_type || "không rõ loại"}: ${h.meaning || "tiện ích khai dừng cứng"}`,
+    khuyen: h.retry || null,
+  };
+}
+
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
 export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0, idLuotTraLoiCuoi = null }) {
@@ -458,12 +509,36 @@ async function chinh() {
            đoán hộ: `REQUEST_TIMEOUT` do tiện ích tự sinh (hết hạn chờ side panel) hiện VẪN
            chưa mang chẩn đoán — xem `B-50`. */
         const cd = d.error?.details || {};
-        if (docHong % 10 === 1) {
+        const nhipHong = nhipDocHong(docHong);
+        if (nhipHong.inRa) {
           console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp (${d.error?.code})`
             + `${cd.diagnosis ? ` — ${cd.diagnosis}` : " — chưa rõ vì sao"}`);
           if (cd.remedy) console.log(`     ${cd.remedy}`);
+          /* IN `debug`. `sidepanel.js:707` CỐ Ý gửi nguyên nhân thật cho agent nội bộ qua
+             `details.debug`; bản trước chỉ in `diagnosis`+`remedy` nên nó vứt đúng câu trả lời
+             đi rồi in "chưa rõ vì sao" — đo 12/09, Đức nhìn 41 lượt không có một chữ nào dùng
+             được. Cắt 300 ký tự: đây là vết ngăn xếp, không phải bài đọc. */
+          if (cd.debug) console.log(`     debug: ${String(cd.debug).slice(0, 300)}`);
+          /* GHI NHẬT KÝ, cùng nhịp với dòng in — KHÔNG ghi cả 900 lượt. Bản trước không ghi
+             gì cả: sau 5 phút hỏng liên tục nhật ký có ĐÚNG MỘT dòng `BAT_DAU`, nên một bản
+             chạy đang nện 900 lượt nhìn từ nhật ký KHÔNG phân biệt được với một bản đã treo
+             chết. Nhịp tim in ra màn hình không cứu được: đóng cửa sổ là mất. */
+          ghi({ su_kien: "DOC_HONG", vong, so_luot: docHong, ma: d.error?.code || null,
+            diagnosis: cd.diagnosis || null, debug: cd.debug ? String(cd.debug).slice(0, 300) : null });
         }
-        await ngu(4000);
+        if (nhipHong.hoiPing) {
+          const p = goi(["ping", "--request-id", khoaAnToan(nhan, `-v${vong}-ping${docHong}`)]);
+          const ch = chanDung(p);
+          if (ch.dung) {
+            lyDo = ch.vi;
+            console.log(`  vòng ${vong}: ${ch.vi}`);
+            if (ch.khuyen) console.log(`     thử lại? ${ch.khuyen}`);
+            console.log("  Nạp lại tab ChatGPT của profile này, chờ ô nhập hiện ra, rồi chạy lại.");
+            ghi({ su_kien: "DUNG_CUNG", vong, vi: ch.vi, so_luot: docHong });
+            break;
+          }
+        }
+        await ngu(nhipHong.treMs);
         continue;
       }
       docHong = 0;
