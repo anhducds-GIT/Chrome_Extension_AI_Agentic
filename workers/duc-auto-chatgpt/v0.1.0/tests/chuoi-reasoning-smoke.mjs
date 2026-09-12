@@ -1210,3 +1210,45 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓒ đọc lại sau khi gửi: nhìn tiếp khi chưa thấy, `false` chỉ sau khi hết kiên nhẫn, mù vẫn `null`");
 }
+
+/* Ⓓ B-89 — "LIÊN TIẾP" MỘT MÌNH KHÔNG PHÂN BIỆT ĐƯỢC "ĐANG TREO" VỚI "ĐANG TIẾN".
+ *
+ * Màn hình 13/09 in ba dòng `đọc hỏng 1 lượt liên tiếp` sát nhau. Đọc ra như một vòng lặp đang
+ * nện cùng một chỗ; sự thật là giữa mỗi cặp có một lượt đọc THÀNH CÔNG (bị bóp nhịp `nhip % 4`
+ * nên không in), `soLanYen` vẫn leo, chuỗi vẫn tiến. Phân biệt được hai cảnh ấy chỉ bằng cách
+ * đo khoảng cách thời gian giữa hai dòng — thứ người đọc nhật ký không làm.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒜ HAI BỘ ĐẾM PHẢI CÙNG SỐNG, và chúng đếm hai thứ khác nhau: một cái về 0 ở mỗi lượt đọc
+     được, một cái không. Nhập chúng làm một là mất đúng thông tin cần. */
+  assert.ok(/docHong \+= 1;\s*\n\s*hongTong \+= 1;/.test(ma),
+    "mỗi lượt hỏng phải nhích CẢ HAI bộ đếm — thiếu một là dòng in nói dối về nhịp");
+  assert.ok(ma.includes("docHong = 0;"), "bộ đếm liên tiếp vẫn phải về 0 ở lượt đọc được");
+  /* Đếm, đừng đo THỨ TỰ. Bản đầu của phép ghim này tìm `hongTong = 0` đứng TRƯỚC `docHong = 0`
+     trong một cửa sổ 400 ký tự — còn đột biến đặt nó ĐỨNG SAU, nên phép ghim vẫn xanh trong khi
+     bộ đếm tổng đã bị về 0 cùng bộ đếm liên tiếp. Một phép đo đúng chiều này sai chiều kia thì
+     không phải phép đo. Đếm thì không có chiều: cả file chỉ được có ĐÚNG MỘT chỗ gán 0, và đó
+     phải là dòng khai báo. */
+  const ganKhong = (ma.match(/hongTong = 0/g) || []).length;
+  assert.equal(ganKhong, 1,
+    `chỉ dòng khai báo được gán \`hongTong = 0\` (đang có ${ganKhong} chỗ) — gán lại ở đâu đó là bộ đếm tổng thành bản sao vô dụng của bộ đếm liên tiếp`);
+  assert.ok(/let hongTong = 0;/.test(ma), "và chỗ gán 0 duy nhất ấy phải là dòng khai báo");
+
+  /* ⒝ CẢ HAI PHẢI RA TỚI NGƯỜI ĐỌC: một cái ra màn hình, một cái vào nhật ký. Đóng cửa sổ là
+     mất màn hình, nên nhật ký mới là chỗ chẩn đoán nguội đọc lại được. */
+  assert.ok(/hong_tong: hongTong/.test(ma), "tổng phải vào nhật ký, không chỉ ra màn hình");
+  assert.ok(/hongTong > docHong \?/.test(ma),
+    "dòng in chỉ nói thêm KHI hai số khác nhau — bằng nhau thì thêm chữ chỉ làm nhiễu");
+
+  /* ⒞ VÀ NÓ PHẢI NÓI ĐÚNG ĐIỀU CẦN NÓI: có lượt đọc được xen vào. Một dòng in thêm con số mà
+     không nói con số ấy NGHĨA LÀ GÌ thì vẫn bắt người đọc tự suy — đúng chỗ tôi đã suy sai. */
+  const iIn = ma.indexOf("lượt hỏng cả vòng");
+  assert.ok(iIn > 0 && /GIỮA CHÚNG có lượt đọc được/.test(ma.slice(iIn, iIn + 120)),
+    "phải nói thẳng là giữa các lượt hỏng CÓ lượt đọc được — đó là điều con số kia dùng để nói");
+
+  console.log("  ok  Ⓓ đọc hỏng: liên tiếp và tổng là hai số khác nhau, cả hai ra tới người đọc");
+}

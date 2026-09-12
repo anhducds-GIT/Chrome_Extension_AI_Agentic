@@ -646,6 +646,20 @@ async function chinh() {
     let khoi = null;
     let nhip = 0;
     let docHong = 0;
+    /* B-89 — "LIÊN TIẾP" MỘT MÌNH ĐỌC RA NHƯ ĐANG TREO.
+     *
+     * Dòng in chỉ có bộ đếm LIÊN TIẾP, mà bộ đếm ấy về 0 ở mỗi lượt đọc được — còn lượt đọc
+     * được thì bị bóp nhịp `nhip % 4` nên phần lớn KHÔNG in ra. Kết quả trên màn hình 13/09:
+     *     vòng 1 · đọc hỏng 1 lượt liên tiếp
+     *     vòng 1 · đọc hỏng 1 lượt liên tiếp
+     *     vòng 1 · đọc hỏng 1 lượt liên tiếp
+     * Đọc ra như một vòng lặp đang nện cùng một chỗ. Sự thật ngược lại: giữa mỗi cặp có một
+     * lượt đọc THÀNH CÔNG, `soLanYen` vẫn đang leo, chuỗi vẫn đang tiến. Tôi đã mất một vòng
+     * chẩn đoán để phân biệt hai cảnh đó, và cách duy nhất là đo khoảng cách thời gian giữa
+     * hai dòng — thứ mà người đọc nhật ký không làm được.
+     *
+     * Một con số nữa là đủ: liên tiếp KHÁC tổng thì tức là có lượt đọc được xen vào. */
+    let hongTong = 0;
 
     while (true) {
       /* HAI CỬA DỪNG, cùng một đường ra. Phím bấm (B-79) là cửa thường dùng; cờ `DUNG` giữ lại
@@ -676,6 +690,7 @@ async function chinh() {
            không in gì, nên khi panel hết giờ liên tục thì bộ chạy quay vòng vô hình — nhịp
            tim ở dưới không bao giờ chạy tới. Mọi nhánh `continue` phải nói ra mình là ai. */
         docHong += 1;
+        hongTong += 1;
         /* IN CHẨN ĐOÁN NẾU CÓ. Từ 11/09 host kèm `diagnosis` + `remedy` vào lượt hết giờ của
            CHÍNH nó. Bản trước in cứng "panel đang bận" cho mọi lỗi đọc — một câu đoán, và nó
            che mất câu thật ngay bên dưới. Không có chẩn đoán thì nói "chưa rõ vì sao", đừng
@@ -684,7 +699,9 @@ async function chinh() {
         const cd = d.error?.details || {};
         const nhipHong = nhipDocHong(docHong);
         if (nhipHong.inRa) {
-          console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp (${d.error?.code})`
+          console.log(`  vòng ${vong} · đọc hỏng ${docHong} lượt liên tiếp`
+            + `${hongTong > docHong ? ` · ${hongTong} lượt hỏng cả vòng, GIỮA CHÚNG có lượt đọc được` : ""}`
+            + ` (${d.error?.code})`
             + `${cd.diagnosis ? ` — ${cd.diagnosis}` : " — chưa rõ vì sao"}`);
           if (cd.remedy) console.log(`     ${cd.remedy}`);
           /* IN `debug`. `sidepanel.js:707` CỐ Ý gửi nguyên nhân thật cho agent nội bộ qua
@@ -696,7 +713,7 @@ async function chinh() {
              gì cả: sau 5 phút hỏng liên tục nhật ký có ĐÚNG MỘT dòng `BAT_DAU`, nên một bản
              chạy đang nện 900 lượt nhìn từ nhật ký KHÔNG phân biệt được với một bản đã treo
              chết. Nhịp tim in ra màn hình không cứu được: đóng cửa sổ là mất. */
-          ghi({ su_kien: "DOC_HONG", vong, so_luot: docHong, ma: d.error?.code || null,
+          ghi({ su_kien: "DOC_HONG", vong, so_luot: docHong, hong_tong: hongTong, ma: d.error?.code || null,
             diagnosis: cd.diagnosis || null, debug: cd.debug ? String(cd.debug).slice(0, 300) : null });
         }
         if (nhipHong.hoiPing) {
