@@ -345,11 +345,19 @@ export function quyetDinh({ generating, khoi, khoiCu, chuKhoiCu = "", daNapLai, 
 
   /* CHỐNG GỬI TRÙNG: so bằng ID khi id đã chốt, so bằng CHỮ khi chưa.
    *
-   * `request-<hội thoại>-0` KHÔNG đổi giữa các lượt — đo được cùng một chuỗi đó qua nhiều vòng
-   * và nhiều lượt nạp lại. Nên lấy nó làm mốc chống-trùng là hỏng theo chiều NGUY HIỂM NHẤT:
-   * vòng sau `khoi.turn_id !== khoiCu` ra `false`, bộ chạy tưởng "không có khối mới" và dừng
-   * một chuỗi còn đang chạy tốt. Ngược lại, nếu mốc cũ rỗng thì nó ra `true` cho MỌI vòng, và
-   * một khối đã gửi có thể bay lần hai.
+   * ⚠ SỬA TẠI CHỖ 13/09 — bản đầu của chú thích này viết: "`request-<hội thoại>-0` KHÔNG đổi
+   * giữa các lượt". Đo thêm cùng ngày thì thấy một lượt khác mang `request-<hội thoại>-1`.
+   * Nên câu ấy SAI, và tôi để lại nó ở đây thay vì xoá: người đọc sau cần biết nó từng được
+   * tin. Sự thật đầy đủ hơn, và nó xấu hơn cho cả hai phía:
+   *     — hậu tố CÓ LÚC đứng yên qua nhiều lượt và nhiều lần nạp lại (đo 11/09 và 12/09, `-0`),
+   *     — hậu tố CÓ LÚC nhích (đo 13/09, `-1`).
+   * Tức id tạm không dùng được theo CẢ HAI chiều: không đứng yên đủ để làm mốc, cũng không đổi
+   * đủ tin cậy để báo "lượt mới". Kết luận về bản vá thì không đổi — chỉ có lý lẽ là đổi.
+   *
+   * Lấy id tạm làm mốc chống-trùng hỏng theo chiều NGUY HIỂM NHẤT: khi nó đứng yên, vòng sau
+   * `khoi.turn_id !== khoiCu` ra `false`, bộ chạy tưởng "không có khối mới" và dừng một chuỗi
+   * còn đang chạy tốt. Ngược lại, nếu mốc cũ rỗng thì nó ra `true` cho MỌI vòng, và một khối
+   * đã gửi có thể bay lần hai.
    *
    * Chữ thì phân biệt được thật: hai câu trả lời khác nhau có chữ khác nhau. Và phép so này
    * MẠNH HƠN so bằng id, không yếu hơn — nó so đúng thứ sắp được gửi đi, chứ không so một cái
