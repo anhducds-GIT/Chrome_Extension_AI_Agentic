@@ -129,7 +129,12 @@ fs.writeFileSync(pairingPath, JSON.stringify({
   // Token hợp lệ về HÌNH DẠNG (validatePairing đòi đúng 32 byte base64url) nhưng dựng từ một
   // hạt cố định và trỏ vào cổng 59999 không ai nghe — nên nó không mở được cửa nào. KHÔNG dùng
   // token thật: một tệp test không bao giờ được mang bí mật đi đâu.
-  token: "RQOp4WE1QmeoNaQ0gpMi5wPb0PLiiXNOoHY00DOWK7Y",
+  // ĐỌC ĐƯỢC BẰNG MẮT LÀ MỘT YÊU CẦU, không phải thẩm mỹ — đổi 12/09. Chuỗi cũ dựng từ một
+  // hạt ngẫu nhiên nên nó TRÔNG y hệt token thật, và bộ dò secret của cổng đỏ mỗi lượt chạy
+  // với câu "nghi có token thật". Một cảnh báo phải soi bằng mắt mỗi phiên là một cảnh báo
+  // sẽ bị bỏ qua, và ngày nó đúng thì không ai đọc. Chuỗi nay vẫn đủ 43 ký tự base64url để
+  // `validatePairing` nhận, nhưng nói thẳng nó là gì.
+  token: "fake-token-khong-mo-duoc-cua-nao-chi-do-hin",
   created_at: "2026-09-08T00:00:00.000Z"
 }));
 
