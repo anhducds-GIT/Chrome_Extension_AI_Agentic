@@ -183,3 +183,25 @@ và bản chắt trạng thái.
 cho **cả bốn gói** cùng lúc, nên nó rẻ hơn nhưng cũng rộng hơn.
 
 **Không đụng mã, không đụng phép ghim của vùng.**
+
+## 2026-09-12 · `claude-scouter-udine` — đặt tên cho ngưỡng chờ của máy chủ
+
+**Một dòng, không đổi hành vi nào.** `bridge-host-core.mjs` nay xuất
+`DEFAULT_REQUEST_TIMEOUT_MS = 35000`, và chỗ dùng nó đọc hằng số thay vì con số trần.
+
+**Vì sao đáng đụng vùng dùng chung cho một việc nhỏ thế.** Con số đó nằm trần trong thân hàm,
+nên phía extension **không có cách nào đọc được**. Kết quả: gói `duc-scouter` có ba method khai
+`deadline_ms` 60–70 giây — dài hơn ngưỡng máy chủ — và trôi như thế nhiều ngày mà không ai
+thấy (`S-16`). Quá ngưỡng thì hai đầu tin hai chuyện khác nhau: máy chủ đã trả `REQUEST_TIMEOUT`
+cho người gọi, extension vẫn đang làm. Với một method GHI, "thử lại" lúc đó là **làm hai lần**.
+
+Có tên rồi thì phép ghim `B9` của gói đó **đọc ngưỡng thẳng từ đây** thay vì gõ lại con số —
+tức là quan hệ giữa hai file được canh, chứ không phải hai bản của một sự thật lệch nhau trong
+im lặng.
+
+**KHÔNG làm, cố ý:** không cho người khởi động truyền `requestTimeoutMs` qua giao thức. Đó là
+đổi giao thức của lõi dùng chung với **ba gói đang đóng băng**, và phải hỏi Đức. Lượt này chỉ
+đặt tên.
+
+**Ba phép ghim của vùng vẫn xanh** (`bat-tay-hai-chieu` · `tao-tep-ghep-cap-smoke` ·
+`tuong-duong-voi-ban-goc`) — chạy lại ngay sau lượt sửa, không tin suy luận.

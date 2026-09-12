@@ -41,6 +41,13 @@ import { closePayload, createFrameDecoder, encodeFrame, websocketAcceptKey } fro
 export const DEFAULT_HOST = "127.0.0.1";
 export const MAX_ENVELOPE_BYTES = 1024 * 1024;
 export const MAX_INFLIGHT = 32;
+/* Máy chủ bỏ cuộc chờ extension trả lời sau chừng này. ĐẶT TÊN CHO NÓ ngày 12/09 (`S-16`):
+ * con số vẫn y nguyên, nhưng trước đó nó nằm trần trong thân hàm nên phía extension không có
+ * cách nào đọc được — và ba method đã khai `deadline_ms` 60–70 giây, tức là VƯỢT ngưỡng này.
+ * Quá ngưỡng thì hai đầu tin hai chuyện khác nhau: máy chủ báo hết giờ, extension vẫn đang
+ * làm. Với một method GHI, "thử lại" lúc đó nghĩa là LÀM HAI LẦN.
+ * Đây chỉ là một lượt đặt tên — không đổi một hành vi nào, không đổi giao thức. */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 35000;
 
 const ERRORS = Object.freeze({
   INVALID_ENVELOPE: { retryable: false, message: "The RPC envelope is invalid." },
@@ -172,7 +179,7 @@ export function createBridgeHostCore(options = {}) {
     throw new Error("`protocol` phải là tên giao thức của chính sản phẩm này, dạng chữ thường có dấu chấm.");
   }
   const taiCho = options.methodTaiCho && typeof options.methodTaiCho === "object" ? options.methodTaiCho : {};
-  const requestTimeoutMs = Math.max(100, Number(options.requestTimeoutMs || 35000));
+  const requestTimeoutMs = Math.max(100, Number(options.requestTimeoutMs || DEFAULT_REQUEST_TIMEOUT_MS));
   const authTimeoutMs = Math.max(100, Number(options.authTimeoutMs || 5000));
   const maxInflight = Math.max(1, Math.min(256, Number(options.maxInflight || MAX_INFLIGHT)));
   const inflight = new Map();

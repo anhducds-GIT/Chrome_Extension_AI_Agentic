@@ -15,7 +15,7 @@
  * kênh ghi **không có mặt trong file đó**. Ai muốn biết Scouter ghi được gì thì đọc đúng
  * một file: file này.
  *
- * ─── BỐN CHỐT, VÀ CHÚNG KHÁC BA CHỐT CỦA LÕI ĐỌC ───────────────────────────
+ * ─── NĂM CHỐT, VÀ CHÚNG KHÁC BA CHỐT CỦA LÕI ĐỌC ───────────────────────────
  *   ⑴ Tên hành động phải nằm trong `ACTION_NAMES`. Tên lạ → từ chối, không đoán.
  *   ⑵ Method CDP phải nằm trong `WRITE_CDP_METHODS`. Danh sách này CỐ Ý KHÔNG CÓ `Runtime.*`:
  *      bấm và gõ không cần chạy một dòng JS nào trên trang, nên cửa đó vẫn đóng.
@@ -25,6 +25,11 @@
  *      từ `DOM.getBoxModel` của đúng phần tử đã khớp.
  *   ⑷ **Selector phải khớp ĐÚNG MỘT phần tử.** Khớp 0 thì không có gì để bấm; khớp nhiều thì
  *      "bấm cái đầu tiên" là chỗ tự động hoá phá hỏng đồ thật. Cả hai đều TỪ CHỐI, không đoán.
+ *   ⑸ **ĐIỂM SẮP BẤM PHẢI THUỘC VỀ PHẦN TỬ ĐÃ KHỚP** (mở 12/09, `S-17`). Chốt ⑶ bảo đảm toạ
+ *      độ suy từ đúng phần tử; nó KHÔNG bảo đảm phần tử đó đang ở trên cùng tại điểm ấy. Một
+ *      lớp phủ chắn ngang thì chuột trúng lớp phủ. Nên trước lượt bắn, hỏi Chrome *"điểm này
+ *      là ai"* và so với phần tử đã khớp — chấp nhận cả con cháu của nó, vì nút thật thường
+ *      là `<button><svg><path>` và tâm hộp rơi vào `<path>`.
  *
  * ─── CHUỖI LỆNH LẤY TỪ PHÉP ĐO, KHÔNG TỰ CHẾ ───────────────────────────────
  * Thứ tự ba khung chuột và hình dạng khung phím chép đúng từ
@@ -58,6 +63,16 @@ export const WRITE_CDP_METHODS = Object.freeze([
   "DOM.querySelectorAll",
   "DOM.scrollIntoViewIfNeeded",
   "DOM.getBoxModel",
+  /* MỞ 12/09 — Đức chốt D1 (`CHUOI-VIEC.md`). Method này KHÔNG sửa gì: nó hỏi Chrome
+   * *"điểm (x, y) này là phần tử nào"*. Nó ở trong danh sách của đường GHI vì chỗ cần nó là
+   * ngay TRƯỚC lượt bắn chuột, và luật gói số 6 cấm đường ghi mượn method của đường đọc —
+   * mỗi lõi khai lấy thứ nó dùng, kể cả khi hai bên khai cùng một cái tên.
+   *
+   * Nó vá `S-17`: trước hôm nay `input.click` suy toạ độ từ hộp của đúng phần tử đã khớp rồi
+   * bắn chuột vào đó, mà KHÔNG kiểm điểm ấy có thuộc về phần tử ấy không. Một lớp phủ chắn
+   * ngang thì chuột trúng lớp phủ và Scouter trả về y hệt một lượt bấm thành công — đó là
+   * kiểu hỏng đắt nhất, vì nó nói dối chứ không báo lỗi. */
+  "DOM.getNodeForLocation",
   "DOM.focus",
   "Input.dispatchMouseEvent",
   "Input.dispatchKeyEvent",
@@ -180,8 +195,11 @@ const ACTIONS = {
     const selector = readSelector(params.selector);
     const node = await locateOne(send, selector);
     const point = await centreOf(send, node.nodeId);
+    /* Chốt ⑸ đứng ĐÚNG Ở ĐÂY, giữa "đã có toạ độ" và "đã bắn": sớm hơn thì chưa có điểm để
+     * hỏi, muộn hơn thì chuột đã đi rồi và câu trả lời chỉ còn là lời phân trần. */
+    const hit = await kiemDiemBam(send, node.nodeId, point);
     await clickAt(send, point);
-    return { selector, matchCount: node.matchCount, clickedAt: point, method: "Input.dispatchMouseEvent" };
+    return { selector, matchCount: node.matchCount, clickedAt: point, hit, method: "Input.dispatchMouseEvent" };
   },
 
   /* ② input.type — gõ một chuỗi vào ĐÚNG MỘT phần tử, từng phím một.
@@ -206,14 +224,32 @@ const ACTIONS = {
    * so bằng sẽ báo hỏng cho một lượt đi hoàn toàn thành công. Thay vào đó nó TRẢ VỀ url thật
    * đã tới, và người gọi tự đối chiếu — đó là sự thật, không phải lời hứa.
    *
-   * "Tới nơi" = url đã đổi VÀ đọc được tài liệu. Thiếu vế sau thì một trang mới bắt đầu tải
-   * cũng tính là xong, và lượt `scout.page` ngay sau đó đọc phải trang rỗng. */
+   * "Tới nơi" = đọc được tài liệu, VÀ có một trong hai dấu hiệu đã đi: url đổi, HOẶC tài liệu
+   * được thay mới. Thiếu vế "đọc được" thì một trang mới bắt đầu tải cũng tính là xong, và
+   * lượt `scout.page` ngay sau đó đọc phải trang rỗng.
+   *
+   * VÌ SAO HAI DẤU HIỆU CHỨ KHÔNG MỘT (`S-19`, vá 12/09). Bản cũ chỉ chờ url đổi, và nó có
+   * đúng một lỗ: **đi tới đúng url đang đứng thì url không bao giờ đổi.** Lượt đó treo hết
+   * 15 giây rồi trả `NAVIGATE_TIMEOUT` — một câu SAI NGUYÊN NHÂN, trong khi trang đã tải lại
+   * thật. Nạp lại trang là việc cơ bản của mọi vòng thuần hoá (thử lại từ trạng thái sạch),
+   * nên khuyết tật này gặp ở mọi trang. Đo 12/09 trên Udin, tái hiện lần hai trên trang tự
+   * dựng — nguyên văn: *"Xin đi 'http://127.0.0.1:38411/', đang ở 'http://127.0.0.1:38411/'
+   * (url chưa đổi)."* Hai vế cùng một url, in cạnh nhau.
+   *
+   * Nhưng dấu hiệu "tài liệu mới" MỘT MÌNH cũng không đủ: đi tới `#muc-2` trên chính trang
+   * đang mở là một lượt điều hướng **trong cùng tài liệu** — url đổi, tài liệu thì không.
+   * Hai ca đó loại trừ nhau, nên nhận CẢ HAI dấu hiệu là câu trả lời duy nhất phủ hết. */
   async "input.navigate"(send, params, ctx) {
     const url = readUrlDi(params.url);
     const hanMs = readHanCho(params.timeout_ms);
 
     const truoc = await send("Target.getTargetInfo", {});
     const urlTruoc = truoc?.targetInfo?.url ?? null;
+    /* `?? null` KHÔNG phải thói quen gõ máy: `danhTinhTaiLieu` trả `undefined` khi chưa đọc
+     * được tài liệu, và để nguyên `undefined` thì phép so bên dưới thấy "khác con số nào cũng
+     * khác" — tức là lượt điều hướng nào cũng xong ngay nhịp đầu. Không đọc được tài liệu
+     * TRƯỚC khi đi thì ta KHÔNG BIẾT danh tính cũ, và "không biết" là `null`. */
+    const taiLieuTruoc = (await danhTinhTaiLieu(send)) ?? null;
 
     const ket = await send("Page.navigate", { url });
     /* `Page.navigate` trả 200 kèm `errorText` khi Chrome từ chối đi — im lặng bỏ qua trường
@@ -224,25 +260,42 @@ const ACTIONS = {
 
     const batDau = ctx.now();
     let urlSau = urlTruoc;
-    let doiRoi = false;
+    let doiUrl = false;
+    let docDuoc = false;
     while (ctx.now() - batDau < hanMs) {
       await ctx.cho(250);
       const tin = await send("Target.getTargetInfo", {});
       urlSau = tin?.targetInfo?.url ?? null;
-      if (urlSau && urlSau !== urlTruoc) {
-        doiRoi = true;
-        try {
-          await send("DOM.getDocument", { depth: 0 });
-          return {
-            requested: url, url: urlSau, from: urlTruoc,
-            ms: ctx.now() - batDau, redirected: urlSau !== url
-          };
-        } catch (_chuaSan) { /* tài liệu chưa đọc được thì chờ tiếp, chưa phải hỏng */ }
-      }
+      doiUrl = Boolean(urlSau && urlSau !== urlTruoc);
+
+      /* Đọc tài liệu LUÔN, không chỉ khi url đã đổi: chính lượt đọc này vừa là phép kiểm
+       * "trang đã sẵn sàng chưa" vừa là phép kiểm "đây có phải một tài liệu KHÁC không". */
+      const taiLieuSau = await danhTinhTaiLieu(send);
+      if (taiLieuSau === undefined) continue;   // chưa đọc được tài liệu → chưa tới nơi
+      docDuoc = true;
+      const doiTaiLieu = taiLieuTruoc !== null && taiLieuSau !== null && taiLieuSau !== taiLieuTruoc;
+      if (!doiUrl && !doiTaiLieu) continue;
+
+      return {
+        requested: url, url: urlSau, from: urlTruoc,
+        ms: ctx.now() - batDau, redirected: urlSau !== url,
+        /* Nói ra ĐÃ BIẾT BẰNG CÁCH NÀO. Hai dấu hiệu nghĩa là hai chuyện khác nhau đã xảy ra,
+         * và người gọi một lượt nạp lại cần phân biệt được "trang đã dựng lại" với "mới chỉ
+         * nhảy tới một mục khác trong cùng trang". */
+        arrivedBy: doiTaiLieu ? "new_document" : "url_change",
+        reloaded: urlSau === urlTruoc
+      };
     }
+    /* Câu lỗi phải nói ĐÚNG cái đã quan sát được, theo cả hai trục. Bản cũ chỉ có một trục
+     * nên nó nói "(url chưa đổi)" cho một lượt nạp lại hoàn toàn thành công — và đó chính là
+     * `S-19`: không phải treo mới đắt, mà là treo RỒI NÓI SAI NGUYÊN NHÂN. */
     throw new ActionError("NAVIGATE_TIMEOUT",
-      `Quá ${hanMs}ms mà chưa tới nơi. Xin đi '${url}', đang ở '${urlSau ?? "không đọc được"}'` +
-      (doiRoi ? " (url đã đổi nhưng tài liệu chưa đọc được)." : " (url chưa đổi)."));
+      `Quá ${hanMs}ms mà chưa tới nơi. Xin đi '${url}', đang ở '${urlSau ?? "không đọc được"}'. ` +
+      (doiUrl ? "url đã đổi" : "url KHÔNG đổi") + "; " +
+      (docDuoc ? "tài liệu đọc được nhưng KHÔNG phải một tài liệu mới" : "tài liệu chưa đọc được") +
+      (taiLieuTruoc === null
+        ? ". (Chrome không cho biết danh tính tài liệu ở lượt này, nên chỉ còn dấu hiệu url.)"
+        : "."));
   },
 
   async "input.key"(send, params) {
@@ -264,6 +317,30 @@ const ACTIONS = {
 
 /* ---- Phụ trợ ------------------------------------------------------------ */
 
+/* Danh tính của TÀI LIỆU đang mở — `S-19`.
+ *
+ * Trả về `undefined` nghĩa là *chưa đọc được* (đang tải dở), `null` nghĩa là *đọc được nhưng
+ * Chrome không cho biết danh tính*, và một con số là danh tính thật. Ba trạng thái, không hai:
+ * gộp "chưa đọc được" với "không biết" lại thì một trang đang tải dở bị tính là một trang có
+ * danh tính không đổi, và lượt chờ thoát sớm.
+ *
+ * DÙNG `backendNodeId`, KHÔNG DÙNG `nodeId`. `nodeId` là số thứ tự trong bảng tra của phiên
+ * debug và nó ĐƯỢC CẤP LẠI mỗi lượt `DOM.getDocument` — nút gốc gần như luôn là `1`, nên so
+ * `nodeId` là so hai con số luôn bằng nhau: một phép kiểm không bao giờ báo gì.
+ * `backendNodeId` là danh tính Chrome cấp cho một nút THẬT trong trình duyệt, và một lượt tải
+ * mới dựng một tài liệu mới, nên con số đó đổi.
+ *
+ * Chrome không trả `backendNodeId` thì hàm này trả `null` và lượt điều hướng **tự động lùi về
+ * đúng hành vi cũ** — chỉ còn dấu hiệu url. Thoái lui êm, không nổ. */
+async function danhTinhTaiLieu(send) {
+  let doc;
+  try { doc = await send("DOM.getDocument", { depth: 0 }); }
+  catch { return undefined; }
+  const goc = doc?.root;
+  if (!goc) return undefined;
+  return typeof goc.backendNodeId === "number" ? goc.backendNodeId : null;
+}
+
 /* Chỉ http(s). `javascript:` chạy mã, `file:` đọc đĩa, `chrome-extension:` vào ruột
  * extension — cả ba là ba lối thoát khác nhau ra khỏi "đi tới một trang web". */
 function readUrlDi(value) {
@@ -281,10 +358,17 @@ function readUrlDi(value) {
   return phanTich.href;
 }
 
+/* Trần 30000 (hạ từ 60000 ngày 12/09, `S-16`). Không phải vì 60 giây là quá lâu để chờ một
+ * trang, mà vì **máy chủ Bridge cắt lượt chuyển tiếp ở 35 giây**: xin chờ 60 thì tới giây thứ
+ * 35 người gọi đã nhận `REQUEST_TIMEOUT` trong khi extension vẫn đang chờ tiếp. Hai đầu tin
+ * hai chuyện khác nhau, và đó là chỗ hỏng đắt hơn hẳn một hạn chờ ngắn.
+ *
+ * Số này phải dưới `deadline_ms` của `scout.navigate` (34000) một quãng đủ cho lượt trả lời
+ * đi về. Đổi một trong hai thì phải đổi cùng nhau — con `B9` canh cặp đó. */
 function readHanCho(value) {
   if (value === undefined || value === null) return 15000;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1000 || value > 60000) {
-    throw new ActionError("TIMEOUT_INVALID", "timeout_ms phải là số nguyên trong 1000..60000.");
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1000 || value > 30000) {
+    throw new ActionError("TIMEOUT_INVALID", "timeout_ms phải là số nguyên trong 1000..30000.");
   }
   return value;
 }
@@ -373,7 +457,76 @@ async function centreOf(send, nodeId) {
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
     throw new ActionError("ELEMENT_NOT_VISIBLE", "Hộp của phần tử không cho ra toạ độ hữu hạn.");
   }
-  return { x, y };
+  /* LÀM TRÒN NGAY TẠI ĐÂY, không làm tròn lúc hỏi. `DOM.getNodeForLocation` chỉ nhận số
+   * nguyên, còn khung chuột nhận số lẻ — hai đầu làm tròn riêng là hỏi về một điểm rồi bấm
+   * vào một điểm khác, và chốt ⑸ mất nghĩa đúng ở nửa pixel đó. Một chỗ làm tròn, một điểm. */
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+/* Chốt ⑸ sống ở đây — `S-17`.
+ *
+ * Câu hỏi: *điểm sắp bấm thuộc về ai?* Ba câu trả lời, và cả ba đều phải nói thật:
+ *   · chính phần tử đã khớp          → bấm
+ *   · con cháu của nó                → bấm (nút có icon: `<button><svg><path>`)
+ *   · thứ khác, hoặc không biết      → TỪ CHỐI, hai mã lỗi khác nhau
+ *
+ * Vì sao hai mã chứ không một: *"có thứ khác chắn"* và *"Chrome không trả lời được"* dẫn tới
+ * hai cách sửa khác nhau. Gộp chúng lại là bắt người đọc log đoán mình đang gặp cái nào.
+ *
+ * Vì sao TỪ CHỐI khi không biết, thay vì cứ bấm: hỏng thì ĐÓNG, giống hệt công tắc đường ghi.
+ * Một lượt bấm không kiểm được chính là trạng thái mà `S-17` mô tả — quay về nó lúc gặp khó
+ * là bỏ luôn chốt này.
+ *
+ * Tìm con cháu bằng `DOM.querySelectorAll(nodeId của phần tử, "*")` — method đã có sẵn trong
+ * danh sách, nên chốt này chỉ tốn ĐÚNG MỘT method mới. Hằng số `"*"` gõ cứng trong mã, không
+ * ghép từ dữ liệu người gọi. */
+async function kiemDiemBam(send, nodeId, point) {
+  let o;
+  try {
+    o = await send("DOM.getNodeForLocation", {
+      x: point.x, y: point.y, includeUserAgentShadowDOM: false
+    });
+  } catch (error) {
+    if (error instanceof ActionError) throw error;
+    /* ĐO THẬT 12/09, và NGUYÊN NHÂN THÌ CHƯA BIẾT — nói đúng mức đó, đừng nói hơn.
+     * Quan sát được: trên một target, Chrome trả `-32000 No node found at given location`
+     * cho đúng toạ độ mà vài phút trước nó trả lời bình thường; `scout.shot` trên cùng
+     * target ấy cũng hỏng cùng lúc; sau một lượt điều hướng thật thì cả hai trở lại bình
+     * thường. Ba dấu hiệu đó khớp nhau, nhưng chúng KHÔNG chứng minh được vì sao — một
+     * chẩn đoán sai mà nghe có thẩm quyền thì đắt hơn một ô trống. Ghi ở `S-21`.
+     *
+     * Đừng để câu tiếng Anh thô của CDP đi thẳng ra ngoài dây một mình: người đọc nó sẽ đi
+     * sửa selector, và selector không phải chỗ hỏng. */
+    throw new ActionError("CLICK_HIT_TEST_FAILED",
+      `Chrome không trả lời được "điểm (${point.x}, ${point.y}) là phần tử nào": ` +
+      `${error?.message || String(error)}. Không kiểm được thì không bấm. Đo được 12/09: ` +
+      "target rơi vào trạng thái này thì `scout.shot` cũng hỏng cùng lúc, và một lượt " +
+      "`scout.navigate` thật làm cả hai trở lại bình thường. Chưa biết vì sao — xem `S-21`.");
+  }
+  const nutTrungDiem = o?.nodeId;
+  if (typeof nutTrungDiem !== "number") {
+    throw new ActionError("CLICK_HIT_TEST_FAILED",
+      `Chrome không nói được phần tử nào nằm ở (${point.x}, ${point.y}). Không kiểm được thì ` +
+      "không bấm — một lượt bấm không kiểm được đúng là chỗ hỏng S-17 mô tả.");
+  }
+  if (nutTrungDiem === nodeId) return { relation: "self", hitNodeId: nutTrungDiem };
+
+  let con;
+  try {
+    con = await send("DOM.querySelectorAll", { nodeId, selector: "*" });
+  } catch (error) {
+    if (error instanceof ActionError) throw error;
+    throw new ActionError("CLICK_HIT_TEST_FAILED",
+      `Không đọc được con cháu của phần tử để đối chiếu: ${error?.message || String(error)}`);
+  }
+  if ((con?.nodeIds || []).includes(nutTrungDiem)) {
+    return { relation: "descendant", hitNodeId: nutTrungDiem };
+  }
+
+  throw new ActionError("CLICK_OBSCURED",
+    `Điểm (${point.x}, ${point.y}) là tâm của phần tử đã khớp, nhưng thứ nằm trên cùng ở đó là ` +
+    `một phần tử KHÁC (node ${nutTrungDiem}). Bấm bây giờ là bấm vào thứ đang chắn, và lượt bấm ` +
+    "sẽ trông như thành công. Thường gặp: hộp thoại, lớp phủ tải, tấm chắn báo hết chỗ.");
 }
 
 /* Ba khung, đúng thứ tự đã đo. */

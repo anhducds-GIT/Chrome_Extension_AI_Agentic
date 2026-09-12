@@ -81,6 +81,20 @@ export class ObserverEngine {
    * sát ở BIÊN `chrome`, không ở biên lõi. Xem mục "nối dây" trong
    * tests/observer-engine-smoke.mjs, và bốn con W1..W4 trong scripts/observer-mutation-check.mjs.
    */
+  /* ---- KÊNH SỰ KIỆN CDP (12/09) — một chiều, VÀO --------------------------
+   * `net.watch` cần nghe được sự kiện, mà `sendCommand` chỉ hỏi-đáp. Đây là kênh đó, và nó
+   * mỏng đúng bằng mức phải mỏng: đăng ký một hàm nghe, trả lại cách gỡ nó ra. Không lọc, không
+   * diễn giải, không nhớ gì — việc chọn trường nào được đi ra ngoài là của LÕI ĐỌC, và phải ở
+   * lõi, vì lõi là chỗ có phép ghim đứng sau.
+   *
+   * LỌC THEO ĐÚNG TAB, và đây không phải chuyện gọn gàng: `chrome.debugger.onEvent` là một
+   * kênh CHUNG cho cả extension. Không lọc thì một phép dò đang nghe tab A sẽ nhận luôn sự
+   * kiện của tab B mà người gọi không hề nhắm tới — tức là quan sát một trang mà không ai
+   * xin phép quan sát trang đó.
+   *
+   * `source` của Chrome có thể mang `targetId` hoặc `tabId` tuỳ đường gắn; ta gắn bằng
+   * `targetId` nên so bằng `targetId`. Thiếu nó thì BỎ QUA, không đoán — một sự kiện không
+   * chứng minh được nó của ai thì không phải của ta. */
   async runProbe(target, name, params = {}) {
     /* Tên lạ thì để LÕI từ chối, và từ chối TRƯỚC khi gắn debugger: gắn debugger vào một trang
      * là thao tác mạnh nhất extension này làm được, đừng làm nó cho một yêu cầu sai. Gọi lại
@@ -102,7 +116,7 @@ export class ObserverEngine {
       await chrome.debugger.attach(debuggee, PROTOCOL_VERSION);
       attachedHere = true;
       const sendRaw = (method, cdpParams) => chrome.debugger.sendCommand(debuggee, method, cdpParams);
-      return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw }, params);
+      return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw, subscribe: dangKySuKien(debuggee) }, params);
     } catch (error) {
       return { ok: false, probe: name, code: "ATTACH_FAILED", detail: normaliseError(error), cdp: [] };
     } finally {
@@ -242,6 +256,18 @@ function emptyElements() {
 
 function isExtensionUrl(url) {
   return typeof url === "string" && url.startsWith(EXTENSION_PREFIX);
+}
+
+/* Xem khối chú thích ngay trên `runProbe`. Trả về `subscribe(handler) -> huỷ`. */
+function dangKySuKien(debuggee) {
+  return function subscribe(handler) {
+    const nghe = (source, method, cdpParams) => {
+      if (!source || source.targetId !== debuggee.targetId) return;
+      handler(method, cdpParams);
+    };
+    chrome.debugger.onEvent.addListener(nghe);
+    return () => chrome.debugger.onEvent.removeListener(nghe);
+  };
 }
 
 async function detachQuietly(debuggee) {

@@ -131,4 +131,22 @@ chrome.storage.onChanged.addListener((changes, area) => {
   transport.loadPairing().then(connectQuietly).catch(() => {});
 });
 
+/* ---- Đức vừa đặt tên cho ghế thì CẮT DÂY để nối lại (12/09) --------------
+ * Nhãn chỉ đi qua dây đúng một lần: trong khung `auth` của lượt bắt tay. Nên gõ tên xong mà
+ * không cắt dây thì máy chủ vẫn thấy cái tên CŨ cho tới khi có thứ gì khác tình cờ làm đứt
+ * kết nối — và "thứ gì đó tình cờ" có thể là vài giờ sau. Nhìn ra ngoài giống hệt "đổi tên
+ * không ăn".
+ *
+ * Dùng lại đúng khuôn của khối ghép cặp ngay trên, và cố ý: hai khoá lưu, một cách xử.
+ * `disconnect()` rồi `connect()` là đường đi bình thường của transport chứ không phải lối
+ * tắt — không chốt nào bị nới, lượt nối mới vẫn bắt tay hai chiều đủ bước.
+ *
+ * KHÔNG đụng tới `INSTANCE_STORAGE_KEY`: cái đó máy sinh một lần rồi ở yên, và nó đổi thì
+ * chính là lúc KHÔNG được coi như một lượt đổi tên. */
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes[transport.INSTANCE_LABEL_STORAGE_KEY]) return;
+  transport.disconnect();
+  connectQuietly();
+});
+
 connectQuietly();

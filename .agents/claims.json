@@ -5,9 +5,9 @@
     "workers/duc-auto-gg-flow-video": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-09T13:21",
-      "task": "nen luat vang theo ADR-0032",
-      "released_at": "2026-09-09T13:33",
+      "claimed_at": "2026-09-12T02:34:05.006Z",
+      "task": "vet byte dieu khien tho lam phep kiem xanh gia",
+      "released_at": "2026-09-12T03:35:07.703Z",
       "taken_from": "claude-flow-f28-f33",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)",
       "taken_by": "claude-luat-rasoat",
@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-11T18:24:41.957Z",
-      "task": "tinh nang chay tiep sau khi chuoi ket thuc",
-      "released_at": "2026-09-11T18:36:14.070Z",
+      "claimed_at": "2026-09-12T14:48:34.299Z",
+      "task": "B-82 dom-probe bao khung canvas; answerBlock nhan canvas",
+      "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-09T15:25",
-      "task": "Migrate bo khung 0.3.0 -> 1.8.0 tu moc Stable Baseline; khong cham workers/",
-      "released_at": "2026-09-09T15:37:57.305Z",
+      "claimed_at": "2026-09-12T06:27:56.937Z",
+      "task": "Chuoi viec Scouter",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -52,9 +52,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-09T15:25",
-      "task": "Migrate bo khung 0.3.0 -> 1.8.0 tu moc Stable Baseline; khong cham workers/",
-      "released_at": "2026-09-09T15:37:57.436Z",
+      "claimed_at": "2026-09-12T02:13:06.495Z",
+      "task": "Duc chot 12/09: clean 4 muc do con lai cua cong",
+      "released_at": "2026-09-12T03:35:07.408Z",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-11T02:11:05.511Z",
-      "task": "B-71: cong canh PHIEN.md con tuoi",
-      "released_at": "2026-09-11T02:25:27.493Z",
+      "claimed_at": "2026-09-12T06:27:56.993Z",
+      "task": "Chuoi viec Scouter",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -75,32 +75,26 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-09T13:21",
-      "task": "nen luat vang theo ADR-0032",
-      "released_at": "2026-09-09T13:33"
+      "claimed_at": "2026-09-12T06:27:56.867Z",
+      "task": "Chuoi viec Scouter",
+      "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-09T10:46",
-      "task": "N-63: dot bien — sua LUAT-CORE roi hoan nguyen",
-      "released_at": "2026-09-09T11:01"
+      "claimed_at": "2026-09-12T14:57:12.815Z",
+      "task": "S-16: dat ten cho nguong cho 35s cua may chu Bridge, khong doi hanh vi",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-11T17:46:29.029Z",
-      "task": "ra soat va lay du lieu HNX con thieu tu 2026-09-08 den 2026-09-12",
-      "released_at": "2026-09-11T17:50:31.358Z"
+      "claimed_at": "2026-09-12T02:13:06.670Z",
+      "task": "Duc chot 12/09: clean 4 muc do con lai cua cong",
+      "released_at": "2026-09-12T03:35:07.826Z"
     }
   },
-  "_fingerprint": "4b0eee086d05e11d",
-  "tam": {
-    "HANDOFF.md": {
-      "owner": "harness-loi-01",
-      "luc": "2026-09-09T15:37:25.380Z"
-    }
-  }
+  "_fingerprint": "b1163300fc427658"
 }

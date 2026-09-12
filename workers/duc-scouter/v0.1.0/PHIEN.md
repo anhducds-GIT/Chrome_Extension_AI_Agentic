@@ -82,6 +82,6 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 ## Trạng thái mới nhất
 
-- lifecycle: paused
-- next_step: "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào. Nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào — dùng lại thì NẠP LẠI extension trước."
-- human_action: "không"
+- lifecycle: building
+- next_step: "Mở CHUOI-VIEC.md của gói, lấy ĐÚNG MỘT việc đang tới lượt ở bảng theo dõi — đừng đọc cả file. T1 tới T4 đã xong, cả bốn đo ngoài đời. Việc tới lượt là T5 (chạy lại lượt gửi prompt trên Udin để phân biệt hai giả thuyết) — cần Đức bật công tắc đường ghi và tài khoản đang rảnh. Không chạy được T5 thì làm T6 hoặc T10 (S-21)."
+- human_action: "@Đức:bấm D2 còn một nửa — ghế thứ hai vẫn chưa có tên. Ghế đang dùng tên Udin_Scout và gọi bằng tên chạy tốt; ghế kia chưa đặt thì lượt gọi nào không nêu đích vẫn bị từ chối TARGET_AMBIGUOUS. Mở thẻ Hệ thống của cửa sổ Chrome kia, khối Hồ sơ ghế (Profile ID), gõ một tên KHÁC. @Đức:bấm T5 cần công tắc Cho phép bấm và gõ đang bật trên ghế chạy Udin."

@@ -35,6 +35,9 @@ globalThis.chrome = {
       }
       if (method === "DOM.querySelectorAll") return { nodeIds: soKhopQuery };
       if (method === "DOM.getBoxModel") return { model: { content: [10, 20, 110, 20, 110, 60, 10, 60] } };
+      /* Chốt ⑸ (S-17) hỏi điểm sắp bấm là ai. Trang giả trả về CHÍNH phần tử đã khớp —
+       * ca "có lớp phủ chắn" ghim ở `scouter-actions-smoke.mjs`, chỗ này chỉ cần đường vui. */
+      if (method === "DOM.getNodeForLocation") return { nodeId: soKhopQuery[0], backendNodeId: 900 };
       if (method === "DOM.describeNode") {
         return { node: { nodeId: params.nodeId, nodeType: 1, nodeName: "BUTTON", localName: "button", childNodeCount: 0,
           attributes: ["id", `b${params.nodeId}`, "data-secret", "SECRET-DO-NOT-LEAK"] } };
@@ -146,6 +149,7 @@ const WRITE_AT_CHROME = new Set([
   "DOM.querySelectorAll",
   "DOM.scrollIntoViewIfNeeded",
   "DOM.getBoxModel",
+  "DOM.getNodeForLocation",
   "DOM.focus",
   "Input.dispatchMouseEvent",
   "Input.dispatchKeyEvent"

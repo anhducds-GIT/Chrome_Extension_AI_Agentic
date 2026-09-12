@@ -110,6 +110,43 @@
           <p class="mo">Chọn tệp ghép cặp do bộ cài Bridge tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
         </div>
 
+        <!-- HỒ SƠ GHẾ. Bản trước CỐ Ý tránh chữ "Profile ID" dù Đức hỏi bằng tên đó, lý do là
+             ở đây có HAI thứ — một cái máy sinh không sửa được, một cái Đức gõ — và gộp chúng
+             dưới một nhãn thì lúc đổi tên người ta tưởng mình đang đổi cả số.
+             Lý do đó đúng, nhưng cách làm thì sai, và Đức báo ngày 12/09: anh đi tìm chữ
+             "Profile", thấy "Tên ghế này", và kết luận tính năng CHƯA CÓ. Một tính năng người
+             dùng không nhận ra thì bằng không có.
+             Cách sửa: dùng ĐÚNG chữ Đức đi tìm cho cả khối, rồi tách rành mạch hai dòng bên
+             trong — đặt tên theo từ người dùng tra, giải thích khác biệt bằng bố cục. -->
+        <div class="the">
+          <h2>Hồ sơ ghế (Profile ID)</h2>
+          <p class="mo">Nhiều cửa sổ Chrome cùng cắm vào một Bridge thì chúng là những cái ghế khác nhau. Đây là căn cước của <strong>đúng cái ghế đang mở bảng bên này</strong>.</p>
+
+          <!-- Số đặt TRƯỚC ô tên, cố ý: đây là thứ Đức đi tìm lúc mở thẻ này, và nó là thứ
+               duy nhất gọi được ghế khi ghế chưa có tên. -->
+          <p class="mo">Profile ID — máy sinh, không sửa được:</p>
+          <div class="bridge-pairing-path">
+            <code id="ten-ghe-so">…</code>
+            <button id="ten-ghe-so-chep" type="button">Sao chép Profile ID</button>
+          </div>
+
+          <p class="mo"><strong>Tên gọi</strong> — đặt tên để AI gọi đúng ghế, thay vì phải nhắm bằng dãy số dài ở trên.</p>
+          <!-- Nói ra cái bẫy, vì bảng bên KHÔNG chặn được nó: nó chỉ thấy ghế của chính mình,
+               không thấy tên các ghế khác đang nối. Đặt trùng tên thì máy chủ lại từ chối
+               TARGET_AMBIGUOUS đúng như lúc chưa ai có tên — nhưng lần này kèm danh sách ứng
+               viên, nên hỏng thành nhìn thấy được chứ không im lặng. -->
+          <p class="mo"><strong>Mỗi ghế một tên khác nhau.</strong> Hai ghế trùng tên thì gọi tên đó không trúng ghế nào — quay lại đúng chỗ hỏng lúc chưa ai có tên.</p>
+
+          <label class="chon-hang" for="ten-ghe">
+            <span class="mo">Tên</span>
+            <input id="ten-ghe" type="text" maxlength="64" placeholder="ví dụ: udine-chinh" autocomplete="off" spellcheck="false">
+          </label>
+          <div class="ten-ghe-hang">
+            <button id="ten-ghe-luu" type="button">Lưu tên</button>
+            <span id="ten-ghe-bao" class="mo" aria-live="polite"></span>
+          </div>
+        </div>
+
         <div class="the">
           <div class="dinh-hang">
             <h2>Năng lực</h2>

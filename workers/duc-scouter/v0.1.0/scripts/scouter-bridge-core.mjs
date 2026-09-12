@@ -321,6 +321,57 @@ const METHOD_ENTRIES = [
       };
     }
   }),
+  /* ---- HAI LỆNH MỞ THÊM 12/09 — Đức chốt -------------------------------
+   * `deadline_ms` của cả hai đặt 34000, và con số đó KHÔNG tự chọn: máy chủ Bridge bỏ cuộc
+   * một lượt chuyển tiếp ở 35.000ms (`requestTimeoutMs` của `bridge-host-core.mjs`). Đặt
+   * rộng hơn 35s là dựng một cái hẹn không bao giờ tới lượt — máy chủ đã trả `REQUEST_TIMEOUT`
+   * cho người gọi từ trước, trong khi extension vẫn đang làm. Trần THẬT của lượt chờ nằm ở
+   * `MAX_WAIT_MS`/`MAX_NET_MS` trong lõi đọc, thấp hơn nữa. */
+  registryEntry({
+    name: "scout.wait", read_only: true, deadline_ms: 34000,
+    description: "Wait inside the browser until a CSS selector matches (present), stops matching (absent), or becomes actually clickable (usable), then answer once. Replaces dozens of polling round trips. Times out with satisfied=false rather than failing. Use usable when something may be covered by an overlay: present only proves the element is in the DOM, not that a click would reach it.",
+    params_schema: {
+      target_id: "string", selector: "string", state: "present|absent|usable?",
+      min_count: "integer:1..200?", timeout_ms: "integer:100..30000?", poll_ms: "integer:100..5000?"
+    },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "state", "min_count", "timeout_ms", "poll_ms"]);
+      if (params.state !== undefined && params.state !== null
+        && params.state !== "present" && params.state !== "absent" && params.state !== "usable") {
+        invalidParams("params.state", "expected present, absent or usable");
+      }
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        state: params.state === undefined || params.state === null ? "present" : params.state,
+        min_count: optionalInt(params.min_count, "params.min_count", 1, 200),
+        timeout_ms: optionalInt(params.timeout_ms, "params.timeout_ms", 100, 30000),
+        poll_ms: optionalInt(params.poll_ms, "params.poll_ms", 100, 5000)
+      };
+    }
+  }),
+  registryEntry({
+    name: "scout.network", read_only: true, deadline_ms: 34000,
+    description: "Listen to the page's network traffic for a window of time and report one line per request: method, path, status, mime type, bytes, duration. Never returns headers, request bodies or response bodies.",
+    params_schema: {
+      target_id: "string", duration_ms: "integer:100..25000?",
+      limit: "integer:1..200?", url_contains: "string?"
+    },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "duration_ms", "limit", "url_contains"]);
+      if (params.url_contains !== undefined && params.url_contains !== null) {
+        if (typeof params.url_contains !== "string" || params.url_contains.length > 200) {
+          invalidParams("params.url_contains", "expected a string of at most 200 characters");
+        }
+      }
+      return {
+        target_id: requiredTargetId(params.target_id),
+        duration_ms: optionalInt(params.duration_ms, "params.duration_ms", 100, 25000),
+        limit: optionalInt(params.limit, "params.limit", 1, 200),
+        url_contains: params.url_contains === undefined ? null : params.url_contains
+      };
+    }
+  }),
   registryEntry({
     name: "scout.shot", read_only: true, deadline_ms: 30000,
     description: "Screenshot the visible page as base64. Defaults to jpeg quality 60 because a full png usually exceeds the envelope. Refuses rather than truncating.",
@@ -349,7 +400,18 @@ const METHOD_ENTRIES = [
    * cố ý: xem chốt ⑶ ở đầu `scripts/scouter-actions-core.mjs`.
    *
    * `deadline_ms` rộng hơn phép dò: một lượt bấm phải cuộn phần tử vào tầm nhìn, đo hộp, rồi
-   * gửi ba khung chuột; một lượt gõ gửi hai khung cho MỖI ký tự. */
+   * gửi ba khung chuột; một lượt gõ gửi hai khung cho MỖI ký tự.
+   *
+   * NHƯNG KHÔNG RỘNG HƠN NGƯỠNG MÁY CHỦ (`S-16`, sửa 12/09). `scout.type` từng khai 60000 và
+   * `scout.navigate` 70000, trong khi máy chủ Bridge bỏ cuộc ở `DEFAULT_REQUEST_TIMEOUT_MS`
+   * = 35000. Quá ngưỡng đó thì **hai đầu tin hai chuyện khác nhau**: máy chủ đã trả
+   * `REQUEST_TIMEOUT` cho người gọi, extension thì vẫn đang gõ. Người gọi thấy "hỏng" và thử
+   * lại — và với `scout.type` thử lại nghĩa là **GÕ HAI LẦN** vào một ô có thể đã đầy chữ.
+   * Một hạn chờ khai dài hơn thực tế không mua thêm thời gian; nó chỉ mua một lời nói dối.
+   *
+   * Nay cả ba xuống 34000, cùng con số với `scout.wait` — và con `B9` ở
+   * `tests/scouter-bridge-smoke.mjs` so TỪNG method với ngưỡng đọc thẳng từ lõi máy chủ, nên
+   * mục này không tái phát bằng một lượt gõ tay nữa. */
   registryEntry({
     name: "scout.click", read_only: false, deadline_ms: 30000,
     description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller.",
@@ -360,7 +422,7 @@ const METHOD_ENTRIES = [
     }
   }),
   registryEntry({
-    name: "scout.type", read_only: false, deadline_ms: 60000,
+    name: "scout.type", read_only: false, deadline_ms: 34000,
     description: "Type a string into one element with the browser's real keyboard, one key at a time. Refuses control characters: Enter and Tab go through scout.key. Does not clear the field first.",
     params_schema: { target_id: "string", selector: "string", text: "string" },
     params_validator: (raw) => {
@@ -401,7 +463,7 @@ const METHOD_ENTRIES = [
      *
      * KHÔNG dùng `Runtime.*` cũng KHÔNG dùng `Network.*`/`Fetch.*` — hai cửa đó đóng từ
      * ADR-0007 và lượt này không mở. Đây là `fetch()` của chính service worker. */
-    name: "scout.fetch", read_only: false, deadline_ms: 60000,
+    name: "scout.fetch", read_only: false, deadline_ms: 34000,
     description: "Fetch one http(s) URL with the browser's own network stack. Returns text by default; set as=\"base64\" for binary bodies such as PDF. Credentials are omitted unless with_credentials is set. Refuses cookie and authorization headers from the caller.",
     params_schema: {
       url: "string", method: "GET|POST?", headers: "object?", body: "string?",
@@ -438,15 +500,18 @@ const METHOD_ENTRIES = [
   registryEntry({
     /* ĐI SANG TRANG KHÁC. `read_only: false` không phải hình thức: đổi trang là điều khiển
      * trang, nên nó chui qua phanh và trả giá hạn mức y như `scout.click`. */
-    name: "scout.navigate", read_only: false, deadline_ms: 70000,
+    name: "scout.navigate", read_only: false, deadline_ms: 34000,
     description: "Navigate one tab to an http(s) URL and wait until the new document is readable. Returns the URL actually reached, which may differ after redirects.",
-    params_schema: { target_id: "string", url: "string", timeout_ms: "integer:1000..60000?" },
+    /* `timeout_ms` trần 30000, KHÔNG phải 34000: extension phải kịp bỏ cuộc VÀ trả lời xong
+     * trước khi máy chủ cắt dây. Bốn giây chênh là chỗ cho lượt trả lời đi về. Cùng hình dạng
+     * với `scout.wait` (trần chờ 30000, `deadline_ms` 34000) — một khuôn, không hai. */
+    params_schema: { target_id: "string", url: "string", timeout_ms: "integer:1000..30000?" },
     params_validator: (raw) => {
       const params = objectParams(raw, ["target_id", "url", "timeout_ms"]);
       return {
         target_id: requiredTargetId(params.target_id),
         url: requiredHttpUrl(params.url),
-        timeout_ms: optionalInt(params.timeout_ms, "params.timeout_ms", 1000, 60000)
+        timeout_ms: optionalInt(params.timeout_ms, "params.timeout_ms", 1000, 30000)
       };
     }
   }),

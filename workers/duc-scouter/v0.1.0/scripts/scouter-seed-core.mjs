@@ -27,7 +27,9 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.query": "dom.query",
   "scout.tree": "dom.tree",
   "scout.a11y": "a11y.tree",
-  "scout.shot": "page.shot"
+  "scout.shot": "page.shot",
+  "scout.wait": "dom.wait",
+  "scout.network": "network.watch"
 });
 
 /* Ba hành động GHI, ánh xạ sang tên của `scripts/scouter-actions-core.mjs`. Bảng riêng, cố ý:
@@ -326,6 +328,21 @@ export function createSeedHandlers(deps = {}) {
     async "scout.a11y"(params) {
       const target = await resolveTarget(params.target_id);
       return await runProbe("scout.a11y", target, { limit: params.limit });
+    },
+
+    async "scout.wait"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runProbe("scout.wait", target, {
+        selector: params.selector, state: params.state, minCount: params.min_count,
+        timeoutMs: params.timeout_ms, pollMs: params.poll_ms
+      });
+    },
+
+    async "scout.network"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runProbe("scout.network", target, {
+        durationMs: params.duration_ms, limit: params.limit, urlContains: params.url_contains
+      });
     },
 
     async "scout.shot"(params) {

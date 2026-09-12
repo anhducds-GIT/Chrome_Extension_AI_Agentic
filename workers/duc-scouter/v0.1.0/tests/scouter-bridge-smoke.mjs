@@ -29,6 +29,8 @@ const EXPECTED_METHODS = [
   "scout.query",
   "scout.tree",
   "scout.a11y",
+  "scout.wait",
+  "scout.network",
   "scout.shot",
   "scout.click",
   "scout.type",
@@ -50,7 +52,7 @@ const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.ty
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key", "input.navigate"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
-const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot"]);
+const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch"]);
 
 const POISON = "'); doSomething(); ('";
 const TARGET_ID = "TARGET-1";
@@ -392,10 +394,13 @@ function request(method, params) {
  * Bốn → bảy ngày 07/09, rồi bảy → SÁU ngày 08/09: Đức chốt bỏ `scout.snapshot` vì nó giết
  * service worker trên trang lớn (2/3 trang đo thật). Con số này KHÔNG
  * được viết là `Object.keys(...).length` — làm thế là so một thứ với chính nó và phép ghim
- * luôn xanh dù có ai lặng lẽ thêm một ánh xạ. Con số gõ tay ở đây chính là cái chốt. */
+ * luôn xanh dù có ai lặng lẽ thêm một ánh xạ. Con số gõ tay ở đây chính là cái chốt.
+ *
+ * SÁU → TÁM ngày 12/09: Đức chốt thêm `scout.wait` (chờ ngay trong trình duyệt) và
+ * `scout.network` (nghe trang nói chuyện với máy chủ). Cả hai `read_only`. */
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
-  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 6);
+  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 8);
 }
 
 /* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------
@@ -554,6 +559,49 @@ function request(method, params) {
     const ra = await dispatch("{ khong phai json");
     assert.equal(ra.ok, false);
     assert.equal(ra.request_id, null);
+  }
+}
+
+/* ---- B9 · KHÔNG method nào được khai hạn chờ dài hơn NGƯỠNG MÁY CHỦ ------
+ *
+ * `S-16`, 12/09. Ba method từng khai 60–70 giây trong khi máy chủ Bridge bỏ cuộc ở 35. Quá
+ * ngưỡng đó thì **hai đầu tin hai chuyện khác nhau**: người gọi đã nhận `REQUEST_TIMEOUT`,
+ * extension vẫn đang làm. Với `scout.type` — một method GHI — người gọi thử lại là **gõ hai
+ * lần** vào một ô có thể đã đầy chữ.
+ *
+ * Con này ĐỌC NGƯỠNG THẲNG TỪ LÕI MÁY CHỦ, không gõ lại con số. Đây là chỗ nó khác mọi phép
+ * ghim khác của file này (những phép kia cố ý khai lại danh sách để module không tự chấm điểm
+ * cho mình): ở đây thứ được ghim KHÔNG phải một con số, mà là **quan hệ giữa hai con số ở hai
+ * file khác nhau**. Chép tay ngưỡng vào đây là dựng lại đúng cái bẫy đã sinh ra `S-16` — hai
+ * bản của một sự thật, và chúng lệch nhau trong im lặng. */
+{
+  const { DEFAULT_REQUEST_TIMEOUT_MS } = await import("../../../_shared/bridge-host/bridge-host-core.mjs");
+  assert.equal(typeof DEFAULT_REQUEST_TIMEOUT_MS, "number",
+    "lõi máy chủ không còn khai ngưỡng chờ — phép ghim này đang đo mù");
+
+  /* Chừa một quãng cho lượt trả lời đi về. Sát ngưỡng thì về mặt số là hợp lệ, về mặt việc thì
+   * vẫn thua: extension bỏ cuộc đúng lúc máy chủ cũng bỏ cuộc, và câu trả lời chết trên đường. */
+  const LE = 1000;
+  const tran = DEFAULT_REQUEST_TIMEOUT_MS - LE;
+
+  /* Đọc từ chính bảng lệnh, KHÔNG từ một danh sách gõ tay: mục này phải bắt được cả một
+   * method MỚI khai hạn chờ quá dài, chứ không chỉ ba method đã biết. */
+  const muc = Object.values(core.METHOD_REGISTRY);
+  assert.ok(muc.length > 10, "không đọc được bảng lệnh — phép ghim này đang đo mù");
+  assert.equal(muc.length, core.METHOD_NAMES.length, "bảng lệnh và danh sách tên đã lệch nhau");
+
+  const pham = muc
+    .map((e) => ({ name: e.name, deadline_ms: e.deadline_ms }))
+    .filter((e) => typeof e.deadline_ms === "number" && e.deadline_ms > tran);
+  assert.deepEqual(pham, [],
+    `method khai hạn chờ vượt ngưỡng máy chủ (${DEFAULT_REQUEST_TIMEOUT_MS}ms, chừa ${LE}ms cho lượt trả lời): `
+    + pham.map((e) => `${e.name}=${e.deadline_ms}`).join(", "));
+
+  /* Chiều NGƯỢC LẠI: mọi method phải CÓ một hạn chờ, và nó phải dương. Thiếu vế này thì xoá
+   * sạch `deadline_ms` khỏi bảng lệnh cũng làm con trên xanh trọn. */
+  for (const e of muc) {
+    assert.ok(Number.isInteger(e.deadline_ms) && e.deadline_ms > 0,
+      `method "${e.name}" không khai hạn chờ hợp lệ: ${e.deadline_ms}`);
   }
 }
 

@@ -19,7 +19,7 @@
 import { ObserverEngine } from "./observer-engine.js";
 import { capabilities } from "./scripts/scouter-bridge-core.mjs";
 import { JOURNAL_CONSTANTS, nanSo, tenMien, tinhTienDo } from "./scripts/scouter-journal-core.mjs";
-import { validatePairing, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
+import { validatePairing, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
 
 const engine = new ObserverEngine();
@@ -65,17 +65,23 @@ const BRIDGE_CHU = {
 
 let bridgeStatus = "unpaired";
 
-async function copyBridgePairingPath(button) {
-  const pairingPath = button?.dataset.bridgePairingPath || "";
-  if (!pairingPath) return;
-  const originalLabel = button.textContent;
+/* MỘT chỗ sao chép, dùng chung cho mọi nút sao chép của bảng bên. Hai bản của một luật thì
+ * sớm muộn hai nút cư xử khác nhau ngay trước mắt người dùng — ở đây là một nút nháy "Đã sao
+ * chép" còn nút kia đứng im, và người bấm không biết mình đã chép được hay chưa. */
+async function chepVaoBangNho(button, chuoi) {
+  if (!button || !chuoi) return;
+  const nhanCu = button.textContent;
   try {
-    await navigator.clipboard.writeText(pairingPath);
+    await navigator.clipboard.writeText(chuoi);
     button.textContent = "Đã sao chép";
   } catch (_loi) {
     button.textContent = "Không thể sao chép";
   }
-  window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+  window.setTimeout(() => { button.textContent = nhanCu; }, 1800);
+}
+
+async function copyBridgePairingPath(button) {
+  await chepVaoBangNho(button, button?.dataset.bridgePairingPath || "");
 }
 
 async function veBridge() {
@@ -103,6 +109,52 @@ $("#pairing-file").addEventListener("change", async (su_kien) => {
   window.setTimeout(veBridge, 1500);
 });
 $("#bridge-pairing-path-copy").addEventListener("click", () => copyBridgePairingPath($("#bridge-pairing-path-copy")));
+
+/* ---- TÊN GHẾ (12/09) -----------------------------------------------------
+ * Ô này ghi vào kho lưu và DỪNG ở đó. Nó không gửi gì qua dây, không gọi method Bridge nào:
+ * `scouter-background.js` thấy khoá đổi thì cắt dây, và lượt nối lại khai tên mới trong khung
+ * `auth`. Một đường, một chỗ xử — bảng bên không có bản sao nào của luật đó.
+ *
+ * Làm sạch bằng ĐÚNG hàm mà transport dùng lúc gửi, không viết lại: hai bản của một luật thì
+ * sớm muộn trả hai câu khác nhau, và ở đây "khác nhau" nghĩa là ô hiện một tên còn máy chủ
+ * ghi một tên khác. */
+async function veTenGhe() {
+  const kho = await chrome.storage.local.get([
+    TRANSPORT_CONSTANTS.INSTANCE_STORAGE_KEY,
+    TRANSPORT_CONSTANTS.INSTANCE_LABEL_STORAGE_KEY
+  ]);
+  const so = kho?.[TRANSPORT_CONSTANTS.INSTANCE_STORAGE_KEY]?.instance_id;
+  /* Chưa có số ghế là chuyện BÌNH THƯỜNG chứ không phải hỏng: số chỉ được đúc ở lượt nối đầu
+   * tiên. Nói ra đúng thế, đừng hiện một ô trống để người đọc tự đoán. */
+  const oSo = $("#ten-ghe-so");
+  oSo.textContent = so || "chưa có — đúc ở lượt nối Bridge đầu tiên";
+  /* Giữ số THẬT riêng khỏi chữ đang hiện. Lúc chưa có số, ô đó đang chứa một câu giải thích,
+   * và sao chép nguyên câu đó vào bảng nhớ rồi dán vào một lượt gọi là một lỗi im lặng. */
+  oSo.dataset.soGhe = so || "";
+  const o = $("#ten-ghe");
+  if (document.activeElement !== o) o.value = kho?.[TRANSPORT_CONSTANTS.INSTANCE_LABEL_STORAGE_KEY] || "";
+}
+
+async function luuTenGhe() {
+  const sach = sanitizeInstanceLabel($("#ten-ghe").value);
+  const bao = $("#ten-ghe-bao");
+  await chrome.storage.local.set({ [TRANSPORT_CONSTANTS.INSTANCE_LABEL_STORAGE_KEY]: sach });
+  $("#ten-ghe").value = sach;
+  /* Nói thẳng cái vừa xảy ra ở tầng dưới: lưu tên là CẮT DÂY. Người bấm nút thấy huy hiệu
+   * Bridge nhấp nháy sang "mất kết nối" vài giây, và không báo trước thì đó là một lỗi. */
+  bao.textContent = sach
+    ? `Đã lưu “${sach}”. Đang nối lại để khai tên…`
+    : "Đã xoá tên. Ghế này quay lại không tên.";
+  window.setTimeout(veBridge, 1500);
+}
+
+$("#ten-ghe-so-chep").addEventListener("click", () => { chepVaoBangNho($("#ten-ghe-so-chep"), $("#ten-ghe-so").dataset.soGhe || ""); });
+$("#ten-ghe-luu").addEventListener("click", () => { luuTenGhe().catch(() => { $("#ten-ghe-bao").textContent = "Không lưu được tên."; }); });
+$("#ten-ghe").addEventListener("keydown", (su_kien) => {
+  if (su_kien.key !== "Enter") return;
+  su_kien.preventDefault();
+  $("#ten-ghe-luu").click();
+});
 
 /* ---- CÔNG TẮC ĐƯỜNG GHI (S-05) -------------------------------------------
  * Bảng bên là chỗ DUY NHẤT bật được công tắc này, và đó là cả ý nghĩa của nó: không method
@@ -412,9 +464,11 @@ chrome.storage.onChanged.addListener((doi, vung) => {
   if (doi[JOURNAL_CONSTANTS.JOURNAL_STORAGE_KEY]) veSo();
   if (doi[SEED_CONSTANTS.WRITE_GATE_STORAGE_KEY]) veCongTac();
   if (doi[TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]) veBridge().then(veHoatDong);
+  if (doi[TRANSPORT_CONSTANTS.INSTANCE_STORAGE_KEY] || doi[TRANSPORT_CONSTANTS.INSTANCE_LABEL_STORAGE_KEY]) veTenGhe();
 });
 
 veNangLuc();
 veBridge().then(veSo);
+veTenGhe();
 veCongTac();
 quet();

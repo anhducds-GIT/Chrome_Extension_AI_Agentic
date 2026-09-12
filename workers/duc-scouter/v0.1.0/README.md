@@ -24,7 +24,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Mười lăm** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Mười bảy** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -36,15 +36,35 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.tree` | không | cây DOM tới độ sâu N, thuộc tính đã che |
 | `scout.a11y` | không | cây trợ năng — cái mà trình đọc màn hình thấy, không phải cái mắt thấy |
 | `scout.shot` | không | ảnh chụp trang, trả về base64 |
-| `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`) |
+| `scout.wait` | không | chờ NGAY TRONG trình duyệt tới khi một selector khớp (`present`), thôi khớp (`absent`), hoặc **thật sự bấm được** (`usable`), rồi trả lời một lần. Hết giờ trả `satisfied: false`, không phải lỗi |
+| `scout.network` | không | nghe trang nói chuyện với máy chủ trong N giây: mỗi lượt gọi một dòng — cách gọi, đường dẫn, mã trạng thái, kiểu nội dung, số byte, mất bao lâu. **Không bao giờ** trả header, nội dung gửi lên, hay nội dung phản hồi |
+| `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`). Kiểm điểm sắp bấm thuộc về ai TRƯỚC khi bắn; có thứ chắn thì từ chối `CLICK_OBSCURED` |
 | `scout.type` | **có** | gõ một chuỗi bằng **bàn phím thật**, từng phím một. Không xoá nội dung cũ |
 | `scout.key` | **có** | gõ một phím có tên: Enter · Tab · Escape · Backspace · Delete · bốn mũi tên · Home · End |
 | `scout.fetch` | **có** | gọi một URL http(s) bằng **chồng mạng của chính trình duyệt**. Trả văn bản; `as: "base64"` cho thân nhị phân như PDF. Không kèm cookie trừ khi khai `with_credentials` |
-| `scout.navigate` | **có** | đi sang trang khác rồi đợi tới nơi. Đổi trang là điều khiển trang, nên nó là lệnh GHI |
+| `scout.navigate` | **có** | đi sang trang khác rồi đợi tới nơi — **kể cả đi tới đúng trang đang mở, tức là F5**. Trả về `reloaded` và `arrivedBy` (`new_document` hay `url_change`). Đổi trang là điều khiển trang, nên nó là lệnh GHI |
 | `scout.reload` | **có** | nạp lại chính extension. Trả lời trước, khởi động lại sau. Trần 10 giây một lượt |
 
 Mọi method chạm trang **bắt buộc** có `target_id` — lấy từ `scout.targets`. Không có đường
 "tab đang mở": nhánh Flow đã trả giá cho đường đó.
+
+### `present` khác `usable` ở đâu, và vì sao chỗ đó đắt
+
+`present` trả lời *"selector này có khớp không"*. Nó KHÔNG trả lời *"bấm vào có ăn không"* —
+một hộp thoại hay tấm chắn phủ lên trên thì cả cây DOM vẫn nằm nguyên bên dưới và mọi selector
+vẫn khớp. Đo thật ngày 12/09: một lượt chờ trả `satisfied` sau **36 mili giây** trong khi màn
+hình đang bị phủ kín.
+
+`usable` đo thêm một bước: lấy điểm giữa của phần tử rồi hỏi Chrome *điểm đó thuộc về ai*.
+Thuộc về chính nó, hoặc con cháu nó (nút biểu tượng là `<button><svg><path>`, điểm giữa rơi
+vào `<path>`) thì tính là dùng được; thứ khác chắn thì không.
+
+Kết quả trả về **cả hai con số**, và cặp đáng giá nhất là `matchCount: 1, usableCount: 0` —
+*"nó có đấy, nhưng đang bị chắn"*. Phần tử nằm ngoài màn hình cũng tính là **chưa** dùng được:
+phép dò cố ý không cuộn trang, vì cuộn là sửa thứ mình đang quan sát.
+
+`scout.click` dùng **đúng phép hỏi đó** ngay trước mỗi lượt bắn chuột. Nên `usable` không phải
+một phép đo xấp xỉ cho lượt bấm — nó là cùng một câu hỏi, hỏi sớm hơn.
 
 **Ba method ghi ĐÓNG MẶC ĐỊNH.** Chưa bật *Chế độ phát triển* trong bảng bên thì chúng trả về
 `WRITE_BLOCKED` và **không hề chạm tới trang** — không gắn debugger, không gửi khung nào. Bật

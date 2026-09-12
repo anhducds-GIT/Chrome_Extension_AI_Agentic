@@ -68,13 +68,14 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 
 | File / thư mục | Vai trò |
 |---|---|
+| `CHUOI-VIEC.md` | **Chuỗi việc chạy liên tục** — việc kế tiếp là gì, đóng khi nào. Sinh ra để sống sót qua một lượt compact: nó KHÔNG kể chuyện đã qua (`HANDOFF.md`), KHÔNG giữ sổ nợ (`BACKLOG.md`), KHÔNG bàn phạm vi (`ROADMAP.md`). Mở phiên: đọc `PHIEN.md` rồi lấy ĐÚNG MỘT việc đang tới lượt ở bảng theo dõi |
 | `PHIEN.md` | **MÁY SINH — đừng sửa tay.** Bó mở phiên: lõi luật + luật riêng của gói + trạng thái mới nhất. Sinh lại: `node scripts/rule-compile.mjs --sinh` (phải giữ khoá vùng). Trần CỨNG ~3.000 token, vượt là bộ sinh từ chối — [ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md) |
 | `manifest.json` | MV3; service worker `scouter-background.js`, kiểu `module` |
 | `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, lưới đỡ `chrome.alarms` (S-02), mở bảng bên khi bấm icon, và giữ **PHANH KHẨN `Ctrl+Shift+X`** — phanh phải với tới được cả khi bảng đã đóng. **Cố ý mỏng, cố ý không có phép ghim riêng**, và **không được có nhánh chết** (khối ⑯ từ chối mọi `if (false)`) — thêm một dòng logic vào đây là thêm một dòng không ai canh |
 | `observer-engine.js` | Gắn/tháo `chrome.debugger`; gọi lõi phép dò **và lõi hành động** |
 | `sidepanel.html` · `.css` · `.js` | **Bảng bên**, ba tab, mặc định *Tiến độ* ([ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Giữ **công tắc đường ghi — chỗ DUY NHẤT bật được nó** — và chọn tệp ghép cặp. **Không con số nào gõ tay:** đếm từ `capabilities()` và sổ công việc |
 | `scripts/scouter-journal-core.mjs` | **SỔ CÔNG VIỆC** — nguồn sự thật duy nhất của khối tiến độ; đứng NGOÀI đường đi của phong bì. Một cuốn sổ sai tệ hơn không có sổ, vì nó sai một cách có thẩm quyền |
-| `scripts/observer-probes.mjs` | **Bảy phép dò read-only**, thuần logic. Ranh giới đọc / điều khiển nằm ở danh sách CDP: **`Page.captureScreenshot` CÓ, `Page.navigate` KHÔNG** |
+| `scripts/observer-probes.mjs` | **Tám phép dò read-only** (đếm lại, đừng tin số: `node -e "import('./scripts/observer-probes.mjs').then(m=>console.log(m.PROBE_NAMES.length))"`), thuần logic. Ranh giới đọc / điều khiển nằm ở danh sách CDP: **`Page.captureScreenshot` CÓ, `Page.navigate` KHÔNG** |
 | `scripts/scouter-bridge-core.mjs` | Giao thức + **từ vựng method cố định** + điều phối. Không biết `chrome` là gì |
 | `scripts/scouter-seed-core.mjs` | Bốn khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **ba hành động ghi (S-01)** |
 | `scripts/scouter-actions-core.mjs` | **Đường GHI** — bấm và gõ như tay người. Danh sách CDP riêng, bốn chốt riêng |

@@ -133,6 +133,14 @@ p { margin: 0; }
   border: 1px solid var(--vien); border-radius: 6px; background: var(--the); color: var(--chu);
 }
 
+/* Ô tên ghế mượn nguyên khuôn của `.chon-hang select` ngay trên: cùng một hàng nhãn-rồi-ô thì
+ * phải nhìn giống nhau, và chép giá trị sang một khối riêng là cách hai ô lệch nhau dần. */
+.chon-hang input[type="text"] {
+  flex: 1; min-width: 0; padding: 5px 6px; font: inherit; font-size: 12px;
+  border: 1px solid var(--vien); border-radius: 6px; background: var(--the); color: var(--chu);
+}
+.ten-ghe-hang { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 .tiendo-so { display: flex; align-items: baseline; justify-content: space-between; }
 .tiendo-dem { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
 

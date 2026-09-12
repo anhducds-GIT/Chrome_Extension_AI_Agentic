@@ -48,7 +48,21 @@ export const PROBE_NAMES = Object.freeze([
   "dom.query",
   "dom.tree",
   "a11y.tree",
-  "page.shot"
+  "page.shot",
+  /* ---- HAI PHÉP DÒ MỞ THÊM 12/09 — Đức chốt ------------------------------
+   * Cả hai sinh ra từ MỘT chỗ đau đo được: để dựng chuỗi thiết kế trên trang Optic, AI phải
+   * biết **lúc nào việc xong**. Hôm nay nó chỉ biết bằng cách hỏi đi hỏi lại qua Bridge —
+   * sinh một ảnh mất 60–90 giây là gần trăm vòng đi-về, và cái logic "xong chưa" nằm NGOÀI
+   * trình duyệt nên không thấy được trạng thái ở giữa.
+   *
+   *   · `dom.wait`  — chờ ngay trong trình duyệt, trả về MỘT lần. Không mở thêm cửa CDP nào:
+   *     nó dùng lại đúng `DOM.getDocument` + `DOM.querySelectorAll` mà `dom.query` đã dùng.
+   *   · `network.watch` — nghe trang nói chuyện với máy chủ. Cái này CÓ mở cửa mới, và chỗ đó
+   *     được giải trình riêng ở `READ_ONLY_CDP_METHODS` bên dưới.
+   *
+   * Cả hai `read_only`, và cả hai KHÔNG chạy mã của người gọi. */
+  "dom.wait",
+  "network.watch"
 ]);
 
 /* Method CDP được phép. CỐ Ý không có `Runtime.*`, không có `Input.*`, không có
@@ -78,7 +92,54 @@ export const READ_ONLY_CDP_METHODS = Object.freeze([
    * CỐ Ý không mở `Page.navigate` — cái đó điều khiển trang, không phải đọc trang. */
   "Accessibility.enable",
   "Accessibility.getFullAXTree",
-  "Page.captureScreenshot"
+  "Page.captureScreenshot",
+  /* ---- `Network.*` MỞ NGÀY 12/09, và nó KHÔNG phải getter thuần ------------
+   * Nói thẳng chỗ khác biệt trước khi nói vì sao vẫn nhận: mọi dòng phía trên là **getter** —
+   * hỏi một câu, nhận một câu trả lời, hết. `Network.enable` là một **lượt đăng ký**: bật
+   * xong thì Chrome bắt đầu đổ sự kiện về, và dòng đó chảy cho tới khi `Network.disable`.
+   * Cái khác biệt đó có thật, đừng giấu nó sau chữ "read-only".
+   *
+   * Vì sao vẫn là ĐỌC: dòng chảy đi MỘT CHIỀU VÀO. `Network.enable` không sửa một byte nào
+   * của trang, không gửi một request nào, không chạy một dòng mã nào của người gọi. Nó chỉ
+   * mở tai. Đó là ranh giới thật, và nó khác hẳn `Input.*` hay `Runtime.*`.
+   *
+   * CỐ Ý CHỈ HAI DÒNG NÀY. Miền `Network` của Chrome có những method mạnh hơn nhiều, và
+   * **không cái nào trong số đó có mặt ở đây** — nên chúng không tồn tại với file này, không
+   * phải bị canh:
+   *   · `Network.getCookies` · `Network.setCookie` — cảnh báo số 10 của bảng kiểm kê năng lực
+   *   · `Network.getResponseBody` · `Network.getRequestPostData` — đọc được nội dung thật
+   *   · `Network.setExtraHTTPHeaders` · `Network.setRequestInterception` — SỬA lượt gọi
+   * Thêm bất cứ dòng nào trong số đó là đổi luật an toàn → hỏi Đức, đừng tự thêm.
+   *
+   * Lớp chặn thứ hai nằm ở chính `network.watch`: nó KHÔNG trả nguyên gói sự kiện Chrome đưa.
+   * Gói đó chở `request.headers` — tức là cookie và token đăng nhập. `network.watch` nhặt ra
+   * từng trường một theo danh sách trắng. Danh sách method mở được thì người ta nới được;
+   * nhặt-theo-danh-sách-trắng thì nới cũng không lọt. */
+  "Network.enable",
+  "Network.disable",
+  /* ---- HAI DÒNG MỞ NGÀY 12/09 cho `dom.wait state:"usable"` — Đức chốt ----
+   * Cả hai là getter thuần, đúng nghĩa cũ: hỏi một câu, nhận một câu trả lời, không sửa một
+   * byte nào của trang, không chạy một dòng mã nào của người gọi. `DOM.getBoxModel` hỏi *hộp
+   * của phần tử nằm ở đâu*; `DOM.getNodeForLocation` hỏi *điểm này là phần tử nào*.
+   *
+   * CHÚNG CŨNG CÓ MẶT TRONG `scouter-actions-core.mjs`, VÀ ĐÓ KHÔNG PHẢI TRÙNG LẶP CẦN DỌN.
+   * Luật gói số 6: đọc và ghi đi qua hai lõi khác nhau, và lõi này chứng minh được là
+   * read-only vì kênh ghi KHÔNG CÓ MẶT trong file này — không phải vì hai file chia nhau một
+   * danh sách. Gộp hai danh sách lại là xoá đúng cái ranh giới ấy: từ đó trở đi, ai nới danh
+   * sách cho đường ghi là nới luôn cho đường đọc, một lượt, không ai thấy.
+   * Nên hai bên khai riêng, mỗi bên một dòng giải trình của mình. Trông thừa; nó là ranh giới.
+   *
+   * Vì sao lõi ĐỌC cần chúng: `dom.wait` trước hôm nay chỉ trả lời được *"selector có khớp
+   * không"*. Đo thật trên trang Optic ngày 12/09 — chờ `textarea.agent-textarea` trả
+   * `satisfied` sau **36ms** trong khi một tấm chắn phủ kín ứng dụng, vì cả cây DOM vẫn nằm
+   * nguyên bên dưới. Câu trả lời đúng về mặt chữ, vô dụng về mặt việc. `S-18`.
+   *
+   * CỐ Ý KHÔNG CÓ `DOM.scrollIntoViewIfNeeded` ở đây, dù lõi ghi có: cuộn trang là SỬA trạng
+   * thái trang. Một phép dò không được tự ý xê dịch thứ nó đang quan sát. Hệ quả có thật và
+   * đúng ý: phần tử nằm ngoài màn hình thì `usable` trả về KHÔNG — vì đúng là lúc ấy chưa
+   * bấm được vào nó. */
+  "DOM.getBoxModel",
+  "DOM.getNodeForLocation"
 ]);
 
 /* Khoá tham số CHỞ MÃ hoặc CHỞ THAO TÁC GHI. Không method hợp lệ nào ở trên dùng tới một
@@ -115,6 +176,31 @@ const MAX_TREE_NODES = 500;
 /* Trần cho ba phép dò mới. Đặt THẤP HƠN trần phong bì Bridge (1 MiB) khá nhiều, cố ý: cả
  * ba đều trả về thứ LỚN theo trang, mà chạm trần phong bì thì cả lượt chết ở tầng vận
  * chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
+/* ---- TRẦN CHỜ — con số này ĐỌC RA TỪ MÁY CHỦ, không phải chọn cho đẹp -----
+ * `bridge-host-core.mjs` bỏ cuộc một lượt chuyển tiếp sau **35.000ms** (`requestTimeoutMs`,
+ * mặc định, và chưa ai truyền giá trị khác). Nên một lệnh chờ 90 giây KHÔNG chờ được 90 giây:
+ * ở giây thứ 35 máy chủ trả `REQUEST_TIMEOUT` cho người gọi trong khi extension vẫn đang chờ
+ * tiếp — tức là hỏng theo kiểu tệ nhất, **hai đầu tin hai chuyện khác nhau**.
+ *
+ * 30.000ms chừa 5 giây cho lượt gắn debugger, lượt đóng gói và đường về. Muốn chờ lâu hơn thì
+ * gọi nhiều lượt — ba lượt 30 giây vẫn rẻ hơn chín mươi lượt hỏi-đáp gần trăm lần.
+ *
+ * **Ba method hiện có đang vượt trần này** (`scout.navigate` 70s · `scout.type` và
+ * `scout.fetch` 60s) — sổ nợ S-16. Đừng chép con số của chúng. */
+const MAX_WAIT_MS = 30000;
+const DEFAULT_WAIT_MS = 15000;
+const MIN_POLL_MS = 100;
+const MAX_POLL_MS = 5000;
+const DEFAULT_POLL_MS = 500;
+
+/* Nghe mạng cũng nằm dưới cùng cái trần 35 giây, và còn phải chừa thêm cho `Network.disable`
+ * cùng lượt đóng gói danh sách — nên thấp hơn `MAX_WAIT_MS`. */
+const MAX_NET_MS = 25000;
+const DEFAULT_NET_MS = 5000;
+const MAX_NET_ITEMS = 200;
+const DEFAULT_NET_ITEMS = 50;
+const MAX_URL_FILTER_LENGTH = 200;
+
 const MAX_AX_NODES = 1500;
 const DEFAULT_AX_NODES = 400;
 const MAX_SHOT_BYTES = 700 * 1024;
@@ -178,7 +264,22 @@ export async function runProbe(name, deps = {}, params = {}) {
   const log = [];
   const send = deps.sendRaw ? createReadOnlySender(deps.sendRaw, log) : null;
   try {
-    const data = await PROBES[name]({ send, listTargets: deps.listTargets, targetId: deps.targetId }, params);
+    /* `sleep` và `subscribe` bơm vào giống hệt `sendRaw`, và vì cùng một lý do: file này không
+     * biết `chrome` là gì, cũng không được biết đồng hồ thật là gì. Phép ghim tiêm đồng hồ giả
+     * nên `dom.wait` 30 giây chạy xong trong một phần nghìn giây — không có cái đó thì suite
+     * của gói dài thêm vài phút và sẽ có người bỏ chạy nó.
+     *
+     * `sleep` mặc định là đồng hồ thật để lớp nối dây khỏi phải nhớ bơm; `subscribe` KHÔNG có
+     * mặc định — không ai đưa kênh sự kiện thì `network.watch` phải nói thẳng là nó không nghe
+     * được, chứ không được im lặng trả về một danh sách rỗng trông y như "trang chẳng gọi gì". */
+    const ctx = {
+      send,
+      listTargets: deps.listTargets,
+      targetId: deps.targetId,
+      sleep: typeof deps.sleep === "function" ? deps.sleep : ((ms) => new Promise((r) => setTimeout(r, ms))),
+      subscribe: deps.subscribe
+    };
+    const data = await PROBES[name](ctx, params);
     return { ok: true, probe: name, data, cdp: log };
   } catch (error) {
     const code = error instanceof ProbeError ? error.code : "PROBE_FAILED";
@@ -299,6 +400,121 @@ const PROBES = {
     };
   },
 
+  /* ⑦ dom.wait — "chờ tới khi selector này khớp (hoặc thôi khớp)".
+   *
+   * VÌ SAO NÓ Ở TRONG TRÌNH DUYỆT chứ không để người gọi tự lặp `dom.query`: mỗi lượt
+   * `dom.query` là một vòng đi-về trọn vẹn qua Bridge — phong bì, HTTP, một chặng WebSocket,
+   * rồi ngược lại. Chờ một tấm ảnh sinh xong mất 60–90 giây; hỏi mỗi giây là gần trăm vòng
+   * như thế. Ở đây nó là MỘT vòng, và lượt hỏi lặp lại nằm sát trang.
+   *
+   * KHÔNG MỞ THÊM CỬA NÀO. Nó gọi đúng ba method mà `dom.query` đã gọi. Đó là điều kiện để
+   * phép dò này rẻ về mặt an toàn: nó không phải một năng lực mới, nó là một VÒNG LẶP quanh
+   * một năng lực đã có.
+   *
+   * Lấy lại `DOM.getDocument` MỖI lượt hỏi, không giữ `nodeId` gốc từ lượt đầu: trang kiểu
+   * React dựng lại cây liên tục, và CDP làm `nodeId` cũ hết hiệu lực khi tài liệu đổi. Giữ
+   * lại thì phép dò sẽ báo "chưa thấy" mãi mãi trên đúng những trang nó sinh ra để phục vụ. */
+  async "dom.wait"(ctx, params) {
+    const send = requireSend(ctx);
+    const selector = params.selector;
+    if (typeof selector !== "string" || selector.trim() === "") {
+      throw new ProbeError("SELECTOR_REQUIRED", "dom.wait cần tham số `selector` là chuỗi không rỗng.");
+    }
+    if (selector.length > MAX_SELECTOR_LENGTH) {
+      throw new ProbeError("SELECTOR_TOO_LONG", `Selector dài quá ${MAX_SELECTOR_LENGTH} ký tự.`);
+    }
+    /* `present` VẪN LÀ MẶC ĐỊNH, và đừng đảo lại. Đổi nghĩa một tham số đang có là làm hỏng
+     * mọi lượt gọi đã viết, ở khắp nơi, cùng một lúc — và hỏng lặng lẽ, vì lượt gọi cũ vẫn
+     * chạy được, chỉ trả lời một câu hỏi khác. Năng lực mới đi vào bằng một GIÁ TRỊ MỚI. */
+    const state = params.state === undefined || params.state === null ? "present" : params.state;
+    if (state !== "present" && state !== "absent" && state !== "usable") {
+      throw new ProbeError("WAIT_STATE_INVALID", "`state` chỉ nhận 'present', 'absent' hoặc 'usable'.");
+    }
+    const minCount = readIndex(params.minCount, 1, "minCount", 1, MAX_PAGE_LIMIT);
+    const timeoutMs = readIndex(params.timeoutMs, DEFAULT_WAIT_MS, "timeoutMs", MIN_POLL_MS, MAX_WAIT_MS);
+    const pollMs = readIndex(params.pollMs, DEFAULT_POLL_MS, "pollMs", MIN_POLL_MS, MAX_POLL_MS);
+
+    await send("DOM.enable", {});
+    const batDau = Date.now();
+    let polls = 0;
+    let matchCount = 0;
+    let satisfied = false;
+    let nodeIds = [];
+    let usableCount = 0;
+    let usableBlockedBy = null;
+
+    /* Hỏi TRƯỚC rồi mới ngủ, không ngược lại: điều kiện rất hay đã đúng sẵn ngay lúc gọi, và
+     * một vòng lặp ngủ-trước sẽ tốn oan một nhịp mỗi lần như thế. */
+    for (;;) {
+      const doc = await send("DOM.getDocument", { depth: 0, pierce: false });
+      const root = doc?.root;
+      if (!root?.nodeId) throw new ProbeError("NO_DOCUMENT", "Target không trả về document nào.");
+      let found;
+      try {
+        found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });
+      } catch (error) {
+        if (error instanceof ProbeError) throw error;
+        throw new ProbeError("SELECTOR_INVALID", `Chrome từ chối selector: ${error?.message || String(error)}`);
+      }
+      polls += 1;
+      nodeIds = found?.nodeIds || [];
+      matchCount = nodeIds.length;
+      if (state === "absent") {
+        satisfied = matchCount === 0;
+      } else if (state === "present") {
+        satisfied = matchCount >= minCount;
+      } else {
+        /* `usable`: khớp thôi chưa đủ, phải có ĐỦ `minCount` phần tử mà điểm giữa của chúng
+         * thật sự thuộc về chúng. Đếm lại mỗi nhịp, không nhớ kết quả nhịp trước — tấm chắn
+         * biến mất giữa hai nhịp là chuyện thường, và đó chính là thứ ta đang chờ. */
+        const dem = await demSoDungDuoc(send, nodeIds, minCount);
+        usableCount = dem.dem;
+        usableBlockedBy = dem.vuong;
+        satisfied = usableCount >= minCount;
+      }
+      if (satisfied) break;
+      /* Hết giờ thì DỪNG, và trả về `satisfied: false` — KHÔNG ném. Hết giờ là một CÂU TRẢ LỜI
+       * ("sau 30 giây vẫn chưa thấy"), không phải một sự cố; ném ra thì người gọi phải bóc lỗi
+       * mới biết được cái tin đó, và sớm muộn có người bóc nhầm thành "Scouter hỏng". */
+      if (Date.now() - batDau + pollMs > timeoutMs) break;
+      await ctx.sleep(pollMs);
+    }
+
+    /* Chỉ mô tả phần tử khi ĐÃ thấy, và chỉ vài cái đầu: người gọi chờ xong thường cần đúng
+     * một thứ — "nó đây, trông thế này" — chứ không cần cả trang. */
+    const items = [];
+    if (satisfied && state !== "absent") {
+      for (const nodeId of nodeIds.slice(0, Math.min(minCount, 10))) items.push(await describe(send, nodeId));
+    }
+
+    return {
+      selector,
+      state,
+      minCount,
+      timeoutMs,
+      pollMs,
+      satisfied,
+      matchCount,
+      /* Trả về CẢ HAI con số, luôn luôn. `matchCount: 1, usableCount: 0` là câu trả lời giá
+       * trị nhất mà phép dò này nói được — "nó có đấy, nhưng đang bị chắn" — và gộp lại thành
+       * một con số là vứt đi đúng cái tin đó. Ở `state` khác `usable` thì `usableCount` là
+       * `null`, không phải `0`: "không đếm" khác "đếm được không cái nào". */
+      usableCount: state === "usable" ? usableCount : null,
+      /* VÌ SAO chưa dùng được, không chỉ LÀ chưa dùng được. Ba lý do dẫn tới ba việc khác hẳn
+       * nhau, và gộp chúng thành một `false` là đúng kiểu hỏng im lặng mà cả gói này chống:
+       *   · `covered`      — có thứ chắn lên. Chờ tiếp, hoặc đóng cái đang chắn.
+       *   · `no_box`       — phần tử không có hộp hiển thị (ẩn, rộng 0, chưa dựng xong).
+       *   · `no_hit_test`  — Chrome KHÔNG TRẢ LỜI được câu hỏi. Đo thật 12/09: tab không
+       *     đang được vẽ thì `DOM.getNodeForLocation` trả `-32000`. Đây KHÔNG phải "bị chắn",
+       *     và ai đọc nhầm nó thành "bị chắn" sẽ đi tìm một hộp thoại không hề tồn tại. */
+      usableBlockedBy: state === "usable" && !satisfied ? usableBlockedBy : null,
+      polls,
+      waitedMs: Date.now() - batDau,
+      items,
+      redaction: redactionNote()
+    };
+  },
+
   /* ④ dom.tree — cấu trúc cây tới độ sâu N kèm thuộc tính.
    * Lỗ ⑵ của brief: bản cũ gọi `DOM.getDocument` với `depth: 0` nên chỉ trả về nút gốc. */
   async "dom.tree"(ctx, params) {
@@ -391,6 +607,139 @@ const PROBES = {
         "Ảnh " + bytes + " byte, quá trần " + MAX_SHOT_BYTES + " byte. Hạ quality, hoặc dùng jpeg thay vì png.");
     }
     return { format, quality: format === "jpeg" ? quality : null, bytes, base64: data };
+  },
+
+  /* ⑧ network.watch — "nghe trang nói chuyện với máy chủ trong N giây rồi kể lại".
+   *
+   * NÓ TRẢ LỜI CÂU GÌ. Hôm nay muốn biết "trang xong chưa" thì chỉ còn cách nhìn màn hình mà
+   * đoán. Nghe được thì biết CHÍNH XÁC lúc máy chủ trả kết quả về, và biết trang báo lỗi gì
+   * bên trong khi ngoài mặt nó chỉ quay vòng vòng.
+   *
+   * ══ CHỖ ĐẮT NHẤT CỦA PHÉP DÒ NÀY, ĐỌC TRƯỚC KHI SỬA ══
+   * Gói sự kiện Chrome đưa sang CHỞ `request.headers` — tức là cookie phiên và token đăng
+   * nhập của Đức. Trả nguyên gói đó ra ngoài dây là làm rò bí mật qua đúng cái cửa dựng ra để
+   * quan sát. Nên hàm này **nhặt ra từng trường một theo danh sách trắng**, không bao giờ
+   * trải gói gốc. Khác biệt giữa hai lối viết chỉ là vài dòng, và nó là toàn bộ khoảng cách
+   * giữa một công cụ chẩn đoán với một máy hút token.
+   *
+   * Ba thứ CỐ Ý KHÔNG có mặt trong kết quả, dù Chrome đưa sẵn:
+   *   · `headers` (cả request lẫn response) — chỗ cookie và `authorization` nằm
+   *   · `postData` — chỗ nội dung người dùng gõ nằm; và `Network.enable` còn được gọi kèm
+   *     `maxPostDataSize: 0` để Chrome ĐỪNG GỬI, chứ không phải gửi rồi ta bỏ
+   *   · nội dung phản hồi — muốn có nó phải gọi `Network.getResponseBody`, mà method đó
+   *     không nằm trong danh sách read-only, nên nó không tồn tại với file này
+   *
+   * URL đi qua `stripQuery` y như `href`/`src` ở `dom.query`: query string là chỗ token hay
+   * nằm thứ hai sau header. Giữ đường dẫn, cắt phần sau dấu `?`.
+   *
+   * ══ VÌ SAO GẮN-RỒI-NHẢ, KHÔNG PHIÊN DÀI ══
+   * Phép dò này sống trọn trong một lượt gọi: bật tai, nghe N giây, tắt tai, kể lại. Nó KHÔNG
+   * để lại một phiên nghe nào chạy tiếp sau khi trả lời. Giữ đúng khuôn gắn-rồi-nhả của
+   * `runProbe` nghĩa là dải băng vàng "đang gỡ lỗi" chỉ hiện đúng lúc nó làm việc — và nghĩa
+   * là không có cái tai nào bị bỏ quên trong tình trạng đang mở. */
+  async "network.watch"(ctx, params) {
+    const send = requireSend(ctx);
+    if (typeof ctx.subscribe !== "function") {
+      /* Nói thẳng là KHÔNG NGHE ĐƯỢC. Trả về danh sách rỗng ở đây thì nó trông y hệt "trang
+       * chẳng gọi máy chủ lần nào" — một câu trả lời sai mà nghe rất giống câu đúng. */
+      throw new ProbeError("DEPS_MISSING", "network.watch cần deps.subscribe — kênh sự kiện CDP chưa được nối.");
+    }
+    const durationMs = readIndex(params.durationMs, DEFAULT_NET_MS, "durationMs", MIN_POLL_MS, MAX_NET_MS);
+    const limit = readIndex(params.limit, DEFAULT_NET_ITEMS, "limit", 1, MAX_NET_ITEMS);
+    let urlContains = null;
+    if (params.urlContains !== undefined && params.urlContains !== null) {
+      if (typeof params.urlContains !== "string" || params.urlContains.length > MAX_URL_FILTER_LENGTH) {
+        throw new ProbeError("PARAM_INVALID",
+          `Tham số \`urlContains\` phải là chuỗi tối đa ${MAX_URL_FILTER_LENGTH} ký tự.`);
+      }
+      /* Lọc bằng SO KHỚP CHUỖI CON, không phải biểu thức chính quy. Nhận regex từ ngoài dây là
+       * mở một cửa cho lượt gọi làm treo service worker bằng một mẫu quay lui mũ. */
+      urlContains = params.urlContains;
+    }
+
+    const luot = new Map();      /* requestId → bản ghi đang dựng */
+    const thuTu = [];            /* giữ đúng thứ tự trang gọi, `Map` không hứa điều đó qua mọi đời JS */
+    let boQua = 0;
+
+    function ban(requestId) {
+      if (luot.has(requestId)) return luot.get(requestId);
+      if (thuTu.length >= MAX_NET_ITEMS) { boQua += 1; return null; }
+      const banGhi = {
+        requestId: String(requestId),
+        method: null, url: null, resourceType: null,
+        status: null, mimeType: null, fromCache: null,
+        encodedDataLength: null, startedAt: null, endedAt: null, durationMs: null,
+        failed: false, errorText: null
+      };
+      luot.set(requestId, banGhi);
+      thuTu.push(banGhi);
+      return banGhi;
+    }
+
+    /* NHẶT TỪNG TRƯỜNG. Mỗi dòng dưới đây là một quyết định có chủ ý; không dòng nào trải một
+     * đối tượng Chrome đưa sang. Xem khối chú thích đầu phép dò. */
+    function nghe(cdpMethod, e) {
+      if (!e || typeof e.requestId !== "string") return;
+      if (cdpMethod === "Network.requestWillBeSent") {
+        const url = typeof e.request?.url === "string" ? e.request.url : "";
+        if (urlContains !== null && !url.includes(urlContains)) return;
+        const banGhi = ban(e.requestId);
+        if (!banGhi) return;
+        banGhi.method = typeof e.request?.method === "string" ? e.request.method.slice(0, 16) : null;
+        banGhi.url = stripQuery(url);
+        banGhi.resourceType = typeof e.type === "string" ? e.type.slice(0, 32) : null;
+        banGhi.startedAt = typeof e.timestamp === "number" ? e.timestamp : null;
+        return;
+      }
+      /* Ba sự kiện còn lại chỉ CẬP NHẬT bản ghi đã có. Không tạo bản ghi mới: một lượt gọi bắt
+       * đầu trước khi ta bật tai sẽ chỉ có nửa sau, và một bản ghi không biết mình gọi URL nào
+       * thì vô dụng — tệ hơn, nó lọt qua được cái lọc `urlContains`. */
+      const banGhi = luot.get(e.requestId);
+      if (!banGhi) return;
+      if (cdpMethod === "Network.responseReceived") {
+        banGhi.status = typeof e.response?.status === "number" ? e.response.status : null;
+        banGhi.mimeType = typeof e.response?.mimeType === "string" ? e.response.mimeType.slice(0, 64) : null;
+        banGhi.fromCache = e.response?.fromDiskCache === true;
+      } else if (cdpMethod === "Network.loadingFinished") {
+        banGhi.encodedDataLength = typeof e.encodedDataLength === "number" ? e.encodedDataLength : null;
+        banGhi.endedAt = typeof e.timestamp === "number" ? e.timestamp : null;
+      } else if (cdpMethod === "Network.loadingFailed") {
+        banGhi.failed = true;
+        banGhi.errorText = typeof e.errorText === "string" ? e.errorText.slice(0, 200) : null;
+        banGhi.endedAt = typeof e.timestamp === "number" ? e.timestamp : null;
+      }
+    }
+
+    const thoi = ctx.subscribe(nghe);
+    try {
+      /* `maxPostDataSize: 0` — bảo Chrome ĐỪNG GỬI nội dung người dùng gõ sang, thay vì gửi
+       * rồi ta bỏ đi. Thứ không bao giờ tới thì không rò được. */
+      await send("Network.enable", { maxPostDataSize: 0 });
+      await ctx.sleep(durationMs);
+    } finally {
+      /* Tắt tai trong `finally`: lượt ngủ hỏng giữa chừng cũng không được để lại một phiên
+       * nghe đang mở. `thoi()` gọi trước vì nó không thể hỏng; `Network.disable` đi qua dây
+       * nên hỏng được, và hỏng thì cũng đã có `detachQuietly` của engine dọn nốt. */
+      try { thoi(); } catch (_error) { /* cố hết sức */ }
+      try { await send("Network.disable", {}); } catch (_error) { /* cố hết sức */ }
+    }
+
+    for (const banGhi of thuTu) {
+      if (banGhi.startedAt !== null && banGhi.endedAt !== null) {
+        banGhi.durationMs = Math.round((banGhi.endedAt - banGhi.startedAt) * 1000);
+      }
+    }
+    const items = thuTu.slice(0, limit);
+    return {
+      durationMs,
+      urlContains,
+      total: thuTu.length,
+      returned: items.length,
+      dropped: boQua,
+      hasMore: thuTu.length > items.length,
+      items,
+      redaction: "URL cắt phần sau dấu `?`. KHÔNG trả header, KHÔNG trả nội dung gửi lên, KHÔNG trả nội dung phản hồi."
+    };
   }
 };
 
@@ -407,6 +756,68 @@ function readIndex(raw, fallback, label, min = 0, max = Number.MAX_SAFE_INTEGER)
     throw new ProbeError("PARAM_INVALID", `Tham số \`${label}\` phải là số nguyên trong khoảng ${min}..${max}.`);
   }
   return raw;
+}
+
+/* ---- `usable`: *dùng được*, không phải *có mặt* — `S-18` ------------------
+ *
+ * Trần 10 phần tử mỗi nhịp. `usable` tốn hai tới ba lượt hỏi CHO MỖI phần tử, nhân với số
+ * nhịp chờ — một selector lỏng khớp 300 thứ sẽ biến một lượt chờ 30 giây thành hàng nghìn
+ * lượt hỏi. Trần này cắt cái đuôi đó; đếm đủ `minCount` là dừng, nên ca thường (khớp một)
+ * không trả thêm đồng nào. */
+const MAX_USABLE_CHECKS = 10;
+
+async function demSoDungDuoc(send, nodeIds, minCount) {
+  let dem = 0;
+  let vuong = null;
+  for (const nodeId of nodeIds.slice(0, MAX_USABLE_CHECKS)) {
+    const lyDo = await dungDuoc(send, nodeId);
+    if (lyDo === "yes") {
+      dem += 1;
+      if (dem >= minCount) break;
+    } else if (vuong === null) {
+      vuong = lyDo;
+    }
+  }
+  return { dem, vuong };
+}
+
+/* Cùng một câu hỏi mà `scouter-actions-core.mjs` hỏi trước mỗi lượt bấm — cố ý, vì `usable`
+ * chỉ đáng tin khi nó đo ĐÚNG THỨ lượt bấm sẽ gặp. Hai bên viết riêng (luật gói số 6), nhưng
+ * chúng phải nói cùng một câu trả lời trên cùng một trang.
+ *
+ * MỘT CHỖ CỐ Ý KHÁC bên đường ghi: ở đó, "không hỏi được" thì NÉM — không kiểm được thì không
+ * bấm. Ở đây thì trả `false`, và đó không phải nới lỏng: `false` nghĩa là *chưa thấy nó dùng
+ * được*, và lượt chờ sẽ hỏi lại ở nhịp sau rồi kết thúc bằng `satisfied: false`. Cả hai đều
+ * là hỏng-thì-đóng, chỉ khác nhau ở chỗ một bên phải quyết ngay còn một bên được chờ. */
+async function dungDuoc(send, nodeId) {
+  let hop;
+  try { hop = await send("DOM.getBoxModel", { nodeId }); }
+  catch { return "no_box"; }
+  const quad = hop?.model?.content;
+  if (!Array.isArray(quad) || quad.length !== 8) return "no_box";
+  const xs = [quad[0], quad[2], quad[4], quad[6]];
+  const ys = [quad[1], quad[3], quad[5], quad[7]];
+  const x = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const y = (Math.min(...ys) + Math.max(...ys)) / 2;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return "no_box";
+
+  let o;
+  try {
+    o = await send("DOM.getNodeForLocation", {
+      x: Math.round(x), y: Math.round(y), includeUserAgentShadowDOM: false
+    });
+  } catch { return "no_hit_test"; }
+  const trungDiem = o?.nodeId;
+  if (typeof trungDiem !== "number") return "no_hit_test";
+  if (trungDiem === nodeId) return "yes";
+
+  /* Nhận cả con cháu, cùng lý do với đường ghi: nút thật hay là `<button><svg><path>` và tâm
+   * hộp rơi vào `<path>`. Chỉ nhận đúng nút thì mọi nút có icon bị báo là "không dùng được"
+   * trong khi tay người bấm vẫn trúng. */
+  let con;
+  try { con = await send("DOM.querySelectorAll", { nodeId, selector: "*" }); }
+  catch { return "no_hit_test"; }
+  return (con?.nodeIds || []).includes(trungDiem) ? "yes" : "covered";
 }
 
 async function describe(send, nodeId) {

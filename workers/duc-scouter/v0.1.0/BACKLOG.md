@@ -350,3 +350,250 @@ tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản 
   chạy*, kèm đúng hai đường ra như ở đây. Giữ hai bản của một mục nợ ở hai quyển sổ là cách chắc
   chắn để một bản được đóng còn bản kia nằm lại mãi.
   **Quyết định vẫn chờ Đức**, và nó nằm ở `H-03`. Sổ nợ Scouter nay **rỗng**.
+
+- **ĐÓNG S-04** (2026-09-12, `claude-scouter-udine`) · Đóng bằng **phép đo**, đúng nhánh thứ hai
+  của điều kiện đóng: *"chạy đủ nhiều lượt mà không mất lần nào"*. **18 lượt `scout.reload` thật
+  trên Chrome 152, 18 lượt giữ được phản hồi, 0 lượt mất.** (2 lượt lẻ lúc nạp lại bản vá tên
+  ghế, rồi 16 lượt liên tiếp cách nhau 13 giây.)
+
+  **Không phải 20 như dự định, và nói thẳng vì sao:** mỗi lượt `chrome.runtime.reload()` đóng
+  rồi mở lại bảng bên, nên nhìn từ phía Đức nó là *"extension cứ tự động thu gọn"*. Đức báo lỗi
+  đó lúc phép đo chạy tới lượt 16 và tôi dừng ngay. Bài học cho người sau: **một phép đo lặp lại
+  việc nạp lại extension là một phép đo NGƯỜI DÙNG NHÌN THẤY** — báo trước, hoặc chạy lúc Đức
+  không dùng máy.
+
+  Độ trễ cố định 250ms (`RELOAD_DELAY_MS`) **giữ nguyên, không làm móc "đã gửi xong"**. Mục này
+  xin cái móc đó chỉ khi có một lượt mất phản hồi thật; 18/18 nói là chưa cần. Mất lần nào thì
+  mở lại mục mới, đừng sửa dòng này.
+
+## XONG · S-16 (mở 2026-09-12, đóng 2026-09-12, `claude-scouter-udine`) — ba method khai hạn chờ VƯỢT ngưỡng máy chủ
+
+Tìm thấy dọc đường khi đặt `deadline_ms` cho `scout.wait`, không phải đi tìm.
+
+`bridge-host-core.mjs` cắt một lượt chuyển tiếp ở **35.000ms** (`requestTimeoutMs`, mặc định, và
+chưa ai truyền giá trị khác). Ba method hiện có khai rộng hơn thế:
+
+| method | `deadline_ms` khai | ngưỡng máy chủ |
+|---|---|---|
+| `scout.navigate` | 70.000 | 35.000 |
+| `scout.type` | 60.000 | 35.000 |
+| `scout.fetch` | 60.000 | 35.000 |
+
+**Hỏng kiểu gì.** Một lượt gọi chạy quá 35 giây: máy chủ trả `REQUEST_TIMEOUT` cho người gọi,
+extension **vẫn đang làm tiếp** và không biết gì. Hai đầu tin hai chuyện khác nhau — với
+`scout.navigate` và `scout.type` là đường GHI, nghĩa là người gọi tưởng lượt gõ hỏng trong khi
+nó đã gõ xong. Thử lại lúc đó là gõ hai lần.
+
+**Chưa thấy nổ ngoài đời** — ba method đó hiếm khi chạy quá 35 giây. Nên đây là nợ, không phải
+đám cháy. `scout.wait` và `scout.network` mở ngày 12/09 đã né sẵn (34.000 ở cửa Bridge, và trần
+thật 30.000/25.000 ở lõi đọc) nên **đừng chép con số của ba method cũ**.
+
+**ĐÃ ĐÓNG 12/09.** Chọn đường một (hạ ba con số), **không** chọn đường hai (đổi giao thức cho
+người khởi động truyền hạn chờ) — đường hai đụng lõi dùng chung với ba gói đóng băng và phải
+hỏi Đức, mà nó không mua thêm gì cho việc đang làm.
+
+Nhưng lấy **nửa tốt** của đường hai, phần không đụng giao thức: con số 35.000 nay có TÊN —
+`DEFAULT_REQUEST_TIMEOUT_MS`, xuất từ `bridge-host-core.mjs`. Trước đó nó nằm trần trong thân
+hàm nên phía extension **không có cách nào đọc được**, và đó chính là lý do ba method trôi
+được lên 60–70 giây mà không ai thấy. Đặt tên không đổi một hành vi nào; ba phép ghim của lõi
+dùng chung vẫn xanh.
+
+| method | trước | sau |
+|---|---|---|
+| `scout.navigate` | 70.000 | **34.000** |
+| `scout.type` | 60.000 | **34.000** |
+| `scout.fetch` | 60.000 | **34.000** |
+
+**Và trần `timeout_ms` của `scout.navigate` xuống 60.000 → 30.000.** Chỗ này suýt bị bỏ sót:
+hạ `deadline_ms` mà để người gọi vẫn xin được 60 giây thì bug còn nguyên, chỉ chuyển chỗ. Bốn
+giây chênh giữa 30.000 và 34.000 là chỗ cho lượt trả lời đi về — cùng khuôn với `scout.wait`.
+
+**Phép ghim chống tái phát: `B9`.** Nó ĐỌC NGƯỠNG THẲNG TỪ LÕI MÁY CHỦ và duyệt CẢ BẢNG LỆNH,
+không so với một danh sách gõ tay — nên nó bắt được cả một method MỚI khai hạn chờ quá dài.
+Đó mới là cách mục này tái phát: không phải ai đó sửa số cũ, mà ai đó **thêm một dòng**. Chép
+tay ngưỡng vào phép ghim là dựng lại đúng cái bẫy đã sinh ra mục này — hai bản của một sự
+thật, lệch nhau trong im lặng. Đột biến `S9`, `S10`, `S11`, giết được cả ba.
+
+**Đo ngoài đời 12/09:** `system.capabilities` khai ra ngoài dây — không method nào còn vượt
+34.000; xin `timeout_ms: 60000` bị cửa Bridge từ chối `INVALID_PARAMS` kèm câu nói rõ khoảng
+hợp lệ.
+
+## XONG · S-17 (mở 2026-09-12, đóng 2026-09-12, `claude-scouter-udine`) — `scout.click` báo "đã bấm" khi nó bấm trúng LỚP CHE
+
+**P1.** Đây là lỗi báo-thành-công-giả trên đường GHI, và nó im lặng.
+
+`scout.click` suy toạ độ từ `DOM.getBoxModel` của đúng phần tử đã khớp — chốt đó đúng và
+`H4`/`H5` canh nó. Nhưng **không có bước nào kiểm rằng điểm ấy thật sự thuộc về phần tử ấy.**
+Một lớp phủ trong suốt, một modal, một tooltip đứng trên đường là đủ: chuột bấm vào lớp trên,
+Scouter trả về `{matchCount: 1, clickedAt: {...}, method: "Input.dispatchMouseEvent"}` — **giống
+hệt một lượt bấm thành công.**
+
+**KHÔNG phải chẩn đoán cho lượt bấm Send hỏng cùng ngày** — nói rõ để người sau khỏi tin nhầm:
+ảnh chụp ngay sau lượt bấm đó **không có lớp che nào**, nên mục này là một giả thuyết chưa được
+chứng minh cho ca ấy. Giả thuyết mạnh không kém: tài khoản đã chạm trần phiên. Mục này đứng
+vững bằng phép đo riêng của nó ở dưới, không bằng ca kia.
+
+**Đo được, 12/09, trên trang Udin:** khi lớp `.concurrency-overlay` ("User Limit Reached") phủ
+kín ứng dụng, `scout.query` vẫn khớp `button.agent-send-button` **đúng một**, và mọi thứ
+`scout.click` cần để tự tin đều còn nguyên. Không chốt nào hiện có nhìn thấy lớp phủ.
+
+**Vì sao nó đắt.** Luật vàng số 7 của gói lo đúng chuyện này (*"bấm trúng phần tử bên cạnh"*)
+nhưng chỉ chặn được nửa theo phương ngang — khớp đúng một phần tử. Nửa theo **chiều sâu** thì
+chưa ai canh. Và hậu quả tệ hơn bấm trượt: bấm trượt thì trang không đổi và người gọi biết;
+bấm trúng lớp che thì **lớp che phản ứng**, trang đổi thật, và người gọi tin là việc của mình
+đã xong.
+
+**ĐÃ ĐÓNG 12/09 — Đức chốt D1 cho `DOM.getNodeForLocation` vào `WRITE_CDP_METHODS`.**
+
+`input.click` nay có **chốt ⑸**: sau khi tính toạ độ và **trước khi** bắn chuột, nó hỏi Chrome
+*"điểm này là phần tử nào"*. Nhận chính phần tử đã khớp, hoặc con cháu của nó (nút biểu tượng
+là `<button><svg><path>`, tâm hộp rơi vào `<path>`); thứ khác thì từ chối `CLICK_OBSCURED`.
+Toạ độ **làm tròn một lần, ở một chỗ**, nên điểm đã hỏi đúng là điểm sẽ bấm.
+
+Đo ngoài đời 12/09 trên một trang tự dựng (`http://127.0.0.1:38411`), qua Bridge thật:
+
+| ca | kết quả |
+|---|---|
+| `<button>Gửi</button>` chữ thuần | `relation: "self"` — Chrome tự đi ngược từ nút văn bản lên phần tử cha, nên nút chữ KHÔNG bị từ chối oan |
+| `<button><svg><path>` | `relation: "descendant"` — nút có icon KHÔNG bị từ chối oan |
+| nút có lớp phủ đè lên | `CLICK_OBSCURED`, và **không một khung chuột nào rời đi** |
+
+Ghim: `scouter-actions-smoke.mjs` khối ⑥b (sáu ca, cả hai chiều). Đột biến `HB1..HB6`, giết được
+cả sáu. Mã lỗi đi ra ngoài dây ở `details.action_code` — cửa Bridge cố ý giữ bảng lỗi nhỏ và mọi
+lỗi hành động đều mang mã `ACTION_FAILED` ở tầng ngoài, đúng lối đã có từ `FETCH_*`.
+
+## XONG · S-18 (mở 2026-09-12, đóng 2026-09-12, `claude-scouter-udine`) — `scout.wait` trả "sẵn sàng" khi phần tử chỉ CÓ MẶT
+
+`scout.wait` mở hôm nay hỏi đúng một câu: *selector này khớp mấy phần tử*. Nhưng câu một chuỗi
+việc thật cần hỏi là *thứ này DÙNG ĐƯỢC chưa*.
+
+**Đo được, 12/09:** chờ `textarea.agent-textarea` trả về `satisfied: true` sau **36ms / 1 lượt
+hỏi**, trong khi màn hình đang là tấm chắn "User Limit Reached" phủ kín ứng dụng. Toàn bộ cây
+DOM của trang nằm nguyên dưới lớp chắn, nên mọi selector vẫn khớp. **"Có trong DOM" ≠ "dùng
+được"** — và một lệnh chờ trả lời sai câu hỏi thì tệ hơn không có lệnh chờ, vì nó trả lời nhanh
+và dứt khoát.
+
+Cùng gốc với `S-17`: cả hai đều thiếu cái nhìn theo CHIỀU SÂU.
+
+**ĐÃ ĐÓNG 12/09 — Đức chốt thêm `DOM.getBoxModel` vào `READ_ONLY_CDP_METHODS`.**
+
+Kế hoạch `CHUOI-VIEC.md` tính THIẾU chỗ này: nó chỉ xin một method, trong khi lõi đọc còn cần
+biết hộp của phần tử nằm ở đâu mới lấy được điểm để hỏi. Đã hỏi lại và Đức chốt.
+
+`scout.wait` nay nhận `state: "usable"`. **`present` vẫn là mặc định** — đổi nghĩa một tham số
+đang có là làm hỏng mọi lượt gọi đã viết, lặng lẽ. Kết quả trả về **cả hai** con số, và cặp
+`matchCount: 1, usableCount: 0` là tin giá trị nhất phép dò này nói được.
+
+Nó còn nói VÌ SAO chưa dùng được, qua `usableBlockedBy`: `covered` (có thứ chắn) · `no_box`
+(không có hộp hiển thị) · `no_hit_test` (Chrome không trả lời được — xem `S-21`). Ba nguyên
+nhân dẫn tới ba việc khác hẳn nhau; gộp lại thành một `false` là đúng kiểu hỏng im lặng mà cả
+gói này chống.
+
+Đo ngoài đời 12/09, cùng một trang, cùng một selector:
+
+| | `state: "present"` | `state: "usable"` |
+|---|---|---|
+| có tấm chắn phủ | `satisfied: true` | `satisfied: false`, `usableCount: 0`, `blockedBy: "covered"` |
+| không chắn | `satisfied: true` | `satisfied: true` |
+
+Hai câu trả lời khác nhau trên cùng một trang — đó là toàn bộ điểm của mục này.
+
+`scout.wait usable` và `scout.click` dùng **cùng một phép hỏi**, nên `usable` không phải một
+phép đo xấp xỉ cho lượt bấm; nó là cùng câu hỏi, hỏi sớm hơn. **CỐ Ý không cuộn trang** ở đường
+đọc (`DOM.scrollIntoViewIfNeeded` vẫn KHÔNG có trong danh sách read-only): phép dò không được
+xê dịch thứ nó đang quan sát, nên phần tử ngoài màn hình tính là chưa dùng được — đúng ý.
+
+Ghim `W11..W15`. Đột biến `NM7..NM11`, giết được cả năm.
+
+## XONG · S-19 (mở 2026-09-12, đóng 2026-09-12, `claude-scouter-udine`) — `scout.navigate` không F5 được cùng một URL
+
+Nó chờ URL đổi; đi tới đúng URL đang đứng thì URL không bao giờ đổi, nên nó treo hết 15 giây rồi
+trả `NAVIGATE_TIMEOUT` — **trong khi trang có thể đã tải lại thật**. Đo 12/09 trên trang Udin.
+
+**Tái hiện lần hai 12/09 trên trang tự dựng, nguyên văn:** *"Quá 15000ms mà chưa tới nơi. Xin đi
+'http://127.0.0.1:38411/', đang ở 'http://127.0.0.1:38411/' (url chưa đổi)."* — hai vế của câu
+đó là cùng một URL, in cạnh nhau, và method vẫn gọi đó là hỏng. Không riêng Udin, đúng như dự
+đoán lúc mở mục.
+
+Nạp lại trang là việc cơ bản của mọi vòng thuần hoá (thử lại từ trạng thái sạch), nên khuyết
+tật này sẽ gặp lại ở mọi trang, không riêng Udin.
+
+**ĐÃ ĐÓNG 12/09.** Chọn đường "chờ bằng một tín hiệu KHÁC", không chọn đường từ chối: nạp lại
+trang là việc cơ bản của mọi vòng thuần hoá, và một method từ chối làm việc cơ bản thì sớm muộn
+có người lách nó.
+
+**Tín hiệu mới: danh tính TÀI LIỆU.** `backendNodeId` của nút gốc — con số Chrome cấp cho một
+nút THẬT. Một lượt tải mới dựng một tài liệu mới, nên con số đó đổi. **KHÔNG dùng `nodeId`**:
+nó là số thứ tự trong bảng tra của phiên debug, được cấp lại mỗi lượt `DOM.getDocument`, nút gốc
+gần như luôn là `1` — so `nodeId` là so hai con số luôn bằng nhau, tức một phép kiểm không bao
+giờ báo gì. Con `HN3` canh đúng chỗ này.
+
+**Nhận CẢ HAI dấu hiệu, và đó không phải thừa.** Hai ca loại trừ nhau:
+
+| ca | url | tài liệu | bản cũ |
+|---|---|---|---|
+| F5 cùng một URL | không đổi | **mới** | treo 15s, báo sai |
+| đi tới `#muc-2` cùng trang | **đổi** | không đổi | chạy |
+
+Một dấu hiệu một mình thì ca kia treo oan. Con `HN1` và `HN2` canh hai chiều đó.
+
+**Không đọc được tài liệu TRƯỚC lúc đi thì danh tính cũ là KHÔNG BIẾT**, không phải "khác mọi
+con số" — để nguyên `undefined` thì mọi lượt điều hướng xong ngay nhịp đầu vì nó so một số thật
+với `undefined`. Con `HN4` **SỐNG SÓT lúc mới thêm**: chốt đó khi ấy chỉ là một dòng bình luận.
+Đã thêm phép ghim ⓓ0 và nó chết.
+
+**Câu lỗi nay nói đúng hai trục** đã quan sát được. Chỗ đắt của mục này chưa bao giờ là *treo* —
+mà là treo RỒI NÓI SAI NGUYÊN NHÂN.
+
+**Đo ngoài đời 12/09**, trang tự dựng, qua Bridge thật, gọi bằng TÊN ghế (`Udin_Scout`):
+
+| ca | trước | sau |
+|---|---|---|
+| F5 cùng URL | 15.000ms → `NAVIGATE_TIMEOUT (url chưa đổi)` | **254ms → `ok`**, `reloaded: true`, `arrivedBy: "new_document"` |
+| đi URL khác | chạy | vẫn chạy, `reloaded: false` |
+
+Ghim: `scouter-actions-smoke.mjs` khối ⑨b (năm ca). Đột biến `HN1..HN4`, giết được cả bốn.
+
+## MỞ · S-20 (2026-09-12, `claude-scouter-udine`) — không NGHE được mạng trong lúc BẤM trên cùng một tab
+
+`runProbe` và `runAction` đều gắn-rồi-nhả debugger, và đó là chốt tốt (dải băng vàng chỉ hiện
+đúng lúc làm việc). Hệ quả không lường trước: `scout.network` giữ debugger suốt cửa sổ nghe, nên
+một lượt `scout.click` trên **cùng tab** trong lúc đó bị từ chối `TARGET_ALREADY_ATTACHED`.
+
+**Nghĩa là Scouter không quan sát được lưu lượng do CHÍNH NÓ gây ra.** Bấm xong rồi mới nghe thì
+lượt gọi quan trọng nhất — cái bắn ra ngay lúc bấm — đã đi mất. Đo 12/09: bấm Send rồi nghe ngay,
+25 giây thu về **0 lượt**; trong khi cùng cái tai đó nghe một lượt tải trang thu về **30 lượt**.
+
+· **đóng khi:** hoặc `scout.network` nhận một tham số "làm việc này trước rồi nghe" để một lượt
+gọi làm cả hai dưới một lần gắn, hoặc gói chấp nhận giới hạn và ghi thẳng nó vào `README.md`.
+**Đừng chữa bằng cách bỏ gắn-rồi-nhả** — đó là nới một lớp bảo vệ để lấy tiện lợi.
+
+## MỞ · S-21 (2026-09-12, `claude-scouter-udine`) — một target thỉnh thoảng KHÔNG trả lời được câu hỏi hình học
+
+**Chưa biết nguyên nhân, và ghi ra đúng ở mức đó.** Một chẩn đoán sai mà nghe có thẩm quyền thì
+đắt hơn một ô trống.
+
+**Quan sát được, 12/09, trên một trang tự dựng qua Bridge thật.** Ba dấu hiệu xảy ra cùng lúc
+trên cùng một target:
+
+- `DOM.getNodeForLocation` trả `-32000 No node found at given location` cho **đúng toạ độ mà
+  vài phút trước nó trả lời bình thường**, trên đúng trang đó, không ai cuộn hay đổi kích thước
+- `scout.shot` trên cùng target trả về hỏng, 0 byte
+- lượt `scout.click` ngay sau đó bị từ chối `TARGET_ALREADY_ATTACHED` — tức là một lượt gắn
+  debugger chưa được nhả
+
+Sau **một lượt `scout.navigate` thật**, cả ba trở lại bình thường và mọi phép đo lặp lại đúng.
+
+**Vì sao đáng theo dõi dù chưa hiểu.** Nó chạm cả hai đường: `scout.click` từ chối bằng
+`CLICK_HIT_TEST_FAILED`, `scout.wait usable` trả `blockedBy: "no_hit_test"`. Cả hai đều fail-closed
+nên KHÔNG có ai bấm nhầm — nhưng một người gặp nó sẽ tưởng trang mình đang bị che, và đi tìm một
+hộp thoại không hề tồn tại. Hai đường đã được sửa để nói rõ "Chrome không trả lời được" chứ
+không nói "bị chắn", và giữ nguyên văn lời Chrome làm bằng chứng.
+
+**Giả thuyết chưa kiểm, đừng tin cái nào:** ⒜ tab không đang được vẽ (nằm sau tab khác, cửa sổ
+thu nhỏ, Chrome cho tab ngủ) · ⒝ một lượt gắn debugger hỏng để lại target ở trạng thái dở dang
+· ⒞ renderer bị thay giữa chừng nên bảng nodeId cũ không còn nghĩa.
+
+· **đóng khi:** tái hiện được có chủ ý ít nhất một lần (đưa tab ra sau rồi hỏi lại là phép thử
+rẻ nhất), rồi hoặc vá, hoặc ghi vào `README.md` như một giới hạn đã biết kèm cách nhận ra nó.
+**Đừng đóng bằng cách đoán** — mục này tồn tại chính vì chưa ai đo được nguyên nhân.

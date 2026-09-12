@@ -594,3 +594,209 @@ cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự
 ## 2026-09-12 · `codex-bridge-pairing-links`
 
 Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\duc-scouter\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.
+
+## 2026-09-12 · `claude-scouter-udine` — ghế có TÊN, và trang thử thứ hai đã chạy thật
+
+**① Trang thử THỨ HAI xong** — mục ① của `ROADMAP.md`. Seed dò `https://vinfast.udinbv.com/optic/`
+(một SPA React khác hẳn `hnx.vn`) **không sửa một dòng seed nào**, toàn lệnh CHỈ ĐỌC, công tắc
+đường ghi vẫn tắt. Bản đồ trang và câu-chưa-trả-lời-được ở
+[`drafts/DO-TRANG-OPTIC-UDINE-V1.md`](../../../drafts/DO-TRANG-OPTIC-UDINE-V1.md) — **đọc file đó
+trước khi viết adapter**, đừng đoán lại.
+
+**② TÊN GHẾ ("Profile ID").** Đo được chứ không phải thẩm mỹ: `bridge.sessions` trả về hai ghế
+cùng nối, cả hai `label: null` `legacy: true` — máy chủ định tuyến fail-closed nên mọi lượt gọi
+không nêu đích bị từ chối `TARGET_AMBIGUOUS`. Máy chủ đã có sẵn chỗ (`parseInstance`); thiếu đúng
+phía extension. Nên **không thêm method Bridge nào** — nhãn đi kèm khung `auth`. Lý do đầy đủ nằm
+trong chú thích khối `DANH TÍNH GHẾ` ở `scripts/scouter-transport-loopback.mjs`.
+
+Ô nhập ở thẻ **Hệ thống** của bảng bên. Lưu tên là **cắt dây để nối lại**. Đo sau khi nạp lại:
+cả hai ghế nay `legacy: false`, số ghế bền, `worker: duc-scouter`. `label` còn rỗng vì **chỉ tay
+người gõ được** — thiết kế, không phải việc dở.
+
+**Phép ghim** `tests/scouter-profile-id-smoke.mjs` tám con `G1..G8`; `G6` nhập `parseInstance`
+THẬT của máy chủ nên "hai đầu dây đồng ý" là phép đo. Đột biến thêm `TG1..TG4`: 100/100 giết
+được, 0 sống sót. Suite gói 19/19 xanh.
+
+**Chưa ai nghiệm thu ngoài người viết.** Cần audit độc lập trước khi đẩy, và cần Đức gõ thử một
+cái tên.
+
+## 2026-09-12 · `claude-scouter-udine` — hai năng lực mới: CHỜ và NGHE MẠNG
+
+Đức chốt thêm cả hai. Từ vựng cửa Bridge **15 → 17**, cả hai `read_only`.
+
+**`scout.wait`** — chờ ngay trong trình duyệt tới khi một selector khớp, trả lời MỘT lần thay
+cho gần trăm vòng đi-về. **Không mở thêm cửa CDP nào.** Hết giờ trả `satisfied: false`, không
+phải lỗi.
+
+**`scout.network`** — nghe trang nói chuyện với máy chủ. Cái này **có** mở cửa mới, và toàn bộ
+giải trình an toàn nằm ở chú thích khối `Network.*` trong `scripts/observer-probes.mjs` — **đọc
+ở đó trước khi sửa**, đừng đọc lại ở đây. Tóm tắt một dòng: đúng hai method, và phép dò nhặt
+từng trường theo danh sách trắng chứ không trải gói Chrome đưa sang.
+
+**Chốt tìm dọc đường:** máy chủ Bridge cắt lượt chuyển tiếp ở **35s**, nên trần chờ 30s/25s là
+đọc ra từ máy chủ chứ không chọn cho đẹp. Ba method cũ đang vượt trần đó → **sổ nợ S-16**, đừng
+chép số của chúng. Cũng **đóng S-04** (18/18 lượt reload giữ được phản hồi).
+
+Tên `scout.net` bị `seed-purity-smoke` bắt vì trông như tên miền `.net` — **đổi tên method**
+chứ không nới phép ghim.
+
+**Phép ghim** `tests/scouter-wait-net-smoke.mjs`, `W1..W10`; `W6` nhét token giả vào đúng chỗ
+Chrome đưa bí mật sang rồi soi toàn bộ chuỗi kết quả. Đột biến thêm `NM1..NM6` — `NM1` trải
+nguyên gói gốc mà vẫn trả đúng số dòng, nên phép ghim đếm-và-so sẽ xanh trọn. **106/106 giết
+được, 0 sống sót.** Suite 19/19.
+
+**Đo thật sau MỘT lượt nạp lại:** 17 method sống; `scout.wait` trên Optic thấy sẵn thì 1 lượt
+hỏi/64ms, không có thì 6 lượt/2.558ms rồi `satisfied:false`.
+
+**CHƯA chứng minh được:** `scout.network` trả lời sạch nhưng cả ba tab đều **0 lượt gọi** vì
+chúng đứng yên — nên lớp nối kênh sự kiện ở `observer-engine.js` (`dangKySuKien`, 12 dòng) vẫn
+chưa chạy thật lần nào. `0` trông giống hệt "trang không gọi gì" và "cái tai hỏng". Đóng bằng
+một việc 5 giây: nghe 25 giây trong lúc Đức bấm F5 một tab.
+
+## 2026-09-12 · `claude-scouter-udine` — lượt GHI đầu tiên trong việc thật
+
+Đức mở công tắc và bảo tự chạy. Ca thử là trang Udin; **đích là seed**.
+
+**Cái tai CHẠY.** `scout.network` thu **30 lượt gọi** trên một lượt tải trang — đóng chỗ hở nêu
+ở mục trước. Nó lộ luôn bộ máy sau lưng trang (Cognito · AppSync · Lambda ·
+`manage-tenant-session`), tức **kết quả về bằng MẠNG** chứ không chỉ vẽ lên canvas. Câu treo từ
+bản đo đầu: đã có đáp án.
+
+**Gõ chạy, bấm thì chưa.** 40 ký tự vào đúng ô bằng bàn phím thật, React nhận — nút Send từ
+`disabled` sống lại, và `scout.wait` bắt được đúng lượt đổi đó. Bấm Send báo ĐẠT
+`{matchCount: 1, clickedAt, Input.dispatchMouseEvent}` mà **không gửi được gì**.
+
+**Bốn mục nợ, cả bốn của SEED chứ không của trang. Đọc `BACKLOG.md` S-17..S-20 trước khi đụng
+đường ghi** — đừng đọc lại ở đây:
+
+- **`S-17` (P1)** — `scout.click` không kiểm điểm-bấm-thuộc-về-ai, nên bấm trúng lớp che vẫn
+  trả về **y hệt một lượt bấm thành công**. Luật vàng 7 chặn nửa theo phương ngang; nửa theo
+  **chiều sâu** chưa ai canh.
+- **`S-18`** — `scout.wait` tôi giao hôm nay nhầm *có mặt* với *dùng được*: `satisfied` sau
+  **36ms** trong khi tấm chắn phủ kín ứng dụng. Lỗi của chính bản vá này.
+- **`S-19`** — `scout.navigate` không F5 được cùng một URL.
+- **`S-20`** — gắn-rồi-nhả nên Scouter **không nghe được lưu lượng do chính nó gây ra**. Đo:
+  bấm rồi nghe = 0; nghe lượt tải = 30.
+
+`S-17` và `S-18` cùng gốc — thiếu cái nhìn theo chiều sâu — làm một lượt thì rẻ hơn hẳn. Cả hai
+cần `DOM.getNodeForLocation`: **thêm method CDP là đổi luật an toàn → hỏi Đức.**
+
+**Tab của Đức đã trả nguyên trạng** (bấm Try Again, chờ lớp chắn tan, chụp lại đối chiếu).
+**Không đụng mã lượt này** — chỉ đo và ghi.
+
+## 2026-09-12 · `claude-scouter-udine` — gói có `CHUOI-VIEC.md`, chuỗi chạy liên tục
+
+Đức đặt bài: một chuỗi việc để **triển khai chạy không dừng**, rồi Đức compact và làm theo nó.
+
+Nên file mới sinh ra để **sống sót qua compact**, và nó cố ý KHÔNG làm ba việc đã có chỗ:
+không kể chuyện đã qua (`HANDOFF.md`) · không giữ sổ nợ (`BACKLOG.md`) · không bàn phạm vi
+(`ROADMAP.md`). Nó trả lời đúng một câu: **việc kế tiếp là gì, đóng khi nào.**
+
+**Hai quyết định của Đức gom LÊN ĐẦU**, cố ý: một chuỗi mà cứ vài bước lại dừng hỏi thì không
+phải chuỗi. `D1` (cho thêm `DOM.getNodeForLocation` vào đường ghi) mở khoá `T1`+`T2`; `D2` là
+gõ tên hai ghế. Đức chưa chốt thì `T3` và `T4` vẫn chạy được — **chuỗi không tắc**.
+
+**Chín việc `T1..T9`**, mỗi việc có `đóng khi` đo được. Thứ tự không tuỳ tiện: `T1` đứng đầu vì
+mọi việc sau nó đều dựa vào một lượt bấm **nói thật**; `T8` (đổi tên `observer`→`scouter`) đứng
+gần cuối vì nó làm mọi diff khó đọc — đúng lý do nó bị hoãn từ 07/09.
+
+`T6` ghi thẳng một đường **BỊ CẤM**: bỏ gắn-rồi-nhả để giữ phiên nghe dài. Đó là nới một lớp
+bảo vệ để lấy tiện lợi, và dải băng vàng sẽ đứng mãi trên tab Đức.
+
+Sửa luôn một con số cũ trong **Bản đồ file**: nó khai `observer-probes.mjs` có **bảy** phép dò,
+thật là **tám**. Nay dòng đó kèm lệnh đếm lại thay vì một con số gõ tay — cùng cách `README.md`
+đã làm với bảng lệnh.
+
+`STATUS.ref_runbook` nay trỏ vào `CHUOI-VIEC.md` chứ không phải `AGENTS.md`: phiên sau mở
+`PHIEN.md` rồi đi thẳng tới việc đang tới lượt.
+
+## 2026-09-12 · `claude-scouter-udine` — lượt bấm thôi nói dối
+
+**Việc.** Đức chốt D1. Vá `S-17` và `S-18` — hai khuyết tật của SEED mà ca thử Udin ép lộ ra.
+
+**S-17.** `input.click` nay có chốt ⑸: sau khi tính toạ độ, **trước khi** bắn chuột, nó hỏi
+Chrome *"điểm này là phần tử nào"*. Không phải phần tử đã khớp hay con cháu nó thì từ chối
+`CLICK_OBSCURED`. Toạ độ làm tròn MỘT lần ở MỘT chỗ — điểm đã hỏi đúng là điểm sẽ bấm.
+
+**S-18.** `scout.wait` nhận `state: "usable"`; `present` **vẫn là mặc định**. Trả về cả
+`matchCount` lẫn `usableCount`, kèm `usableBlockedBy` nói VÌ SAO chưa dùng được.
+
+**Đo ngoài đời**, trang tự dựng, qua Bridge thật — không chỉ trước máy giả. Sáu ô đều khớp
+thiết kế; bảng ở `docs/TRIALS.md`. Một câu **không tra được trong tài liệu** đã được đo thay vì
+đoán: Chrome tự đi ngược từ nút văn bản lên phần tử cha, nên `<button>Gửi</button>` không bị từ
+chối oan.
+
+**Ba chỗ tôi sai, ghi ra:**
+⑴ `CHUOI-VIEC.md` tính THIẾU — D1 chỉ xin một method, T2 còn cần `DOM.getBoxModel` ở lõi đọc.
+Phải quay lại hỏi Đức giữa chừng. ⑵ Viết vào mã một chẩn đoán CHƯA ĐO ("tab không được vẽ") rồi
+tự bắt được và hạ xuống đúng mức quan sát → `S-21`. ⑶ Hai phép ghim ĐỎ oan vì chúng ghim **cách
+viết** chứ không ghim **hành vi**; sửa cho chúng ghim chặt hơn, không hạ chúng xuống.
+
+**Đức báo không thấy phần Profile.** Bản trước cố ý tránh chữ "Profile ID" vì trong khối có hai
+thứ khác nhau — lý do đúng, kết quả sai: Đức đi tìm chữ mình dùng, không thấy, và kết luận tính
+năng chưa có. Nay khối mang đúng tên đó, số ghế đứng TRƯỚC ô tên và sao chép được.
+
+**Số:** suite 20/20 · đột biến 117/117 giết được, 0 sống sót. Từ vựng CDP đường ghi 9 → 10,
+đường đọc 11 → 13 (hai getter thuần, mỗi lõi khai riêng — KHÔNG dùng chung danh sách).
+
+**Chưa ai nghiệm thu ngoài người viết. Chưa commit, chưa đẩy.** Việc tới lượt: `T3` (`S-19`),
+đã tái hiện lần hai ngoài Udin nên nó chắc chắn là của seed.
+
+## 2026-09-12 · `claude-scouter-udine` — nạp lại trang, và một con đột biến sống sót
+
+**Việc.** `T3` / `S-19`: `scout.navigate` đi tới đúng url đang đứng thì treo 15 giây rồi trả
+`NAVIGATE_TIMEOUT` — **câu sai nguyên nhân**, trong khi trang đã tải lại thật.
+
+**Cách vá.** Chờ bằng HAI dấu hiệu đã-đi, không một: url đổi, **hoặc** tài liệu được thay mới
+(`backendNodeId` của nút gốc). Hai ca loại trừ nhau — F5 đổi tài liệu chứ không đổi url;
+`#muc-2` đổi url chứ không đổi tài liệu — nên một dấu hiệu một mình thì ca kia treo oan.
+
+**Không dùng `nodeId`**: nó được cấp lại mỗi lượt `DOM.getDocument`, nút gốc gần như luôn là
+`1`, nên so `nodeId` là so hai con số luôn bằng nhau. Không mở thêm method CDP nào.
+
+**Đo ngoài đời**, trang tự dựng, qua Bridge thật: F5 từ **15.000ms báo sai** xuống **254ms báo
+đúng** (`reloaded: true`, `arrivedBy: "new_document"`). Đi url khác vẫn chạy nguyên.
+
+**Một con đột biến SỐNG SÓT, và đó là chỗ đáng kể nhất của lượt này.** `HN4` — để nguyên
+`undefined` làm danh tính tài liệu cũ — sống sót lúc mới thêm. Nghĩa là chốt `?? null` khi ấy
+chỉ là một dòng bình luận: không đọc được tài liệu trước lúc đi thì mọi lượt điều hướng xong
+ngay nhịp đầu, vì nó so một con số thật với `undefined`. Thêm phép ghim ⓓ0, con đó chết.
+
+**Tên ghế nghiệm thu ngoài đời.** Đức gõ `Udin_Scout` ở bảng bên; máy chủ thấy tên và mọi lượt
+gọi trong lượt đo này đi bằng TÊN thay vì dãy số. Vòng đó khép: bảng bên → kho lưu → cắt dây →
+khung `auth` → định tuyến. **D2 còn một nửa** — ghế thứ hai chưa có tên.
+
+**Số:** suite 20/20 · đột biến 121/121 giết được, 0 sống sót.
+
+**Chưa ai nghiệm thu ngoài người viết. Chưa commit, chưa đẩy.** Việc tới lượt: `T4` (`S-16`).
+
+## 2026-09-12 · `claude-scouter-udine` — hạn chờ thôi hứa dài hơn khả năng
+
+**Việc.** `T4` / `S-16`: `scout.navigate` khai 70 giây, `scout.type` và `scout.fetch` khai 60,
+trong khi máy chủ Bridge cắt lượt chuyển tiếp ở **35**. Quá ngưỡng đó thì người gọi đã nhận
+`REQUEST_TIMEOUT` trong khi extension vẫn đang làm — và với `scout.type` (đường GHI) thì thử
+lại nghĩa là **gõ hai lần**.
+
+**Cách vá.** Ba số xuống 34.000. Chọn đường "hạ số", không chọn đường "đổi giao thức cho người
+khởi động truyền hạn chờ" — đường kia đụng lõi dùng chung với ba gói đóng băng.
+
+**Nhưng lấy nửa tốt của đường kia**, phần không đụng giao thức: 35.000 nay có TÊN,
+`DEFAULT_REQUEST_TIMEOUT_MS`, xuất từ `bridge-host-core.mjs`. Trước đó nó nằm trần trong thân
+hàm nên phía extension KHÔNG CÓ CÁCH NÀO ĐỌC ĐƯỢC — đó đúng là lý do ba method trôi lên 60–70
+giây mà không ai thấy. Ba phép ghim của lõi dùng chung vẫn xanh; không đổi hành vi nào.
+
+**Suýt bỏ sót một nửa.** Hạ `deadline_ms` mà để người gọi vẫn xin được `timeout_ms: 60000` thì
+bug còn nguyên, chỉ chuyển chỗ. Trần đó xuống 30.000 — chừa bốn giây cho lượt trả lời đi về,
+cùng khuôn với `scout.wait`.
+
+**Phép ghim `B9` đọc ngưỡng THẲNG TỪ LÕI MÁY CHỦ** và duyệt cả bảng lệnh, không so với một
+danh sách gõ tay. Mục này tái phát không phải bằng ai đó sửa số cũ mà bằng ai đó **thêm một
+dòng**, và `S10` ghim đúng ca đó.
+
+**Đo ngoài đời:** `system.capabilities` khai ra ngoài dây — không method nào vượt 34.000; xin
+60.000 bị từ chối `INVALID_PARAMS` kèm khoảng hợp lệ.
+
+**Số:** suite 20/20 · đột biến 124/124 giết được, 0 sống sót.
+
+**Đức chốt 12/09: AI chủ động commit và đẩy, không hỏi, miễn không lỗi.** Lượt này đẩy theo chốt
+đó. **Chưa có audit độc lập** — ghi ra để người sau không tưởng là đã có.

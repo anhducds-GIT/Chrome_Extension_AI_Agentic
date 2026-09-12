@@ -37,6 +37,31 @@ const BATCHES = [
     target: path.join(ROOT, "scripts", "scouter-bridge-core.mjs"),
     pin: PIN_BRIDGE,
     mutants: [
+      /* ---- `S-16` — hạn chờ không được vượt ngưỡng máy chủ (12/09) ------
+       * Hai con hoàn nguyên đúng bug cũ theo hai kiểu: một method GHI khai quá dài, và một
+       * method MỚI lọt vào bảng với hạn chờ quá dài. Con thứ hai quan trọng hơn — mục này
+       * tái phát không phải bằng cách ai đó sửa số cũ, mà bằng cách ai đó THÊM một dòng. */
+      {
+        ma: "S9",
+        ten: "`S-16` — scout.type khai lại 60 giây, dài hơn ngưỡng 35 giây của máy chủ",
+        tim: '    name: "scout.type", read_only: false, deadline_ms: 34000,',
+        thay: '    name: "scout.type", read_only: false, deadline_ms: 60000,',
+        soLan: 1
+      },
+      {
+        ma: "S10",
+        ten: "`S-16` — một method MỚI lọt vào bảng với hạn chờ vượt ngưỡng",
+        tim: '    name: "scout.navigate", read_only: false, deadline_ms: 34000,',
+        thay: '    name: "scout.navigate", read_only: false, deadline_ms: 90000,',
+        soLan: 1
+      },
+      {
+        ma: "S11",
+        ten: "`S-16` — bảng lệnh mất hẳn trường hạn chờ",
+        tim: '    name: "scout.key", read_only: false, deadline_ms: 30000,',
+        thay: '    name: "scout.key", read_only: false, deadline_ms: null,',
+        soLan: 1
+      },
       {
         ma: "S1",
         ten: "Nói dối cờ read_only: một phép dò tự khai là lệnh ghi",
@@ -239,7 +264,7 @@ const BATCHES = [
 const NL = String.fromCharCode(10);
 
 BATCHES.push({
-  ten: "HÀNH ĐỘNG — bốn chốt của đường ghi",
+  ten: "HÀNH ĐỘNG — năm chốt của đường ghi",
   target: path.join(ROOT, "scripts", "scouter-actions-core.mjs"),
   pin: PIN_ACTIONS,
   mutants: [
@@ -276,6 +301,84 @@ BATCHES.push({
       ten: "CHỐT ⑷ — selector khớp nhiều thì bấm cái ĐẦU TIÊN",
       tim: "  if (nodeIds.length > 1) {",
       thay: "  if (false) {",
+      soLan: 1
+    },
+    /* ---- CHỐT ⑸ (`S-17`), mở 12/09 ---------------------------------------
+     * Năm con dưới đây canh kiểu hỏng ĐẮT NHẤT của gói: lượt bấm NÓI DỐI. Mỗi con hoàn
+     * nguyên một cách khác nhau về đúng hành vi trước 12/09 — bấm vào thứ đang chắn rồi
+     * trả về `ok: true`. Con nào SỐNG SÓT nghĩa là phép ghim chỉ nhìn "có bấm không" chứ
+     * không nhìn "bấm trúng ai". */
+    /* ---- `S-19` — nạp lại cùng một URL, vá 12/09 -------------------------
+     * Bốn con canh một bản vá mà bản CŨ vẫn "chạy được" ở mọi ca thường: chỉ ca F5 mới lộ ra.
+     * `HN1` là con hoàn nguyên đúng bug cũ. */
+    {
+      ma: "HN1",
+      ten: "`S-19` — chỉ chờ url đổi: nạp lại cùng một URL treo rồi báo sai nguyên nhân",
+      tim: "      if (!doiUrl && !doiTaiLieu) continue;",
+      thay: "      if (!doiUrl) continue;",
+      soLan: 1
+    },
+    {
+      ma: "HN2",
+      ten: "`S-19` — bỏ vế url: điều hướng trong cùng tài liệu (#muc-2) treo oan",
+      tim: "      if (!doiUrl && !doiTaiLieu) continue;",
+      thay: "      if (!doiTaiLieu) continue;",
+      soLan: 1
+    },
+    {
+      ma: "HN3",
+      ten: "`S-19` — so `nodeId` thay vì `backendNodeId`: hai con số luôn bằng nhau, phép kiểm không bao giờ báo gì",
+      tim: '  return typeof goc.backendNodeId === "number" ? goc.backendNodeId : null;',
+      thay: '  return typeof goc.nodeId === "number" ? goc.nodeId : null;',
+      soLan: 1
+    },
+    {
+      ma: "HN4",
+      ten: "`S-19` — để nguyên `undefined` làm danh tính cũ: lượt điều hướng nào cũng xong ngay nhịp đầu",
+      tim: "    const taiLieuTruoc = (await danhTinhTaiLieu(send)) ?? null;",
+      thay: "    const taiLieuTruoc = await danhTinhTaiLieu(send);",
+      soLan: 1
+    },
+    {
+      ma: "HB1",
+      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm: bấm thẳng, có lớp phủ cũng kệ (đúng bug S-17)",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point);",
+      thay: '    const hit = { relation: "self", hitNodeId: node.nodeId };',
+      soLan: 1
+    },
+    {
+      ma: "HB2",
+      ten: "CHỐT ⑸ — nới thành nhận MỌI phần tử: lớp phủ cũng tính là con cháu",
+      tim: "  if ((con?.nodeIds || []).includes(nutTrungDiem)) {",
+      thay: "  if (true) {",
+      soLan: 1
+    },
+    {
+      ma: "HB3",
+      ten: "CHỐT ⑸ — hỏng thì MỞ: Chrome không trả lời được thì cứ bấm",
+      tim: '  if (typeof nutTrungDiem !== "number") {',
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "HB4",
+      ten: "CHỐT ⑸ — hỏi SAU khi bắn: câu trả lời chỉ còn là lời phân trần",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point);" + NL + "    await clickAt(send, point);",
+      thay: "    await clickAt(send, point);" + NL + "    const hit = await kiemDiemBam(send, node.nodeId, point);",
+      soLan: 1
+    },
+    {
+      ma: "HB6",
+      ten: "CHỐT ⑸ — để lỗi CDP thô lọt ra ngoài dây thay vì nói ra nguyên nhân hay gặp",
+      tim: "      x: point.x, y: point.y, includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) {",
+      thay: "      x: point.x, y: point.y, includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) { throw error; } if (false) { const error = null;",
+      soLan: 1
+    },
+    {
+      ma: "HB5",
+      ten: "CHỐT ⑸ — bỏ làm tròn: hỏi về một điểm rồi bấm vào một điểm khác",
+      tim: "  return { x: Math.round(x), y: Math.round(y) };",
+      thay: "  return { x, y };",
       soLan: 1
     },
     {
@@ -537,8 +640,8 @@ BATCHES.push({
     {
       ma: "F1",
       ten: "Xếp scout.fetch thành read_only — nó thôi chui qua phanh, đúng lúc nguy nhất",
-      tim: '    name: "scout.fetch", read_only: false, deadline_ms: 60000,',
-      thay: '    name: "scout.fetch", read_only: true, deadline_ms: 60000,',
+      tim: '    name: "scout.fetch", read_only: false, deadline_ms: 34000,',
+      thay: '    name: "scout.fetch", read_only: true, deadline_ms: 34000,',
       soLan: 1
     },
     {
@@ -926,6 +1029,146 @@ BATCHES.push({
       ten: "Bỏ phương án dự phòng: phong bì hỏng lại trả request_id null như trước",
       tim: "      const id = request?.request_id ?? idTho;",
       thay: "      const id = request?.request_id ?? null;",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- TÊN GHẾ — bốn con canh khối danh tính (12/09) -----------------------
+ * Khối này nhỏ nhưng hỏng thì hỏng CÂM: ghế vẫn nối, lệnh vẫn chạy, chỉ là gọi tên không
+ * trúng — hoặc tệ hơn, trúng NHẦM ghế. Bốn con dưới đây nhắm vào bốn bất biến, không vào cú
+ * pháp: số ghế bền, tên đọc lại mỗi lượt nối, thiếu tên không giết kết nối, và nhãn phải sạch
+ * đúng cách máy chủ làm sạch. */
+BATCHES.push({
+  ten: "TÊN GHẾ — danh tính định tuyến",
+  target: path.join(ROOT, "scripts", "scouter-transport-loopback.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-profile-id-smoke.mjs"),
+  mutants: [
+    {
+      ma: "TG1",
+      ten: "Đúc số ghế MỚI mỗi lượt nối — mọi lệnh đang nhắm vào ghế cũ lạc chỗ",
+      tim: "      || !INSTANCE_ID_SHAPE.test(record.instance_id)) {",
+      thay: "      || !INSTANCE_ID_SHAPE.test(record.instance_id) || true) {",
+      soLan: 1
+    },
+    {
+      ma: "TG2",
+      ten: "Nhớ danh tính lần đầu rồi dùng mãi — Đức đổi tên xong không bao giờ ăn",
+      tim: "      instanceForSocket = await loadInstance().catch(() => null);",
+      thay: "      instanceForSocket = instanceForSocket || await loadInstance().catch(() => null);",
+      soLan: 1
+    },
+    {
+      ma: "TG3",
+      ten: "Khai bừa một khối instance rỗng khi đọc danh tính hỏng — máy chủ đóng socket 1008",
+      tim: "      if (instanceForSocket) khungAuth.instance = instanceForSocket;",
+      thay: "      khungAuth.instance = instanceForSocket || { schema_version: 1 };",
+      soLan: 1
+    },
+    {
+      ma: "TG4",
+      ten: "Bỏ lượt quét nửa cặp thay thế lạc — nhãn cắt ở 64 thành UTF-16 hỏng trên dây",
+      tim: "  return value.slice(0, 256).replace(DIEU_KHIEN, \"\").trim().slice(0, 64).replace(NUA_CAP_LAC, \"\");",
+      thay: "  return value.slice(0, 256).replace(DIEU_KHIEN, \"\").trim().slice(0, 64);",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- CHỜ và NGHE MẠNG — sáu con canh hai năng lực mở 12/09 --------------
+ * Con `NM1` là con quan trọng nhất của cả file này: nó hoàn nguyên lượt nhặt-theo-danh-sách-
+ * trắng thành một lượt trải nguyên gói Chrome đưa sang. Bản đột biến đó vẫn trả về đúng số
+ * dòng, đúng URL, đúng mã trạng thái — nó chỉ chở thêm `request.headers`. Nghĩa là mọi phép
+ * ghim đếm-và-so sẽ XANH trọn, và công cụ quan sát lặng lẽ thành máy hút token. Con này chỉ
+ * chết nếu phép ghim soi TOÀN BỘ chuỗi kết quả để tìm bí mật. */
+BATCHES.push({
+  ten: "CHỜ và NGHE MẠNG — hai năng lực mở 12/09",
+  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-wait-net-smoke.mjs"),
+  mutants: [
+    {
+      ma: "NM1",
+      ten: "Trải nguyên gói Chrome đưa sang — header, cookie và token đi thẳng ra ngoài dây",
+      tim: "        banGhi.method = typeof e.request?.method === \"string\" ? e.request.method.slice(0, 16) : null;",
+      thay: "        Object.assign(banGhi, e.request);",
+      soLan: 1
+    },
+    {
+      ma: "NM2",
+      ten: "Bỏ cắt query string — token nằm sau dấu ? đi ra nguyên vẹn",
+      tim: "        banGhi.url = stripQuery(url);",
+      thay: "        banGhi.url = url;",
+      soLan: 1
+    },
+    {
+      ma: "NM3",
+      ten: "Bỏ maxPostDataSize:0 — Chrome gửi luôn nội dung người dùng gõ sang",
+      tim: "      await send(\"Network.enable\", { maxPostDataSize: 0 });",
+      thay: "      await send(\"Network.enable\", {});",
+      soLan: 1
+    },
+    {
+      ma: "NM4",
+      ten: "Thiếu kênh sự kiện thì im lặng trả danh sách rỗng (trông y hệt 'trang không gọi gì')",
+      tim: "      throw new ProbeError(\"DEPS_MISSING\", \"network.watch cần deps.subscribe — kênh sự kiện CDP chưa được nối.\");",
+      thay: "      return { durationMs: 0, urlContains: null, total: 0, returned: 0, dropped: 0, hasMore: false, items: [], redaction: \"\" };",
+      soLan: 1
+    },
+    {
+      ma: "NM5",
+      ten: "Giữ nodeId gốc từ lượt hỏi đầu — chờ mãi không thấy trên trang động",
+      tim: "      const doc = await send(\"DOM.getDocument\", { depth: 0, pierce: false });",
+      thay: "      const doc = docCache || (docCache = await send(\"DOM.getDocument\", { depth: 0, pierce: false }));",
+      soLan: 1
+    },
+    {
+      ma: "NM6",
+      ten: "Ngủ trước rồi mới hỏi — tốn oan một nhịp mỗi lần điều kiện đã đúng sẵn",
+      tim: "      if (satisfied) break;",
+      thay: "      if (satisfied && polls > 1) break;",
+      soLan: 1
+    },
+    /* ---- `usable` (`S-18`), mở 12/09 -------------------------------------
+     * Bốn con dưới đây canh MỘT câu hỏi: `usable` có thật sự khác `present` không, hay nó chỉ
+     * là một cái tên thứ hai cho cùng một phép đo. Con `NM7` là con đắt nhất — bản đột biến
+     * của nó trả về đúng `satisfied: true` như mọi bản đúng trên mọi trang KHÔNG có tấm chắn,
+     * nên chỉ một phép ghim DỰNG HẲN tấm chắn mới giết được nó. */
+    {
+      ma: "NM7",
+      ten: "`usable` cư xử y hệt `present` — đếm khớp thay vì đếm thứ thật sự bấm được",
+      tim: "        const dem = await demSoDungDuoc(send, nodeIds, minCount);" + NL
+        + "        usableCount = dem.dem;" + NL + "        usableBlockedBy = dem.vuong;" + NL
+        + "        satisfied = usableCount >= minCount;",
+      thay: "        usableCount = matchCount;" + NL + "        usableBlockedBy = null;" + NL
+        + "        satisfied = matchCount >= minCount;",
+      soLan: 1
+    },
+    {
+      ma: "NM8",
+      ten: "Nới phép đối chiếu: mọi thứ nằm ở điểm giữa đều tính là của phần tử đó",
+      tim: '  return (con?.nodeIds || []).includes(trungDiem) ? "yes" : "covered";',
+      thay: '  return "yes";',
+      soLan: 1
+    },
+    {
+      ma: "NM9",
+      ten: "Báo số dùng được bằng số khớp — xoá đúng cái tin 'có đấy nhưng đang bị chắn'",
+      tim: "      usableCount: state === \"usable\" ? usableCount : null,",
+      thay: "      usableCount: matchCount,",
+      soLan: 1
+    },
+    {
+      ma: "NM11",
+      ten: "Gộp 'Chrome không trả lời được' vào 'bị chắn' — đẩy người đọc đi tìm hộp thoại không có",
+      tim: '  } catch { return "no_hit_test"; }',
+      thay: '  } catch { return "covered"; }',
+      soLan: 1
+    },
+    {
+      ma: "NM10",
+      ten: "Đổi MẶC ĐỊNH sang usable — mọi lượt gọi đã viết lặng lẽ đổi nghĩa",
+      tim: "    const state = params.state === undefined || params.state === null ? \"present\" : params.state;",
+      thay: "    const state = params.state === undefined || params.state === null ? \"usable\" : params.state;",
       soLan: 1
     }
   ]

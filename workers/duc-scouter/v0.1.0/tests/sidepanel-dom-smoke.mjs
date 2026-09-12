@@ -92,4 +92,24 @@ const js = jsThat
   assert.ok(/lang="vi"/.test(html), "trang phai khai lang=vi");
 }
 
-console.log("sidepanel-dom smoke tests: PASS (4 khoi)");
+/* ---- ⑸ Từ NGƯỜI DÙNG đi tìm phải có mặt trên màn hình -------------------
+ * Đức hỏi tính năng bằng chữ "Profile ID". Bản 12/09 đặt tên khối là "Tên ghế này" vì trong
+ * đó có hai thứ khác nhau — lý do đúng, kết quả sai: Đức mở thẻ Hệ thống, không thấy chữ mình
+ * tìm, và báo là tính năng CHƯA CÓ. Một tính năng người dùng không nhận ra thì bằng không có.
+ *
+ * Con này canh đúng chỗ đó, và nó KHÔNG kiểm bố cục — chỉ kiểm ba thứ đo được: chữ Đức tra
+ * có trên màn hình, ô chứa số có thật, và nút sao chép chép SỐ chứ không chép chữ đang hiện. */
+{
+  assert.ok(html.includes("Profile ID"),
+    "bang ben khong con chu 'Profile ID' — day la tu Duc dung de goi tinh nang nay");
+
+  /* Nút sao chép phải lấy số từ `dataset`, KHÔNG từ `textContent`. Lúc chưa có số, ô đó đang
+   * chứa câu "chưa có — đúc ở lượt nối Bridge đầu tiên"; chép nguyên câu đó vào bảng nhớ rồi
+   * dán vào một lượt gọi là một lỗi IM LẶNG — lượt gọi hỏng, và không ai nhìn ra vì sao. */
+  assert.ok(/ten-ghe-so"\)\.dataset\.soGhe/.test(js),
+    "nut sao chep Profile ID phai doc dataset.soGhe, khong doc textContent");
+  assert.ok(!/ten-ghe-so"\)\.textContent\s*\)/.test(js),
+    "khong duoc sao chep chu dang hien trong o so ghe");
+}
+
+console.log("sidepanel-dom smoke tests: PASS (5 khoi)");
