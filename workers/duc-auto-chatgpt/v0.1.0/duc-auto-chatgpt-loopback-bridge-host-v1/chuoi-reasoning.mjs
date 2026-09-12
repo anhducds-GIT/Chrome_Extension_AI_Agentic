@@ -747,11 +747,20 @@ async function chinh() {
 
            Không đoán hộ nội dung trang: chỉ đếm "có khối hay không", không đọc khối nói gì. */
         else if (daGui === 0 && !daThayKhoi) {
-          lyDo = "CHUA_CO_GIAO_KEO — hội thoại này chưa có khối nối vòng nào";
+          /* NÓI ĐÚNG ĐIỀU ĐO ĐƯỢC: "tôi KHÔNG THẤY khối", chứ không phải "không CÓ khối".
+             Sửa 12/09 ngay trong ngày ship, vì bản đầu nói sai ca thật của Đức: màn hình có một
+             nút copy rành rành, còn bộ chạy báo "hội thoại chưa có giao kèo, hãy dán vào" — đẩy
+             người ta đi dán lại thứ họ đã có. Nguyên nhân thật: câu trả lời đóng gói trong một
+             thẻ **canvas**, mà bộ dò khối neo vào `answerBlock: ["pre"]` nên mù với nó (`pre = 0`,
+             `nutCopy` có `aria="Copy"` + `aria="Open editor"` — xem B-82).
+             Hai khả năng, nêu CẢ HAI và nêu cách phân biệt. Đừng bắt người đoán. */
+          lyDo = "KHONG_THAY_KHOI — chưa gửi vòng nào và chưa đọc ra khối nối vòng nào";
           console.log(`  vòng ${vong}: ${lyDo}`);
-          console.log("  Câu trả lời cuối không kết bằng một khối copy, và cả lượt chạy này chưa thấy khối nào.");
-          console.log("  Chuỗi chỉ chuyển tiếp NGUYÊN VĂN khối copy cuối câu trả lời — không có khối thì không có gì để gửi.");
-          console.log("  Dán khối \"GIAO KÈO NỐI VÒNG\" vào hội thoại trước (xem AI-OPERATOR-GUIDE.md), rồi chạy lại.");
+          console.log("  Chuỗi chỉ chuyển tiếp NGUYÊN VĂN khối copy cuối câu trả lời. Hai khả năng:");
+          console.log("   ⑴ hội thoại chưa có giao kèo — dán khối \"GIAO KÈO NỐI VÒNG\" (xem AI-OPERATOR-GUIDE.md) rồi chạy lại;");
+          console.log("   ⑵ CÓ khối trên màn hình nhưng bộ đọc không thấy (ví dụ canvas, không phải khối mã).");
+          console.log("  Phân biệt: chạy `bridge-cli.mjs dom-probe --target <profile>` và xem `answerScope.pre`.");
+          console.log("  `pre: 0` mà màn hình vẫn có nút copy ⇒ là khả năng ⑵, đừng dán lại gì cả.");
           ghi({ su_kien: "CHUA_CO_GIAO_KEO", vong, thay_vi: qd.vi });
         }
         break;

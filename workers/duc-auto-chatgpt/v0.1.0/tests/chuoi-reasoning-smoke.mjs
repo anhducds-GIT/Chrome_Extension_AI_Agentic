@@ -884,9 +884,9 @@ console.log("chuoi reasoning smoke tests: PASS");
   const iThoat = src.indexOf("process.exit(lyDo ===");
   assert.ok(iThoat > 0, "không tìm thấy dòng mã thoát");
   const dongThoat = src.slice(iThoat, src.indexOf("\n", iThoat));
-  assert.ok(!dongThoat.includes("CHUA_CO_GIAO_KEO"),
-    "CHUA_CO_GIAO_KEO không được lọt vào nhóm thoát 0 — chưa làm được gì thì không phải thành công");
-  assert.ok(src.includes('lyDo = "CHUA_CO_GIAO_KEO'),
+  assert.ok(!dongThoat.includes("KHONG_THAY_KHOI"),
+    "KHONG_THAY_KHOI không được lọt vào nhóm thoát 0 — chưa làm được gì thì không phải thành công");
+  assert.ok(src.includes('lyDo = "KHONG_THAY_KHOI'),
     "phải ĐỔI lyDo, vì mã thoát bám vào lyDo");
 
   // ⒟ Phải nói người ta làm gì, không chỉ nói nó hỏng.
@@ -896,5 +896,16 @@ console.log("chuoi reasoning smoke tests: PASS");
     "phải chỉ đúng thứ cần dán vào hội thoại, không bắt người đi tra");
   assert.ok(thanNhanh.includes('su_kien: "CHUA_CO_GIAO_KEO"'), "phải vào nhật ký, không chỉ in màn hình");
 
-  console.log("  ok  ⓩ chưa có giao kèo ≠ chạy hết: đòi cả hai vế, thoát 1, và nói phải dán gì");
+  /* ⒠ PHẢI NÊU CẢ KHẢ NĂNG THỨ HAI. Bản đầu khẳng định thẳng "hội thoại chưa có giao kèo" và
+     nói sai ngay ca thật của Đức: màn hình có nút copy rành rành, nhưng câu trả lời đóng gói
+     trong một thẻ canvas mà `answerBlock: ["pre"]` mù với nó (B-82). Một câu chẩn đoán sai bệnh
+     đẩy người ta đi dán lại thứ họ đã có — tệ hơn im lặng. */
+  assert.match(thanNhanh, /canvas/i,
+    "phải nêu khả năng 'có khối nhưng bộ đọc không thấy', không chỉ khả năng 'chưa có khối'");
+  assert.match(thanNhanh, /dom-probe/,
+    "phải chỉ ra cách PHÂN BIỆT hai khả năng, không bắt người đoán");
+  assert.ok(!/không có khối nào|chưa có khối nối vòng nào/.test(thanNhanh),
+    "không được khẳng định 'không CÓ khối' — bộ chạy chỉ biết là nó KHÔNG THẤY");
+
+  console.log("  ok  ⓩ không thấy khối ≠ chạy hết: đòi cả hai vế, thoát 1, nêu cả hai khả năng + cách phân biệt");
 }

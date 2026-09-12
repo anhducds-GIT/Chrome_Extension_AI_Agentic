@@ -1355,7 +1355,50 @@
               aria: (button.getAttribute("aria-label") || "").slice(0, 40),
               testid: button.getAttribute("data-testid") || "",
               txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 24)
-            }))
+            })),
+            /* B-82 · KHUNG CỦA KHỐI COPY — dựng từ bằng chứng, không đoán.
+             *
+             * Đo 12/09 trên hội thoại của Đức: `pre = 0` nhưng `nutCopy` có CẢ `aria="Copy"`
+             * lẫn `aria="Open editor"` — tức câu trả lời đóng gói trong một thẻ **canvas**, và
+             * `answerBlock: ["pre"]` mù hoàn toàn với nó. Đức nhìn thấy nút copy trên màn hình
+             * trong khi bộ chạy báo "không có khối".
+             *
+             * KHÔNG ĐƯỢC NEO VÀO `aria-label`: nhãn ấy là tiếng Anh và chết ngay lượt Đức đổi
+             * ngôn ngữ giao diện — cùng cái bẫy đã ghi ở `answerBlock`. Nên ở đây chỉ DÙNG nhãn
+             * để TÌM ĐƯỜNG, rồi báo về tổ tiên của nút để tìm một mỏ neo CẤU TRÚC.
+             *
+             * Máy soi cấu trúc, không phải máy chở nội dung: chỉ đếm ký tự, `head` cắt 40. */
+            khoiUngVien: Array.from(khung.querySelectorAll('button, [role="button"]'))
+              .filter((b) => /copy|editor|canvas|textdoc/i.test(`${b.getAttribute("aria-label") || ""} ${b.getAttribute("data-testid") || ""}`))
+              .slice(0, 6)
+              .map((b) => {
+                const toTien = [];
+                let cha = b.parentElement;
+                for (let i = 0; i < 6 && cha && cha !== khung; i += 1) {
+                  toTien.push({
+                    tag: cha.tagName.toLowerCase(),
+                    attrs: Array.from(cha.attributes || [])
+                      .map((a) => `${a.name}=${String(a.value).slice(0, 40)}`)
+                      .slice(0, 6),
+                    inner: chuHien(cha).length,
+                    head: chuTho(cha).slice(0, 40)
+                  });
+                  cha = cha.parentElement;
+                }
+                return {
+                  nut: { aria: (b.getAttribute("aria-label") || "").slice(0, 40), testid: b.getAttribute("data-testid") || "" },
+                  toTien
+                };
+              }),
+            /* Mọi `data-testid` trong khung. Nếu canvas mang một testid riêng thì đây là mỏ neo
+               tốt nhất: không phụ thuộc ngôn ngữ, và ChatGPT đổi nó ít hơn đổi class. */
+            moiTestid: Array.from(khung.querySelectorAll("[data-testid]")).slice(0, 20)
+              .map((e) => `${e.tagName.toLowerCase()}:${e.getAttribute("data-testid")}`),
+            /* Thẻ tuỳ biến — canvas có thể là một custom element, và khi đó `querySelectorAll`
+               theo tên thẻ là mỏ neo bền nhất trong cả đám. */
+            theLa: Array.from(new Set(Array.from(khung.querySelectorAll("*"))
+              .map((e) => e.tagName.toLowerCase())
+              .filter((t) => t.includes("-")))).slice(0, 10)
           };
         })();
 
