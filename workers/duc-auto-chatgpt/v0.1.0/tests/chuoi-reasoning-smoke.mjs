@@ -816,3 +816,85 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  ⓧ dừng trong cửa sổ: mềm, bắt lại Ctrl+C, không TTY vẫn chạy, đánh thức ngay");
 }
+
+/* ⓨ B-80 — MỐC CANH TAB KHÔNG ĐƯỢC GHIM BẰNG `null`.
+ *
+ * Bắt tại trận 12/09, chuỗi "Prompt engineer 01" của Đức: lượt đọc đầu hỏng vì `RECEIVER_LOST`
+ * (tab đang nạp lại); lượt kế tiếp THÀNH CÔNG nhưng trang chưa dựng xong nên `turns` rỗng.
+ * Mốc bị ghim bằng `null`, lượt sau thấy lượt gõ thật, và chuỗi tự giết mình sau 31 giây với
+ * `NGUOI_DANG_DUNG` trong khi KHÔNG AI gõ gì cả. `da_gui: 0`.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  /* ⒜ HÀNH VI, không phải chữ: `null` làm mốc thì MỌI lượt gõ thật đều thành "lượt gõ lạ".
+     Đây là cái bẫy — nó chạy đúng theo nghĩa đen của mã cũ, và sai theo nghĩa của việc. */
+  assert.equal(canhTab({ idLuotNguoiCuoi: "that", mocLuotNguoi: null }).dung, true,
+    "mốc `null` mà so thì báo động — chính vì thế KHÔNG ĐƯỢC để nó lọt vào làm mốc");
+
+  // ⒝ Cửa chặn nằm ở chỗ GHIM MỐC, không ở canhTab.
+  assert.ok(src.includes("if (mocLuotNguoi === undefined && idLuotNguoiCuoi)"),
+    "chỉ ghim mốc khi ĐỌC RA một lượt thật — danh sách rỗng là 'chưa nhìn thấy', không phải 'không có'");
+
+  /* ⒞ VẾ NGƯỢC — mép vẫn phải bắt được người gõ thật. Thiếu vế này thì một đột biến kiểu
+     "không bao giờ so" sẽ thoát, và khi đó chuỗi gõ đè lên hội thoại người khác đang dùng. */
+  assert.equal(canhTab({ idLuotNguoiCuoi: "moi", mocLuotNguoi: "cu" }).dung, true,
+    "lượt gõ thật khác mốc thì VẪN phải dừng — đây là lý do mép này tồn tại");
+  assert.equal(canhTab({ idLuotNguoiCuoi: "y-het", mocLuotNguoi: "y-het" }).dung, false,
+    "trùng mốc thì chạy tiếp");
+  assert.equal(canhTab({ idLuotNguoiCuoi: null, mocLuotNguoi: "cu" }).dung, false,
+    "đọc ra rỗng KHÔNG được coi là người gõ — cùng một lý lẽ, chiều ngược lại");
+
+  // ⒟ Nhật ký phải ghi CẢ HAI ĐẦU của phép so, không chỉ câu kết luận.
+  const iGhi = src.indexOf('su_kien: "CANH_TAB"');
+  const dongGhi = src.slice(iGhi, src.indexOf("\n", iGhi));
+  assert.ok(dongGhi.includes("moc:") && dongGhi.includes("thay:"),
+    "CANH_TAB phải ghi cả mốc lẫn cái vừa thấy — nếu không, 'người gõ thật' và 'mốc null' đọc ra y hệt nhau");
+
+  console.log("  ok  ⓨ mốc canh tab: không ghim bằng null, vẫn bắt người gõ thật, nhật ký ghi cả hai đầu");
+}
+
+/* ⓩ B-81 — "CHUỖI ĐÃ HẾT" ≠ "CHUỖI CHƯA BAO GIỜ BẮT ĐẦU".
+ *
+ * Đức 12/09: *"tôi thấy ta chưa bắt được 1 chat đã có text sẵn."* Đo trên hội thoại
+ * "Prompt engineer 01": 4 lượt, câu trả lời cuối 2.719 ký tự, `blocks_in_turn: 0` — GPT trả lời
+ * văn xuôi thuần. Bộ chạy đọc ĐÚNG, nhưng báo `HET_CHUOI` và **thoát 0**, đọc y như một chuỗi
+ * vừa chạy trọn. Cùng một hình dạng lỗi với B-77, ở một mép khác.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  // ⒜ Điều kiện phải là CẢ HAI vế. Thiếu `daGui === 0` thì một chuỗi chạy trọn 4 vòng rồi hết
+  //    khối cũng bị gọi là "chưa có giao kèo" — sai ngược lại, và làm người ta đi dán thừa.
+  assert.ok(src.includes("else if (daGui === 0 && !daThayKhoi)"),
+    "chỉ gọi là 'chưa có giao kèo' khi CHƯA gửi vòng nào VÀ chưa từng thấy khối");
+
+  // ⒝ Cờ phải được bật từ lượt đọc, và bật cho CẢ lượt chạy — không reset theo vòng.
+  assert.ok(src.includes("if (r.last_copy_block?.found) daThayKhoi = true;"),
+    "phải đánh dấu khi đọc ra một khối thật");
+  const iVong = src.indexOf("for (let vong = 1;");
+  const iCo = src.indexOf("let daThayKhoi = false;");
+  assert.ok(iCo > 0 && iCo < iVong,
+    "`daThayKhoi` phải khai NGOÀI vòng lặp vòng — khai trong thì mỗi vòng quên sạch");
+
+  /* ⒞ MÃ THOÁT. Đây là vế chịu tải: `HET_CHUOI` thoát 0, và một hội thoại chưa có giao kèo
+     KHÔNG được đi chung cửa đó. Tên lý do phải nằm ngoài nhóm thoát 0. */
+  const iThoat = src.indexOf("process.exit(lyDo ===");
+  assert.ok(iThoat > 0, "không tìm thấy dòng mã thoát");
+  const dongThoat = src.slice(iThoat, src.indexOf("\n", iThoat));
+  assert.ok(!dongThoat.includes("CHUA_CO_GIAO_KEO"),
+    "CHUA_CO_GIAO_KEO không được lọt vào nhóm thoát 0 — chưa làm được gì thì không phải thành công");
+  assert.ok(src.includes('lyDo = "CHUA_CO_GIAO_KEO'),
+    "phải ĐỔI lyDo, vì mã thoát bám vào lyDo");
+
+  // ⒟ Phải nói người ta làm gì, không chỉ nói nó hỏng.
+  const iNhanh = src.indexOf("else if (daGui === 0 && !daThayKhoi)");
+  const thanNhanh = src.slice(iNhanh, src.indexOf("break;", iNhanh));
+  assert.match(thanNhanh, /GIAO KÈO NỐI VÒNG/,
+    "phải chỉ đúng thứ cần dán vào hội thoại, không bắt người đi tra");
+  assert.ok(thanNhanh.includes('su_kien: "CHUA_CO_GIAO_KEO"'), "phải vào nhật ký, không chỉ in màn hình");
+
+  console.log("  ok  ⓩ chưa có giao kèo ≠ chạy hết: đòi cả hai vế, thoát 1, và nói phải dán gì");
+}

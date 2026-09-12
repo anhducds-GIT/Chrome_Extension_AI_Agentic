@@ -542,6 +542,9 @@ async function chinh() {
      Không có thì dùng chỗ dừng của `--tiep`; không có nữa thì rỗng (chạy mới). */
   let khoiCu = docCo(argv, "tu-turn", "") || tuNhatKy;
   let daGui = 0;
+  /* B-81 — ĐÃ TỪNG THẤY KHỐI CHƯA, tính cho CẢ lượt chạy chứ không riêng một vòng. Đây là thứ
+     phân biệt "chuỗi chạy hết" với "hội thoại chưa có giao kèo nối vòng". */
+  let daThayKhoi = false;
   let lyDo = "HET_SO_VONG";
   /* Có `--url` thì ghim từ đó — lệch là dừng ở lượt đọc đầu. Không có thì ghim ở LƯỢT ĐỌC
      ĐẦU: bộ chạy nối vào một tab đang mở sẵn và không biết trước tab ấy ở hội thoại nào. */
@@ -651,11 +654,27 @@ async function chinh() {
       const luotNguoi = (r.turns || []).filter((t) => t.role === "user");
       const idLuotNguoiCuoi = luotNguoi.length ? luotNguoi[luotNguoi.length - 1].id : null;
       if (urlGhim === null && r.url) { urlGhim = r.url; }
-      if (mocLuotNguoi === undefined) { mocLuotNguoi = idLuotNguoiCuoi; }
+      /* B-80 — KHÔNG GHIM MỐC BẰNG `null`. Bắt tại trận 12/09, chuỗi "Prompt engineer 01":
+         lượt đọc đầu hỏng vì `RECEIVER_LOST` (tab đang nạp lại); lượt kế tiếp THÀNH CÔNG nhưng
+         trang chưa dựng xong nên `turns` rỗng, `idLuotNguoiCuoi` là `null`. Mốc bị ghim bằng
+         `null`, và lượt sau thấy lượt gõ thật thì `null !== "bbb21bd0…"` → báo `NGUOI_DANG_DUNG`
+         và giết chuỗi sau 31 giây, trong khi KHÔNG AI gõ gì cả.
+
+         DANH SÁCH RỖNG NGHĨA LÀ "TÔI CHƯA NHÌN THẤY", KHÔNG PHẢI "KHÔNG CÓ LƯỢT NÀO". Và lượt
+         đọc ngay sau một lượt `RECEIVER_LOST` là lượt đọc ÍT ĐÁNG TIN NHẤT trong cả lượt chạy —
+         đúng lúc bản cũ đem nó ra làm chuẩn cho mọi phép so về sau.
+
+         Mép này KHÔNG bị nới: mốc chưa ghim thì `canhTab` cũng chưa so gì, mà lượt GỬI đầu tiên
+         nằm sau đó — nên không có cửa sổ nào để một lượt gõ lạ lọt qua mà chuỗi vẫn gửi đè. */
+      if (mocLuotNguoi === undefined && idLuotNguoiCuoi) { mocLuotNguoi = idLuotNguoiCuoi; }
       const canh = canhTab({ url: r.url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi });
       if (canh.dung) {
         console.log(`  vòng ${vong}: ${canh.vi}`);
-        ghi({ su_kien: "CANH_TAB", vong, vi: canh.vi });
+        /* GHI CẢ HAI ĐẦU CỦA PHÉP SO, không chỉ câu kết luận. Lượt 14:31 ngày 12/09 chỉ ghi
+           `vi`, nên "có lượt gõ lạ" đọc ra y hệt nhau ở hai ca hoàn toàn khác nhau: người ta
+           gõ thật, và mốc bị ghim bằng `null` (B-80). Phải đọc mã nguồn mới phân biệt được —
+           và đó là lúc nhật ký thất bại đúng việc nó sinh ra để làm. */
+        ghi({ su_kien: "CANH_TAB", vong, vi: canh.vi, moc: mocLuotNguoi ?? null, thay: idLuotNguoiCuoi ?? null, url: r.url ?? null, url_ghim: urlGhim ?? null });
         lyDo = canh.vi;
         break;
       }
@@ -663,6 +682,7 @@ async function chinh() {
       if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
 
       const luotTL = [...(r.turns || [])].reverse().find((t) => t.role === "assistant");
+      if (r.last_copy_block?.found) daThayKhoi = true;
       const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
       if (qd.viec === "CHO") {
         /* NHỊP TIM. Bản đầu im hoàn toàn trong lúc chờ, nên một lượt treo 25 phút nhìn từ
@@ -710,6 +730,29 @@ async function chinh() {
           console.log(`  vòng ${vong}: ${ch.vi}`);
           if (ch.khuyen) console.log(`     thử lại? ${ch.khuyen}`);
           ghi({ su_kien: "DUNG_CUNG", vong, vi: ch.vi, thay_vi: qd.vi });
+        }
+        /* B-81 — "CHUỖI ĐÃ HẾT" ≠ "CHUỖI CHƯA BAO GIỜ BẮT ĐẦU". Đức nêu 12/09:
+           *"tôi thấy ta chưa bắt được 1 chat đã có text sẵn."*
+
+           Đo cùng lúc trên hội thoại "Prompt engineer 01": 4 lượt, câu trả lời cuối dài 2.719
+           ký tự, và `blocks_in_turn: 0` — GPT trả lời bằng văn xuôi thuần, không có khối copy
+           nào. Bộ chạy đọc ĐÚNG: không có gì để chuyển tiếp. Nhưng nó báo
+           `HET_CHUOI — đã nạp lại mà vẫn không có khối mới` rồi **thoát 0**, đọc y như một
+           chuỗi vừa chạy trọn vẹn.
+
+           Hai ca hoàn toàn khác nhau, và phân biệt được bằng đúng hai biến đã có:
+             · ĐÃ gửi vòng nào, hoặc ĐÃ từng thấy khối ⇒ chuỗi chạy hết thật. Thoát 0.
+             · CHƯA gửi vòng nào VÀ chưa từng thấy khối ⇒ hội thoại này KHÔNG CÓ giao kèo nối
+               vòng. Chưa làm được gì cả. Thoát 1, và nói ra phải làm gì.
+
+           Không đoán hộ nội dung trang: chỉ đếm "có khối hay không", không đọc khối nói gì. */
+        else if (daGui === 0 && !daThayKhoi) {
+          lyDo = "CHUA_CO_GIAO_KEO — hội thoại này chưa có khối nối vòng nào";
+          console.log(`  vòng ${vong}: ${lyDo}`);
+          console.log("  Câu trả lời cuối không kết bằng một khối copy, và cả lượt chạy này chưa thấy khối nào.");
+          console.log("  Chuỗi chỉ chuyển tiếp NGUYÊN VĂN khối copy cuối câu trả lời — không có khối thì không có gì để gửi.");
+          console.log("  Dán khối \"GIAO KÈO NỐI VÒNG\" vào hội thoại trước (xem AI-OPERATOR-GUIDE.md), rồi chạy lại.");
+          ghi({ su_kien: "CHUA_CO_GIAO_KEO", vong, thay_vi: qd.vi });
         }
         break;
       }
