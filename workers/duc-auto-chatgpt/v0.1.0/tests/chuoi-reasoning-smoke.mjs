@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, chanDung, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, chanDung, conSong, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
@@ -661,4 +661,54 @@ console.log("chuoi reasoning smoke tests: PASS");
     "phải in `details.debug` — sidepanel.js:707 cố ý gửi nguyên nhân thật qua trường đó");
 
   console.log("  ok  ⓤ đọc hỏng: HARD_STOP thì dừng, giãn nhịp có trần, ghi nhật ký, in debug");
+}
+
+/* ⓥ B-77 — "XONG" PHẢI KHÁC "BỊ CHẶN", và khoá mồ côi phải tự thu.
+ *
+ * Đo 12/09, chuỗi "mo rong scouter 2": đọc được trang, không thấy khối, nạp lại, vẫn không
+ * thấy ⇒ chấm `HET_CHUOI` và THOÁT 0. Ping cùng lúc: `SECURITY_HARD_STOP` — ChatGPT đang đòi
+ * CAPTCHA. Trang bị chặn đọc ra "không có khối" là đương nhiên, và bản trước gọi đó là xong.
+ */
+{
+  // ⒜ pid đã chết ⇒ khoá mồ côi, thu được.
+  const chet = () => { const e = new Error("no such process"); e.code = "ESRCH"; throw e; };
+  assert.equal(conSong(36772, chet), false, "pid đã chết thì khoá là mồ côi");
+
+  // ⒝ VẾ NGƯỢC — thiếu vế này thì một đột biến "luôn luôn mồ côi" sẽ thoát, và nó cho phép
+  //    hai bản chạy cùng gõ vào một tab: đúng lỗi B-61 đã trả giá.
+  assert.equal(conSong(1, () => true), true, "kill(pid,0) êm xuôi nghĩa là CÒN SỐNG");
+  const khacChu = () => { const e = new Error("operation not permitted"); e.code = "EPERM"; throw e; };
+  assert.equal(conSong(4, khacChu), true, "EPERM = tiến trình CÓ THẬT nhưng khác chủ — vẫn là còn sống");
+  assert.equal(conSong(undefined, chet), true, "không đọc được pid thì KHÔNG được coi là chết");
+  assert.equal(conSong("bậy", chet), true, "pid rác thì KHÔNG được coi là chết");
+  assert.equal(conSong(0, chet), true, "pid 0 không phải một tiến trình — không được thu khoá");
+
+  const boChay2 = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  // ⒞ Đường "DUNG" phải hỏi ping TRƯỚC khi dám nói xong. Nhánh đọc-hỏng không cứu được ca này:
+  //    ở đây lượt đọc THÀNH CÔNG nên nó không bao giờ chạy tới.
+  const khoiDung = boChay2.slice(boChay2.indexOf('if (qd.viec === "DUNG")'));
+  const hetKhoi = khoiDung.slice(0, khoiDung.indexOf("khoi = r.last_copy_block"));
+  assert.ok(hetKhoi.includes("chanDung(p)"),
+    "trước khi chấm HET_CHUOI phải hỏi ping — trang đang đòi CAPTCHA cũng đọc ra 'không có khối'");
+  assert.ok(hetKhoi.includes("lyDo = ch.vi"),
+    "ping nói dừng cứng thì lyDo phải ĐỔI — mã thoát bám theo lyDo");
+  assert.ok(hetKhoi.includes('su_kien: "DUNG_CUNG"'), "phải ghi vào nhật ký, không chỉ in màn hình");
+
+  // ⒟ Mã thoát: chỉ HET_SO_VONG và HET_CHUOI mới là 0. Đây là chỗ "bị chặn" khác "xong".
+  assert.match(boChay2, /process\.exit\(lyDo === "HET_SO_VONG" \|\| lyDo\.startsWith\("HET_CHUOI"\) \? 0 : 1\)/,
+    "mã thoát phải bám vào lyDo — DUNG_CUNG không được lọt vào nhóm thoát 0");
+  assert.ok(!/DUNG_CUNG/.test(boChay2.slice(boChay2.indexOf("process.exit(lyDo ==="))),
+    "không được thêm DUNG_CUNG vào nhóm thoát 0 để cho êm");
+
+  // ⒠ Thu khoá mồ côi phải ĐẶT LẠI BẰNG `wx`, không phải ghi đè — nếu không, hai bản chạy chen
+  //    nhau giữa hai câu lệnh sẽ cùng tin mình giữ khoá.
+  assert.ok(boChay2.includes("conSong(cu.pid)"), "phải kiểm pid trước khi thu khoá");
+  assert.equal((boChay2.match(/flag: "wx"/g) || []).length, 1,
+    "chỉ MỘT chỗ đặt khoá, và nó dùng `wx` — lượt thu lại phải đi qua đúng cửa nguyên tử đó");
+  assert.ok(boChay2.includes("const datKhoa = ()"),
+    "lượt đặt lại phải dùng lại đúng hàm đặt khoá, không chép một lượt ghi khác");
+
+  console.log("  ok  ⓥ bị chặn ≠ xong: hỏi ping trước khi chấm HET_CHUOI · khoá mồ côi tự thu, vẫn qua `wx`");
 }

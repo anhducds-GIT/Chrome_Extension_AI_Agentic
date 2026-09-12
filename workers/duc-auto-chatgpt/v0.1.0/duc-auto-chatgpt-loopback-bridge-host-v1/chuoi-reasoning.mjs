@@ -250,6 +250,23 @@ export function nhipDocHong(docHong, nen = TRE_DOC_HONG_NEN_MS, tran = TRE_DOC_H
   };
 }
 
+/** Thuần: tiến trình `pid` còn sống không.
+ *
+ * B-77 — KHOÁ MỒ CÔI. Đo 12/09: bản chạy 05:31 bị giết ngang, `DANG-CHAY.json` ở lại với
+ * `pid: 36772` đã chết. Bản sau gõ đúng tên chuỗi ấy thì bị từ chối, và cách thoát dễ nhất là
+ * đặt một cái tên khác — thư mục nhật ký của Đức có `HNX`, `HNX ` (thừa dấu cách) và
+ * `mo rong scouter 2` đứng cạnh nhau, ba cái tên cho hai việc. Một khoá không tự thu được dạy
+ * người ta đi vòng qua nó, và đi vòng qua khoá thì khoá hết tác dụng.
+ *
+ * KHÔNG BIẾT THÌ COI NHƯ CÒN SỐNG. `kill(pid, 0)` ném `EPERM` khi tiến trình có thật nhưng
+ * khác chủ — đó là CÒN SỐNG. Đoán sai theo chiều này chỉ tốn một lần gõ tay; đoán sai theo
+ * chiều kia là hai bản chạy cùng gõ vào một tab, đúng lỗi B-61 đã trả giá. */
+export function conSong(pid, kill = process.kill) {
+  const n = Number(pid);
+  if (!Number.isInteger(n) || n <= 0) return true;
+  try { kill(n, 0); return true; } catch (e) { return e?.code === "EPERM"; }
+}
+
 /** Thuần: tiện ích có tự khai DỪNG CỨNG không. Đọc `system.ping`, không đoán từ mã lỗi. */
 export function chanDung(ping) {
   const c = ping?.result?.chatgpt ?? ping?.chatgpt ?? null;
@@ -412,15 +429,29 @@ async function chinh() {
      gửi đã bay, không chứng minh LƯỢT CỦA TÔI đã bay. Một tiến trình thì hai câu đó trùng
      nhau; hai tiến trình thì không. `wx` là phép kiểm-và-tạo nguyên tử của hệ tệp. */
   const soKhoa = path.join(thuMuc, "DANG-CHAY.json");
+  const datKhoa = () => fs.writeFileSync(soKhoa,
+    JSON.stringify({ pid: process.pid, tu: new Date().toISOString(), nhan }, null, 1), { flag: "wx" });
   try {
-    fs.writeFileSync(soKhoa, JSON.stringify({ pid: process.pid, tu: new Date().toISOString(), nhan }, null, 1), { flag: "wx" });
+    datKhoa();
   } catch (e) {
     if (e?.code !== "EEXIST") throw e;
-    let cu = "(không đọc được)";
-    try { cu = fs.readFileSync(soKhoa, "utf8").replace(/\s+/g, " ").trim(); } catch { /* giữ nguyên */ }
-    console.error(`ĐÃ CÓ MỘT BẢN CHẠY GIỮ THƯ MỤC NÀY: ${cu}`);
-    console.error(`Nó chết rồi thì xoá tay: ${soKhoa}`);
-    process.exit(3);
+    let tho = "(không đọc được)";
+    let cu = null;
+    try { tho = fs.readFileSync(soKhoa, "utf8"); cu = JSON.parse(tho); } catch { /* giữ nguyên */ }
+    /* B-77 — THU LẠI KHOÁ MỒ CÔI. Chỉ khi chủ cũ CHẮC CHẮN đã chết. Lần đặt lại vẫn dùng `wx`,
+       nên nếu một bản chạy khác vừa chen vào giữa hai câu lệnh này thì nó ném EEXIST lần nữa
+       và ta từ chối như cũ — cửa nguyên tử không bị nới ra ở đâu cả. */
+    if (cu && !conSong(cu.pid)) {
+      console.log(`khoá mồ côi: tiến trình ${cu.pid} (từ ${cu.tu || "?"}) đã chết — thu lại và chạy tiếp.`);
+      try { fs.rmSync(soKhoa, { force: true }); datKhoa(); } catch (e2) {
+        console.error(`Thu khoá mồ côi không xong (${e2?.code || e2?.message}) — có bản chạy khác vừa chen vào.`);
+        process.exit(3);
+      }
+    } else {
+      console.error(`ĐÃ CÓ MỘT BẢN CHẠY GIỮ THƯ MỤC NÀY: ${String(tho).replace(/\s+/g, " ").trim()}`);
+      console.error(`Nó chết rồi thì xoá tay: ${soKhoa}`);
+      process.exit(3);
+    }
   }
   const traKhoa = () => { try { fs.unlinkSync(soKhoa); } catch { /* đã mất thì thôi */ } };
   process.on("exit", traKhoa);
@@ -587,7 +618,31 @@ async function chinh() {
         await ngu(15000);
         continue;
       }
-      if (qd.viec === "DUNG") { lyDo = qd.vi; break; }
+      if (qd.viec === "DUNG") {
+        lyDo = qd.vi;
+        /* B-77 — HỎI PING TRƯỚC KHI DÁM NÓI "XONG". Đo 12/09, chuỗi "mo rong scouter 2":
+           bộ chạy đọc được trang, không thấy khối mới, nạp lại một lần, vẫn không thấy, rồi
+           chấm `HET_CHUOI` và **thoát 0 — tức THÀNH CÔNG**. Ping cùng lúc trả lời
+           `state: HARD_STOP` · `SECURITY_HARD_STOP`: ChatGPT đang đòi CAPTCHA, và một trang
+           đang đòi CAPTCHA thì đọc ra "không có khối" là chuyện đương nhiên.
+
+           Hai câu đó khác nhau ở chỗ chí mạng: "chuỗi đã hết" là XONG VIỆC, "trang bị chặn"
+           là CHƯA LÀM ĐƯỢC GÌ. Bản trước gộp cả hai vào một mã thoát 0, nên một lượt bị chặn
+           nhìn từ ngoài y hệt một lượt chạy trọn. Nhánh HARD_STOP ở đường đọc-hỏng KHÔNG cứu
+           được ca này: ở đây lượt đọc THÀNH CÔNG, nên nó không bao giờ chạy tới.
+
+           `lyDo` đổi thì mã thoát tự đổi theo — dòng `process.exit` cuối file chỉ trả 0 cho
+           `HET_SO_VONG` và `HET_CHUOI`. */
+        const p = goi(["ping", "--request-id", khoaAnToan(nhan, `-v${vong}-ping-dung`)]);
+        const ch = chanDung(p);
+        if (ch.dung) {
+          lyDo = ch.vi;
+          console.log(`  vòng ${vong}: ${ch.vi}`);
+          if (ch.khuyen) console.log(`     thử lại? ${ch.khuyen}`);
+          ghi({ su_kien: "DUNG_CUNG", vong, vi: ch.vi, thay_vi: qd.vi });
+        }
+        break;
+      }
       khoi = r.last_copy_block;
       break;
     }
