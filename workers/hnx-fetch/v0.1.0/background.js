@@ -42,7 +42,11 @@ const journal = createJournal({ chromeApi: chrome, async traUrl() { return null;
 
 const transport = createTransport({
   dispatch: journal.boc(createDispatcher({ handlers })),
-  max_envelope_bytes: MAX_ENVELOPE_BYTES
+  max_envelope_bytes: MAX_ENVELOPE_BYTES,
+  /* TÊN GÓI KHAI Ở ĐÂY, không ở trong transport. `scripts/transport` được chép nguyên văn
+   * giữa các gói, nên một tên gói gõ cứng trong đó sẽ theo bản chép sang gói khác và khiến
+   * gói đó tự khai sai tên mình trên dây. Đây là lớp nối dây — chỗ của hiểu biết riêng. */
+  worker_id: "hnx-fetch"
 });
 
 /* Nối hụt KHÔNG được ném ra ngoài: một promise bị bỏ rơi trong service worker chỉ để lại một

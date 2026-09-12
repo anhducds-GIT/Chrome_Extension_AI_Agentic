@@ -800,3 +800,27 @@ dòng**, và `S10` ghim đúng ca đó.
 
 **Đức chốt 12/09: AI chủ động commit và đẩy, không hỏi, miễn không lỗi.** Lượt này đẩy theo chốt
 đó. **Chưa có audit độc lập** — ghi ra để người sau không tưởng là đã có.
+
+## 2026-09-12 · `claude-scouter-udine` — tên gói gõ cứng vào một file được chép đi
+
+**Bug của chính tôi, và phép ghim của gói KHÁC bắt được.** Lượt thêm danh tính ghế hôm nay gõ
+cứng `WORKER_ID = "duc-scouter"` vào `scripts/scouter-transport-loopback.mjs`. File đó được
+CHÉP NGUYÊN VĂN sang `hnx-fetch`, nên bản chép khiến HNX Fetch **tự khai sai tên mình trên
+dây** — và `bridge.sessions` là đúng chỗ người ta nhìn để phân biệt các ghế.
+
+Không phép ghim nào của gói NÀY bắt được: với gói này thì `"duc-scouter"` là đúng. Nó lộ ra ở
+lượt `npm test` TOÀN REPO đầu tiên sau đó, bằng con ⑷ của `hnx-fetch` (so từng byte hai bản).
+**Bài học: sửa một file có bản sao thì phải chạy suite toàn repo, không chỉ suite của gói.**
+
+**Cách chữa.** Tên gói thành THAM SỐ `worker_id` của `createTransport`, do lớp nối dây khai —
+`scouter-background.js` khai `"duc-scouter"`, `background.js` của hnx-fetch khai `"hnx-fetch"`.
+Hình dạng sai thì KHÔNG khai (`null`), chứ không khai bừa: một `worker` rác đi thẳng vào bảng
+`bridge.sessions` mà người đọc đang tin. Đây là luật gói số 1 dưới hình dạng khác: **năng lực
+vào seed, hiểu biết riêng vào lớp nối dây** — tên gói là hiểu biết riêng.
+
+**Ghim `G9`**: đọc mã transport (đã bỏ chú thích) và ĐỎ nếu thấy bất kỳ tên gói nào. Rig của
+mẻ ghim nay dùng `"goi-thu-nghiem"` chứ KHÔNG dùng tên thật — dùng tên thật thì một bản gõ
+cứng `"duc-scouter"` vẫn xanh trọn, đúng bug này.
+
+**Số:** scouter 20/20 · repo 137/138 (con còn lại là việc canvas lane khác đang làm dở) ·
+đột biến 124/124 giết được, 0 sống sót.

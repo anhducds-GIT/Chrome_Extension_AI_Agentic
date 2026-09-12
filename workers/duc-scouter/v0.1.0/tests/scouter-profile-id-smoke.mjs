@@ -23,6 +23,10 @@ import { parseInstance } from "../../../_shared/bridge-host/bridge-host-core.mjs
 const { createTransport, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } =
   await import("../scripts/scouter-transport-loopback.mjs");
 
+/* Tên gói mà PHÉP GHIM tự chọn — cố ý KHÔNG phải "duc-scouter". Dùng đúng tên thật ở đây thì
+ * một bản transport gõ cứng "duc-scouter" vẫn xanh trọn, và đó chính là bug 12/09. */
+const WORKER_ID_THU = "goi-thu-nghiem";
+
 const PORT = 32147;
 const TOKEN = base64Url(new Uint8Array(32).map((_value, index) => (index * 7 + 3) & 0xff));
 const PAIRING = Object.freeze({
@@ -116,10 +120,12 @@ function makeChrome(seed = {}) {
   };
 }
 
-function makeRig(seed) {
+function makeRig(seed, tenGoi = WORKER_ID_THU) {
   const chromeApi = makeChrome(seed);
   const transport = createTransport({
     chrome: chromeApi,
+    /* Tên gói do LỚP NỐI DÂY khai, không do transport gõ cứng — xem G9. */
+    worker_id: tenGoi,
     WebSocket: FakeSocket,
     crypto: globalThis.crypto,
     timers: makeTimers(),
@@ -157,7 +163,7 @@ await ghim("G1 khung auth mang instance đủ bốn trường", async () => {
   assert.ok(auth.instance, "khung auth phải có khối instance — thiếu nó là quay lại ghế legacy");
   assert.equal(auth.instance.schema_version, 1);
   assert.equal(auth.instance.label, "udine-chinh");
-  assert.equal(auth.instance.worker, TRANSPORT_CONSTANTS.WORKER_ID);
+  assert.equal(auth.instance.worker, WORKER_ID_THU);
   assert.equal(auth.instance.extension_version, "0.1.0");
   /* Token vẫn phải ở đúng chỗ cũ: `instance` là dữ liệu ĐỊNH TUYẾN, nó không được thay thế
    * hay làm xê dịch thứ quyết định ai được vào. */
@@ -229,7 +235,7 @@ await ghim("G6 parseInstance THẬT của máy chủ nhận đúng thứ extensi
   assert.equal(mayChuThay.label, auth.instance.label,
     "nhãn extension gửi và nhãn máy chủ lưu phải là MỘT — lệch thì Đức gọi tên nào cũng không trúng");
   assert.equal(mayChuThay.label, "udine chính");
-  assert.equal(mayChuThay.worker, TRANSPORT_CONSTANTS.WORKER_ID);
+  assert.equal(mayChuThay.worker, WORKER_ID_THU);
 });
 
 /* ---- G7 · Đọc danh tính hỏng KHÔNG được kéo theo mất kết nối --------------
@@ -258,6 +264,34 @@ await ghim("G8 không có khung lạ nào mọc thêm trong lượt bắt tay", 
   const loai = [...new Set(socket.sent.map((khung) => khung.type))].sort();
   assert.deepEqual(loai, ["auth", "auth_challenge"],
     `lượt bắt tay chỉ được gửi auth_challenge rồi auth; thấy thêm: ${loai.join(", ")}`);
+});
+
+/* ---- G9 · Transport KHÔNG được gõ cứng tên gói nào --------------------------
+ * BUG THẬT, 12/09. `scripts/scouter-transport-loopback.mjs` được CHÉP NGUYÊN VĂN sang gói
+ * `hnx-fetch` (phép ghim ⑷ của gói đó so từng byte). Tôi gõ cứng `WORKER_ID = "duc-scouter"`
+ * vào file này, nên bản chép sẽ khiến HNX Fetch **tự khai sai tên mình trên dây** — và
+ * `bridge.sessions` là đúng chỗ người ta nhìn để phân biệt các ghế.
+ *
+ * Đây là luật gói số 1 dưới một hình dạng khác: năng lực vào seed, hiểu biết riêng của một
+ * chỗ vào lớp nối dây. Tên gói là hiểu biết riêng. */
+await ghim("G9 transport không chứa tên gói nào — tên do lớp nối dây khai", async () => {
+  const fs = await import("node:fs");
+  const url = new URL("../scripts/scouter-transport-loopback.mjs", import.meta.url);
+  const ma = fs.readFileSync(url, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")          // bỏ chú thích khối
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");        // bỏ chú thích dòng
+  for (const ten of ["duc-scouter", "hnx-fetch", "duc-auto-chatgpt", "duc-auto-gemini"]) {
+    assert.equal(ma.includes(ten), false,
+      `transport gõ cứng tên gói "${ten}" — bản chép sang gói khác sẽ khai sai tên gói đó`);
+  }
+
+  /* Chiều NGƯỢC LẠI: tên hình dạng sai thì KHÔNG khai, chứ không khai bừa. Một `worker` rác
+   * đi thẳng vào bảng `bridge.sessions` mà người đọc đang tin. */
+  for (const xau of ["Duc Scouter", "", "  ", 42, null, "x".repeat(65), "-bat-dau-bang-gach"]) {
+    const rig = makeRig(undefined, xau);
+    const { auth } = await batTay(rig);
+    assert.equal(auth.instance.worker, null, `tên gói hỏng vẫn lọt: ${JSON.stringify(xau)}`);
+  }
 });
 
 for (const dong of ket) console.log(dong);

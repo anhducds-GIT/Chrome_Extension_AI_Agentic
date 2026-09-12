@@ -53,7 +53,19 @@ const STATUS_STORAGE_KEY = "scouter.bridge.status.v1";
 const INSTANCE_STORAGE_KEY = "scouter.bridge.instance.v1";
 const INSTANCE_LABEL_STORAGE_KEY = "scouter.bridge.instance_label.v1";
 const INSTANCE_ID_SHAPE = /^[A-Za-z0-9-]{8,64}$/;
-const WORKER_ID = "duc-scouter";
+/* TÊN GÓI KHÔNG ĐƯỢC GÕ CỨNG VÀO FILE NÀY. File này được CHÉP NGUYÊN VĂN sang `hnx-fetch`
+ * (và phép ghim ⑷ của gói đó so từng byte), nên một hằng số mang tên gói ở đây sẽ theo bản
+ * chép sang gói khác và khiến gói đó **tự khai sai tên mình trên dây**.
+ *
+ * Tôi đã gõ cứng `"duc-scouter"` ở đây ngày 12/09 và phép ghim của `hnx-fetch` bắt được đúng
+ * lượt chạy `npm test` đầu tiên sau đó. Đây là hình dạng khác của cùng cái bẫy mà luật gói
+ * số 1 nói: **năng lực vào seed, hiểu biết riêng của một chỗ vào lớp nối dây.** Tên gói là
+ * hiểu biết riêng.
+ *
+ * Nên nó là THAM SỐ, và mặc định là `null` = "không khai" — không phải một tên đoán bừa:
+ * khai sai tên còn tệ hơn không khai, vì `bridge.sessions` là chỗ người ta nhìn để phân biệt
+ * các ghế. */
+const WORKER_ID_SHAPE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 const KEEPALIVE_MS = 20000;
 const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
@@ -131,6 +143,11 @@ export function createTransport(options = {}) {
   const timers = options.timers || globalThis;
   const dispatch = options.dispatch;
   const maxEnvelopeBytes = Number(options.max_envelope_bytes) || 1024 * 1024;
+  /* Hình dạng sai thì KHÔNG khai, chứ không phải khai bừa: máy chủ nhận khối `instance` và
+   * một `worker` rác ở đó đi thẳng vào bảng `bridge.sessions` mà người đọc đang tin. */
+  const workerId = typeof options.worker_id === "string" && WORKER_ID_SHAPE.test(options.worker_id)
+    ? options.worker_id
+    : null;
   if (!chromeApi || !WebSocketApi || !cryptoApi || typeof dispatch !== "function") {
     throw new TypeError("Scouter transport needs chrome, WebSocket, crypto and dispatch.");
   }
@@ -440,7 +457,7 @@ export function createTransport(options = {}) {
       schema_version: 1,
       instance_id: record.instance_id,
       label: sanitizeInstanceLabel(stored?.[INSTANCE_LABEL_STORAGE_KEY]),
-      worker: WORKER_ID,
+      worker: workerId,
       extension_version: chromeApi.runtime?.getManifest?.()?.version || "0.0.0"
     };
   }
@@ -550,7 +567,7 @@ export const TRANSPORT_CONSTANTS = Object.freeze({
   INSTANCE_STORAGE_KEY,
   INSTANCE_LABEL_STORAGE_KEY,
   INSTANCE_ID_SHAPE,
-  WORKER_ID,
+  WORKER_ID_SHAPE,
   KEEPALIVE_MS,
   KEEPALIVE_ACK_TIMEOUT_MS,
   HANDSHAKE_TIMEOUT_MS,

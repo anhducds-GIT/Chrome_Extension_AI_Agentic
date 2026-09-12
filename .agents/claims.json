@@ -47,8 +47,7 @@
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay.",
-      "tra_khi_chua_day": null,
-      "ghi_chu": "Khong con commit nao treo (kiem 12/09: origin/main == HEAD). Viec cua lane nay da day het. MOT LOI DA XAY RA, ghi ra de nguoi sau doc duoc: luot git commit --amend cua toi roi vao commit dc42d320 cua lane claude-gpt-chay-het-job — ho commit xen vao giua git add va git commit nen HEAD khong con la commit cua toi. Ket qua: commit cua ho thanh e80be828 va mang theo mot dong claims.json cua toi. Khong sua lich su de che vi ho da commit tiep len tren va sua lich su la viec phai hoi Duc. Bai hoc: repo nhieu lane chay song song thi KHONG DUOC --amend, chi tao commit moi."
+      "tra_khi_chua_day": null
     },
     "_docs": {
       "owner": null,
@@ -66,8 +65,8 @@
     "_code": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T06:27:56.993Z",
-      "task": "Chuoi viec Scouter",
+      "claimed_at": "2026-09-12T15:12:53.057Z",
+      "task": "Scouter S-16..S-19",
       "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
@@ -90,12 +89,12 @@
       "released_at": "2026-09-12T15:05:44.248Z"
     },
     "workers/hnx-fetch": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T02:13:06.670Z",
-      "task": "Duc chot 12/09: clean 4 muc do con lai cua cong",
-      "released_at": "2026-09-12T03:35:07.826Z"
+      "claimed_at": "2026-09-12T15:18:09.973Z",
+      "task": "Dong bo transport sau khi Scouter them danh tinh ghe; go ten goi go cung",
+      "released_at": null
     }
   },
-  "_fingerprint": "911c3b090ab4115a"
+  "_fingerprint": "c49ccc303e50bc3c"
 }

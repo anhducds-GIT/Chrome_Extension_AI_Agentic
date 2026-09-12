@@ -462,3 +462,26 @@ một bên thì sửa cả hai trong CÙNG lượt** — theo `docs/protocols/RU
 Lấy kết quả giao dịch 08–11/09: **4 ngày · 32 hàng**. SSOT nay có **400 hàng · 50 ngày** (đến 11/09), không dòng lệch cột, không khoá trùng, và mọi ngày có đúng 8 hàng. Ba ngày 31/08–02/09 vẫn thiếu ở cả SSOT lẫn danh mục PDF HNX, phù hợp ngày nghỉ Quốc khánh.
 
 Tải **28 PDF tháng 09** còn thiếu (bao gồm 16 tệp của 08–11/09 và tồn đọng 03–07/09); tất cả qua kiểm byte/chữ ký PDF/EOF của lệnh, không ghi đè. Lượt đối chiếu cuối trả `28 trên đĩa · CÒN THIẾU: 0`.
+
+## 2026-09-12 · `claude-scouter-udine` — đồng bộ `transport.mjs` sau khi Scouter thêm danh tính ghế
+
+**Vì sao gói này bị đụng.** `scripts/transport.mjs` là bản chép NGUYÊN VĂN của Scouter, và
+phép ghim ⑷ của gói này so từng byte. Ngày 12/09 Scouter thêm **danh tính ghế** (mỗi phiên
+extension khai `instance_id` + tên gọi trong khung `auth`, để máy chủ định tuyến đúng ghế khi
+nhiều cửa sổ Chrome cùng cắm một Bridge). Bản chép ở đây chưa theo, nên phép ghim ĐỎ ngay lượt
+`npm test` toàn repo đầu tiên sau đó. Nó làm đúng việc của nó.
+
+**Đã đồng bộ.** Gói này nay cũng có danh tính ghế — không phải tính năng thừa: hai cửa sổ HNX
+Fetch cùng cắm một Bridge sẽ gặp đúng chỗ hỏng mà Scouter vừa chữa (`TARGET_AMBIGUOUS`, không
+ai gọi được đúng ghế). Gói này chưa có ô nhập tên ở giao diện, nên `label` luôn rỗng và ghế
+được gọi bằng số.
+
+**Một chỗ phải sửa ở SEED trước khi chép được.** Bản đầu gõ cứng `WORKER_ID = "duc-scouter"`
+vào chính `transport.mjs`. Chép nguyên văn sang đây thì HNX Fetch **tự khai sai tên mình trên
+dây**, và `bridge.sessions` là đúng chỗ người ta nhìn để phân biệt các ghế. Nay tên gói là
+THAM SỐ do lớp nối dây khai — `background.js` của gói này khai `worker_id: "hnx-fetch"`. Tên
+hình dạng sai thì KHÔNG khai, chứ không khai bừa: một `worker` rác còn tệ hơn một ô trống.
+
+Ghim `G9` bên Scouter canh đúng chỗ đó: transport không được chứa tên gói nào.
+
+**Không đụng gì khác trong gói này.** Đã trả khoá ngay sau lượt sửa.

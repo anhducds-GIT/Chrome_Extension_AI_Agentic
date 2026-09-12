@@ -33,6 +33,40 @@
 const PAIRING_STORAGE_KEY = "dac.bridge.pairing.v1";
 const STATUS_STORAGE_KEY = "scouter.bridge.status.v1";
 
+/* ---- DANH TÍNH GHẾ — "Profile ID" trong lời Đức (12/09) ------------------
+ * Dòng ở đầu file này trước đây ghi: *đa profile HOÃN tới khi có thứ thật để nhân bản*. Ngày
+ * 12/09 cái "thứ thật" xuất hiện và ĐO ĐƯỢC: `bridge.sessions` trả về HAI ghế cùng nối, cả
+ * hai `label: null` `legacy: true`. Hệ quả không phải thẩm mỹ — máy chủ định tuyến
+ * FAIL-CLOSED, nên mọi lượt gọi không nêu đích bị từ chối `TARGET_AMBIGUOUS`, và cách duy
+ * nhất còn lại để nêu đích là dán một chuỗi `legacy:<uuid>` đọc ra từ `bridge.sessions`.
+ *
+ * Máy chủ ĐÃ có sẵn chỗ cho việc này (`parseInstance`, và định tuyến theo `label` ở
+ * `_shared/bridge-host/bridge-host-core.mjs`) — thiếu đúng phía extension. Nên đây KHÔNG phải
+ * một method Bridge mới: luật gói số 4 giữ nguyên, từ vựng cửa Bridge không thêm chữ nào.
+ * Nhãn đi kèm khung `auth`, là khung máy chủ vốn đã đọc.
+ *
+ * HAI khoá, không phải một, và cố ý:
+ *   · `instance_id` — máy sinh MỘT LẦN rồi ở yên. Đây là danh tính ĐỊNH TUYẾN: một cái ghế tự
+ *     đổi số giữa hai lượt nối lại thì mọi lệnh đang nhắm vào nó lạc chỗ.
+ *   · `label` — người gõ, sửa lúc nào cũng được. Đây là cái TÊN Đức gọi.
+ * Gộp hai thứ vào một khoá nghĩa là sửa tên thì mất ghế. */
+const INSTANCE_STORAGE_KEY = "scouter.bridge.instance.v1";
+const INSTANCE_LABEL_STORAGE_KEY = "scouter.bridge.instance_label.v1";
+const INSTANCE_ID_SHAPE = /^[A-Za-z0-9-]{8,64}$/;
+/* TÊN GÓI KHÔNG ĐƯỢC GÕ CỨNG VÀO FILE NÀY. File này được CHÉP NGUYÊN VĂN sang `hnx-fetch`
+ * (và phép ghim ⑷ của gói đó so từng byte), nên một hằng số mang tên gói ở đây sẽ theo bản
+ * chép sang gói khác và khiến gói đó **tự khai sai tên mình trên dây**.
+ *
+ * Tôi đã gõ cứng `"duc-scouter"` ở đây ngày 12/09 và phép ghim của `hnx-fetch` bắt được đúng
+ * lượt chạy `npm test` đầu tiên sau đó. Đây là hình dạng khác của cùng cái bẫy mà luật gói
+ * số 1 nói: **năng lực vào seed, hiểu biết riêng của một chỗ vào lớp nối dây.** Tên gói là
+ * hiểu biết riêng.
+ *
+ * Nên nó là THAM SỐ, và mặc định là `null` = "không khai" — không phải một tên đoán bừa:
+ * khai sai tên còn tệ hơn không khai, vì `bridge.sessions` là chỗ người ta nhìn để phân biệt
+ * các ghế. */
+const WORKER_ID_SHAPE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
 const KEEPALIVE_MS = 20000;
 const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
 const HANDSHAKE_TIMEOUT_MS = 10000;
@@ -85,6 +119,21 @@ export async function verifyHostProof(cryptoApi, token, nonce, proof) {
   }
 }
 
+/* Cắt trần TRƯỚC khi quét (O(trần), không phải O(đầu vào)), bỏ cả ký tự điều khiển C1, rồi quét
+ * nốt nửa cặp thay thế LẠC mà chính lượt cắt vừa có thể tạo ra. Bản này phải khớp từng bước với
+ * `sanitizeInstanceLabel` của máy chủ: lệch một bước thì nhãn extension gửi đi và nhãn máy chủ
+ * lưu lại khác nhau, và Đức gọi tên nào cũng không trúng ghế nào.
+ *
+ * Dãy ký tự điều khiển dựng bằng CHUỖI ESCAPE chứ không gõ ký tự thật — gõ thật thì git coi cả
+ * file là nhị phân và giấu diff vĩnh viễn. Cùng lý do ở phía máy chủ. */
+const DIEU_KHIEN = new RegExp("[\\u0000-\\u001f\\u007f-\\u009f]", "g");
+const NUA_CAP_LAC = new RegExp("(?:[\\ud800-\\udbff](?![\\udc00-\\udfff]))|(?:(?<![\\ud800-\\udbff])[\\udc00-\\udfff])", "g");
+
+export function sanitizeInstanceLabel(value) {
+  if (typeof value !== "string") return "";
+  return value.slice(0, 256).replace(DIEU_KHIEN, "").trim().slice(0, 64).replace(NUA_CAP_LAC, "");
+}
+
 /* ---- Vận chuyển ---------------------------------------------------------- */
 
 export function createTransport(options = {}) {
@@ -94,6 +143,11 @@ export function createTransport(options = {}) {
   const timers = options.timers || globalThis;
   const dispatch = options.dispatch;
   const maxEnvelopeBytes = Number(options.max_envelope_bytes) || 1024 * 1024;
+  /* Hình dạng sai thì KHÔNG khai, chứ không phải khai bừa: máy chủ nhận khối `instance` và
+   * một `worker` rác ở đó đi thẳng vào bảng `bridge.sessions` mà người đọc đang tin. */
+  const workerId = typeof options.worker_id === "string" && WORKER_ID_SHAPE.test(options.worker_id)
+    ? options.worker_id
+    : null;
   if (!chromeApi || !WebSocketApi || !cryptoApi || typeof dispatch !== "function") {
     throw new TypeError("Scouter transport needs chrome, WebSocket, crypto and dispatch.");
   }
@@ -122,6 +176,7 @@ export function createTransport(options = {}) {
   let hostProofVerified = false;
   let authSent = false;
   let handshakeNonce = null;
+  let instanceForSocket = null;
   let keepaliveTimer = null;
   let keepaliveDeadlineTimer = null;
   let handshakeTimer = null;
@@ -276,7 +331,12 @@ export function createTransport(options = {}) {
       }
       hostProofVerified = true;
       authSent = true;
-      targetSocket.send(JSON.stringify({ type: "auth", role: "extension", token: pairingAtProof.token }));
+      /* `instance` là DỮ LIỆU ĐỊNH TUYẾN, không bao giờ tham gia xác thực — chỉ token quyết
+       * định ai được vào. Nên thiếu nó thì vẫn đăng nhập được, chỉ là ngồi ghế không tên
+       * (`legacy`) y như trước ngày 12/09: đọc danh tính hỏng KHÔNG được kéo theo mất kết nối. */
+      const khungAuth = { type: "auth", role: "extension", token: pairingAtProof.token };
+      if (instanceForSocket) khungAuth.instance = instanceForSocket;
+      targetSocket.send(JSON.stringify(khungAuth));
       return;
     }
 
@@ -365,6 +425,43 @@ export function createTransport(options = {}) {
     };
   }
 
+  /* ---- ĐỌC DANH TÍNH — TUẦN TỰ, không song song ---------------------------
+   * Lượt đọc đầu tiên là một cặp "không thấy thì tạo rồi ghi". Hai lượt đọc chạy chồng nhau
+   * lúc chưa có gì trong kho thì CẢ HAI thấy trống, cả hai đúc một `instance_id` khác nhau,
+   * một cái được khai lên máy chủ còn cái kia nằm lại trên đĩa — nên ghế đổi số ở lượt nối
+   * lại sau. Gói `duc-auto-chatgpt` đã dính đúng lỗi này (audit 03/09) và cách chữa là xếp
+   * hàng; chép lại cách chữa, không chép lại lỗi.
+   *
+   * Hàng đợi này KHÔNG bảo vệ chống một tiến trình khác cùng ghi — nó không cần: cả hai lượt
+   * đọc đều ở trong một service worker. */
+  let instanceWork = Promise.resolve();
+  function loadInstance() {
+    const run = instanceWork.then(loadInstanceNow, loadInstanceNow);
+    instanceWork = run.then(() => {}, () => {});
+    return run;
+  }
+
+  async function loadInstanceNow() {
+    const stored = await chromeApi.storage.local.get([INSTANCE_STORAGE_KEY, INSTANCE_LABEL_STORAGE_KEY]);
+    let record = stored?.[INSTANCE_STORAGE_KEY];
+    if (!record || typeof record !== "object" || typeof record.instance_id !== "string"
+      || !INSTANCE_ID_SHAPE.test(record.instance_id)) {
+      record = {
+        schema_version: 1,
+        instance_id: cryptoApi.randomUUID?.() || `inst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
+        created_at: new Date().toISOString()
+      };
+      await chromeApi.storage.local.set({ [INSTANCE_STORAGE_KEY]: record });
+    }
+    return {
+      schema_version: 1,
+      instance_id: record.instance_id,
+      label: sanitizeInstanceLabel(stored?.[INSTANCE_LABEL_STORAGE_KEY]),
+      worker: workerId,
+      extension_version: chromeApi.runtime?.getManifest?.()?.version || "0.0.0"
+    };
+  }
+
   async function loadPairing() {
     const stored = await chromeApi.storage.local.get([PAIRING_STORAGE_KEY]);
     const raw = stored?.[PAIRING_STORAGE_KEY];
@@ -395,6 +492,15 @@ export function createTransport(options = {}) {
     try {
       if (!pairing) await loadPairing();
       if (!pairing) return null;
+      /* Danh tính đọc MỘT LẦN mỗi lượt nối, TRƯỚC khi socket mở, rồi đông cứng cho cả lượt đó.
+       * Hai lý do, và cả hai đều là chốt:
+       *   · Khung `auth` gửi đi trong một nhánh async đã có sẵn một `await` (kiểm bằng chứng
+       *     máy chủ). Thêm một `await` nữa vào đúng chỗ đó là thêm một khe cho socket đổi chủ
+       *     giữa chừng. Đọc trước thì lúc gửi không còn `await` nào.
+       *   · Đức vừa gõ tên xong thì lượt nối KẾ TIẾP khai tên mới — không phải nạp lại
+       *     extension, cũng không phải khởi động lại máy chủ. `scouter-background.js` lo phần
+       *     cắt dây cho lượt kế tiếp xảy ra ngay. */
+      instanceForSocket = await loadInstance().catch(() => null);
       const candidate = new WebSocketApi(pairing.websocket_url);
       socket = candidate;
       authenticated = false;
@@ -444,14 +550,24 @@ export function createTransport(options = {}) {
     disconnect,
     loadPairing,
     state,
+    /* `loadInstance` CỐ Ý không có mặt ở đây. Nó là việc riêng của lượt bắt tay; bảng bên đọc
+     * thẳng hai khoá lưu vì nó chỉ cần HIỂN THỊ, không cần đúc số ghế. Bày nó ra ngoài là dựng
+     * sẵn một tầng cho một người dùng chưa tồn tại — và cái tầng đó sẽ đúc số ghế vào những lúc
+     * không ai định đúc. */
     PAIRING_STORAGE_KEY,
-    STATUS_STORAGE_KEY
+    STATUS_STORAGE_KEY,
+    INSTANCE_STORAGE_KEY,
+    INSTANCE_LABEL_STORAGE_KEY
   });
 }
 
 export const TRANSPORT_CONSTANTS = Object.freeze({
   PAIRING_STORAGE_KEY,
   STATUS_STORAGE_KEY,
+  INSTANCE_STORAGE_KEY,
+  INSTANCE_LABEL_STORAGE_KEY,
+  INSTANCE_ID_SHAPE,
+  WORKER_ID_SHAPE,
   KEEPALIVE_MS,
   KEEPALIVE_ACK_TIMEOUT_MS,
   HANDSHAKE_TIMEOUT_MS,
