@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-12T14:48:34.299Z",
       "task": "B-82 dom-probe bao khung canvas; answerBlock nhan canvas",
-      "released_at": null,
+      "released_at": "2026-09-12T15:33:48.301Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -91,10 +91,10 @@
     "workers/hnx-fetch": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T15:18:09.973Z",
-      "task": "Dong bo transport sau khi Scouter them danh tinh ghe; go ten goi go cung",
+      "claimed_at": "2026-09-12T15:29:54.065Z",
+      "task": "Dong bo transport; chay suite cho cong nhin thay",
       "released_at": null
     }
   },
-  "_fingerprint": "c49ccc303e50bc3c"
+  "_fingerprint": "8b833ded7f283b73"
 }

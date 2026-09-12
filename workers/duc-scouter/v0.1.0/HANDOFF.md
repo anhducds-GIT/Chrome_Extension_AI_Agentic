@@ -824,3 +824,24 @@ cứng `"duc-scouter"` vẫn xanh trọn, đúng bug này.
 
 **Số:** scouter 20/20 · repo 137/138 (con còn lại là việc canvas lane khác đang làm dở) ·
 đột biến 124/124 giết được, 0 sống sót.
+
+## 2026-09-12 · `claude-scouter-udine` — một byte NUL nằm im trong chính phép ghim của tôi
+
+**Tìm thấy khi chạy `npm test` TOÀN REPO, không phải suite của gói.** `tests/scouter-profile-id-smoke.mjs`
+chứa **byte điều khiển THÔ** (`0x00 0x1f 0x7f 0x9f`) ở phép ghim `G5` — chỗ kiểm rằng
+`sanitizeInstanceLabel` cắt ký tự điều khiển. Tôi gõ thẳng ký tự thật vào chuỗi nguồn thay vì
+viết escape.
+
+**Vì sao đắt hơn vẻ ngoài.** Git thấy byte `0x00` thì coi cả file là NHỊ PHÂN và **giấu mọi
+diff về sau** — mọi lượt audit sau đó sẽ đọc "Binary file differs" thay vì thấy phép ghim đã
+đổi gì. Một phép ghim không ai đọc được diff là một phép ghim sửa được mà không ai thấy. Chính
+tôi đã đụng vào triệu chứng trong phiên này (`grep` báo "Binary file matches") mà không dừng
+lại hỏi vì sao.
+
+**Chữa:** viết bằng escape — `"a bcde"`. Cùng ký tự, cùng phép đo,
+file trở lại UTF-8 thuần và diff đọc được.
+
+**Vì sao nó trốn được lâu:** `npm test` nối bằng `&&`, và một con của lane khác đỏ ở khúc
+trước nên chuỗi dừng trước khi tới `tests/khong-byte-dieu-khien-smoke.mjs`. Cổng repo CÓ người
+canh chuyện này từ trước — nó chỉ chưa tới lượt chạy. **Suite của gói xanh không thay được
+suite toàn repo**, đúng bài học của mục ngay trên.

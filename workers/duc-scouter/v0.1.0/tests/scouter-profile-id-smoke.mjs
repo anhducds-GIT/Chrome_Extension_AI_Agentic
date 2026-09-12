@@ -217,7 +217,7 @@ await ghim("G5 sanitizeInstanceLabel cắt đúng chỗ", async () => {
   assert.equal(sanitizeInstanceLabel(undefined), "");
   assert.equal(sanitizeInstanceLabel(12345), "", "không phải chuỗi thì là chuỗi rỗng, không phải '12345'");
   assert.equal(sanitizeInstanceLabel("  udine  "), "udine");
-  assert.equal(sanitizeInstanceLabel("a bcde"), "abcde", "ký tự điều khiển C0 và C1 đều phải rụng");
+  assert.equal(sanitizeInstanceLabel("a\u0000b\u001fc\u007fd\u009fe"), "abcde", "ký tự điều khiển C0 và C1 đều phải rụng");
   assert.equal(sanitizeInstanceLabel("x".repeat(200)).length, 64, "trần 64 ký tự");
   /* Nửa cặp thay thế LẠC — thứ chính lượt cắt 64 có thể vừa tạo ra. Để lại thì chuỗi JSON
    * gửi lên dây không còn là UTF-16 hợp lệ. */
