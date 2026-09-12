@@ -351,13 +351,10 @@
                   "tự ký nghiệm thu"
                 ]
               }
-            ],
-            "file": [
-              "BACKLOG.md"
             ]
           },
           "khong_co_thi": "Vai chia theo hãng, nên một phiên vừa phát hiện lỗi vừa tự ký nghiệm thu bản sửa của mình. Và chỗ vấp ở repo đích không có đường về lõi — nó chết trong một cửa sổ chat.",
-          "vi_sao": "Do 08/09 tren BON repo da migrate: muc nay tung khai can.file = [AGENTS.md, BACKLOG.md], ma hai file do co o MOI repo da lap tu lau — nen no bao [x] khap noi trong khi grep -cE \"giu loi|phat & thu\" ra 0 tren 4. Danh muc bao DAT cho mot tinh nang o noi no KHONG TON TAI. Nay do NOI DUNG: luat hai vai la mot doan chu nam TRONG AGENTS.md cua repo dich, ma upgrade.mjs khong bao gio ghi file do — dung, vi do la file cua ho. \"File co ton tai\" va \"noi dung da toi\" la hai cau khac nhau."
+          "vi_sao": "Do 08/09 tren BON repo da migrate: muc nay tung khai can.file = [AGENTS.md, BACKLOG.md], ma hai file do co o MOI repo da lap tu lau — nen no bao [x] khap noi trong khi grep -cE \"giu loi|phat & thu\" ra 0 tren 4. Danh muc bao DAT cho mot tinh nang o noi no KHONG TON TAI. Nay do NOI DUNG: luat hai vai la mot doan chu nam TRONG AGENTS.md cua repo dich, ma upgrade.mjs khong bao gio ghi file do — dung, vi do la file cua ho. \"File co ton tai\" va \"noi dung da toi\" la hai cau khac nhau. BO `can.file: [BACKLOG.md]` ngay 12/09: BACKLOG.md co o MOI repo vi ly do khac han, nen no lam muc nay doc thanh MOT PHAN (file toi, noi dung chua toi) trong khi su that la repo nay KHONG NHAN cap vai do — ADR-0029 (Duc chot 09/09) chot cap Giu loi/Phat & thu thuoc repo bo khung, con day giu He thong/San pham. MOT PHAN nghia la ban trich phat ra mot nua; THIEU nghia la chua toi luc nhan. Day la ca thu hai, va no phai doc thanh THIEU. Chinh muc nay da tu viet bai hoc do o cau tren: \"File co ton tai\" va \"noi dung da toi\" la hai cau khac nhau."
         }
       ]
     },

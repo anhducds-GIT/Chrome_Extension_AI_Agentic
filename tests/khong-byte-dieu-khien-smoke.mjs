@@ -75,8 +75,19 @@ assert.deepEqual(hong, [],
   "tệp mã nguồn mang byte điều khiển thô — git sẽ coi là nhị phân và GIẤU MỌI DIFF về sau:\n  " +
   hong.join("\n  "));
 
-/* Danh sách đóng băng phải THẬT SỰ che được cái gì. Rỗng nghĩa là khối `frozen` đổi hình dạng
- * và cái bỏ qua trên đang bỏ qua số không — lúc đó ta muốn biết ngay, chứ không phải khi cổng đỏ. */
-assert.ok(DONG_BANG.length > 0, "khoi frozen cua .repo-structure.json rong — cai bo qua dang vo nghia");
+/* HÌNH DẠNG chứ không phải SỐ LƯỢNG — sửa 12/09.
+ * Bản trước đòi `frozen` KHÔNG rỗng, và nó gộp hai chuyện khác hẳn nhau: "khối đổi hình dạng
+ * nên cái bỏ qua đang bỏ qua số không" (lỗi thật) với "hôm nay không gói nào bị đóng băng"
+ * (trạng thái Đức tự chốt 08/09: *"tôi mở băng để chuẩn bị làm các extension đó"*, ghi ngay
+ * trong `_frozen_doc`). Nên nó ĐỎ vì một quyết định của Đức, và đỏ như thế thì không ai sửa
+ * được — chỉ có cách đóng băng lại một gói để làm nguôi một phép kiểm.
+ * Nay tách đôi: khối phải CÒN và phải là mảng · và nếu có khai gói nào thì lượt bỏ qua phải
+ * thật sự bỏ qua được cái gì đó — đúng cái bẫy "mỏ neo khớp 0 lần" ở trên. */
+assert.ok(Array.isArray(DONG_BANG),
+  "khoi frozen cua .repo-structure.json khong con la mang — cai bo qua tren dang doc nham hinh dang");
+if (DONG_BANG.length > 0) {
+  assert.ok(boQua > 0,
+    `khai ${DONG_BANG.length} goi dong bang ma khong tep nao bi bo qua — mo neo khong khop lan nao`);
+}
 
 console.log(`khong-byte-dieu-khien-smoke: ${daSoi} tep chu sach, bo qua ${boQua} tep cua goi dong bang`);

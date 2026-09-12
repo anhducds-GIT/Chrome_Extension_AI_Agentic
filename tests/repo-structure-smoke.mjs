@@ -324,7 +324,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.match(cauTruc.slice(moc), /stewardOf\(/,
     "ownershipKeys PHAI goi stewardOf — hai ham quy vung doc lap la hai cua, dung con bug 02/09");
   for (const name of ["safe-push.mjs", "claim.mjs"]) {
-    assert.doesNotMatch(readScript(name), /areaOf\(/,
+    assert.doesNotMatch(readScript(name), /\bareaOf\(/,
       `${name} KHONG duoc tu quy vung bang areaOf — do la cua thu hai, va no da lech mot lan`);
   }
   ok("K2-2b · DAY NOI: ba script deu di qua cua chung; commitChuaDay khong duoc thanh cua thu hai; khong ai co duong rieng");

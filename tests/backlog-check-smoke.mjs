@@ -21,7 +21,14 @@ import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, mucVoHinh, thieuDongKh
    va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
    goi bo chay, va no se DO oan — hoac te hon: mot ngay ai do doi lai thanh chuoi thang thi no
    im lang thoi soi gi ca. */
-const chuoiTestThat = (pkg) => String(pkg.scripts?.["test:tuan-tu"] ?? pkg.scripts?.test ?? "");
+/* CHUỖI THẬT LÀ CHUỖI `npm test` CHẠY — sửa 12/09.
+   Bản trước ưu tiên `test:tuan-tu` và chỉ lùi về `test` khi không có. Lượt migrate bộ khung
+   (4da1e9e5) THÊM `test:tuan-tu` — một tập CON mười bài phải chạy một mình — nên từ hôm ấy
+   phép ghim này soi nhầm chuỗi: `backlog-check.mjs` vẫn nằm đủ trong `test`, mà mép vẫn ĐỎ.
+   Một phép ghim đỏ vì soi nhầm chỗ còn tệ hơn không có: nó dạy người đọc bỏ qua nó.
+   Gộp CẢ HAI chuỗi: bộ kiểm nằm ở chuỗi nào cũng là còn ở cổng, và gỡ khỏi cả hai mới là
+   "luật biến mất trong im lặng" — đúng thứ N-01 sinh ra để chặn. */
+const chuoiTestThat = (pkg) => [pkg.scripts?.test, pkg.scripts?.["test:tuan-tu"]].filter(Boolean).join(" && ");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BO_KIEM = path.join(ROOT, "scripts", "backlog-check.mjs");

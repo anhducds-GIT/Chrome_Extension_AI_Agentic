@@ -200,6 +200,12 @@ export function render({ ketQua, as, boSinh = [], luc = new Date() }) {
     }
     d.push("  · bảng quyền lệch mà bạn KHÔNG hiểu vì sao → ĐỪNG tự sửa bảng cho khớp lại.");
     d.push("      git diff .agents/claims.json     rồi HỎI CHỦ DỰ ÁN (AGENTS.md mục 1).");
+    /* GỌI TÊN ĐÚNG CÁI LỆNH GÂY HẠI. Câu ngay trên nói "đừng tự sửa bảng" — nhưng lượt sửa
+       nguy hiểm nhất KHÔNG phải sửa tay, mà là `--restamp`: nó đóng lại dấu niêm phong lên
+       một bảng đã bị đổi, và từ đó không ai còn thấy bảng từng lệch. Một lời khuyên không
+       gọi tên cái bẫy thì người đọc vẫn bước vào. Mép này mất ở lượt migrate bộ khung
+       (4da1e9e5) và `tests/state-check-smoke.mjs` đã đỏ vì nó suốt từ đó. */
+    d.push("      đừng `--restamp` cho xong việc: nó đóng dấu lên chỗ lệch, không xoá chỗ lệch.");
     d.push("");
     d.push("Chưa xử xong thì ĐỪNG phát biểu trạng thái chắc chắn với chủ dự án.");
   }

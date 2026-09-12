@@ -29,9 +29,18 @@ const doc = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
    Bỏ `template/`: đó là bản trích PHÁT ĐI, và quyển nhật ký trong đó cố ý TRẮNG — repo mới nhận
    một quyển chưa có mục nào. Quét nó vào đây thì phép ⑴ đòi "mọi quyển phải có mục" sẽ đỏ vì một
    file đúng ra phải rỗng, và phép ⑵ đếm lặp mọi thứ hai lần. */
-const CAC_FILE = execFileSync("git", ["ls-files", "*HANDOFF.md"], { cwd: ROOT, encoding: "utf8" })
+/* GOM THEO TEN, ROI LOC THEO NOI DUNG — sua 12/09.
+   Ban truoc gom `*HANDOFF.md` bang git roi khang dinh MOI file gom duoc deu la nhat ky. Do la
+   DUNG CAI LOI ma khoi (1b) ben duoi mo ta: `docs/protocols/HANDOFF.md` la SO TAY LUAT, khong
+   co muc `## Log` nao, va no bi tinh la nhat ky chi vi cai ten. Bo do that (`session-check.mjs`)
+   da loc theo noi dung tu lau; chi phep ghim nay con hoi theo ten, nen no DO tren mot file
+   khong he sai. */
+const CAC_FILE_THEO_TEN = execFileSync("git", ["ls-files", "*HANDOFF.md"], { cwd: ROOT, encoding: "utf8" })
   .split(String.fromCharCode(10)).map((d) => d.trim())
   .filter((d) => d && !d.startsWith("template/"));
+
+const CAC_FILE = CAC_FILE_THEO_TEN.filter((f) => laNhatKy(doc(f)));
+const KHONG_PHAI_NHAT_KY = CAC_FILE_THEO_TEN.filter((f) => !laNhatKy(doc(f)));
 
 const mau = (mucs, dau = "# H\n\n## Log\n\n") => dau + mucs.join("");
 const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - tieuDe.length - 5))}\n\n`;
@@ -68,7 +77,13 @@ const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - t
    sổ tay LUẬT — cũng có tên kết thúc bằng `HANDOFF.md`, nên nó bị đòi khai mốc tháng và cổng ĐỎ
    với một file không hề là nhật ký. */
 {
-  for (const f of CAC_FILE) assert.ok(laNhatKy(doc(f)), `${f} phai duoc nhan ra la nhat ky`);
+  /* MO NEO PHAI CON BAM: loc theo noi dung xong ma con 0 file thi phep ghim nay xanh vi rong. */
+  assert.ok(CAC_FILE.length >= 3,
+    `chi ${CAC_FILE.length} quyen nhat ky sau khi loc — bo do laNhatKy hong, phep ghim dang xanh vi rong`);
+  /* VA CHIEU NGUOC, tren FILE THAT chu khong tren mot mau dung san: so tay luat mang dung cai
+     ten do phai bi loai. Day la su co 06/09, va tu 12/09 no duoc ghim bang chinh thu phai. */
+  assert.ok(KHONG_PHAI_NHAT_KY.includes("docs/protocols/HANDOFF.md"),
+    "docs/protocols/HANDOFF.md la SO TAY LUAT — phai bi loai khoi tap nhat ky, du ten ket thuc bang HANDOFF.md");
   /* Bản gốc đọc THẲNG `docs/protocols/HANDOFF.md` của repo tiêu thụ. Bộ khung không có sổ tay
      đó, và **cố ý không mang sang** — ta đang cắt kho chữ, không thêm. Nên ca này dựng bằng chữ
      tại chỗ: nó ghim HÀNH VI (một file tên `…HANDOFF.md` mà không có dòng `## Log` thì không

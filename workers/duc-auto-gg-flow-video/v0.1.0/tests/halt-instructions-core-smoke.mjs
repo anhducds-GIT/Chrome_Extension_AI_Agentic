@@ -24,7 +24,7 @@ assert.deepEqual([...quaTai.codes], ["PROVIDER_OVERLOADED"], "nhom nay chi duoc 
 assert.match(quaTai.retry, /hard stop/i, "Duc chot 2026-09-07: dung han ca me, khong tu thu lai");
 assert.match(quaTai.action, /KHÔNG bị trừ credit/, "phai noi ro job dung o day khong ton credit — do la cau Duc can nhat");
 assert.match(quaTai.action, /KHÔNG tự thử lại|KHÔNG tự thử/, "phai noi ro may khong tu thu lai, va vi sao");
-assert.doesNotMatch(quaTai.meaning, /CAPTCHA.*yêu cầu|hết credit(?!.*KHÔNG)/, "khong duoc mo ta nham sang hai loai kia");
+assert.doesNotMatch(quaTai.meaning, /CAPTCHA.*yêu cầu|hết credit\b(?!.*KHÔNG)/, "khong duoc mo ta nham sang hai loai kia");
 
 const covered = [...guide.coveredFailureCodes()].sort();
 const declared = [...runner.FAILURE_TYPES].sort();

@@ -48,3 +48,11 @@ bang-trang-thai/DUNG.txt
 # việc — đã xảy ra 10/09 với `chuoi-ark-luat/`. Mặc định nay là
 # `~/Documents/chuoi-gpt/<nhãn>`; dòng này chặn nốt các lượt chạy cũ.
 /chuoi-*/
+
+# BẢNG SỐNG — trang trạng thái chạy tại máy, sinh lại mỗi lượt. Ba file này là
+# TRẠNG THÁI CỦA MỘT MÁY, không phải của repo: commit chúng là mọi phiên khác
+# thấy cây làm việc bẩn và không ai biết vì sao. `bang-trang-thai/BANG.html` đã
+# có dòng riêng từ trước; ba dòng này là phần bị bỏ quên ở lượt migrate bộ khung.
+bang-song/BANG.html
+bang-song/trang-thai.json
+bang-song/DUNG.txt

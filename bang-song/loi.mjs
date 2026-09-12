@@ -94,7 +94,7 @@ export function vanTay() {
     /* BĂM, không giữ nguyên văn. `trang-thai.json` được phục vụ qua HTTP, và giữ nguyên văn
      * là nhét cả bảng quyền vào đó — một trường chỉ dùng để SO SÁNH thì không việc gì phải
      * đọc được, và đọc được thì sớm muộn có người đọc nó như dữ liệu thật. */
-    return createHash("sha256").update(`${head}${ban}${khoa}`).digest("hex").slice(0, 16);
+    return createHash("sha256").update(`${head}\x01${ban}\x01${khoa}`).digest("hex").slice(0, 16);
   } catch (_) {
     return null;
   }

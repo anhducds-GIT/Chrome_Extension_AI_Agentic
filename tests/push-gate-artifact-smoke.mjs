@@ -87,7 +87,28 @@ function dungRepoGia() {
 
   mkdirSync(join(repo, "scripts"), { recursive: true });
   mkdirSync(join(repo, ".agents"), { recursive: true });
-  for (const name of ["safe-push.mjs", "repo-structure.mjs"]) {
+  /* SUY TU MA NGUON, KHONG GO TAY — sua 12/09, va day la lan thu hai cung mot benh.
+     Danh sach cu ["safe-push.mjs", "repo-structure.mjs"] dung cho toi khi luot migrate bo khung
+     them `import ... from "./chay-test.mjs"` vao safe-push: repo gia thieu mot file, node nem
+     ERR_MODULE_NOT_FOUND, va mep nay doc thanh "khong day duoc" — mot chan doan noi sai benh.
+     Commit 422d07e1 da chua dung benh nay mot lan ("17 danh sach go tay -> mot ham suy tu ma
+     nguon"); ham do bien mat o lan migrate. Lan nay de ngay trong file kiem: di theo import
+     TINH, de mot import moi khong bao gio lam mep nay do oan nua. */
+  const canChep = (goc) => {
+    const thay = new Set();
+    const di = (ten) => {
+      if (thay.has(ten)) return;
+      thay.add(ten);
+      const src = readFileSync(join(ROOT, "scripts", ten), "utf8");
+      for (const m of src.matchAll(/from\s+"\.\/([A-Za-z0-9._-]+\.mjs)"/g)) di(m[1]);
+    };
+    di(goc);
+    return [...thay];
+  };
+  const dsChep = canChep("safe-push.mjs");
+  assert.ok(dsChep.includes("repo-structure.mjs"),
+    "khong do duoc import cua safe-push.mjs — bo suy nay dang tra ve mot danh sach cut");
+  for (const name of dsChep) {
     copyFileSync(join(ROOT, "scripts", name), join(repo, "scripts", name));
   }
   writeFileSync(join(repo, "scripts", "gia-lap-bo-sinh.mjs"), BO_SINH_GIA, "utf8");

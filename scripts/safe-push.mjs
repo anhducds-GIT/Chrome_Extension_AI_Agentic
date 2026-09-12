@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, AUDIT_CHUA_CO, AUDIT_TRAILER, auditFromMessage, claimPrefixesFrom, laneFromMessage, LANE_TRAILER, loiKhuyenKhiChan, nguoiDuyetFrom, nguoiDuyetSaiKhuon, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, AUDIT_CHUA_CO, AUDIT_TRAILER, auditFromMessage, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, loiKhuyenKhiChan, nguoiDuyetFrom, nguoiDuyetSaiKhuon, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDauCong, xetDauCong } from "./chay-test.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -399,6 +399,71 @@ if (chuaDuyet.length && ducDuyetChuaAudit) {
 /* Cửa "đứng ngoài main thì từ chối" của bản cũ ĐÃ BỎ, và KHÔNG phải vì nới lỏng: nó không còn
    ca nào để chặn. Nhánh đích nay bằng chính nhánh đang đứng (tính ở đầu file), nên "đưa nhánh
    khác lên main" là chuyện không dựng nổi — chặt hơn một câu `if`, vì không có gì để quên. */
+
+/* ---- SỰ THẬT MÁY SINH PHẢI KHỚP HEAD ---------------------------------------
+ *
+ * KHÔI PHỤC 12/09, không phải tính năng mới. Bảo đảm này đã có chữ từ lâu — *"không ai đẩy
+ * được một nhánh mà artifact đã commit không khớp với HEAD"* — và `tests/push-gate-artifact-
+ * smoke.mjs` là phép ghim của nó. Lượt migrate bộ khung (`4da1e9e5`) gỡ mất khối này khỏi
+ * safe-push; phép ghim đỏ từ hôm đó, nhưng nó nằm trong một chuỗi `npm test` đã chết ở bài
+ * thứ nhất, nên không ai thấy. Đo 12/09: 18/31 bài kiểm gốc repo không chạy nổi.
+ *
+ * VÌ SAO PHẢI Ở ĐÂY, DÙ CỔNG PHIÊN CŨNG KIỂM: cổng là lượt TỰ KIỂM, bỏ qua được. `safe-push`
+ * là CÁI CỬA. Một bảo đảm chỉ tồn tại ở lượt tự kiểm thì nó là lời khuyên.
+ *
+ * CƠ CHẾ dùng lại đúng hợp đồng sẵn có: mỗi bộ sinh tự biết đối chiếu bản ra của mình với HEAD
+ * qua `--check-head`. Không chép logic so sánh sang đây — hai bộ so là hai chỗ để chúng nói
+ * khác nhau.
+ *
+ * `ponytail: chạy tuần tự từng bộ sinh, mỗi cái tối đa 120 giây. Repo này có 4. Song song hoá
+ *  nếu sau này có hàng chục.` */
+{
+  const boSinh = generatorsFrom(structure);
+  /* CHẠY BẢN Ở HEAD, KHÔNG CHẠY BẢN TRONG CÂY LÀM VIỆC — và đây là điểm khác cổng phiên.
+     Cổng phiên gặp bộ sinh sửa dở thì TỪ CHỐI PHÁN XỬ, và với nó thế là đủ: cổng là lượt tự
+     kiểm của chính phiên đang sửa. `safe-push` thì không — một lane đang sửa `build-dashboard.mjs`
+     sẽ chặn mọi lane khác đẩy việc chẳng liên quan. Đó là đổ oan, đúng họ bệnh mà cả lớp phân
+     vùng sinh ra để tránh.
+     Bản ở HEAD ghi tạm vào ĐÚNG `scripts/` chứ không vào thư mục tạm: bộ sinh tự tính gốc repo
+     theo vị trí file của chính nó, chạy ở chỗ khác là nó tính sai gốc (ghi chú dài trong
+     session-check.mjs, audit 02/09). */
+  const tam = [];
+  /* DỌN TRƯỚC KHI THOÁT, KHÔNG DỰA VÀO `finally`. `process.exit()` KHÔNG chạy khối `finally` —
+     đo được ngay lượt thử đầu 12/09: một lượt từ chối để lại `.safe-push-head-<pid>-*.mjs` nằm
+     trong `scripts/`, tức cửa này tự làm bẩn đúng thư mục nó vừa phán là phải sạch. */
+  const don = () => { for (const f of tam) { try { fs.unlinkSync(f); } catch { /* dọn được thì dọn */ } } };
+  try {
+    const lech = [];
+    for (const ten of boSinh) {
+      const duongTam = path.join(ROOT, "scripts", `.safe-push-head-${process.pid}-${ten}`);
+      let blob;
+      try {
+        blob = execFileSync("git", ["show", `HEAD:scripts/${ten}`], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+      } catch {
+        // Bộ sinh CHƯA có ở HEAD (vừa thêm, chưa commit) thì không có gì để đối chiếu — bỏ qua,
+        // không chặn: chặn ở đây là bắt người ta commit bộ sinh trước khi được đẩy bộ sinh.
+        continue;
+      }
+      fs.writeFileSync(duongTam, blob, "utf8");
+      tam.push(duongTam);
+      try {
+        execFileSync(process.execPath, [duongTam, "--check-head"],
+          { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 120000 });
+      } catch (e) {
+        const chiTiet = String(e.stderr || e.stdout || e.message).trim().split("\n").slice(-3).join(" | ");
+        lech.push(`${ten}${chiTiet ? ` → ${chiTiet}` : ""}`);
+      }
+    }
+    if (lech.length) {
+      console.error(`${NL}TỪ CHỐI PUSH — sự thật máy sinh chưa khớp với HEAD:`);
+      for (const d of lech) console.error(`    ✗ ${d}`);
+      console.error(`${NL}  Sinh lại rồi commit phần vừa sinh:`);
+      console.error(`      ${boSinh.map((t) => `node scripts/${t}`).join(" && ")}${NL}`);
+      don();
+      process.exit(1);
+    }
+  } finally { don(); }
+}
 
 if (dryRun) { console.log("\n--dry-run: dừng ở đây, chưa đẩy gì.\n"); process.exit(0); }
 

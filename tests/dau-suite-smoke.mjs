@@ -365,8 +365,15 @@ try {
     const write2 = wA;
     execFileSync("git", ["init", "-q", "--bare", bareA]);
     gA("init", "-q", "-b", "main"); gA("config", "user.name", "t"); gA("config", "user.email", "t@e.invalid");
+    /* `generators: []` KHAI THAT, khong phai de ne mot phep kiem: repo gia nay KHONG commit
+       artifact may sinh nao, va `[]` la cach DA KHAI trong bo khung de noi "dung doi chieu
+       artifact nao cua toi voi HEAD" (generatorsFrom, R1 10/09). Vang khoa thi rot ve mac dinh
+       ["build-dashboard.mjs", "feature-parity.mjs"], va tu 12/09 `safe-push` chay chung that —
+       nen mot fixture khong khai se bi tu choi vi thieu DASHBOARD.md, tuc no do vi mot CUA KHAC
+       chu khong vi thu no dang kiem (nhan Audit). Fixture noi that ve chinh no. */
     wA(".repo-structure.json", JSON.stringify({ units: { root_dir: null },
       areas: { "scripts/": { steward: "_root", ownership_mode: "root" } },
+      generators: [],
       audit: { nguoi_duyet: ["codex"] } }));
     wA(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: null } } }));
     wA("package.json", JSON.stringify({ type: "module", scripts: { test: "node scripts/chay-test.mjs" } }));

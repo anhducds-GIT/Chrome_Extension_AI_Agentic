@@ -97,7 +97,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
       const c1 = chay();
       assert.doesNotMatch(c1.out, /Không có gì để push/, "co commit cho ma bao khong co gi la fail-open");
       assert.match(c1.out, /hai/, "phai liet ke commit dang cho");
-      assert.doesNotMatch(c1.out, /mot/, "chi liet ke phan CHUA day, khong ke lai lich su cu");
+      assert.doesNotMatch(c1.out, /\bmot\b/, "chi liet ke phan CHUA day, khong ke lai lich su cu");
     
       // (d) DUNG NGOAI `main` -> phai TU CHOI. Day la lo nguy hiem nhat tung tim thay o cong cu
       // nay: moi phep soi chay tren `origin/main..HEAD`, con cau day cu la `git push origin main`

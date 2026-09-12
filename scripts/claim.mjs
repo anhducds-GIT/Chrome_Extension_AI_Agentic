@@ -861,7 +861,7 @@ async function main() {
      * khi `git add`) thi luot ghi CHUA xong — tra khoa luc do la lay mat luoi do cua chinh lane
      * dang sua. Hoi git: file nao con hien trong `status --porcelain` thi GIU khoa. */
     /* BẢN GHI ĐỔI TÊN DÙNG HAI TRƯỜNG — kiểm toán 10/09 [#4], và tôi đã tự dựng lại ca này.
-     * `status --porcelain -z` phát `R  moi cu `: MỘT mục, HAI trường. Bản đầu của tôi tách
+     * `status --porcelain -z` phát `R  moi\0cu\0`: MỘT mục, HAI trường. Bản đầu của tôi tách
      * theo NUL rồi `slice(3)` cho MỌI trường, nên đường dẫn CŨ bị cắt mất 3 ký tự đầu — đo
      * được: `scripts/cu ten.mjs` thành `ipts/cu ten.mjs`. Một đường dẫn sai trong bảng "đang
      * bẩn" nghĩa là file bẩn thật không được nhận ra, và khoá của nó bị trả trong khi lane vẫn
