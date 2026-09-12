@@ -456,3 +456,9 @@ một bên thì sửa cả hai trong CÙNG lượt** — theo `docs/protocols/RU
 ## 2026-09-12 · `codex-bridge-pairing-links`
 
 Đặt khối **Sao chép đường dẫn JSON** ngay dưới Kết nối Bridge. Khối hiện đúng tệp ghép cặp trong `C:\WORKING ZONE\Chrome Extension Bridge\hnx-fetch\` và nút một chạm chép đường dẫn, không chép token. Thêm `bridge-pairing-path-static.mjs`; suite gói xanh.
+
+## 2026-09-12 · `codex-hnx-week-20260912` — dữ liệu tuần đã bù
+
+Lấy kết quả giao dịch 08–11/09: **4 ngày · 32 hàng**. SSOT nay có **400 hàng · 50 ngày** (đến 11/09), không dòng lệch cột, không khoá trùng, và mọi ngày có đúng 8 hàng. Ba ngày 31/08–02/09 vẫn thiếu ở cả SSOT lẫn danh mục PDF HNX, phù hợp ngày nghỉ Quốc khánh.
+
+Tải **28 PDF tháng 09** còn thiếu (bao gồm 16 tệp của 08–11/09 và tồn đọng 03–07/09); tất cả qua kiểm byte/chữ ký PDF/EOF của lệnh, không ghi đè. Lượt đối chiếu cuối trả `28 trên đĩa · CÒN THIẾU: 0`.
