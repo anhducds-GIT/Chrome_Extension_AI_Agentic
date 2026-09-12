@@ -838,7 +838,7 @@ diff về sau** — mọi lượt audit sau đó sẽ đọc "Binary file differ
 tôi đã đụng vào triệu chứng trong phiên này (`grep` báo "Binary file matches") mà không dừng
 lại hỏi vì sao.
 
-**Chữa:** viết bằng escape — `"a bcde"`. Cùng ký tự, cùng phép đo,
+**Chữa:** viết bằng escape sáu ký tự (`\` + `u0000`, `u001f`, `u007f`, `u009f`) thay vì gõ thẳng ký tự thật vào chuỗi nguồn. Cùng ký tự, cùng phép đo,
 file trở lại UTF-8 thuần và diff đọc được.
 
 **Vì sao nó trốn được lâu:** `npm test` nối bằng `&&`, và một con của lane khác đỏ ở khúc

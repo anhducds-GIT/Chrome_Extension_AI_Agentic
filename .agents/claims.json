@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-12T15:56:42.539Z",
-      "task": "B-83 moc sau khi gui khong duoc de cu; B-84 doc nen duoc",
-      "released_at": null,
+      "claimed_at": "2026-09-12T16:11:54.259Z",
+      "task": "B-85 san nhip dat o goi() — moi RPC, khong rieng luot doc",
+      "released_at": "2026-09-12T16:21:59.566Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -96,5 +96,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "fa6050635a7e5c7d"
+  "_fingerprint": "e8b6904053a0021c"
 }
