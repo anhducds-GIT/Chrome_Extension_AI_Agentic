@@ -714,3 +714,52 @@ một cảnh báo sẽ bị bỏ qua, và ngày nó ĐÚNG thì không ai đọc
 **Đối chiếu bằng băm trước khi đổi:** chuỗi cũ KHÔNG phải token ghép cặp đang dùng. Chuỗi mới
 vẫn đủ 43 ký tự base64url để `validatePairing` nhận, và mang dấu `fake` — đúng dấu mà chính bộ
 dò khai trong `DAU_HANG_GIA`. Suite gói **136/136**.
+
+## 2026-09-13 · `claude-gpt-chay-het-job` — bốn lỗi GIÁC QUAN, tìm ra bằng cách tự chạy chuỗi thật
+
+Đức hỏi tôi có tự chạy và tự gỡ lỗi được không thay vì bắt anh làm. Được, cho phần máy chủ
+(`.mjs`); không được cho ba việc: nạp lại extension, giải CAPTCHA, đưa cửa sổ Chrome ra trước.
+Phiên này tôi tự khởi chạy `chuoi-reasoning.mjs` hai lượt trên hồ sơ `anhducds`, đọc nhật ký,
+chẩn đoán, vá, chạy lại — Đức không phải làm gì. Cả bốn lỗi dưới đây **chỉ lộ ra khi chạy thật**;
+không lỗi nào bắt được bằng đọc mã.
+
+`~~B-87~~` **id tạm không còn là đại diện cho "chưa đọc được gì".** Cửa `LUOT_CHUA_CHOT` dựng
+11/09 khi id tạm ĐI KÈM `chars: 0`, và nó lấy "id chưa chốt" làm đại diện cho "chưa có gì để
+đọc". Đo 13/09: `turn_id: request-…-0` kèm `chars: 164`, câu trả lời xong hẳn. Bắt nạp lại ở đây
+là nạp lại một trang đã đọc được, mỗi vòng một lượt phí, rồi DỪNG hẳn vì một lý do sai. Nay đo
+thẳng `chars > 0`. Ca gốc 11/09 giữ nguyên sức. Chống gửi trùng so bằng **chữ** khi id chưa chốt.
+
+`~~B-88~~` **"đọc được mà chưa thấy" không phải "không bay" — lỗi nguy hiểm nhất phiên này.**
+Đo: hai lượt đọc lại sau khi gửi đều chấm `da_bay: false`, bộ chạy kết `GUI_THAT_BAI · đã gửi 0`
+và thoát 1. Đọc lại hội thoại ngay sau đó: `user cb71b545-… · 164 ký tự` — **đúng khối ấy, đúng
+một bản**, và GPT đang trả lời nó. Tin nhắn đã bay. Gốc: `daVaoChua` lặp 12 lượt nhưng `return`
+ngay ở lượt ĐỌC ĐƯỢC đầu tiên, nên toàn bộ kiên nhẫn dồn cho khả năng "đọc hỏng", còn "đọc được
+nhưng trang chưa dựng kịp" không được một giây nào — mà trên tab bị bóp, đó là khả năng hay xảy
+ra hơn. Cái giá không phải một dòng nhật ký sai: `chay-chuoi.bat` sau đó mời `[m] chạy MỚI`, và
+chạy mới trên một hội thoại vừa gửi thành công thì **gửi lại đúng khối đó**. Một chẩn đoán sai
+đẻ ra đúng cái lỗi mà cả tầng exact-once tồn tại để chặn.
+
+`~~B-89~~` **bộ đếm "liên tiếp" một mình đọc ra như đang treo.** Ba dòng `đọc hỏng 1 lượt liên
+tiếp` sát nhau; sự thật là giữa mỗi cặp có một lượt đọc THÀNH CÔNG (bị bóp nhịp `nhip % 4` nên
+không in). Phân biệt được chỉ bằng cách đo khoảng cách thời gian giữa hai dòng. Thêm bộ đếm TỔNG.
+
+`~~B-90~~` **"không thấy khối" có BA khả năng, không phải hai.** Đo: lượt trả lời cuối dài đúng
+13 ký tự, `generating: false`, máy soi DOM trả `pre: []` · `canvas: null` · thẻ lạ `[]`. Tức
+trên màn hình cũng không có gì — GPT trả lời rồi **đứt giữa chừng**. Cả hai khả năng in ra trước
+đó đều sai cho ca này, và người đọc bị đẩy đi tìm ở hai chỗ đều sai.
+
+**Ba lần trong một phiên, phép ghim của chính tôi lọt lưới ở lượt đột biến đầu**, cả ba cùng một
+họ — đo nhầm thứ: ⑴ ca thử cho `Boolean(vanTayKhoi)` không phân biệt được hai nhánh vì cả hai đều
+ra `DUNG`, chỉ khác lý do; ⑵ `some()` khớp phải `ngu(45000)` nên vẫn xanh khi sàn tụt về 5s;
+⑶ đo THỨ TỰ (`hongTong = 0` đứng trước `docHong = 0`) còn đột biến đặt nó đứng SAU. Bài học:
+khi phép ghim có một chiều, hỏi ngay chiều kia; **đếm thì không có chiều để đo nhầm**.
+
+**Đo được, ghi lại để khỏi tìm lại:** hậu tố id tạm **không ổn định theo cả hai chiều** — có lúc
+đứng yên qua nhiều lượt nạp lại (`-0`, 11/09 và 12/09), có lúc nhích (`-1`, 13/09). Lời tuyên bố
+cũ trong chú thích B-87 nói nó "KHÔNG đổi" đã được **gạch bỏ tại chỗ**, không xoá.
+
+Suite gói **138/138**. Đột biến: B-87 6/6 · B-88 6/6 · B-89 5/5 · B-90 8/8.
+
+**Còn nợ:** B-88 **chưa được nghiệm thu trên trang thật** — vòng chạy thứ hai không tới được cửa
+gửi vì hội thoại `Prompt engineer 2` đang kẹt ở một câu trả lời đứt. Cần một hội thoại có giao
+kèo nối vòng còn lành để chứng minh nốt.
