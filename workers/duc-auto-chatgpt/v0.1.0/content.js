@@ -89,7 +89,10 @@
   // B-56 (1). CHI `chat.read` truyen selector nay xuong `readTurns`; ba cho goi con lai la
   // duong CHAN DOAN noi bo, chung khong doc khoi copy — nen tham so co mac dinh rong va
   // `last_copy_block.found` la false o do. Do la im lang DUNG, khong phai thieu sot.
-  function answerBlockSelector() { return resolveSelector(SEL.answerBlock); }
+  /* B-82 · TRẢ CẢ DANH SÁCH, không phân giải sẵn một cái. `readTurns` phải thử từng ứng viên
+     TRONG khung trả lời mới nhất — phân giải ở đây là hỏi cả trang, và một `pre` ở lượt cũ sẽ
+     thắng trong khi lượt mới nhất dùng canvas. Xem khối lý lẽ ở `readTurns`. */
+  function answerBlockSelector() { return Array.isArray(SEL.answerBlock) ? Array.from(SEL.answerBlock) : [SEL.answerBlock]; }
   function userSelector() { return resolveSelector(SEL.userMessage); }
 
   // Trang hiện tại có phải một hội thoại thật không. THÊM 2026-09-02.
@@ -178,6 +181,44 @@
        NO_TURNS_MATCHED    · SELECTOR ĐÃ CHẾT — dựng lại từ `attribute_names`, đừng đoán
      Gộp hai cái sau thành một là bắt người đọc phân biệt "trang trống" với "selector chết",
      hai kết luận chỉ về hai hướng ngược nhau. */
+  /* B-82 · THÂN CỦA MỘT THẺ CANVAS, bóc khỏi phần vỏ. Đo live 12/09 trên hội thoại của Đức:
+   *
+   *   writing-block-container                                  inner 815
+   *   ├─ div.pointer-events-none                               inner   0
+   *   ├─ div.relative.z-[1]                                    inner 815
+   *   │  ├─ div[writing-block-header-sticky-container]         inner  34   ← "Refine Prompt…"
+   *   │  └─ div.mt4SwW_editor                                  inner 780   ← THÂN
+   *   └─ div.pointer-events-none                               inner   0
+   *
+   * Chuỗi chuyển tiếp NGUYÊN VĂN, nên cái tiêu đề và hai chip gợi ý
+   * (`writing-block-suggested-followups`) mà lọt vào là lọt thẳng sang lượt hỏi sau.
+   *
+   * BA TẦNG, và bản đầu của tôi sai ở tầng giữa — nó *bỏ qua* nhánh nào CHỨA phần vỏ, mà phần
+   * vỏ lại nằm trong đúng nhánh chứa thân, nên nó trả về chuỗi rỗng:
+   *   ⒜ chính nó là vỏ            → bỏ
+   *   ⒝ nó CHỨA vỏ ở đâu đó       → ĐI SÂU VÀO (không bỏ, không lấy cả cụm)
+   *   ⒞ sạch                      → lấy NGUYÊN CỤM, giữ nguyên xuống dòng
+   * Chỉ đi sâu đúng chỗ cần đi: mọi cụm sạch được lấy nguyên vẹn, nên cấu trúc dòng của prompt
+   * không bị băm ra rồi ghép lại.
+   *
+   * Không gỡ phần tử nào, không nhân bản — `provider-adapter-static` cấm máy soi làm thế, và
+   * luật ấy thô nên không lừa được. Ở đây chỉ ĐỌC. */
+  const VO_CANVAS = '[data-testid^="writing-block-header"], [data-testid^="writing-block-suggested-followups"]';
+  function thanCanvas(hop) {
+    const laVo = (el) => /^writing-block-(header|suggested-followups)/.test(el.getAttribute("data-testid") || "");
+    const cum = [];
+    const di = (el, sau) => {
+      if (sau > 8) return;                       // trần đệ quy: DOM lạ không được quyền treo lượt đọc
+      for (const con of Array.from(el.children || [])) {
+        if (laVo(con)) continue;                                           // ⒜
+        if (con.querySelector(VO_CANVAS)) { di(con, sau + 1); continue; }   // ⒝
+        cum.push(con);                                                     // ⒞
+      }
+    };
+    di(hop, 1);
+    return cum.map((e) => (e.innerText || e.textContent || "")).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   function readTurns(doc, assistantSel, userSel, limit, maxChars, blockSel = "") {
     const selector = `${assistantSel}, ${userSel}`;
     const turns = Array.from(doc.querySelectorAll(selector));
@@ -228,9 +269,26 @@
        LẤY KHỐI CUỐI, và `blocks_in_turn` nói ra có mấy khối: một câu trả lời có hai khối thì
        "khối cuối" là một LỰA CHỌN, và bên gọi phải thấy được là mình đang tin vào lựa chọn đó. */
     const newestAssistant = turns.filter((element) => element.matches(assistantSel)).pop() || null;
-    const blocks = newestAssistant && blockSel ? Array.from(newestAssistant.querySelectorAll(blockSel)) : [];
+    /* B-82 · PHÂN GIẢI SELECTOR TRONG CHÍNH LƯỢT TRẢ LỜI, không phân giải toàn trang.
+       `resolveSelector` hỏi `document.querySelector`, nên một `pre` ở BẤT KỲ lượt cũ nào cũng
+       thắng — và lượt mới nhất dùng canvas thì nó chọn `pre`, không khớp gì trong khung, rồi
+       báo "không có khối". Một hội thoại pha trộn hai kiểu là chuyện thường, nên chỗ hỏi phải
+       là cái khung, không phải cả trang. Thứ tự trong danh sách là thứ tự ƯU TIÊN. */
+    const ungVien = Array.isArray(blockSel) ? blockSel : (blockSel ? [blockSel] : []);
+    let blocks = [];
+    for (const sel of ungVien) {
+      try {
+        const thu = newestAssistant ? Array.from(newestAssistant.querySelectorAll(sel)) : [];
+        if (thu.length) { blocks = thu; break; }
+      } catch (_) { /* một selector mục nát không được làm hỏng cả lượt đọc */ }
+    }
     const block = blocks.length ? blocks[blocks.length - 1] : null;
-    const blockText = block ? (block.innerText || block.textContent || "").trim() : "";
+    /* Canvas thì bóc vỏ; khối mã thì lấy nguyên như cũ. Nhận dạng bằng `data-testid` — cấu
+       trúc, không phải nhãn tiếng Anh. */
+    const blockText = !block ? ""
+      : (block.getAttribute("data-testid") === "writing-block-container"
+        ? thanCanvas(block)
+        : (block.innerText || block.textContent || "").trim());
     const lastCopyBlock = {
       // `found: false` KHÔNG phải lỗi — nó là điều kiện DỪNG tự nhiên của một chuỗi nhiều vòng:
       // GPT không soạn prompt tiếp thì không có bước tiếp. Đừng để ai đọc nó thành "hỏng" rồi
@@ -1442,9 +1500,7 @@
                  (Và chính comment này từng làm bài kiểm đỏ vì nó chứa đúng cái tên phương thức
                  bị cấm — bộ dò khớp vào văn của tôi, không vào mã. Nên ở đây gọi tên nó bằng
                  lời.) */
-              const laVo = (el) => /^writing-block-(header|suggested-followups)/.test(el.getAttribute("data-testid") || "");
-              const than = Array.from(hop.children).filter((c) => !laVo(c) && !c.querySelector('[data-testid^="writing-block-header"]'));
-              const thuTru = than.map((c) => (c.innerText || c.textContent || "")).join("\n").trim();
+              const thuTru = thanCanvas(hop);
               return {
                 co: true,
                 innerCaHop: chuHien(hop).length,

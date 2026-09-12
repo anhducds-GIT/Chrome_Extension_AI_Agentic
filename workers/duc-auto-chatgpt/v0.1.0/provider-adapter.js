@@ -172,8 +172,21 @@
     // lời). Neo nhầm cái thứ hai là chép về cả bài văn thay vì cái khối. Và cả hai nhãn đều là
     // tiếng Anh, chết ngay khi Đức đổi ngôn ngữ giao diện — `pre` là thẻ HTML chuẩn, không chết
     // vì ngôn ngữ. Cùng lý do đã chọn `attachmentChip` thay cho `"Remove file"` ở `~~B-14~~`.
+    //
+    // THÊM 12/09 — CANVAS. Đo live bằng `dom-probe` trên hội thoại của Đức: `pre = 0` nhưng
+    // màn hình có nút copy rành rành. Câu trả lời đóng gói trong một thẻ "writing block":
+    //     writing-block-container            inner 815   <- khung
+    //     ├─ writing-block-header-*          inner  34   <- tiêu đề
+    //     └─ div.mt4SwW_editor               inner 780   <- thân
+    //     (và writing-block-suggested-followups: hai chip goi y)
+    // `data-testid` là mỏ neo CẤU TRÚC: không chết khi Đức đổi ngôn ngữ giao diện, và ChatGPT
+    // đổi testid ít hơn đổi class. Phần vỏ bóc trong `thanCanvas` ở `content.js`.
+    //
+    // THỨ TỰ LÀ ƯU TIÊN, và `readTurns` thử từng cái TRONG khung trả lời mới nhất chứ không
+    // phân giải toàn trang — hội thoại pha cả hai kiểu là chuyện thường.
     answerBlock: Object.freeze([
       "pre",
+      '[data-testid="writing-block-container"]',
     ]),
     attachmentChip: Object.freeze([
       'form div[role="group"][aria-label]',      // ✔ MỚI 09/09 — khung chip, aria-label = TÊN FILE
