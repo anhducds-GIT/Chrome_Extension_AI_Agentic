@@ -463,6 +463,22 @@ async function chinh() {
   process.on("exit", traKhoa);
   for (const tinHieu of ["SIGINT", "SIGTERM"]) process.on(tinHieu, () => { traKhoa(); process.exit(130); });
 
+  /* NGHE PHÍM. Chỉ khi đầu vào là một cửa sổ thật: chạy từ một script khác, hoặc đường ống, thì
+     `stdin` không phải TTY và `setRawMode` sẽ ném. Không có TTY thì cờ `DUNG` vẫn dùng được. */
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", (phim) => {
+      const k = String(phim);
+      /* RAW MODE NUỐT Ctrl+C — phải tự bắt lại, nếu không cửa sổ này thành thứ không thoát được
+         bằng phản xạ quen thuộc nhất, và người ta sẽ đóng cửa sổ (= giết ngang). 0x03 là Ctrl+C. */
+      if (k === "\u0003") { batDung("Ctrl+C"); return; }
+      if (k === "d" || k === "D" || k === "q" || k === "Q") batDung(`đã bấm "${k}"`);
+    });
+    console.log('  Bấm "d" để DỪNG chuỗi này (dừng mềm: ghi nốt nhật ký rồi thoát). Ctrl+C cũng vậy.');
+  }
+
   const soNhatKy = path.join(thuMuc, "nhat-ky.jsonl");
   const ghi = (o) => fs.appendFileSync(soNhatKy, JSON.stringify({ luc: new Date().toISOString(), ...o }) + "\n");
 
@@ -473,7 +489,30 @@ async function chinh() {
     } catch (e) { out = String(e.stdout || ""); }
     try { return JSON.parse(out); } catch { return { ok: false, error: { code: "KHONG_PHAI_JSON" } }; }
   };
-  const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
+  /* B-79 — DỪNG NGAY TRONG CỬA SỔ ĐANG CHẠY. Đức nêu 12/09: *"dùng script dừng riêng tôi thấy
+   * khó dùng vì phải gõ tay tên luồng dẫn đến sai."* Cửa sổ này BIẾT nó là chuỗi nào, nên nó
+   * là chỗ đúng để dừng chính nó — không phải gõ lại một cái tên.
+   *
+   * DỪNG MỀM, y hệt cờ `DUNG`: đặt cờ rồi để vòng lặp tự dừng ở đầu lượt kế tiếp, ghi đủ nhật
+   * ký, trả khoá. KHÔNG giết ngang — bộ chạy có thể đang ở giữa một lượt GỬI, và giết ngang thì
+   * không ai biết tin nhắn đã bay chưa. Đó đúng là chỗ không được đoán.
+   *
+   * `execFileSync` khoá vòng lặp sự kiện, nên phím bấm giữa một lượt gửi chỉ được đọc SAU khi
+   * lượt ấy xong. Đó là tính năng, không phải hạn chế: không cách nào cắt ngang một lượt gửi. */
+  let dungTay = null;
+  let danhThuc = null;
+  const ngu = (ms) => new Promise((r) => {
+    /* Đánh thức được. Nhịp giãn tới 2 phút (B-78), nên nếu chỉ `setTimeout` trần thì bấm dừng
+       xong còn ngồi chờ hai phút — và người ta sẽ đóng cửa sổ, tức giết ngang. */
+    const t = setTimeout(() => { danhThuc = null; r(); }, ms);
+    danhThuc = () => { clearTimeout(t); danhThuc = null; r(); };
+  });
+  const batDung = (vi) => {
+    if (dungTay) return;
+    dungTay = vi;
+    console.log(`\n  ${vi} — dừng ở đầu lượt kế tiếp, đang ghi nốt nhật ký…`);
+    if (danhThuc) danhThuc();
+  };
 
   /* B-78 — SÀN GIỮA HAI LƯỢT ĐỌC. Đức chốt 12/09: *"đọc vài trăm lần trong vài chục giây thì
    * là spam rồi còn gì. Hãy đọc và maintain từ tốn thôi."*
@@ -537,6 +576,9 @@ async function chinh() {
     let docHong = 0;
 
     while (true) {
+      /* HAI CỬA DỪNG, cùng một đường ra. Phím bấm (B-79) là cửa thường dùng; cờ `DUNG` giữ lại
+         cho lượt chạy không có cửa sổ — chạy từ một script khác thì `stdin` không phải TTY. */
+      if (dungTay) { lyDo = `NGUOI_DUNG (${dungTay})`; break; }
       if (fs.existsSync(path.join(thuMuc, "DUNG"))) { lyDo = "NGUOI_DUNG"; break; }
       if (Date.now() > hanChung) { lyDo = "QUA_TRAN_PHUT"; break; }
 

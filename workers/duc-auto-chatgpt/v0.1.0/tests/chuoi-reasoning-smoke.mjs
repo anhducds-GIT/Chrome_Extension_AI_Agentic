@@ -776,3 +776,43 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  ⓦ sàn nhịp đọc: cưỡng chế trong doc(), mọi chỗ gọi đều await, ≤60 lượt/giờ khi hỏng");
 }
+
+/* ⓧ B-79 — DỪNG NGAY TRONG CỬA SỔ ĐANG CHẠY.
+ * Đức 12/09: *"dùng script dừng riêng tôi thấy khó dùng vì phải gõ tay tên luồng dẫn đến sai."*
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  // ⒜ Dừng MỀM — đi chung một đường ra với cờ `DUNG`, không giết ngang.
+  assert.ok(src.includes('if (dungTay) { lyDo = `NGUOI_DUNG'),
+    "phím bấm phải đặt cờ rồi để vòng lặp tự dừng, không được `process.exit` giữa chừng");
+  const iBat = src.indexOf("const batDung = (vi) =>");
+  assert.ok(iBat > 0, "không tìm thấy batDung — phép ghim dưới vô nghĩa");
+  const thanBat = src.slice(iBat, src.indexOf("\n  };", iBat));
+  assert.ok(!/process\.exit|kill/.test(thanBat),
+    "batDung KHÔNG được giết tiến trình: bộ chạy có thể đang giữa một lượt GỬI, và lúc đó không ai biết tin nhắn đã bay chưa");
+
+  /* ⒝ CTRL+C. Raw mode NUỐT Ctrl+C — quên bắt lại là cửa sổ này thành thứ không thoát được bằng
+     phản xạ quen thuộc nhất, và người ta sẽ đóng cửa sổ, tức đúng cái "giết ngang" vừa cấm. */
+  assert.ok(src.includes('k === "\\u0003"'),
+    "phải tự bắt Ctrl+C (0x03) khi bật raw mode — nếu không cửa sổ không thoát được");
+  assert.ok(!src.includes(String.fromCharCode(3)),
+    "Ctrl+C phải viết bằng DÃY THOÁT, không phải byte thô — byte thô làm git coi tệp là nhị phân và diff mù vĩnh viễn");
+
+  // ⒞ Không có TTY thì không được ném. Chạy từ một script khác thì stdin không phải TTY.
+  assert.ok(src.includes("if (process.stdin.isTTY)"),
+    "setRawMode ném khi stdin không phải TTY — phải hỏi trước");
+  assert.ok(src.includes('fs.existsSync(path.join(thuMuc, "DUNG"))'),
+    "cờ DUNG phải GIỮ LẠI: lượt chạy không có cửa sổ vẫn cần một cách dừng");
+
+  /* ⒟ Bấm xong phải dừng NGAY. Nhịp giãn tới 2 phút (B-78); `setTimeout` trần thì bấm xong còn
+     ngồi chờ hai phút, và người ta sẽ đóng cửa sổ. */
+  const iNgu = src.indexOf("const ngu = (ms) =>");
+  const thanNgu = src.slice(iNgu, src.indexOf("\n  });", iNgu));
+  assert.ok(thanNgu.includes("clearTimeout") || src.includes("danhThuc = () => { clearTimeout"),
+    "`ngu()` phải đánh thức được — không thì bấm dừng xong còn chờ hết một nhịp 2 phút");
+  assert.ok(thanBat.includes("danhThuc()"), "batDung phải đánh thức lượt nghỉ đang chờ");
+
+  console.log("  ok  ⓧ dừng trong cửa sổ: mềm, bắt lại Ctrl+C, không TTY vẫn chạy, đánh thức ngay");
+}
