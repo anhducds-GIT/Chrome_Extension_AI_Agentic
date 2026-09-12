@@ -302,7 +302,7 @@ export function chanDung(ping) {
 
 /* Toàn bộ phần "nghĩ" của bộ chạy nằm ở đây, và nó THUẦN — không mạng, không file, không giờ.
    Tách ra để phép ghim lái được nó qua mọi mép mà không cần Bridge. */
-export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, soLanYen = 0, idLuotTraLoiCuoi = null }) {
+export function quyetDinh({ generating, khoi, khoiCu, chuKhoiCu = "", daNapLai, daThayDangChay, soLanYen = 0, idLuotTraLoiCuoi = null }) {
   if (generating === true) return { viec: "CHO", vi: "trang còn đang sinh" };
   /* HAI đường mở khoá, không một. Đường ⑴ là lượt vừa gửi: đã thấy nó sinh rồi lặng.
      Đường ⑵ là nối vào một chuỗi đã xong từ trước: không bao giờ thấy nó sinh, nên phải
@@ -319,7 +319,21 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
      Nhận `id` của lượt trả lời cuối chứ không chỉ của khối, vì có lúc khối chưa hiện mà lượt
      đã có id tạm — đo được ở giây 6.1. */
   const idXet = khoi?.turn_id || idLuotTraLoiCuoi;
-  if (idXet && !luotDaChot(idXet)) {
+  /* B-87 — ID TẠM KHÔNG CÒN LÀ ĐẠI DIỆN CHO "CHƯA ĐỌC ĐƯỢC GÌ".
+   *
+   * Cửa này dựng từ phép đo 11/09, khi id tạm ĐI KÈM `chars: 0`. Nó lấy "id chưa chốt" làm
+   * ĐẠI DIỆN cho "chưa có gì để đọc". Đo live 13/09 trên hội thoại Project của Đức phá vỡ
+   * đại diện ấy:
+   *     [assistant] TẠM request-<hội thoại>-0 · 400 ký tự
+   *     last_copy_block: found=true chars=164 · generating=false
+   * Câu trả lời XONG HẲN, khối ĐẦY ĐỦ, chỉ mỗi cái id là chưa chốt. Bắt nạp lại ở đây là bắt
+   * nạp lại một trang đã đọc được — mỗi vòng một lượt phí, và khi nạp lại không đổi được id
+   * (đo được: `-0` giữ nguyên qua nhiều lượt nạp) thì nó DỪNG hẳn chuỗi vì một lý do sai.
+   *
+   * Nên đo THẲNG cái mình cần: có chữ để đọc hay không. `chars > 0` là phép đo đó.
+   * Cửa GIỮ NGUYÊN sức mạnh cho ca gốc 11/09 — id tạm VÀ khối rỗng thì vẫn nạp lại như cũ. */
+  const coChuDeDoc = Boolean(khoi?.found) && Number(khoi?.chars) > 0;
+  if (idXet && !luotDaChot(idXet) && !coChuDeDoc) {
     /* KHÔNG CHỜ THÊM Ở ĐÂY. Tới được dòng này nghĩa là `generating` đã false VÀ trang đã qua
        cửa quan sát ở trên — tức nó đã lặng. Mà đo được cả hai lượt 11/09: id tạm **không bao
        giờ tự** thành UUID (giữ tạm tới 27 và 32,5 giây), chỉ nạp lại mới đổi. Nên mọi giây
@@ -329,7 +343,21 @@ export function quyetDinh({ generating, khoi, khoiCu, daNapLai, daThayDangChay, 
     return { viec: "DUNG", vi: `LUOT_CHUA_CHOT — nạp lại rồi mà lượt vẫn mang id tạm "${idXet}"` };
   }
 
-  const coKhoiMoi = Boolean(khoi?.found) && Boolean(khoi.turn_id) && khoi.turn_id !== khoiCu;
+  /* CHỐNG GỬI TRÙNG: so bằng ID khi id đã chốt, so bằng CHỮ khi chưa.
+   *
+   * `request-<hội thoại>-0` KHÔNG đổi giữa các lượt — đo được cùng một chuỗi đó qua nhiều vòng
+   * và nhiều lượt nạp lại. Nên lấy nó làm mốc chống-trùng là hỏng theo chiều NGUY HIỂM NHẤT:
+   * vòng sau `khoi.turn_id !== khoiCu` ra `false`, bộ chạy tưởng "không có khối mới" và dừng
+   * một chuỗi còn đang chạy tốt. Ngược lại, nếu mốc cũ rỗng thì nó ra `true` cho MỌI vòng, và
+   * một khối đã gửi có thể bay lần hai.
+   *
+   * Chữ thì phân biệt được thật: hai câu trả lời khác nhau có chữ khác nhau. Và phép so này
+   * MẠNH HƠN so bằng id, không yếu hơn — nó so đúng thứ sắp được gửi đi, chứ không so một cái
+   * nhãn có thể trùng. 200 ký tự đầu: đủ dài để không đụng nhau, đủ ngắn để không phải giữ cả
+   * khối trong bộ nhớ qua nhiều vòng. */
+  const vanTayKhoi = String(khoi?.text ?? "").slice(0, 200);
+  const coKhoiMoi = Boolean(khoi?.found) && Boolean(khoi.turn_id)
+    && (luotDaChot(khoi.turn_id) ? khoi.turn_id !== khoiCu : Boolean(vanTayKhoi) && vanTayKhoi !== chuKhoiCu);
 
   // Khối có thể hiện ra lúc còn đang gõ dở — đo được 80 ký tự giữa chừng ở vòng 1 ngày 10/09.
   // Nên mép này chỉ chạy khi generating đã false, tức đã qua hai cửa trên.
@@ -583,6 +611,9 @@ async function chinh() {
   /* B-83 — 60 ky tu dau cua khoi VUA GUI, de nhan ra chinh tin nhan cua minh o vong sau khi
      luot doc ngay sau khi gui bi het gio. Xem khoi ly le o `canhTab`. */
   let chuToiVuaGui = "";
+  /* B-87 - 200 ky tu dau cua khoi DA GUI o vong truoc, de chong gui trung khi id luot chua
+     chot (id tam khong doi giua cac luot). Xem khoi ly le o `quyetDinh`. */
+  let chuKhoiCu = "";
   let lyDo = "HET_SO_VONG";
   /* Có `--url` thì ghim từ đó — lệch là dừng ở lượt đọc đầu. Không có thì ghim ở LƯỢT ĐỌC
      ĐẦU: bộ chạy nối vào một tab đang mở sẵn và không biết trước tab ấy ở hội thoại nào. */
@@ -725,7 +756,7 @@ async function chinh() {
 
       const luotTL = [...(r.turns || [])].reverse().find((t) => t.role === "assistant");
       if (r.last_copy_block?.found) daThayKhoi = true;
-      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
+      const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, chuKhoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
       if (qd.viec === "CHO") {
         /* NHỊP TIM. Bản đầu im hoàn toàn trong lúc chờ, nên một lượt treo 25 phút nhìn từ
            ngoài KHÔNG phân biệt được với một tiến trình đã chết — Đức hỏi đúng câu đó. */
@@ -867,6 +898,7 @@ async function chinh() {
 
     daGui += 1;
     khoiCu = khoi.turn_id;
+    chuKhoiCu = String(khoi.text ?? "").slice(0, 200);
     /* NHÍCH MỐC SANG ĐÚNG LƯỢT VỪA GỬI — và chỉ khi nhận ra nó là lượt của mình. Không được
        nhích mù (xoá mốc đi để nó tự ghim lại): nếu người gõ ngay sau lượt tôi,
        nhích mù sẽ nhận lượt của người làm mốc và mép B-63 mất tác dụng đúng lúc cần nhất.
