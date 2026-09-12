@@ -852,19 +852,43 @@ async function chinh() {
        Phải thử lại nhiều lượt: đúng lúc cần đọc nhất là lúc trang đang sinh, và đó cũng là
        lúc panel hay hết giờ nhất (B-50). Bản đầu đọc MỘT lượt, hết giờ là trả false, và hai
        lần liên tiếp nó chấm nhầm một tin nhắn đã vào hội thoại thành chưa gửi. */
+    /* B-88 — KIÊN NHẪN PHẢI ĐẶT ĐÚNG CHỖ NÓ CẦN.
+     *
+     * Bản trước lặp 12 lượt, nhưng `return` ngay ở lượt ĐỌC ĐƯỢC đầu tiên. Tức toàn bộ sự kiên
+     * nhẫn ấy dành cho một khả năng duy nhất: lượt đọc HỎNG. Khả năng còn lại — đọc được nhưng
+     * trang CHƯA KỊP DỰNG lượt vừa gửi — không được cho một giây nào.
+     *
+     * Đo live 13/09, hồ sơ `anhducds`, tab chạy nền:
+     *     18:24:00  GUI_LOI_DOC_LAI lần 1 · da_bay: false
+     *     18:27:00  GUI_LOI_DOC_LAI lần 2 · da_bay: false
+     *     KET_THUC  da_gui: 0 · "hai lượt gửi, hai lượt đọc lại, đều không thấy" · thoát 1
+     * Đọc lại hội thoại ngay sau đó: `user cb71b545-… · 164 ký tự` — ĐÚNG khối ấy, ĐÚNG một
+     * bản, và GPT đang trả lời nó. Tin nhắn đã bay. Bộ chạy báo thất bại toàn phần.
+     *
+     * Cái giá không phải là một dòng nhật ký sai. `chay-chuoi.bat` sau đó mời `[m] chạy MỚI`,
+     * và chạy mới trên một hội thoại vừa gửi thành công sẽ GỬI LẠI đúng khối đó — một lượt
+     * gửi trùng, thứ mà luật exact-once dựng ra để chặn. Một chẩn đoán sai ở đây đẻ ra đúng
+     * cái lỗi mà cả tầng an toàn này tồn tại để tránh.
+     *
+     * Nên: thấy thì `true` NGAY; `false` chỉ được trả khi đã nhìn hết kiên nhẫn mà vẫn không
+     * thấy. Hướng sửa này chỉ làm bộ chạy gửi lại ÍT hơn, không bao giờ nhiều hơn — nó không
+     * nới luật, nó đòi bằng chứng thật trước khi luật được viện tới. Chưa đọc nổi một lượt nào
+     * thì vẫn `null` như cũ: mù thì dừng, người nhìn. */
     const daVaoChua = async () => {
       await ngu(45000);
+      let docDuoc = false;
       for (let i = 0; i < 12; i += 1) {
         const lai = await doc();
         if (lai.ok) {
+          docDuoc = true;
           const hoiCuoi = [...lai.result.turns].reverse().find((t) => t.role === "user");
-          return Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
+          if (hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60))) return true;
         }
-        /* Cộng thêm vào SÀN của `doc()`, không thay nó: mỗi vòng ở đây cách nhau ~15 giây chứ
-           không phải 5. Đừng đọc con số này một mình mà kết luận nhịp — sàn mới là thứ cưỡng chế. */
-        await ngu(5000);
+        /* Cộng thêm vào SÀN của `doc()`, không thay nó: mỗi vòng ở đây cách nhau ~20 giây chứ
+           không phải 10. Đừng đọc con số này một mình mà kết luận nhịp — sàn mới là thứ cưỡng chế. */
+        await ngu(10000);
       }
-      return null;
+      return docDuoc ? false : null;
     };
 
     /* NGHỈ GIỮA ĐỌC VÀ GÕ. Đặt ở đây — SAU khi đã ghi tệp tham số, TRƯỚC lượt gửi đầu — nên

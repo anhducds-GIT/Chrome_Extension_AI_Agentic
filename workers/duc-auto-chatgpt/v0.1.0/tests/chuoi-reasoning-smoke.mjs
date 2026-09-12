@@ -1099,3 +1099,114 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓑ id tạm: đo chữ chứ không đo id, chống trùng bằng chữ khi chưa chốt, ca 11/09 còn nguyên");
 }
+
+/* Ⓒ B-88 — "ĐỌC ĐƯỢC MÀ CHƯA THẤY" KHÔNG PHẢI "KHÔNG BAY".
+ *
+ * Đo live 13/09, hồ sơ `anhducds`, tab chạy nền: hai lượt đọc lại đều chấm `da_bay: false`,
+ * bộ chạy kết `GUI_THAT_BAI · da_gui: 0` và thoát 1. Đọc lại hội thoại ngay sau đó thì lượt
+ * `user cb71b545-… · 164 ký tự` nằm đó, ĐÚNG một bản, và GPT đang trả lời nó.
+ *
+ * Gốc: vòng lặp 12 lượt `return` ngay ở lượt ĐỌC ĐƯỢC đầu tiên, nên toàn bộ kiên nhẫn dồn vào
+ * khả năng "đọc hỏng", còn khả năng "đọc được nhưng trang chưa kịp dựng lượt vừa gửi" không
+ * được một giây nào. Trên tab bị Chrome bóp, đó lại là khả năng hay xảy ra hơn.
+ *
+ * Cái giá không phải một dòng nhật ký sai: `chay-chuoi.bat` sau đó mời `[m] chạy MỚI`, và chạy
+ * mới trên một hội thoại vừa gửi thành công thì GỬI LẠI đúng khối đó.
+ *
+ * Lái HÀM THẬT bằng cách cắt nó ra khỏi file đã ship và bơm `doc`/`ngu`/`khoi` — hàm là closure,
+ * không xuất ra được. Không chép lại logic: chép là ghim một bản sao, và bản sao không hỏng
+ * cùng lúc với bản chạy.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const MO = "const daVaoChua = async () => {";
+  const DONG = "\n    };";
+  const i0 = src.indexOf(MO);
+  const i1 = src.indexOf(DONG, i0);
+  assert.ok(i0 > 0 && i1 > i0, "mỏ neo cắt `daVaoChua` phải hợp lệ và đúng thứ tự");
+  const than = src.slice(i0, i1 + DONG.length);
+  assert.ok(than.length > 200 && than.length < 2000,
+    `lát cắt \`daVaoChua\` phải GỌN (đang ${than.length} ký tự) — cắt trượt là phép ghim vô nghĩa`);
+
+  const CHU = "unresolved_dependencies:\n  - kind: prompt\n    capability: bounded_audit_investigation";
+  /* `lich` là kịch bản của từng lượt đọc: "hong" · "khong-thay" · "thay". Đếm luôn số lượt đọc
+     để phép ghim nói được cả về NHỊP, không chỉ về kết quả. */
+  const lam = (lich) => {
+    const dem = { doc: 0, ngu: 0 };
+    const doc = async () => {
+      const canh = lich[Math.min(dem.doc, lich.length - 1)];
+      dem.doc += 1;
+      if (canh === "hong") return { ok: false, error: { code: "REQUEST_TIMEOUT" } };
+      const turns = canh === "thay"
+        ? [{ role: "assistant", text: "cũ" }, { role: "user", text: CHU }]
+        : [{ role: "assistant", text: "cũ" }, { role: "user", text: "một lượt gõ cũ hẳn" }];
+      return { ok: true, result: { turns } };
+    };
+    const ngu = async (ms) => { dem.ngu += ms; };
+    const fn = new Function("doc", "ngu", "khoi", `${than}\n      return daVaoChua;`)(doc, ngu, { text: CHU });
+    return { fn, dem };
+  };
+
+  /* ⒜ Thấy ngay thì `true` ngay — không được nhìn thêm lượt nào. */
+  {
+    const { fn, dem } = lam(["thay"]);
+    assert.equal(await fn(), true);
+    assert.equal(dem.doc, 1, "thấy rồi thì dừng nhìn — mỗi lượt đọc thừa là một lượt RPC thừa");
+  }
+
+  /* ⒝ CA ĐO ĐƯỢC 13/09. Đọc được nhưng trang chưa dựng kịp, ba lượt sau mới hiện.
+     Bản trước trả `false` ngay ở lượt ⑴ — và `false` là giấy phép GỬI LẠI. */
+  {
+    const { fn, dem } = lam(["khong-thay", "khong-thay", "khong-thay", "thay"]);
+    assert.equal(await fn(), true,
+      "đọc được mà chưa thấy thì phải NHÌN TIẾP, không được kết luận là chưa bay");
+    assert.equal(dem.doc, 4);
+  }
+
+  /* ⒞ Nhìn hết kiên nhẫn mà vẫn không thấy thì mới được `false`. Đây là chỗ luật gửi-lại
+     được viện tới, nên nó phải đứng trên bằng chứng thật, không phải trên một lượt đọc sớm. */
+  {
+    const { fn, dem } = lam(["khong-thay"]);
+    assert.equal(await fn(), false);
+    assert.ok(dem.doc >= 8, `phải nhìn đủ lâu trước khi nói "chưa bay" (mới ${dem.doc} lượt)`);
+  }
+
+  /* ⒟ MÙ THÌ `null`, KHÔNG PHẢI `false` — đây là vế cũ và nó không được mất.
+     `null` đi thẳng xuống `ketLuanGui` để DỪNG: gửi lại lúc không đọc được là đúng thứ
+     exact-once cấm. Trộn nó vào `false` là mở lại cửa gửi trùng. */
+  {
+    const { fn } = lam(["hong"]);
+    assert.equal(await fn(), null, "chưa đọc nổi một lượt nào thì mù — mù thì dừng, người nhìn");
+  }
+
+  /* ⒠ Hỏng vài lượt rồi đọc được và thấy → vẫn `true`. Hai loại kiên nhẫn phải cùng sống. */
+  {
+    const { fn } = lam(["hong", "hong", "khong-thay", "thay"]);
+    assert.equal(await fn(), true);
+  }
+
+  /* ⒡ Đọc được ít nhất một lượt rồi sau đó hỏng hết, không lần nào thấy → `false`, không `null`:
+     ta ĐÃ nhìn được trang và nó không có lượt của mình. */
+  {
+    const { fn } = lam(["khong-thay", "hong"]);
+    assert.equal(await fn(), false);
+  }
+
+  /* ⒢ SÀN NHỊP KHÔNG ĐƯỢC HẠ. Mỗi lượt nhìn thêm là một lượt RPC, và chính lượt RPC dày là
+     thứ đã làm hồ sơ `kaito` ăn CAPTCHA (xem `decisions.md` 12/09). Nhìn kiên nhẫn hơn thì
+     phải giãn ra, không được co lại. */
+  const maThan = boChuThich(than);
+  assert.ok(/ngu\(45000\)/.test(maThan), "vẫn phải chờ 45 giây trước lượt nhìn đầu");
+  /* Đo MỌI lượt nghỉ trong lát cắt, không đo một lượt bất kỳ. Bản đầu dùng `some()`, và `some()`
+     khớp ngay phải `ngu(45000)` ở trên — nên nó vẫn xanh khi sàn trong vòng lặp tụt về 5 giây.
+     Một phép ghim đo nhầm phần tử đọc ra y hệt một phép ghim đang canh. */
+  const treVong = (maThan.match(/ngu\((\d+)\)/g) || []).map((t) => Number(t.replace(/\D/g, "")));
+  assert.ok(treVong.length >= 2, "lát cắt phải còn cả hai lượt nghỉ — thiếu một là cắt trượt");
+  for (const ms of treVong) {
+    assert.ok(ms >= 10000,
+      `mọi lượt nghỉ trong đọc-lại phải ≥ 10 giây (thấy ${ms}ms) — cộng với sàn của doc() là ~20 giây một lượt`);
+  }
+
+  console.log("  ok  Ⓒ đọc lại sau khi gửi: nhìn tiếp khi chưa thấy, `false` chỉ sau khi hết kiên nhẫn, mù vẫn `null`");
+}
