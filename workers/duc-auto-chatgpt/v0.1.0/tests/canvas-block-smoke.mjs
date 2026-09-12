@@ -165,15 +165,21 @@ const canvas = (than = THAN) => n("div", { "data-testid": "writing-block-contain
 
   /* LỒNG NHAU: một khối mã NẰM TRONG thân canvas cũng khớp, và nó đứng SAU canvas trên trang.
      Lấy nó là lấy một MẢNH của khối. Phải giữ cái ngoài cùng. */
+  /* THÂN CANVAS PHẢI CÓ HAI PHẦN, nếu không ca này không phân biệt được hai nhánh: thân chỉ
+     có đúng một `pre` thì "lấy canvas rồi bóc vỏ" và "lấy riêng `pre`" cho RA CÙNG MỘT CHUỖI,
+     và đột biến gỡ phép lọc sẽ XANH. Đã dính đúng thế một lượt. */
   const long = n("div", { "data-turn": "assistant", "data-turn-id": "t1" }, [
     n("div", { "data-testid": "writing-block-container" }, [
       n("div", { "data-testid": "writing-block-header-sticky-container" }, TIEU_DE),
-      n("div", { class: "mt4SwW_editor" }, [n("pre", {}, "mảnh bên trong canvas")])
+      n("div", { class: "mt4SwW_editor" }, [
+        n("p", {}, "Câu dẫn nằm ngoài khối mã."),
+        n("pre", {}, "mảnh code bên trong canvas")
+      ])
     ])
   ]);
   const rLong = readTurns(tai([long]), A, U, 4, 20000, UNG_VIEN);
-  assert.equal(rLong.last_copy_block.text, "mảnh bên trong canvas",
-    "khối lồng khối: lấy cái NGOÀI CÙNG (canvas), và thân nó chính là mảnh bên trong — không lấy riêng mảnh");
+  assert.equal(rLong.last_copy_block.text, "Câu dẫn nằm ngoài khối mã.\nmảnh code bên trong canvas",
+    "khối lồng khối: phải lấy cái NGOÀI CÙNG (canvas) và lấy TRỌN thân — lấy riêng `pre` là mất câu dẫn");
   assert.ok(!rLong.last_copy_block.text.includes(TIEU_DE), "và vẫn bóc vỏ");
 
   console.log("  ok  ③ khối CUỐI CÙNG từ dưới lên thắng, bất kể loại · khối lồng khối lấy cái ngoài cùng");
