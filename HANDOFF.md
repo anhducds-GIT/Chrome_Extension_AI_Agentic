@@ -731,3 +731,7 @@ nằm trong chuỗi nào. `npm test` **thoát 0** — lần đầu kể từ 10/
 **Cũng làm:** gỡ khoá `HANDOFF.md` bỏ quên 58 tiếng của `harness-loi-01` (thêm cửa
 `--xong --duc-duyet` — trước nay khoá mức FILE **không lệnh nào gỡ được**) · commit mục Log
 bỏ quên của `codex-hnx-week-20260912`, không sửa một chữ.
+
+**Đuôi lượt:** N-64 có **hai** chỗ gọi và bản khôi phục đầu chỉ trả một — cổng đỏ lại ở lượt
+chạy cuối, vẫn vì đúng file nháp ấy. Trả nốt; phép ghim nay **đếm** chỗ lọc chứ không chỉ tìm
+thấy một cái. Bộ kiểm gốc repo: **13 xanh → 24 xanh**, `npm test` thoát 0.
