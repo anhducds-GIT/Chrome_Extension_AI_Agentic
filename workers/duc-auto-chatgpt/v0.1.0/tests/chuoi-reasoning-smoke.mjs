@@ -1016,3 +1016,86 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓐ nhận ra tin nhắn của chính mình khi lượt đọc sau khi gửi hết giờ");
 }
+
+/* Ⓑ B-87 — ID TẠM KHÔNG PHẢI ĐẠI DIỆN CHO "CHƯA CÓ GÌ ĐỌC", VÀ KHÔNG DÙNG ĐƯỢC LÀM MỐC.
+ *
+ * Hai phép đo, hai ngày, cùng một cái id `request-<hội thoại>-0`:
+ *   11/09 — id tạm ĐI KÈM `chars: 0`. Nạp lại là đúng: chưa có gì để đọc thật.
+ *   13/09 — id tạm đi kèm `chars: 164`, `generating: false`, câu trả lời XONG HẲN. Nạp lại ở
+ *           đây là phí một lượt mỗi vòng, và vì `-0` KHÔNG đổi qua lượt nạp, vòng sau lại
+ *           gặp đúng cảnh ấy rồi DỪNG chuỗi bằng một lý do sai.
+ *
+ * Nên cửa phải đo `chars > 0`, không đo hình dạng của id. Và phép chống-trùng phải so bằng
+ * CHỮ khi id chưa chốt: so bằng một cái nhãn không đổi giữa các lượt thì vòng hai đọc ra
+ * "không có khối mới" và dừng một chuỗi còn đang chạy tốt.
+ */
+{
+  const TAM = "request-6aa5128a-5634-83ec-8d40-492bd55ad342-0";
+  const nen = { generating: false, daNapLai: false, daThayDangChay: true, khoiCu: KHOI_CU };
+  const tam = (text, chars = text.length) =>
+    ({ found: true, chars, truncated: false, text, turn_id: TAM, blocks_in_turn: 1 });
+
+  /* ⒜ CA GỐC 11/09 PHẢI GIỮ NGUYÊN SỨC. Đây là vế dễ mất nhất khi nới một cửa: nới xong thì
+     ca đã từng hỏng lặng lẽ chui lọt. Id tạm + khối rỗng = vẫn nạp lại, nạp rồi vẫn tạm = dừng. */
+  assert.equal(quyetDinh({ ...nen, khoi: tam("", 0) }).viec, "NAP_LAI",
+    "id tạm KÈM khối rỗng vẫn phải nạp lại — đó là ca đo được 11/09");
+  assert.equal(quyetDinh({ ...nen, khoi: null, idLuotTraLoiCuoi: TAM }).viec, "NAP_LAI",
+    "chưa có khối mà lượt đã mang id tạm: vẫn nạp lại");
+  const d2 = quyetDinh({ ...nen, daNapLai: true, khoi: tam("", 0) });
+  assert.equal(d2.viec, "DUNG");
+  assert.match(d2.vi, /LUOT_CHUA_CHOT/, "nạp lại rồi vẫn rỗng thì dừng, và nói đúng bệnh");
+
+  /* ⒝ CA LIVE 13/09 — CÓ CHỮ THÌ ĐỌC, BẤT KỂ ID. Đây là lỗi B-87 sinh ra để sửa: chuỗi của
+     Đức dừng ở `da_gui: 0` với đúng bộ dữ kiện này. */
+  const dGui = quyetDinh({ ...nen, khoi: tam("prompt vòng sau, dài 164 ký tự", 164) });
+  assert.equal(dGui.viec, "GUI",
+    "id tạm mà khối ĐẦY ĐỦ thì phải gửi — nạp lại ở đây là phí một lượt mỗi vòng và rồi dừng sai");
+
+  /* ⒞ CHỐNG TRÙNG BẰNG CHỮ KHI ID CHƯA CHỐT — hai chiều, cả hai đều phải phân biệt được.
+     Chiều nguy hiểm hơn là ⒞₂: bản so-bằng-id đọc ra "không có khối mới" ở MỌI vòng sau vòng
+     một, vì `-0` không đổi. Chuỗi 8 vòng của Đức sẽ dừng ở vòng 2 mà không ai hiểu vì sao. */
+  const CHU = "prompt vòng sau, dài 164 ký tự";
+  assert.equal(quyetDinh({ ...nen, khoi: tam(CHU), chuKhoiCu: CHU, daNapLai: true }).viec, "DUNG",
+    "⒞₁ vẫn đúng khối cũ (cùng chữ) thì KHÔNG gửi lần hai");
+  assert.equal(quyetDinh({ ...nen, khoi: tam("một khối KHÁC hẳn ở vòng sau"), chuKhoiCu: CHU }).viec, "GUI",
+    "⒞₂ cùng id tạm nhưng CHỮ đã khác = khối mới thật — so bằng id sẽ dừng nhầm chuỗi đang chạy");
+
+  /* ⒟ ID ĐÃ CHỐT THÌ VẪN SO BẰNG ID. Nhánh mới không được nuốt nhánh cũ: một lượt đã chốt
+     lặp lại id cũ là gửi trùng, dù chữ có khác (trang sửa lại khối chẳng hạn). */
+  assert.equal(quyetDinh({ ...nen, khoi: khoiTot("chữ hoàn toàn khác", KHOI_CU), chuKhoiCu: "", daNapLai: true }).viec,
+    "DUNG", "id đã chốt mà trùng mốc thì không gửi lại, kể cả khi chữ khác");
+  assert.equal(quyetDinh({ ...nen, khoi: khoiTot(), chuKhoiCu: "prompt vòng sau" }).viec, "GUI",
+    "id đã chốt và khác mốc thì gửi — `chuKhoiCu` trùng KHÔNG được chặn nhánh id");
+
+  /* ⒠ KHÔNG CÓ CHỮ THÌ KHÔNG PHẢI KHỐI MỚI — dù mốc chữ cũ có khác nó.
+     Ca này đo được một lần: trang khai `chars` > 0 nhưng `text` về rỗng (khối vừa bị thay
+     giữa hai lượt đọc). Không có vế `Boolean(vanTayKhoi)` thì `"" !== "chữ cũ"` ra true, bộ
+     chạy vào nhánh "có khối mới" rồi chấm `KHOI_RONG` và DỪNG — dừng bằng một lý do sai, đúng
+     kiểu lỗi mà chính B-87 sinh ra để bỏ. Sự thật ở đây chỉ là: chưa có gì mới.
+     Phải đo bằng LÝ DO, không bằng `viec`: cả hai nhánh đều dừng hoặc nạp lại, chỉ khác bệnh. */
+  const dRong = quyetDinh({ ...nen, khoi: tam("", 12), chuKhoiCu: CHU, daNapLai: true });
+  assert.doesNotMatch(dRong.vi, /KHOI_RONG/,
+    "không đọc ra chữ ≠ khối rỗng cần dừng — đừng chấm bệnh của một khối chưa tồn tại");
+  assert.match(dRong.vi, /HET_CHUOI/, "sự thật là chưa có khối mới, và nhật ký phải nói đúng thế");
+
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒡ MỐC CHỮ PHẢI SỐNG QUA CÁC VÒNG. Khai báo nó bên trong vòng lặp thì mỗi vòng nó reset về
+     rỗng, phép so ⒞₁ luôn ra "khối mới", và một khối đã gửi bay lần hai. Đo bằng vị trí: nó
+     phải đứng TRƯỚC chỗ vòng lặp bắt đầu. */
+  const iKhai = ma.indexOf("let chuKhoiCu =");
+  const iVong = ma.indexOf("for (let vong = 1");
+  assert.ok(iKhai > 0 && iVong > iKhai,
+    "`chuKhoiCu` phải khai báo NGOÀI vòng lặp vòng — trong vòng thì mỗi vòng reset, mốc vô dụng");
+
+  /* ⒢ VÀ PHẢI ĐƯỢC CẬP NHẬT Ở ĐÚNG CHỖ: ngay cạnh `khoiCu`, tức SAU khi lượt gửi đã kết luận
+     xong. Đặt sớm hơn là ghi mốc cho một khối chưa chắc đã bay. */
+  const iKhoiCu = ma.indexOf("khoiCu = khoi.turn_id;");
+  const iChu = ma.indexOf("chuKhoiCu = String(khoi.text");
+  assert.ok(iKhoiCu > 0 && iChu > iKhoiCu && iChu - iKhoiCu < 200,
+    "hai mốc phải nhích CÙNG NHAU — lệch nhau là hai nguồn sự thật cho cùng một câu hỏi");
+
+  console.log("  ok  Ⓑ id tạm: đo chữ chứ không đo id, chống trùng bằng chữ khi chưa chốt, ca 11/09 còn nguyên");
+}
