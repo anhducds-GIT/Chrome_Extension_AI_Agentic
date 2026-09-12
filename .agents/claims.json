@@ -82,11 +82,11 @@
       "released_at": null
     },
     "workers/_shared": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-12T14:57:12.815Z",
       "task": "S-16: dat ten cho nguong cho 35s cua may chu Bridge, khong doi hanh vi",
-      "released_at": null
+      "released_at": "2026-09-12T15:05:44.248Z"
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -96,5 +96,5 @@
       "released_at": "2026-09-12T03:35:07.826Z"
     }
   },
-  "_fingerprint": "b1163300fc427658"
+  "_fingerprint": "911c3b090ab4115a"
 }
