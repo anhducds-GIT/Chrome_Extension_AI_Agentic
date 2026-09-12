@@ -1398,7 +1398,56 @@
                theo tên thẻ là mỏ neo bền nhất trong cả đám. */
             theLa: Array.from(new Set(Array.from(khung.querySelectorAll("*"))
               .map((e) => e.tagName.toLowerCase())
-              .filter((t) => t.includes("-")))).slice(0, 10)
+              .filter((t) => t.includes("-")))).slice(0, 10),
+            /* B-82 vòng hai · BÊN TRONG THẺ CANVAS.
+             *
+             * Vòng một đã trả lời "canvas là gì": `data-testid="writing-block-container"` — mỏ
+             * neo CẤU TRÚC, không phụ thuộc ngôn ngữ giao diện, đúng thứ `answerBlock` cần.
+             *
+             * Vòng này trả lời câu khó hơn: LẤY PHẦN NÀO BÊN TRONG NÓ. Cùng lượt đo thấy
+             * `writing-block-suggested-followups` — chính là hai chip gợi ý ("Quy định rõ tiêu
+             * chí NO MATCH…") nằm NGAY TRONG khung. Lấy cả khung là kéo theo cái tiêu đề và hai
+             * chip ấy vào prompt gửi đi. Chuỗi chuyển tiếp NGUYÊN VĂN, nên rác vào đây là rác
+             * bay thẳng sang lượt sau.
+             *
+             * Nên báo hai thứ: cây con (để thấy hình dạng thật) và `thuTru` — chính xác đoạn chữ
+             * mà phép TRỪ sẽ lấy ra. Trừ chứ không đoán tên thẻ thân bài: mọi thứ bị trừ đều là
+             * thứ CÓ BẰNG CHỨNG trực tiếp trong `moiTestid`. */
+            canvas: (() => {
+              const hop = khung.querySelector('[data-testid="writing-block-container"]');
+              if (!hop) return { co: false };
+              const cay = [];
+              const di = (el, sau) => {
+                if (sau > 3) return;
+                for (const con of Array.from(el.children || [])) {
+                  cay.push({
+                    sau,
+                    tag: con.tagName.toLowerCase(),
+                    testid: con.getAttribute("data-testid") || "",
+                    cls: (con.getAttribute("class") || "").slice(0, 30),
+                    inner: chuHien(con).length,
+                    head: chuTho(con).slice(0, 40)
+                  });
+                  di(con, sau + 1);
+                }
+              };
+              di(hop, 1);
+              /* PHÉP TRỪ, chạy trên một BẢN SAO — máy soi không được đụng vào trang thật. */
+              let thuTru = "";
+              try {
+                const sao = hop.cloneNode(true);
+                for (const bo of Array.from(sao.querySelectorAll('[data-testid^="writing-block-header"], [data-testid^="writing-block-suggested-followups"]'))) bo.remove();
+                thuTru = (sao.innerText || sao.textContent || "").trim();
+              } catch (_) { thuTru = ""; }
+              return {
+                co: true,
+                innerCaHop: chuHien(hop).length,
+                truConLai: thuTru.length,
+                truHead: thuTru.slice(0, 60),
+                truTail: thuTru.slice(-60),
+                cay: cay.slice(0, 20)
+              };
+            })()
           };
         })();
 
