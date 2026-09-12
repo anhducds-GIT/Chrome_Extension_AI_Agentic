@@ -16,7 +16,7 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, areaOf, claimPrefixesFrom, FILE_HANH_CHINH, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, nhapDungChungFrom, FILE_HANH_CHINH, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { napContext } from "./rule-compiler.mjs";
 /* KHÔI PHỤC 11/09. Hàng cổng *"Luật biên dịch sạch"* (lane `claude-luat-rasoat`, Đức chốt
    09/09) **biến mất** trong lượt migrate bộ khung `4da1e9e5`, cùng với lượt nhập này. Phép
@@ -240,6 +240,10 @@ const touchedToiPhaiTraLoi = touched.filter((f) => !daQuyThuoc(f));
 // nằm cứng ở ĐÂY và một bản y hệt nằm trong safe-push.mjs. Hai bản đã lệch nhau một lần thật
 // (26/08, đường dẫn tiếng Việt bị quy nhầm chủ). Một hàm dùng chung thì không lệch được.
 const structure = readStructureFromDisk(ROOT);
+/* NHÁP DÙNG CHUNG — N-64. Nhiều lane ghi vào `drafts/` cùng lúc theo đúng thiết kế, nên không
+   quy file ở đó cho ai. Luật khai ở `.repo-structure.json`; khôi phục 12/09 sau lượt migrate. */
+const nhapDungChung = nhapDungChungFrom(structure);
+const laNhapDungChung = (f) => nhapDungChung.some((d) => f === d.slice(0, -1) || f.startsWith(d));
 const claimPrefixes = claimPrefixesFrom(structure);
 const unitShape = unitsFrom(structure);
 // Vùng chia-theo-gói vẫn hỏi `areaOf` ở đây, và đó KHÔNG phải cửa thứ hai: `stewardOf` gọi
@@ -562,7 +566,7 @@ check("File mới đã khai vào Bản đồ file", () => {
   // là cổng đổi câu trả lời. Nên: lọc hết sạch mà vẫn CÓ file mới thì đó là `BỎ`, kèm câu nói
   // thẳng vì sao không kiểm được.
   const themMoi = sessionChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file);
-  const added = themMoi.filter(mine);
+  const added = themMoi.filter(mine).filter((f) => !laNhapDungChung(f));
   if (themMoi.length > 0 && added.length === 0) {
     return {
       ok: true,

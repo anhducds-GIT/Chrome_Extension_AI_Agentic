@@ -14,14 +14,13 @@
     "depth": 2,
     "ten": "Extension"
   },
-  "_generators_doc": "Mỗi tên ở đây phải nhận cờ `--check-head` và thoát khác 0 khi bản ra đã commit không còn khớp. `rule-compile.mjs` vào danh sách 11/09 (B-71): PHIEN.md là file DUY NHẤT một phiên đụng gói được bảo phải đọc, nó máy sinh, và đường sinh có một cửa fail-silent — vượt trần cứng thì `--sinh` TỪ CHỐI GHI và bản CŨ nằm lại. Đo 11/09: một PHIEN.md lệch hai ngày, mang năm câu đã sai, không cổng nào thấy.",
+  "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. Repo dựng từ bộ khung chỉ khai những script nó THẬT SỰ mang theo — khai thừa là cổng đỏ vì thiếu file.",
   "generators": [
     "build-dashboard.mjs",
     "feature-parity.mjs",
     "build-overview.mjs",
     "rule-compile.mjs"
   ],
-  "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. Repo dựng từ bộ khung chỉ khai những script nó THẬT SỰ mang theo — khai thừa là cổng đỏ vì thiếu file.",
   "generated": [
     "DASHBOARD.md",
     "llms.txt",
@@ -67,7 +66,12 @@
     }
   },
   "areas": {
-    "drafts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "nhap DUNG CHUNG — nhieu lane duoc ghi cung luc (N-64, a7bd5518). Khai steward _root de B3 co mot muc, nhung quyen THAT nam o khoi nhap_dung_chung: khong quy file o day cho lane dang giu _root." },
+    "drafts/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "nhap DUNG CHUNG — nhieu lane duoc ghi cung luc (N-64, a7bd5518). Khai steward _root de B3 co mot muc, nhung quyen THAT nam o khoi nhap_dung_chung: khong quy file o day cho lane dang giu _root."
+    },
     "delegations/": {
       "steward": "_root",
       "mutability": "rw",
@@ -247,8 +251,9 @@
     "_tru_adr": "Khong ke docs/adr/: ADR da Accepted la bat bien (ADR-0000) nen thu muc do chi co the to len. Tinh no vao thuoc thi moi quyet dinh moi lam cong do, va nguoi ta se noi con so cho xong.",
     "_khac_gi_tran_8000": "Gioi han ③ cua AGENTS.md la DICH (8.000 dong, ke ca ADR). Thuoc coc nay la CHAN (con so hom nay, tru ADR). Dich do khoang cach con phai di; chan do co dang di lui khong. Mot cai khong thay the cai kia.",
     "_do_that": "2026-09-09, lane claude-luat-rasoat, luot hai: 9.274 -> 9.185 (HA them 89 dong). Them muc 5 cua RULE-COMPILER.md (kiem tung ve sau moi luot gop) va xoa docs/briefs/BRIEF-OBSERVER-V1.md (119 dong, khai status: active nhung la de bai cho Observer V1 — san pham do da chet 06/09, ADR-0007 ve chet, no thanh Scouter va don sang goi rieng theo ADR-0013; 0 lien ket tro toi). Mot brief khai dang mo cho mot san pham khong con ton tai khong chi la rac, no lam AI doc phai xay nham thu. Lenh do lai: node scripts/session-check.mjs",
-    "tran_dong_khong_ke_adr": 9340,
-    "_vi_sao_nang_0909": "Nang 9185 -> 9340 (+119 dong) ngay 09/09, theo dung cua ra thu ba ma chinh cong neu ra. Phan them KHONG phai chu moi: no la THU TUC chuyen tu Tang 1 xuong Tang 2 (MULTIFLOW muc 3a-3b, RULE-COMPILER muc 5a, docs/README muc 'Ngoai docs/') theo ADR-0033 (3). Do ca hai dau trong cung mot luot: docs/ +119 dong, con file LUAT (CLAUDE.md + AGENTS.md goc + bon goi) -440 dong. RONG -321 dong. Thuoc nay CO Y khong thay khoan bu tru do: no do kho chu phinh, khong do hoa don nap — hai cau hoi khac nhau, giu hai thuoc rieng la co chu dinh (ADR-0031). Nen luat doc thuoc nay: mot luot nang tiep MA KHONG co so bu tru di kem thi do la phinh that."
+    "tran_dong_khong_ke_adr": 9830,
+    "_vi_sao_nang_0909": "Nang 9185 -> 9340 (+119 dong) ngay 09/09, theo dung cua ra thu ba ma chinh cong neu ra. Phan them KHONG phai chu moi: no la THU TUC chuyen tu Tang 1 xuong Tang 2 (MULTIFLOW muc 3a-3b, RULE-COMPILER muc 5a, docs/README muc 'Ngoai docs/') theo ADR-0033 (3). Do ca hai dau trong cung mot luot: docs/ +119 dong, con file LUAT (CLAUDE.md + AGENTS.md goc + bon goi) -440 dong. RONG -321 dong. Thuoc nay CO Y khong thay khoan bu tru do: no do kho chu phinh, khong do hoa don nap — hai cau hoi khac nhau, giu hai thuoc rieng la co chu dinh (ADR-0031). Nen luat doc thuoc nay: mot luot nang tiep MA KHONG co so bu tru di kem thi do la phinh that.",
+    "_vi_sao_nang_1209": "Nang 9340 -> 9830 (+490) ngay 12/09, cua ra thu ba. DO TRUOC KHI NANG, va so lieu khong co cho hieu khac: 514e3677 (09/09 16:11) dat thuoc 9340 luc docs/ dang la 9303 dong; 4da1e9e5 (09/09 22:29) migrate bo khung 0.3.0 -> 1.8.0 day len 9830. Toan bo +527 dong la NAM FILE cua chinh bo khung mang vao — BAN-DO-CHI-TIET 83 · BAO-TRI-DINH-KY 218 · HUONG-DAN 135 · LEGEND 62 · VI-SAO-LUAT 29 — cong RULE-COMPILER.md 125 cua 95b2ec74. Lane migrate khong lam phan so sach bat buoc, nen thuoc DO suot ba ngay ma khong ai doc ra vi sao. Tu 09/09 den nay KHONG dong van xuoi nao cua repo NAY duoc them vao docs/. PHAN NANG NAY DANH RIENG CHO CHU VAY MUON, KHONG PHAI SLACK: neu phien sau them van xuoi cua repo nay va lai thay do, cau tra loi la XOA hoac chuyen sang ADR, khong phai nang tiep. Go bo khung ra thi ha thuoc ve 9303. Lenh do lai: node scripts/session-check.mjs --soat --as <phien>"
   },
   "luat": {
     "_doc": "BAN DANG KY NOI CHUA LUAT — dau vao cua scripts/rule-compile.mjs. Hai tang: SO CAI (docs/adr/**, chi them, B12 canh) va BAN HIEU LUC (danh sach duoi day, thu AI that su nap). Khai thieu mot noi = noi do vo hinh voi bo bien dich, va luat trong do se troi lech ma khong ai keu.",

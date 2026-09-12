@@ -109,7 +109,7 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | Đụng một gói `duc-auto-*` | `AGENTS.md` của **chính gói đó**. **Ba gói là fork của nhau** — một lỗi thường có **ba** bản sao |
 | Nhận khoá · commit · đóng phiên · tranh chấp khoá | `docs/protocols/MULTIFLOW.md` mục 3a–3b |
 | Nhận việc **ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không ngoại lệ "sửa nhỏ". Nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi **DỪNG** |
-| Thêm/sửa/bỏ một LUẬT hay TRẦN · lượt rà hằng tuần | `docs/protocols/RULE-COMPILER.md` |
+| Thêm/sửa/bỏ một LUẬT hay TRẦN · lượt rà hằng tuần · **gộp/xoá một ADR** | `docs/protocols/RULE-COMPILER.md` · gộp thì khai `decides: [..]`, rời repo thì khai `adr.moved_out` kèm lý do — B12 cưỡng chế, ghim ở `tests/b12-so-hieu-adr-smoke.mjs` |
 | Ghi nhật ký · cắt sổ · đóng một mục sổ nợ | `docs/protocols/HANDOFF.md` · `RULE-COMPILER.md` 5a |
 | Hỏi làm gì TRƯỚC | `ROADMAP.md` (thứ tự) · `what-next.mjs` (trạng thái sống) |
 | Thêm/vận hành extension · đặt tệp ghép cặp hay vùng ghi Bridge | `PLATFORM.md`. **Đừng tự chọn chỗ** — `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>` |

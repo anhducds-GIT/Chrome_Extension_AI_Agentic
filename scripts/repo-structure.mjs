@@ -861,6 +861,33 @@ export function nhomBangFrom(parsed) {
   return Object.freeze([...nhom]);
 }
 
+/* NHÁP DÙNG CHUNG — N-64, khôi phục 12/09.
+ *
+ * `.repo-structure.json` khai `nhap_dung_chung: ["drafts/"]` từ 09/09, và KHÔNG script nào đọc
+ * nó — lượt migrate bộ khung (4da1e9e5) gỡ mất cả hàm này lẫn hai chỗ gọi. Tức một dòng LUẬT
+ * nằm trong bản đồ mà không có máy nào cưỡng chế: đúng thứ tệ nhất, vì người đọc tin là có.
+ *
+ * Vì sao cần: CLAUDE.md toàn cục nói `drafts/` là chỗ DUY NHẤT agent tự ghi không cần hỏi —
+ * tức nhiều lane ghi vào đó CÙNG LÚC theo đúng thiết kế. Tiền đề "bẩn trong vùng tôi giữ = của
+ * tôi" sai ở đúng thư mục ấy. Đo 09/09 18:30: lane `claude-context-review` để một file nháp,
+ * lane đang giữ `_root` bị quy cho nó và KHÔNG ĐẨY ĐƯỢC, trong khi không được commit hay xoá
+ * file người khác. Đức ghi: "lần thứ ba trong một ngày". Đo lại 12/09: y hệt. */
+export function nhapDungChungFrom(parsed) {
+  const value = parsed?.nhap_dung_chung;
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) {
+    throw new Error("NHAP_DUNG_CHUNG_HONG: `nhap_dung_chung` phải là mảng đường dẫn thư mục (hoặc bỏ hẳn).");
+  }
+  const ra = [];
+  for (const d of value) {
+    if (typeof d !== "string" || d === "") {
+      throw new Error("NHAP_DUNG_CHUNG_HONG: mỗi mục phải là một đường dẫn thư mục khác rỗng.");
+    }
+    ra.push(d.endsWith("/") ? d : `${d}/`);
+  }
+  return Object.freeze(ra);
+}
+
 export function frozenFrom(parsed) {
   const value = parsed?.frozen;
   if (value === undefined) return Object.freeze([]);

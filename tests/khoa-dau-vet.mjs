@@ -438,4 +438,41 @@ const SCRIPTS = readdirSync(join(ROOT, "scripts")).filter((f) => f.endsWith(".mj
   ok("13 · `Audit:` là trailer, không phải kiểu commit — 3 ca, kể cả tiêu đề `audit:` cộng nhãn thật");
 }
 
+/* ---- 14. NHÁP DÙNG CHUNG không quy cho ai — N-64, khôi phục 12/09 --------- */
+/* `.repo-structure.json` khai `nhap_dung_chung: ["drafts/"]` từ 09/09. Lượt migrate bộ khung
+   (4da1e9e5) gỡ mất cả hàm đọc lẫn hai chỗ gọi, nên từ hôm đó luật ấy nằm trong bản đồ mà
+   KHÔNG máy nào cưỡng chế — tệ hơn không có luật, vì người đọc tin là có.
+   Hậu quả đo được HAI LẦN: một lane để file nháp trong `drafts/`, lane đang giữ `_root` bị quy
+   cho nó và không đẩy được, trong khi không được commit hay xoá file người khác. Đức ghi
+   09/09: "lần thứ ba trong một ngày". Đo lại 12/09: y hệt. */
+{
+  const { nhapDungChungFrom } = await import("../scripts/repo-structure.mjs");
+
+  assert.deepEqual(nhapDungChungFrom({ nhap_dung_chung: ["drafts/"] }), ["drafts/"]);
+  assert.deepEqual(nhapDungChungFrom({ nhap_dung_chung: ["drafts"] }), ["drafts/"],
+    "thiếu gạch chéo cuối vẫn phải hiểu là thư mục — nếu không, `draftsX/` lọt vào");
+  assert.deepEqual(nhapDungChungFrom({}), [], "không khai = không miễn gì; mặc định là CHẶT");
+  assert.deepEqual(nhapDungChungFrom(undefined), []);
+  for (const xau of [{ nhap_dung_chung: "drafts/" }, { nhap_dung_chung: [""] }, { nhap_dung_chung: [3] }]) {
+    assert.throws(() => nhapDungChungFrom(xau), /NHAP_DUNG_CHUNG_HONG/,
+      "khai sai thì NÉM, không im lặng coi như rỗng — im lặng ở đây là tắt một lớp bảo vệ");
+  }
+
+  // Và ĐƯỜNG DÂY: cổng phải THẬT SỰ lọc, không chỉ có hàm nằm đó.
+  const nguonCong = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
+  assert.match(nguonCong, /nhapDungChungFrom\(structure\)/,
+    "session-check phải đọc khối nhap_dung_chung — không đọc thì luật đó chỉ là chữ");
+  assert.match(nguonCong, /filter\(\(f\) => !laNhapDungChung\(f\)\)/,
+    "và phải LỌC tập file mới bằng nó, nếu không thì file nháp của lane khác vẫn chặn lượt đóng phiên");
+
+  // Và chốt vẫn phải nổ cho mọi file KHÁC: miễn trừ này hẹp đúng một thư mục.
+  const ds = nhapDungChungFrom({ nhap_dung_chung: ["drafts/"] });
+  const la = (f) => ds.some((d) => f === d.slice(0, -1) || f.startsWith(d));
+  assert.equal(la("drafts/ghi-chu.md"), true);
+  assert.equal(la("drafts"), true, "chính thư mục đó");
+  assert.equal(la("draftsX/ghi-chu.md"), false, "cùng tiền tố KHÔNG phải cùng thư mục");
+  assert.equal(la("scripts/x.mjs"), false);
+  ok("14 · nháp dùng chung: không quy cho ai, và miễn trừ hẹp đúng một thư mục");
+}
+
 console.log(`khoa-dau-vet: ${passed} vế xanh`);
