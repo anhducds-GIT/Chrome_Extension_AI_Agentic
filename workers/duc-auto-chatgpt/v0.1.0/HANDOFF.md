@@ -700,3 +700,17 @@ Thêm **ca 7**: huỷ tới **giữa** khoảng nghỉ → chữ vào ô soạn 
 biến: xoá `content.js:309` thì đúng ca 7 đỏ. Suite gói **136/136**. `~~B-75~~`.
 
 **Đức phải nạp lại extension** thì nửa `content.js` mới có hiệu lực.
+
+## 2026-09-12 · `claude-gpt-chay-het-job` — token giả trong fixture nay nói thẳng nó là giả
+
+Chạm **đúng một dòng** trong gói này, từ lượt dọn ở gốc repo.
+
+`tests/bridge-cli-mutation-key-smoke.mjs` mang một chuỗi token dựng từ hạt ngẫu nhiên — hợp lệ
+về hình dạng, không mở được cửa nào, và chú thích đã nói rõ thế. Vấn đề nằm ở chỗ khác: nó
+**trông y hệt token thật**, nên bộ dò secret của cổng đỏ **mỗi lượt chạy** với câu *"nghi có
+token thật — kiểm tra bằng mắt trước khi commit"*. Một cảnh báo phải soi bằng mắt mỗi phiên là
+một cảnh báo sẽ bị bỏ qua, và ngày nó ĐÚNG thì không ai đọc.
+
+**Đối chiếu bằng băm trước khi đổi:** chuỗi cũ KHÔNG phải token ghép cặp đang dùng. Chuỗi mới
+vẫn đủ 43 ký tự base64url để `validatePairing` nhận, và mang dấu `fake` — đúng dấu mà chính bộ
+dò khai trong `DAU_HANG_GIA`. Suite gói **136/136**.

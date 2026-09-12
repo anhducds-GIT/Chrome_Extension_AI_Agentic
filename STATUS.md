@@ -5,14 +5,14 @@ name: Chrome Extension AI Agentic
 lifecycle: active
 last_verified: 2026-09-09
 last_verified_commit: 4da1e9e5a5c89002309c35b12c7bb1a52721ef9f
-last_verified_how: "migrate bộ khung 0.3.0 → 1.8.0; cổng cấu trúc còn ĐỎ ở B12 (42 ADR) và B16 — xem BACKLOG"
+last_verified_how: "cổng cấu trúc: nhóm CHẶN đạt hết (B12 44→0, xem N-65); npm test thoát 0 lần đầu từ 10/09"
 evidence_ref: HANDOFF.md
 owner: harness-loi-01
 priority_rank: 1
-next_step: "Dọn 42 ADR bị B12 nêu, rồi khai luat.chu_de cho bộ biên dịch luật (B16) — xem BACKLOG.md."
+next_step: "N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16)."
 version_source: package.json
 current_focus: "Vừa lên khung 1.8.0: nhận bộ nén luật, Context Compiler, can-nang đo token, bảng sống. Cổng nay chặt hơn và đang nêu nợ có thật."
-human_action: "CÓ — Đức chốt có bật B16 (bộ biên dịch luật) hay để cảnh báo cho tới khi 154 ADR khai xong `chu_de`."
+human_action: "CÓ — ⑴ N-65: viết lại hay bỏ 8 bài kiểm đang cách ly · ⑵ bật B16 hay để cảnh báo tới khi 154 ADR khai xong `chu_de`."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
 ---
@@ -29,8 +29,10 @@ Lượt migrate **không chạm `workers/`** — một lane khác đang giữ `w
 (`npm run luat -- --nap`) · `npm run can-nang` đo **token mỗi phiên phải nạp** · bảng sống ·
 `features.json` · nhịp dọn (`npm run don`).
 
-**Cổng cấu trúc đang ĐỎ, và đó là nợ CÓ THẬT chứ không phải hỏng:** B12 nêu 42 ADR đã
-`Accepted` mà thân bài bị sửa sau đó · B16 đòi khai `luat.chu_de`. Cả hai ghi ở
-[BACKLOG.md](BACKLOG.md).
+**Cổng cấu trúc: nhóm CHẶN đạt hết (12/09).** 42 chỗ B12 nêu **không chỗ nào là lỗi thật** —
+22 chỗ oan cho lượt gộp ADR Đức tự chốt, 20 chỗ cưỡng chế luật `ADR-0026` đã thu hồi 09/09;
+B12 nay làm đúng việc ADR-0026 giao (sổ số hiệu) và siết thêm hai vế. Còn **B16** (khai
+`luat.chu_de`) ở mức cảnh báo, và **`N-65`**: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly
+ở `npm run test:chet`. Cả hai ở [BACKLOG.md](BACKLOG.md).
 
 **Còn mở:** `next_step` ở đầu file này, và [BACKLOG.md](BACKLOG.md).
