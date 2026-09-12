@@ -495,11 +495,48 @@ async function chinh() {
   const soNhatKy = path.join(thuMuc, "nhat-ky.jsonl");
   const ghi = (o) => fs.appendFileSync(soNhatKy, JSON.stringify({ luc: new Date().toISOString(), ...o }) + "\n");
 
+  /* ═══ RANH GIỚI CỦA HỆ THỐNG — ĐỪNG GỠ, ĐỪNG HẠ ══════════════════════════════════════
+   *
+   * SỰ CỐ THẬT 12/09/2026, profile `kaito`. Bộ chạy gặp `RECEIVER_LOST` và thử lại ĐỀU 4 giây
+   * không giãn, không trần: ~900 lượt gõ cửa trong 60 phút. Ngay sau đó ChatGPT trả
+   * `SECURITY_HARD_STOP` — đòi CAPTCHA, xác minh con người, báo "hoạt động bất thường". Đức
+   * phải tự ngồi gõ CAPTCHA mới chạy lại được, và cả buổi chiều mất vào việc gỡ hậu quả.
+   *
+   * ĐỨC CHỐT 12/09: *"đọc vài trăm lần chỉ trong vài chục giây thì là spam rồi còn gì. Hãy đọc
+   * và maintain từ tốn thôi."* Và: mọi lần dính CAPTCHA phải được ghi lại và tô đậm như một
+   * RANH GIỚI của hệ thống, để không bao giờ lặp lại.
+   *
+   * VÌ SAO SÀN NẰM Ở ĐÂY, không nằm ở `doc()`:
+   * `goi()` là cửa DUY NHẤT mọi lượt RPC đi qua — đọc, ping, nạp lại, gửi. Đặt sàn ở `doc()`
+   * chỉ che được lượt ĐỌC; ping và nạp-lại vẫn bắn tự do, và một vòng lặp lỗi ở đường ping sẽ
+   * dựng lại đúng sự cố trên bằng một cửa khác. Sàn ở đây là sàn THẬT, kể cả cho đường gọi
+   * chưa ai viết. Cùng hình dạng với `runPrompt()` bên `content.js`: một chỗ hẹp, một luật.
+   *
+   * BỐN THỨ ĐANG GIỮ RANH GIỚI NÀY — gỡ bất kỳ cái nào là mở lại cửa đã làm hỏng:
+   *   ⑴ SÀN dưới đây: không hai lượt RPC nào sát nhau hơn `SAN_GIUA_HAI_LUOT_DOC_MS`.
+   *   ⑵ GIÃN DẦN khi hỏng: `nhipDocHong` 15s → 120s, ≤ ~34 lượt/giờ (trước: ~900).
+   *   ⑶ NGHE TIỆN ÍCH: `state: HARD_STOP` thì DỪNG, không thử lại — chính tiện ích viết
+   *      *"auto-retrying would just fail every remaining job back-to-back."*
+   *   ⑷ TRẦN VÒNG `TRAN_VONG` và trần phút: một vòng lặp không trần trên một trang có thể
+   *      sinh tiền là loại lỗi không sửa lại được sau khi nó chạy.
+   *
+   * ĐO TỪ LÚC LƯỢT TRƯỚC XONG, không phải lúc nó bắt đầu: một lượt có thể mất 30 giây rồi mới
+   * hết giờ, và đo từ lúc bắt đầu thì sàn đã tiêu hết vào chính thời gian chờ đó.
+   * ══════════════════════════════════════════════════════════════════════════════════════ */
+  let mocGoiXong = 0;
   const goi = (args) => {
+    const con = SAN_GIUA_HAI_LUOT_DOC_MS - (Date.now() - mocGoiXong);
+    if (mocGoiXong && con > 0) {
+      /* Ngủ ĐỒNG BỘ: `goi` được gọi từ cả chỗ có `await` lẫn chỗ không, và một cửa an toàn chỉ
+         chặn được ở nửa số lối vào thì không phải là cửa. `Atomics.wait` chặn thật, không quay
+         vòng bận. */
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, con);
+    }
     let out = "";
     try {
       out = execFileSync("node", [CLI, ...args, "--pairing", pairing, ...(target ? ["--target", target] : [])], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
     } catch (e) { out = String(e.stdout || ""); }
+    mocGoiXong = Date.now();
     try { return JSON.parse(out); } catch { return { ok: false, error: { code: "KHONG_PHAI_JSON" } }; }
   };
   /* B-79 — DỪNG NGAY TRONG CỬA SỔ ĐANG CHẠY. Đức nêu 12/09: *"dùng script dừng riêng tôi thấy
@@ -527,28 +564,13 @@ async function chinh() {
     if (danhThuc) danhThuc();
   };
 
-  /* B-78 — SÀN GIỮA HAI LƯỢT ĐỌC. Đức chốt 12/09: *"đọc vài trăm lần trong vài chục giây thì
-   * là spam rồi còn gì. Hãy đọc và maintain từ tốn thôi."*
-   *
-   * VÌ SAO ĐẶT Ở ĐÂY chứ không sửa từng chỗ: có BỐN đường đọc, mỗi đường tự chọn nhịp riêng
-   * (đọc hỏng · chờ trả lời · đọc lại sau lượt gửi · soi mốc sau khi gửi). Vá từng nhịp thì
-   * đường thứ năm thêm sau này lại tự chọn số của nó, và cái trần chung không ai canh. `doc()`
-   * là cửa DUY NHẤT mọi lượt đọc đi qua, nên sàn đặt ở đây là sàn thật — kể cả cho đường chưa
-   * viết. Đúng hình dạng của `runPrompt()` bên `content.js`: một chỗ hẹp, một luật.
-   *
-   * ĐO TỪ LÚC LƯỢT TRƯỚC XONG, không phải lúc nó bắt đầu. Một lượt `chat-read` có thể mất 30
-   * giây rồi mới hết giờ; đo từ lúc bắt đầu thì sàn đã "tiêu" hết vào thời gian chờ đó và hai
-   * lượt vẫn dính nhau. Đo từ lúc xong thì khoảng nghỉ là khoảng nghỉ thật.
-   *
-   * KHÔNG chạm `--limit 4 --max-chars 20000`: đó là cỡ một lượt đọc, không phải tần suất. */
-  let mocDocXong = 0;
-  const doc = async () => {
-    const con = SAN_GIUA_HAI_LUOT_DOC_MS - (Date.now() - mocDocXong);
-    if (mocDocXong && con > 0) await ngu(con);
-    const kq = goi(["chat-read", "--limit", "4", "--max-chars", "20000"]);
-    mocDocXong = Date.now();
-    return kq;
-  };
+  /* Lượt đọc. Nhịp KHÔNG nằm ở đây — sàn chống-spam nằm ở `goi()`, cửa duy nhất mọi lượt RPC
+     đi qua (đọc · ping · nạp lại · gửi). Xem khối "RANH GIỚI CỦA HỆ THỐNG" ở `goi()`: đặt sàn
+     riêng cho lượt đọc chỉ che được một trong bốn đường, và ba đường còn lại đủ để dựng lại
+     đúng sự cố CAPTCHA ngày 12/09 bằng một cửa khác.
+
+     KHÔNG chạm `--limit 4 --max-chars 20000`: đó là CỠ một lượt đọc, không phải TẦN SUẤT. */
+  const doc = async () => goi(["chat-read", "--limit", "4", "--max-chars", "20000"]);
 
   const hanChung = Date.now() + tranPhut * 60000;
   /* `--tu-turn` gõ tay THẮNG chỗ dừng đọc từ nhật ký: người khai tường minh thì người đúng.

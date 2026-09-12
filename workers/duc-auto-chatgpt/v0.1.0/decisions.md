@@ -99,3 +99,42 @@ từ `0046`. **Đừng thêm dòng vào file này nữa** — nó là mục lụ
 (`drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md`, hướng A). Khối `instance` gắn vào message `auth`
 CUỐI của bắt tay challenge — bắt tay `auth_challenge`/`auth_proof` GIỮ NGUYÊN, không nới gì.
 WORKER_ID `duc-auto-chatgpt`. Không quyền Chrome mới.
+
+## 2026-09-12 — ⛔ RANH GIỚI CỦA HỆ THỐNG: GỌI DÀY = BỊ CHẶN. Đức chốt.
+
+**SỰ CỐ THẬT, đo được.** Profile `kaito`, sáng 12/09. Bộ chạy chuỗi gặp `RECEIVER_LOST` rồi
+thử lại **đều 4 giây, không giãn, không trần**: ~**900 lượt gõ cửa trong 60 phút**. Ngay sau
+đó ChatGPT trả `SECURITY_HARD_STOP` — *"yêu cầu CAPTCHA, xác minh con người, hoặc báo hoạt
+động bất thường"*. Đức phải tự ngồi gõ CAPTCHA mới chạy lại được. Cả buổi chiều 12/09 mất vào
+việc gỡ hậu quả, và chính lượt nện ấy còn che mất ba lỗi khác nằm dưới.
+
+**Đức chốt, nguyên văn:** *"đọc vài trăm lần chỉ trong vài chục giây thì là spam rồi còn gì.
+Hãy đọc và maintain từ tốn thôi."* Và: mọi lần dính CAPTCHA phải được **ghi lại và tô đậm như
+một ranh giới của hệ thống**, để không bao giờ lặp lại.
+
+**LUẬT.** Trang của nhà cung cấp là một hệ thống có **cơ chế phòng vệ chống bot**. Một chuỗi
+gọi dày, đều, liên tục là tín hiệu bot — bất kể ta gọi nó là đọc, ping, hay nạp lại. Vượt
+ngưỡng thì hậu quả **không nằm trong tay ta**: tài khoản bị thử thách, và không lệnh nào của
+ta gỡ được. **Đây là ranh giới cứng, không phải một tham số hiệu năng để chỉnh cho nhanh.**
+
+**BỐN THỨ ĐANG GIỮ RANH GIỚI — gỡ bất kỳ cái nào là mở lại đúng cửa đã làm hỏng:**
+
+| # | cơ chế | ở đâu |
+|---|---|---|
+| ⑴ | **Sàn giữa hai lượt RPC** — không hai lượt nào sát nhau hơn `SAN_GIUA_HAI_LUOT_DOC_MS` (10s) | `goi()` — cửa duy nhất **mọi** lượt RPC đi qua: đọc · ping · nạp lại · gửi |
+| ⑵ | **Giãn dần khi hỏng** — `nhipDocHong` 15s → trần 120s, **≤ ~34 lượt/giờ** (trước: ~900) | `nhipDocHong()` |
+| ⑶ | **Nghe tiện ích khai dừng** — `state: HARD_STOP` thì DỪNG, không thử lại | `chanDung()` |
+| ⑷ | **Trần vòng và trần phút** — vòng lặp không trần trên trang sinh tiền là lỗi không sửa lại được sau khi nó chạy | `TRAN_VONG` |
+
+**VÌ SAO SÀN Ở `goi()` CHỨ KHÔNG Ở `doc()`:** `doc()` chỉ là một trong bốn đường RPC. Sàn ở đó
+che được lượt đọc và để ping/nạp-lại/gửi bắn tự do — một vòng lặp lỗi ở đường ping dựng lại
+đúng sự cố trên bằng một cửa khác. Chỗ hẹp phải là chỗ **tất cả** đi qua.
+
+**KHI SỬA MÃ Ở GÓI NÀY, ĐỌC DÒNG NÀY TRƯỚC:** thấy một lượt chạy chậm và muốn hạ sàn, rút nhịp
+giãn, hay bỏ một lượt chờ — **dừng lại**. Cái chậm ấy là giá của việc không bị chặn. Muốn nhanh
+hơn thì tìm chỗ khác: nâng `deadline_ms` (đã làm 12/09: đọc 10s → 30s, cho tab nền trả lời kịp)
+là nhanh hơn **mà không gọi dày hơn**. Hạ sàn thì không.
+
+**Phép ghim canh:** `tests/chuoi-reasoning-smoke.mjs` khối ⓦ — đếm thật số lượt trong trần 60
+phút và đỏ nếu vượt 60; đòi sàn nằm trong `goi()`; đòi chặn **đồng bộ** (`goi` có chỗ gọi không
+`await`, nên `await ngu()` ở đó không chặn gì cả).

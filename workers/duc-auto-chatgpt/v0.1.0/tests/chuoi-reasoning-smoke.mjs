@@ -739,17 +739,29 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(SAN_GIUA_HAI_LUOT_DOC_MS >= 10000,
     `sàn giữa hai lượt đọc phải ≥10 giây, đang là ${SAN_GIUA_HAI_LUOT_DOC_MS}ms`);
 
-  // ⒜ Sàn phải nằm TRONG `doc()` — cửa duy nhất mọi lượt đọc đi qua.
-  const iDoc = src.indexOf("const doc = async () =>");
-  assert.ok(iDoc > 0, "`doc()` phải là một hàm async — sàn cần chờ được");
-  const thanDoc = src.slice(iDoc, src.indexOf("\n  };", iDoc));
-  assert.ok(thanDoc.includes("SAN_GIUA_HAI_LUOT_DOC_MS"),
-    "sàn phải cưỡng chế NGAY TRONG doc(), không phải ở từng chỗ gọi");
-  assert.ok(thanDoc.includes("chat-read"), "cắt nhầm thân hàm — phép ghim dưới sẽ vô nghĩa");
-  /* Đo từ lúc lượt trước XONG. Một lượt `chat-read` có thể mất 30 giây rồi mới hết giờ; đo từ
-     lúc bắt đầu thì sàn tiêu hết vào thời gian chờ đó và hai lượt vẫn dính nhau. */
-  assert.ok(thanDoc.indexOf("mocDocXong = Date.now()") > thanDoc.indexOf("chat-read"),
+  /* ⒜ SÀN PHẢI NẰM Ở `goi()`, KHÔNG PHẢI Ở `doc()` — B-85.
+     `doc()` chỉ là MỘT trong bốn đường RPC (đọc · ping · nạp lại · gửi). Sàn ở `doc()` che
+     được lượt đọc và để ba đường kia bắn tự do; một vòng lặp lỗi ở đường ping dựng lại đúng
+     sự cố CAPTCHA 12/09 bằng một cửa khác. `goi()` là cửa duy nhất TẤT CẢ đi qua. */
+  const iGoi = src.indexOf("const goi = (args) =>");
+  assert.ok(iGoi > 0, "`goi()` vẫn là cửa RPC");
+  const thanGoi = src.slice(iGoi, src.indexOf("\n  };", iGoi));
+  assert.ok(thanGoi.includes("SAN_GIUA_HAI_LUOT_DOC_MS"),
+    "sàn phải cưỡng chế NGAY TRONG goi() — cửa duy nhất MỌI lượt RPC đi qua, không riêng lượt đọc");
+  assert.ok(thanGoi.includes("execFileSync"), "cắt nhầm thân hàm — phép ghim dưới sẽ vô nghĩa");
+  assert.ok(thanGoi.indexOf("mocGoiXong = Date.now()") > thanGoi.indexOf("execFileSync"),
     "mốc phải đặt SAU lượt gọi — đo từ lúc lượt trước xong, không phải lúc nó bắt đầu");
+  /* `goi` được gọi từ cả chỗ có `await` lẫn chỗ không, nên phải chặn ĐỒNG BỘ. Một cửa an toàn
+     chỉ chặn được nửa số lối vào thì không phải là cửa. */
+  assert.match(thanGoi, /Atomics\.wait/,
+    "phải chặn đồng bộ: `goi` có chỗ gọi không await, và `await ngu()` ở đó không chặn gì cả");
+
+  // `doc()` phải ĐI QUA `goi()`, không tự gọi CLI — đường vòng là đường lách sàn.
+  const iDoc = src.indexOf("const doc = async () =>");
+  assert.ok(iDoc > 0, "`doc()` vẫn còn");
+  const thanDoc = src.slice(iDoc, src.indexOf("\n", iDoc));
+  assert.ok(thanDoc.includes("goi(["), "`doc()` phải đi qua `goi()`");
+  assert.ok(!thanDoc.includes("execFileSync"), "`doc()` không được tự gọi CLI");
 
   /* ⒝ MỌI chỗ gọi phải `await` — một chỗ quên là một đường đọc lọt qua sàn, và nó không đỏ ở
      đâu cả: `doc()` không await trả về một Promise, mà `Promise.ok` là `undefined`, nên nhánh
