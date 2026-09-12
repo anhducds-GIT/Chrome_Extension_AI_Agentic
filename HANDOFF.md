@@ -735,3 +735,8 @@ bỏ quên của `codex-hnx-week-20260912`, không sửa một chữ.
 **Đuôi lượt:** N-64 có **hai** chỗ gọi và bản khôi phục đầu chỉ trả một — cổng đỏ lại ở lượt
 chạy cuối, vẫn vì đúng file nháp ấy. Trả nốt; phép ghim nay **đếm** chỗ lọc chứ không chỉ tìm
 thấy một cái. Bộ kiểm gốc repo: **13 xanh → 24 xanh**, `npm test` thoát 0.
+
+**Đuôi lượt ⑵:** `STATUS.md` vẫn khai *"cổng cấu trúc còn ĐỎ ở B12 (42 ADR)"* — câu đó đi
+thẳng vào bảng trạng thái và `PHIEN.md` mà mọi phiên gói nạp, nên nó dạy sai từng phiên một.
+Sửa, và đổi `next_step`/`human_action` sang thứ Đức thật sự cần chốt: `N-65`. Và token giả
+trong fixture gói chatgpt nay mang dấu `fake` — bộ dò secret thôi đỏ mỗi lượt chạy.
