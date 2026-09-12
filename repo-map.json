@@ -70,7 +70,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "**Chạy tiếp được rồi** (`~~B-74~~`, Đức nêu 12/09): cuối mỗi lượt `chay-chuoi.bat` hỏi `[t]` chạy tiếp · `[m]` chạy mới cùng thông số · `[g]` gõ lại; và thông số được nhớ sang cả lần mở cửa sổ sau. `--tiep` đọc nhật ký để nối từ lượt gửi cuối và **trừ** số vòng đã gửi vào trần — chạy lại từ số không trên một hội thoại đang dở sẽ **gửi lại đúng prompt đã gửi**. **Trước đó, `~~B-73~~`:** tên chuỗi có **dấu cách** làm vỡ khoá gửi — mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1, trong khi nhật ký lại đổ cho trang. Cùng họ: hai dòng `echo` không đóng ngoặc khiến `&` trong tên **chạy `fill` như một lệnh**. Cả hai đã vá. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
+      "next_step": "**Chuỗi đã gửi được trên trang thật, và ba lỗi vừa lộ ra đều ở GIÁC QUAN chứ không ở suy luận.** `~~B-87~~`: id tạm (`request-<hội thoại>-N`) từng bị coi là đại diện cho *chưa đọc được gì* — đo 13/09 thì nó đi kèm một khối ĐẦY ĐỦ 164 ký tự, nên giờ đo thẳng `chars > 0`; chống gửi trùng so bằng CHỮ khi id chưa chốt. `~~B-88~~` **nguy hiểm nhất**: lượt đọc lại sau khi gửi trả `false` (chưa bay) ngay ở lượt đọc được đầu tiên, trong khi tin nhắn ĐÃ bay — bộ chạy báo `GUI_THAT_BAI · đã gửi 0` rồi `chay-chuoi.bat` mời `[m] chạy MỚI`, tức mời gửi trùng đúng thứ exact-once cấm. Nay thấy thì `true` ngay, `false` chỉ sau khi hết kiên nhẫn, mù vẫn `null`. `~~B-89~~`: bộ đếm *liên tiếp* một mình đọc ra như đang treo — thêm bộ đếm TỔNG mỗi vòng. **Việc kế:** `B-50` · `B-58` vẫn chờ bệnh tái phát.",
       "human_action": "@Đức:chốt(suite) **`npm test` gốc repo vẫn chết** ở `tests/repo-structure-smoke.mjs` — việc của lane `_code`, đừng xoá phép kiểm cho suite xanh. @Đức:chốt(pilot) **Pilot điều phối cần một phiên CC MỚI** (Haiku/Sonnet): `drafts/pilot-dieu-phoi/GOI-VIEC.md`.",
       "priority_rank": 2,
       "superseded_by": null,
@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Mở CHUOI-VIEC.md của gói, đọc khối Luật của chuỗi rồi nhảy THANG tới mục T7 — đừng đọc cả file. T7 là việc tới lượt và là mục đích của cả gói: đóng vòng tự cải tiến một lần (Scouter dò trang, AI ghi adapter xuống đĩa qua Bridge, scout.reload, adapter chạy). Mục T7 đã liệt sẵn mọi thứ đã biết (vùng ghi, method ghi đĩa, chỗ đặt adapter, ba cái bẫy đã vấp) nên không phải đi dò lại. T1 tới T4 đã xong và đã đo ngoài đời; toàn bộ đã đẩy lên main.",
-      "human_action": "@Đức:bấm D2 còn một nửa — ghế Chrome thứ hai vẫn chưa có tên. Ghế đang dùng tên Udin_Scout và gọi bằng tên chạy tốt; ghế kia chưa đặt thì lượt gọi nào không nêu đích vẫn bị từ chối TARGET_AMBIGUOUS. Thẻ Hệ thống, khối Hồ sơ ghế (Profile ID), gõ một tên KHÁC. @Đức:bấm T5 cần công tắc Cho phép bấm và gõ đang bật — nhưng T5 đứng SAU T7, chưa cần ngay.",
+      "next_step": "Mo CHUOI-VIEC.md, doc khoi Luat cua chuoi roi nhay THANG toi T11 — dung doc ca file. T11 chen len dau vi luot chay T7 do duoc: scout.type tra typed:8 ma o nhap van RONG, scout.click tra hit:descendant ma tay nghe cua trang KHONG chay (S-22). Duong ghi bao DAT cho viec chua xay ra, va moi viec con lai deu dung tren no. Ban do da dung san o pilots/trang-thu-cham/ — chay lai bang mot lenh, dung dung lai tu dau.",
+      "human_action": "@Duc:bam T11 ton 10 giay — dua cua so Chrome cua ghe Udin_Scout ra TRUOC man hinh roi bao mot tieng. Do la phep thu re nhat de biet duong ghi hong co phai vi cua so dang khuat. @Duc:bam D2 con mot nua — The He thong, khoi Ho so ghe, go cho ghe THU HAI mot ten khac Udin_Scout.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -174,7 +174,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "**Chạy tiếp được rồi** (`~~B-74~~`, Đức nêu 12/09): cuối mỗi lượt `chay-chuoi.bat` hỏi `[t]` chạy tiếp · `[m]` chạy mới cùng thông số · `[g]` gõ lại; và thông số được nhớ sang cả lần mở cửa sổ sau. `--tiep` đọc nhật ký để nối từ lượt gửi cuối và **trừ** số vòng đã gửi vào trần — chạy lại từ số không trên một hội thoại đang dở sẽ **gửi lại đúng prompt đã gửi**. **Trước đó, `~~B-73~~`:** tên chuỗi có **dấu cách** làm vỡ khoá gửi — mọi lượt gửi trả `INVALID_ENVELOPE` và chuỗi chết ở vòng 1, trong khi nhật ký lại đổ cho trang. Cùng họ: hai dòng `echo` không đóng ngoặc khiến `&` trong tên **chạy `fill` như một lệnh**. Cả hai đã vá. **Sổ nợ 2**: `B-50` · `B-58`, cả hai chờ bệnh tái phát.",
+      "title": "**Chuỗi đã gửi được trên trang thật, và ba lỗi vừa lộ ra đều ở GIÁC QUAN chứ không ở suy luận.** `~~B-87~~`: id tạm (`request-<hội thoại>-N`) từng bị coi là đại diện cho *chưa đọc được gì* — đo 13/09 thì nó đi kèm một khối ĐẦY ĐỦ 164 ký tự, nên giờ đo thẳng `chars > 0`; chống gửi trùng so bằng CHỮ khi id chưa chốt. `~~B-88~~` **nguy hiểm nhất**: lượt đọc lại sau khi gửi trả `false` (chưa bay) ngay ở lượt đọc được đầu tiên, trong khi tin nhắn ĐÃ bay — bộ chạy báo `GUI_THAT_BAI · đã gửi 0` rồi `chay-chuoi.bat` mời `[m] chạy MỚI`, tức mời gửi trùng đúng thứ exact-once cấm. Nay thấy thì `true` ngay, `false` chỉ sau khi hết kiên nhẫn, mù vẫn `null`. `~~B-89~~`: bộ đếm *liên tiếp* một mình đọc ra như đang treo — thêm bộ đếm TỔNG mỗi vòng. **Việc kế:** `B-50` · `B-58` vẫn chờ bệnh tái phát.",
       "rank": 2,
       "claim": null
     },
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Mở CHUOI-VIEC.md của gói, đọc khối Luật của chuỗi rồi nhảy THANG tới mục T7 — đừng đọc cả file. T7 là việc tới lượt và là mục đích của cả gói: đóng vòng tự cải tiến một lần (Scouter dò trang, AI ghi adapter xuống đĩa qua Bridge, scout.reload, adapter chạy). Mục T7 đã liệt sẵn mọi thứ đã biết (vùng ghi, method ghi đĩa, chỗ đặt adapter, ba cái bẫy đã vấp) nên không phải đi dò lại. T1 tới T4 đã xong và đã đo ngoài đời; toàn bộ đã đẩy lên main.",
+      "title": "Mo CHUOI-VIEC.md, doc khoi Luat cua chuoi roi nhay THANG toi T11 — dung doc ca file. T11 chen len dau vi luot chay T7 do duoc: scout.type tra typed:8 ma o nhap van RONG, scout.click tra hit:descendant ma tay nghe cua trang KHONG chay (S-22). Duong ghi bao DAT cho viec chua xay ra, va moi viec con lai deu dung tren no. Ban do da dung san o pilots/trang-thu-cham/ — chay lai bang mot lenh, dung dung lai tu dau.",
       "rank": 4,
       "claim": null
     }
