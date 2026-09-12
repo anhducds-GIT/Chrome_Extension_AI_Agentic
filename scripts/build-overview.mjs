@@ -1052,9 +1052,22 @@ function khoiVongDoi(st) {
 /* BẮT ĐẦU Ở ĐÂU — ba câu hỏi, ba lệnh. Đặt NGAY dưới NOW/NEXT vì đây là thứ người mở trang
    cần nhiều nhất, và trước đây nó nằm tận tab thứ ba. Cuộn để tìm việc hay làm nhất là lỗi bày
    trang, không phải lỗi người đọc. */
+/* HAI CÂU TỰ KHAI CỦA TRANG — khôi phục 12/09, mất ở lượt migrate bộ khung (4da1e9e5).
+ *
+ * Trang này ra ở HAI bản: bản CHỤP nằm trong git (không tự cập nhật), và bản SỐNG do ba cửa
+ * `bang-trang-thai/` dựng lại mỗi lần Đức nhấp. `doiSangBanSong()` trong `bang-trang-thai/loi.mjs`
+ * đổi câu này khi dựng bản sống — bằng cách thay CHUỖI HẰNG, cố ý không gõ lại chữ ở hai nơi.
+ *
+ * Gỡ hai hằng số đi mà giữ nguyên bên gọi: `doi-sang-ban-song` NÉM LỖI mỗi lần chạy, tức ba
+ * cửa bảng sống của Đức hỏng từ 10/09 và không ai biết — phép ghim của nó
+ * (`tests/bang-ba-cua-smoke.mjs`) nằm trong chuỗi `npm test` đã chết ở bài đầu tiên. */
+export const KHAI_BAN_CHUP = "BẢN CHỤP trong git — không tự cập nhật. Bản SỐNG: nhấp đúp bang-trang-thai" + String.fromCharCode(92) + "Xem-bang.cmd";
+export const KHAI_BAN_SONG = "BẢN SỐNG — dựng lại mỗi lần bạn nhấp. Bản chụp trong git: DASHBOARD-Chrome-Extension-AI-Agentic.html ở gốc repo";
+
 export function khoiBatDau(dl) {
   return `<div class="the batdau">
     <h2>Bắt đầu ở đâu</h2>
+    <p class="khai-ban" style="color:var(--mo);font-size:12.6px;margin:0 0 10px">${KHAI_BAN_CHUP}</p>
     <div class="cols">
       <div><h3>Repo này đang thế nào?</h3><pre class="code"><code>npm run gate -- --as duc</code></pre>
         <p>XANH TOÀN BỘ = xong. ĐỎ = chưa xong, mỗi dòng nói luôn cách sửa.</p></div>
@@ -1948,13 +1961,22 @@ export function trang(dl) {
         </tbody></table></div>
       </div>` : ""}`;
 
-  return `<title>${esc(ten)}</title>
+  /* DONG DAU TIEN LA LOI TU KHAI, CHO MAY DOC — N-11, Duc bao 06/09: "toi thay co 2 dashboard
+     nen bi confuse". Hai file khong gop duoc (ban o goc phai nam yen trong git, ban song phai
+     ghi de lien tuc), nen moi ban phai TU NOI no la ban nao. `doiSangBanSong()` thay dung chuoi
+     nay khi dung ban song. Dat o DONG DAU chu khong o giua than trang: cho de mot phep kiem tro
+     toi, va cho de doc ngay khi mo file bang bat cu thu gi. Mat o luot migrate bo khung. */
+  return `<!-- ${KHAI_BAN_CHUP} -->
+<title>${esc(ten)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>${CSS}</style>
 <div class="wrap">
-  <div class="cu" data-sinh="${esc(ngay)}"></div>
+  <!-- id=cu KHONG phai trang tri: ba cua bang song (bang-trang-thai/loi.mjs) dung dung the
+       nay lam MO NEO de chen bang thong bao "ban song". Thuoc nay mat o luot migrate bo
+       khung (4da1e9e5) va ke chen khong tim thay cho chen tu hom do. -->
+  <div class="cu" id="cu" data-sinh="${esc(ngay)}"></div>
   <header>
     <h1>${esc(ten)}</h1>
     <p class="sub">${esc(dl.khauHieu || "Repo này chưa khai một câu tự giới thiệu (repo.tagline).")}</p>

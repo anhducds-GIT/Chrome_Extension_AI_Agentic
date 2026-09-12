@@ -235,9 +235,12 @@ export async function sinhLai({
   }
 
   // ⑵ CHỈ bảng HTML. Nạp muộn, sau khi chốt ⑴ đã cho qua.
-  const { sinhTrang } = await import("../scripts/build-overview.mjs");
-  const { createDefaultDeps } = await import("../scripts/build-dashboard.mjs");
-  const { html } = sinhTrang(createDefaultDeps(goc));
+  /* `sinhTrang(createDefaultDeps(goc))` LA API CU — ca hai ham bien mat o luot migrate bo khung
+     (4da1e9e5), nen dong nay nem `sinhTrang is not a function` MOI LAN ba cua duoc nhap. Tuc
+     bang song cua Duc hong tu 10/09, va phep ghim cua no nam trong chuoi `npm test` da chet o
+     bai dau tien. Nay goi dung API hien tai: `trang(await gomDuLieu())`. */
+  const { trang, gomDuLieu } = await import("../scripts/build-overview.mjs");
+  const html = trang(await gomDuLieu());
 
   const tt = { ngung: false, chuKhoa: null, luc, nhip: nhip ?? cu.nhip ?? null, ly_do: null };
   fs.writeFileSync(fileBang, themCharset(chenBang(await doiSangBanSong(html), tt)), "utf8");

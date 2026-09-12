@@ -326,4 +326,46 @@ const vungCua = (d) => (d.startsWith("scripts/") || d.startsWith("tests/") ? "_c
   ok("6e · `--restamp` không phải cửa sau: đối chiếu HEAD · đòi câu chốt · ghi vào bảng");
 }
 
+/* ---- 7. Gỡ hộ một khoá file BỎ QUÊN — cửa mới 12/09 ---------------------- */
+/* Khoá mức FILE tự khai là "giữ VÀI PHÚT". Đo 12/09: một khoá `HANDOFF.md` treo 58 TIẾNG, và
+   luật chiều hai làm nó chặn luôn cả vùng bao ngoài (`_root`). Trước hôm nay KHÔNG lệnh nào gỡ
+   được: khoá VÙNG của người khác thì `--take --duc-duyet` giành được, khoá FILE thì không có
+   cửa nào. Đó là một lỗ, không phải một sự nghiêm khắc — và nó khoá một phần tư repo.
+   Vẫn đòi CÂU CHỐT chứ không mở theo thời gian: một cái hạn tự động là lời mời ngồi đợi cho
+   hết giờ rồi lấy, và lần đó sẽ đúng vào phiên đang ghi dở thật. */
+{
+  const bang = { claims: {}, tam: { "a.md": { owner: "p2", luc: LUC } } };
+
+  const khongChot = quyetDinhXong(bang, { duongDan: "a.md", as: "p1" });
+  assert.equal(khongChot.code, EXIT.REFUSED, "không có câu chốt thì VẪN từ chối — mặc định không đổi");
+  assert.match(khongChot.message, /--duc-duyet/, "lời từ chối phải chỉ ra đúng cửa đi tiếp");
+
+  // Câu chốt phải là một câu THẬT. Một chuỗi ngắn là cách đi vòng qua luật bằng một ký tự.
+  for (const xau of ["", "   ", "ok", "Duc ok"]) {
+    assert.equal(quyetDinhXong(bang, { duongDan: "a.md", as: "p1", ducDuyet: xau }).code, EXIT.REFUSED,
+      `câu chốt quá ngắn (${JSON.stringify(xau)}) không được tính là duyệt`);
+  }
+
+  const chot = "Duc chot 2026-09-12: go khoa bo quen cua harness-loi-01";
+  const go = quyetDinhXong(bang, { duongDan: "a.md", as: "p1", ducDuyet: chot });
+  assert.equal(go.code, EXIT.OK);
+  assert.deepEqual(go.next, {}, "gỡ xong thì HÀNG BỊ XOÁ hẳn, không để lại xác đường dẫn");
+  assert.deepEqual(go.goHo, { duongDan: "a.md", cua: "p2", chot },
+    "phải trả về ai vừa bị gỡ và vì sao — lệnh in ra để phiên kia còn được báo");
+  assert.deepEqual(bang.tam, { "a.md": { owner: "p2", luc: LUC } }, "không được sửa bảng gốc tại chỗ");
+
+  // Cửa này CHỈ mở cho khoá của NGƯỜI KHÁC. Khoá của chính mình vẫn trả bình thường, không câu
+  // chốt nào — nếu không thì mọi lượt `--xong --het` hàng ngày đều đòi duyệt.
+  const cuaMinh = quyetDinhXong({ claims: {}, tam: { "b.md": { owner: "p1", luc: LUC } } }, { duongDan: "b.md", as: "p1" });
+  assert.equal(cuaMinh.code, EXIT.OK);
+  assert.equal(cuaMinh.goHo, undefined, "trả khoá của chính mình KHÔNG phải gỡ hộ");
+
+  // Và ĐƯỜNG DÂY: nhánh CLI phải thật sự chuyển cờ xuống, không chỉ khai trong hàm thuần.
+  const nguonCli = readFileSync(new URL("../scripts/claim.mjs", import.meta.url), "utf8");
+  assert.match(nguonCli, /ducDuyet: flag\("duc-duyet"\)/,
+    "nhánh --xong của CLI phải chuyển --duc-duyet xuống, nếu không thì cửa mới không với tới được");
+  assert.match(nguonCli, /GỠ HỘ: /, "gỡ hộ phải IN RA — một dòng lặng lẽ là cách phiên kia không bao giờ biết");
+  ok("7 · khoá file bỏ quên: gỡ được bằng câu chốt của Đức, và CHỈ bằng câu chốt");
+}
+
 console.log(`khoa-file: ${so} vế xanh`);

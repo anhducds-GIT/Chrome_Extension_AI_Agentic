@@ -1161,44 +1161,4 @@ const CLAIMS = () => ({
   ok("N-33 · moi luot ghi bang deu qua cua nguyen tu");
 }
 
-{
-  /* GO HO MOT KHOA FILE BO QUEN — cua moi 12/09, va no DOI cau chot cua Duc.
-     Vi sao can: khoa muc FILE tu khai la "giu VAI PHUT", nhung do 12/09 mot khoa HANDOFF.md
-     treo 58 TIENG. Luat chieu hai lam no chan ca vung bao ngoai (_root), va truoc hom nay
-     KHONG lenh nao go duoc — khoa VUNG cua nguoi khac thi --take --duc-duyet gianh duoc,
-     khoa FILE thi khong co cua nao. Do la mot lo, khong phai mot su nghiem khac. */
-  const bang = { claims: {}, tam: { "a.md": { owner: "p2", luc: "t" } } };
-
-  const khongChot = quyetDinhXong(bang, { duongDan: "a.md", as: "p1" });
-  assert.equal(khongChot.code, EXIT.REFUSED, "khong co cau chot thi VAN tu choi — mac dinh khong doi");
-  assert.match(khongChot.message, /--duc-duyet/, "loi tu choi phai chi ra dung cua di tiep");
-
-  // Cau chot phai la mot cau THAT. Mot chuoi ngan la cach di vong qua luat bang mot ky tu.
-  for (const xau of ["", "   ", "ok", "Duc ok"]) {
-    assert.equal(quyetDinhXong(bang, { duongDan: "a.md", as: "p1", ducDuyet: xau }).code, EXIT.REFUSED,
-      `cau chot qua ngan (${JSON.stringify(xau)}) khong duoc tinh la duyet`);
-  }
-
-  const chot = "Duc chot 2026-09-12: go khoa bo quen cua harness-loi-01";
-  const go = quyetDinhXong(bang, { duongDan: "a.md", as: "p1", ducDuyet: chot });
-  assert.equal(go.code, EXIT.OK);
-  assert.deepEqual(go.next, {}, "go xong thi HANG BI XOA han, khong de lai xac duong dan");
-  assert.deepEqual(go.goHo, { duongDan: "a.md", cua: "p2", chot },
-    "phai tra ve ai vua bi go va vi sao — lenh in ra de phien kia con duoc bao");
-  assert.deepEqual(bang.tam, { "a.md": { owner: "p2", luc: "t" } }, "khong duoc sua bang goc tai cho");
-
-  // Va cua nay chi mo cho khoa CUA NGUOI KHAC. Khoa cua chinh minh van tra binh thuong,
-  // khong cau chot nao — neu khong thi moi luot --xong --het hang ngay deu doi duyet.
-  const cuaMinh = quyetDinhXong({ claims: {}, tam: { "b.md": { owner: "p1", luc: "t" } } }, { duongDan: "b.md", as: "p1" });
-  assert.equal(cuaMinh.code, EXIT.OK);
-  assert.equal(cuaMinh.goHo, undefined, "tra khoa cua chinh minh KHONG phai go ho");
-
-  // Va duong day: nhanh CLI phai thuc su chuyen co xuong, khong chi khai trong ham thuan.
-  const nguonCli = readFileSync(join(SCRIPTS_DIR, "claim.mjs"), "utf8");
-  assert.match(nguonCli, /quyetDinhXong\(\{ claims: parsed\.claims, tam \}, \{ duongDan: d, as, ducDuyet: flag\("duc-duyet"\) \}\)/,
-    "nhanh --xong cua CLI phai chuyen --duc-duyet xuong, neu khong thi cua moi khong voi toi duoc");
-  assert.match(nguonCli, /GO HO: /, "go ho phai IN RA — mot dong lang le la cach phien kia khong bao gio biet");
-  ok("khoa file bo quen: go duoc bang cau chot cua Duc, va chi bang cau chot");
-}
-
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
