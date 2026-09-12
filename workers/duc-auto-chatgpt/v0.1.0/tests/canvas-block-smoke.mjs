@@ -156,4 +156,30 @@ const canvas = (than = THAN) => n("div", { "data-testid": "writing-block-contain
   console.log("  ok  ⑤ danh sách ứng viên đi hết, không dừng ở cái đầu");
 }
 
+/* ---- ca 6: DÂY NỐI TỚI ADAPTER ----
+ * Năm ca trên truyền danh sách selector vào TẬN TAY `readTurns`, nên chúng kiểm CƠ CHẾ mà
+ * không kiểm việc cơ chế ấy có được nối dây hay không. Đột biến kiểm bắt đúng khe đó: gỡ
+ * `writing-block-container` khỏi adapter thì cả năm ca vẫn xanh, trong khi bộ chạy thật mù
+ * trở lại y như trước khi sửa. Đây là hình dạng lỗi đã sống một tuần trong repo này:
+ * `articleSample: []` nằm cạnh `assistantCount: 7` — mù một nửa mà tự báo khoẻ. */
+{
+  const adapter = fs.readFileSync(new URL("../provider-adapter.js", import.meta.url), "utf8");
+  const iKhoi = adapter.indexOf("answerBlock: Object.freeze([");
+  assert.ok(iKhoi > 0, "adapter vẫn khai `answerBlock`");
+  const danhSach = adapter.slice(iKhoi, adapter.indexOf("]),", iKhoi));
+  assert.match(danhSach, /writing-block-container/,
+    "adapter PHẢI khai selector canvas — không khai thì bộ đọc mù với canvas, và năm ca trên vẫn xanh vì chúng tự truyền selector");
+  assert.match(danhSach, /"pre"/, "và vẫn phải giữ khối mã");
+  assert.ok(danhSach.indexOf('"pre"') < danhSach.indexOf("writing-block-container"),
+    "`pre` đứng TRƯỚC canvas: thứ tự là ưu tiên, và khối mã là thứ ưu tiên");
+  assert.ok(!/aria-label/.test(danhSach),
+    "KHÔNG neo vào aria-label: nhãn tiếng Anh chết ngay lượt Đức đổi ngôn ngữ giao diện");
+
+  /* Và `answerBlockSelector` phải CHUYỂN CẢ DANH SÁCH xuống, không phân giải sẵn một cái —
+     phân giải sẵn là hỏi `document`, tức hỏi cả trang. */
+  assert.match(content, /function answerBlockSelector\(\)\s*\{\s*return Array\.isArray\(SEL\.answerBlock\)/,
+    "`answerBlockSelector` phải trả cả danh sách cho `readTurns` tự thử trong khung");
+  console.log("  ok  ⑥ dây nối: adapter khai canvas, `pre` ưu tiên trước, danh sách xuống tới readTurns");
+}
+
 console.log("canvas-block-smoke: xanh");
