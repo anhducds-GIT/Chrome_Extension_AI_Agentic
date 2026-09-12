@@ -26,7 +26,7 @@
     },
     {
       "path": "drafts/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "evidence/",
@@ -196,7 +196,7 @@
   "health": {
     "units_without_status": 0,
     "dead_links": 0,
-    "undeclared_dirs": 1,
+    "undeclared_dirs": 0,
     "draft_debt": 1
   }
 }
