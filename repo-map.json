@@ -56,8 +56,8 @@
       "lifecycle": "active",
       "status_md": "STATUS.md",
       "owner": "harness-loi-01",
-      "next_step": "Dọn 42 ADR bị B12 nêu, rồi khai luat.chu_de cho bộ biên dịch luật (B16) — xem BACKLOG.md.",
-      "human_action": "CÓ — Đức chốt có bật B16 (bộ biên dịch luật) hay để cảnh báo cho tới khi 154 ADR khai xong `chu_de`.",
+      "next_step": "N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).",
+      "human_action": "CÓ — ⑴ N-65: viết lại hay bỏ 8 bài kiểm đang cách ly · ⑵ bật B16 hay để cảnh báo tới khi 154 ADR khai xong `chu_de`.",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": "2026-09-09",
@@ -153,7 +153,7 @@
     {
       "id": "_root",
       "unit": "_root",
-      "title": "Dọn 42 ADR bị B12 nêu, rồi khai luat.chu_de cho bộ biên dịch luật (B16) — xem BACKLOG.md.",
+      "title": "N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).",
       "rank": 1,
       "claim": null
     },
