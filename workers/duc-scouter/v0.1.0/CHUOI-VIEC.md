@@ -30,23 +30,20 @@
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **D1** | Đức chốt: cho thêm `DOM.getNodeForLocation` vào đường ghi | — | **XONG 12/09 — Đức cho** |
-| **D1b** | Đức chốt: thêm `DOM.getBoxModel` vào đường ĐỌC (kế hoạch này tính thiếu) | — | **XONG 12/09 — Đức cho** |
-| **D2** | Đức gõ tên cho hai ghế Scouter | — | **NỬA CHỪNG** — một ghế tên `Udin_Scout`, ghế kia chưa |
-| **T1** | `S-17` — bấm phải kiểm điểm bấm thuộc về ai | D1 | **XONG** · đo ngoài đời |
-| **T2** | `S-18` — `scout.wait` biết *dùng được*, không chỉ *có mặt* | D1 · D1b | **XONG** · đo ngoài đời |
-| **T3** | `S-19` — `scout.navigate` nạp lại được cùng một URL | — | **XONG** · đo ngoài đời |
-| **T4** | `S-16` — hạ ba hạn chờ xuống dưới ngưỡng máy chủ | — | **XONG** · đo ngoài đời |
-| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | ~~T1~~ · công tắc | **mở khoá** — T1 xong |
-| **T10** | `S-21` — target thỉnh thoảng không trả lời được câu hỏi hình học | — | chưa bắt đầu |
-| **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T1 xong trước | chưa bắt đầu |
-| **T7** | **Đóng vòng tự cải tiến MỘT lần** — `ROADMAP` bước 2 | T3 | chưa bắt đầu |
+| **T7** | **Đóng vòng tự cải tiến MỘT lần** — `ROADMAP` bước 2 | — | **tới lượt** |
+| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | @Đức:bấm công tắc · tài khoản rảnh | chờ Đức |
+| **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
+| **T10** | `S-21` — target thỉnh thoảng không trả lời câu hỏi hình học | — | chưa bắt đầu |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T7 xong trước | chưa bắt đầu |
 | **T9** | Đóng gói v1 cho người ngoài dùng được | T7 | chưa bắt đầu |
+| ~~D1 · D1b~~ | Đức chốt hai method CDP | — | **XONG 12/09** |
+| **D2** | Đức gõ tên cho ghế THỨ HAI | — | **nửa chừng** — ghế 1 đã tên `Udin_Scout` |
+| ~~T1 T2 T3 T4~~ | `S-17` `S-18` `S-19` `S-16` | — | **XONG 12/09**, cả bốn đo ngoài đời |
 
-**Thứ tự này không tuỳ tiện.** T1 đứng đầu vì nó là lỗi báo-thành-công-giả trên đường ghi: mọi
-việc sau nó đều dựa vào một lượt bấm nói thật. T8 đứng gần cuối vì nó đổi tên hàng loạt và làm
-mọi diff khó đọc — đúng lý do nó bị hoãn từ 07/09; đừng chen nó vào giữa lúc đang xây.
+**T7 đứng đầu bây giờ vì bốn việc kê dưới nó đều đang chờ nó trả lời một câu:** cả vòng có
+khép được không, và khép rồi thì còn thiếu gì thật. T6 xây sẵn một năng lực chưa ai cần là
+đúng thứ `ROADMAP` mục ④ cấm; T9 đóng gói một seed chưa khép vòng lần nào là đóng gói một lời
+hứa. T8 đứng cuối vì nó đổi tên hàng loạt và làm mọi diff khó đọc.
 
 ---
 
@@ -199,31 +196,49 @@ sẵn cho một nhu cầu tưởng tượng là đúng thứ `ROADMAP` mục ④
 
 · **đóng khi:** chọn được một đường, và lý do ghi vào `BACKLOG.md` dưới `S-20`.
 
-## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ *việc lớn nhất còn nợ*
+## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ *việc tới lượt, và là mục đích của cả gói*
 
-Đây là **mục đích của cả gói** (`ROADMAP` bước 2): Scouter dò trang → AI ghi adapter xuống đĩa
-qua Bridge → `scout.reload` → adapter chạy. **Từng mảnh đã có và đã đo; cả vòng thì chưa ai
-khép một lần nào.** Cho tới khi nó khép, ta đang xây các bộ phận mà chưa biết chúng lắp vào
-nhau có chạy không.
+Scouter dò trang → AI ghi adapter xuống đĩa qua Bridge → `scout.reload` → adapter chạy.
+**Từng mảnh đã có và đã đo; cả vòng thì chưa ai khép một lần nào.** Cho tới khi nó khép, ta
+đang xây các bộ phận mà chưa biết chúng lắp vào nhau có chạy không.
 
-**Chạy trên một trang TỰ DỰNG, không phải trang thật.** Hai lý do: trang thật cần Đức duyệt
-từng lượt, và trang Udin có trần phiên nên một lượt chạy hỏng vì hết ghế sẽ bị đọc nhầm thành
-vòng lặp hỏng.
+### Thứ đã biết — đừng đi dò lại
 
-**Bốn chặng, mỗi chặng dừng được và kiểm được:**
+| thứ | giá trị |
+|---|---|
+| ghế gọi được bằng tên | `Udin_Scout` (ghế thứ hai chưa có tên → luôn dán đích) |
+| method ghi đĩa | `file.write` · `file.append` · `file.read` · `file.list` — **của MÁY CHỦ**, chạy được cả khi không có extension nào nối |
+| vùng ghi | `C:\WORKING ZONE\Chrome Extension Bridge\duc-scouter\du-lieu` (hỏi lại bằng `host.capabilities` → `write_root`) |
+| chỗ đặt adapter | `workers/duc-scouter/pilots/<tên>/` — mẫu có sẵn: `pilots/hnx-phai-sinh/` (`scripts/` + `tests/`) |
+| trang thử | phải phục vụ qua **http trên 127.0.0.1**. `scout.navigate` chỉ nhận http(s): `file:` và `data:` bị chặn ở `readUrlDi`, cố ý |
+| nạp lại trang | `scout.navigate` tới **đúng URL đang đứng** nay chạy (T3) — chặng 4 cần nó |
+| chờ cho đúng | `scout.wait state:"usable"` (T2), đừng dùng `present` cho một nút sắp bấm |
 
-1. Dựng một trang thử tự dựng, **tối thiểu**: một ô nhập, một nút, một kết quả hiện ra sau một
-   khoảng trễ. Đủ để ép dùng `scout.wait`, không hơn.
-2. Scouter dò nó (`scout.page` · `scout.a11y` · `scout.query`) và **ghi báo cáo xuống đĩa** qua
-   `file.write` của Bridge.
-3. AI đọc báo cáo, **viết một adapter** xuống đĩa — vào `pilots/<tên>/`, **KHÔNG vào seed**.
-   Adapter chỉ được chứa hiểu biết về trang đó; thứ gì không riêng của trang nào thì đẩy lên
-   seed và ghi lại là đã đẩy.
-4. `scout.reload`, rồi chạy adapter, rồi so kết quả với thứ làm tay.
+### Bốn chặng, mỗi chặng dừng được và kiểm được
 
-· **đóng khi:** cả bốn chặng chạy liền một mạch không sửa tay giữa chừng, và `docs/TRIALS.md`
+1. **Trang thử TỐI THIỂU, tự dựng**: một ô nhập, một nút, một kết quả hiện ra **sau một khoảng
+   trễ**. Độ trễ là phần bắt buộc — nó là thứ ép phải dùng `scout.wait`. Không thêm gì nữa.
+   Đặt trong repo để lặp lại được, **đừng** để ở thư mục tạm như lượt đo 12/09.
+2. **Scouter dò nó** (`scout.page` · `scout.a11y` · `scout.query`) và **ghi báo cáo xuống đĩa**
+   qua `file.write`.
+3. **AI đọc báo cáo, viết một adapter** xuống đĩa — vào `pilots/<tên>/`, **KHÔNG vào seed**.
+   Adapter chỉ được chứa hiểu biết về trang đó. Thứ gì **không riêng của trang nào** thì đẩy
+   lên seed và ghi lại là đã đẩy — đó là cách seed lớn lên, và là luật gói số 2.
+4. **`scout.reload`, rồi chạy adapter, rồi so kết quả với thứ làm tay.**
+
+### Cái bẫy đã biết, đừng vấp lại
+
+- **Hai ghế là hai HỒ SƠ Chrome.** `scout.reload` một ghế KHÔNG nạp lại ghế kia. Sửa mã xong
+  thì nạp lại **đúng cái ghế sắp dùng**, không thì đo phải bản cũ (mất 10 phút ngày 12/09).
+- **`targetId` đổi sau một lượt điều hướng khác nguồn.** Hỏi lại `scout.targets` sau mỗi
+  `scout.navigate`, đừng dùng lại số cũ.
+- **Đừng mượn tab việc thật của Đức.** Tab nào mượn thì phải trả lại được — cả đi lẫn về đều
+  phải là http(s).
+
+· **đóng khi:** cả bốn chặng chạy liền một mạch **không sửa tay giữa chừng**, và `docs/TRIALS.md`
 có một dòng cho lượt đó. **Một chặng phải sửa tay thì vòng CHƯA khép** — ghi rõ chặng nào và vì
-sao, đừng làm tròn.
+sao, đừng làm tròn. Kết quả "chưa khép được" cũng là kết quả, và nó đáng giá hơn một dòng xanh
+không đúng.
 
 ## T8 · `S-03` — đổi tên `observer` → `scouter`
 

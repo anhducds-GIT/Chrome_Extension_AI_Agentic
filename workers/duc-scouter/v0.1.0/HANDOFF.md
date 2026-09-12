@@ -845,3 +845,22 @@ file trở lại UTF-8 thuần và diff đọc được.
 trước nên chuỗi dừng trước khi tới `tests/khong-byte-dieu-khien-smoke.mjs`. Cổng repo CÓ người
 canh chuyện này từ trước — nó chỉ chưa tới lượt chạy. **Suite của gói xanh không thay được
 suite toàn repo**, đúng bài học của mục ngay trên.
+
+## 2026-09-12 · `claude-scouter-udine` — điều phối lại chuỗi quanh T7
+
+**Không sửa mã.** Chỉ dựng lại `CHUOI-VIEC.md` để phiên sau (sau một lượt compact) vào là chạy
+được T7 ngay, không phải đi dò lại những thứ phiên này đã biết.
+
+**Bảng theo dõi viết lại quanh việc CÒN LẠI**, không kể lại việc đã xong: T7 lên đầu, và nói rõ
+vì sao — T6, T8, T9 đều đang chờ T7 trả lời một câu: cả vòng có khép được không, và khép rồi
+thì còn thiếu gì THẬT. Xây trước một năng lực chưa ai cần là thứ `ROADMAP` mục ④ cấm.
+
+**Mục T7 nay chở sẵn bảng "thứ đã biết"**: vùng ghi của máy chủ, bốn method ghi đĩa (chúng là
+method của MÁY CHỦ, chạy được cả khi không extension nào nối), chỗ đặt adapter kèm gói mẫu, và
+việc trang thử phải phục vụ qua http vì `scout.navigate` cố ý chặn `file:`/`data:`.
+
+**Và ba cái bẫy phiên này đã vấp**, ghi để khỏi vấp lần hai: hai ghế là hai HỒ SƠ Chrome nên
+nạp lại một ghế không chạm ghế kia · `targetId` đổi sau lượt điều hướng khác nguồn · tab mượn
+của Đức thì phải trả lại được.
+
+Việc tới lượt: **T7**, không cần ai duyệt.
