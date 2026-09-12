@@ -753,7 +753,15 @@ console.log("chuoi reasoning smoke tests: PASS");
     "mốc phải đặt SAU lượt gọi — đo từ lúc lượt trước xong, không phải lúc nó bắt đầu");
   /* `goi` được gọi từ cả chỗ có `await` lẫn chỗ không, nên phải chặn ĐỒNG BỘ. Một cửa an toàn
      chỉ chặn được nửa số lối vào thì không phải là cửa. */
-  assert.match(thanGoi, /Atomics\.wait/,
+  /* DÒ TRÊN MÃ, KHÔNG DÒ TRÊN CHÚ THÍCH. Bản đầu `assert.match(thanGoi, /Atomics\.wait/)` XANH
+     cả khi đột biến đã gỡ hẳn lời gọi — vì chính comment ngay phía trên nhắc tên nó. Lần thứ
+     ba trong một ngày một bộ dò của tôi khớp vào văn của tôi. Lọc comment là điều kiện cần để
+     một phép ghim nói về mã. */
+  const maGoi = thanGoi.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  assert.match(maGoi, /Atomics\.wait\(/,
     "phải chặn đồng bộ: `goi` có chỗ gọi không await, và `await ngu()` ở đó không chặn gì cả");
 
   // `doc()` phải ĐI QUA `goi()`, không tự gọi CLI — đường vòng là đường lách sàn.
