@@ -57,7 +57,15 @@ function n(tag, attrs, con) {
       di(node);
       return ra;
     },
-    querySelector(sel) { return node.querySelectorAll(sel)[0] || null; }
+    querySelector(sel) { return node.querySelectorAll(sel)[0] || null; },
+    /* `contains` LÀ THẬT, không phải trang trí. Phép lọc "khối lồng khối" trong `readTurns`
+       gọi đúng hàm này; DOM giả thiếu nó thì phép lọc thành vô hiệu trong test, và đột biến
+       "bỏ phép lọc" sẽ XANH — đã dính đúng thế một lượt. */
+    contains(el) {
+      if (el === node) return true;
+      const di = (x) => x.children.some((c) => c === el || di(c));
+      return di(node);
+    }
   };
   return node;
 }

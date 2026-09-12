@@ -14,6 +14,22 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { quyetDinh, ketLuanGui, canhTab, chanDung, conSong, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS, SAN_GIUA_HAI_LUOT_DOC_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
+/* BỎ CHÚ THÍCH TRƯỚC KHI DÒ MÃ — dùng chung cho mọi phép ghim đọc mã nguồn trong file này.
+ *
+ * NĂM LẦN trong hai ngày một bộ dò của tôi khớp vào CHÍNH VĂN CỦA TÔI thay vì vào mã: đếm chỗ
+ * gọi `doc()`, tên phương thức gỡ phần tử trong máy soi DOM, lời gọi `Atomics.wait`, dạng có
+ * ngoặc kép của tên thẻ khối, và `NGUOI_DANG_DUNG` trong một comment giải thích.
+ *
+ * Bốn lần đầu tôi vá bằng cách lọc theo TIỀN TỐ DÒNG (`*`, `//`, `/*`). Lần thứ năm cho thấy
+ * cách ấy sai từ gốc: kiểu chú thích của repo này thụt lề treo, nên dòng NỐI trong một khối
+ * `/* … *​/` không mang tiền tố nào và lọt sạch. Bỏ theo KHỐI mới đúng.
+ *
+ * Không hoàn hảo — một chuỗi ký tự chứa dấu đóng chú thích sẽ cắt nhầm. Đủ tốt cho việc dò mã
+ * ở đây, và tốt hơn hẳn phép lọc theo dòng đã bốn lần cho kết quả sai. */
+export function boChuThich(ma) {
+  return String(ma ?? "").replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
   ({ found: true, chars: text.length, truncated: false, text, turn_id: turn, blocks_in_turn: 1 });
@@ -976,6 +992,27 @@ console.log("chuoi reasoning smoke tests: PASS");
     "nhận ra của mình thì phải nhích mốc ngay");
   assert.ok(src.includes('su_kien: "SAU_GUI_DOC_HONG"'),
     "đọc lại sau khi gửi mà hỏng thì phải vào nhật ký — im lặng ở đây đọc ra như 'đã kiểm và thấy ổn'");
+
+  /* ⒠ B-86 ⓑ — NHÁNH `sauGui` KHÔNG ĐƯỢC TỰ KẾT LUẬN "NGƯỜI ĐANG DÙNG".
+     Đo 16:51:36 ngày 12/09: gửi xong, đọc lại 10 giây sau (sàn B-85), trang CHƯA KỊP dựng lượt
+     vừa gửi nên lượt người cuối vẫn là lượt CŨ — và bản trước kết luận ngay `NGUOI_DANG_DUNG`,
+     dừng chuỗi với `da_gui: 1`, trong khi không ai gõ gì. Chỗ này KHÔNG đủ dữ kiện để phán:
+     nó chỉ đọc được MỘT lượt, còn `canhTab` ở vòng sau có cả chữ mình vừa gửi để so. */
+  const iSauGui = src.indexOf("const sauGui = await doc();");
+  const iHet = src.indexOf("ghi({ su_kien: \"DA_GUI\"", iSauGui);
+  const khoiSauGui = src.slice(iSauGui, iHet);
+  /* Mỏ neo kết thúc phải nằm SAU mỏ neo bắt đầu. Bản đầu dùng `ketLuanGui` — mà chỗ đó nằm
+     TRƯỚC `sauGui` trong file, nên `indexOf(…, iSauGui)` trả `-1` và lát cắt ôm trọn phần còn
+     lại của file, kéo theo mọi `NGUOI_DANG_DUNG` khác. Một lát cắt sai làm phép ghim nói về
+     một đoạn mã không phải đoạn nó định nói. */
+  assert.ok(iSauGui > 0 && iHet > iSauGui, "mỏ neo cắt nhánh sauGui phải hợp lệ và đúng thứ tự");
+  assert.ok(khoiSauGui.length > 100 && khoiSauGui.length < 3000,
+    `lát cắt nhánh sauGui phải GỌN (đang ${khoiSauGui.length} ký tự) — cắt trượt là phép ghim vô nghĩa`);
+  const maSauGui = boChuThich(khoiSauGui);
+  assert.ok(!/NGUOI_DANG_DUNG/.test(maSauGui),
+    "nhánh đọc-lại-sau-khi-gửi KHÔNG được kết luận NGUOI_DANG_DUNG: 'chưa thấy mình' ≠ 'thấy người khác'");
+  assert.ok(maSauGui.includes('su_kien: "SAU_GUI_CHUA_THAY"'),
+    "chưa thấy lượt của mình thì GHI LẠI rồi đi tiếp, không dừng");
 
   console.log("  ok  Ⓐ nhận ra tin nhắn của chính mình khi lượt đọc sau khi gửi hết giờ");
 }
