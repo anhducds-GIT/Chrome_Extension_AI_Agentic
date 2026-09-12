@@ -852,14 +852,36 @@ async function chinh() {
              thẻ **canvas**, mà bộ dò khối neo vào `answerBlock: ["pre"]` nên mù với nó (`pre = 0`,
              `nutCopy` có `aria="Copy"` + `aria="Open editor"` — xem B-82).
              Hai khả năng, nêu CẢ HAI và nêu cách phân biệt. Đừng bắt người đoán. */
+          /* B-90 — KHẢ NĂNG ⑶: GPT CÓ TRẢ LỜI, NHƯNG CÂU TRẢ LỜI ĐỨT.
+           *
+           * Đo 13/09 trên hội thoại Project của Đức: lượt trả lời cuối dài ĐÚNG 13 ký tự
+           * ("MODE: Explain"), `generating: false`, `blocks_in_turn: 0`, và máy soi DOM trả
+           * `pre: []` · `canvas: null` · `thẻ lạ: []` — tức trên màn hình cũng KHÔNG có gì.
+           * Lượt ấy giữ nguyên id tạm qua cả một lượt nạp lại: một câu sinh ra rồi chết giữa
+           * chừng thì không bao giờ được chốt id.
+           *
+           * Cả hai khả năng in ra trước đây đều KHÔNG đúng ca này: không phải "chưa có giao
+           * kèo" (dán lại cũng vô ích), không phải "bộ đọc mù" (máy soi cũng không thấy gì).
+           * Người đọc bị đẩy đi tìm ở hai chỗ đều sai — tôi tự đi tìm mất hơn mười phút.
+           *
+           * Bộ chạy ĐÃ CÓ sẵn con số để nói: độ dài lượt trả lời cuối và id của nó. In ra.
+           * Đây chỉ là CHỮ, không phải quyết định: không nhánh nào rẽ theo con số này, nên
+           * không có ngưỡng nào bị đặt ra ở đây. */
+          const tlCuoi = [...(r.turns || [])].reverse().find((t) => t.role === "assistant");
+          const chuCuoi = Number(tlCuoi?.chars ?? 0);
+          const dut = Boolean(tlCuoi) && chuCuoi < 200 && !luotDaChot(tlCuoi.id) && daNapLai;
           lyDo = "KHONG_THAY_KHOI — chưa gửi vòng nào và chưa đọc ra khối nối vòng nào";
           console.log(`  vòng ${vong}: ${lyDo}`);
-          console.log("  Chuỗi chỉ chuyển tiếp NGUYÊN VĂN khối copy cuối câu trả lời. Hai khả năng:");
+          console.log(`  Lượt trả lời cuối: ${tlCuoi ? `${chuCuoi} ký tự · id ${tlCuoi.id}` : "KHÔNG CÓ lượt trả lời nào"}`);
+          console.log("  Chuỗi chỉ chuyển tiếp NGUYÊN VĂN khối copy cuối câu trả lời. Ba khả năng:");
           console.log("   ⑴ hội thoại chưa có giao kèo — dán khối \"GIAO KÈO NỐI VÒNG\" (xem AI-OPERATOR-GUIDE.md) rồi chạy lại;");
-          console.log("   ⑵ CÓ khối trên màn hình nhưng bộ đọc không thấy (ví dụ canvas, không phải khối mã).");
-          console.log("  Phân biệt: chạy `bridge-cli.mjs dom-probe --target <profile>` và xem `answerScope.pre`.");
+          console.log("   ⑵ CÓ khối trên màn hình nhưng bộ đọc không thấy (ví dụ canvas, không phải khối mã);");
+          console.log("   ⑶ GPT CÓ trả lời nhưng câu trả lời ĐỨT giữa chừng — lượt cuối ngắn bất thường và vẫn mang id tạm sau khi nạp lại.");
+          if (dut) console.log("  → Số liệu trên khớp ⑶. Đừng dán lại giao kèo: hãy mở tab, xem câu trả lời cuối, và bảo GPT trả lời lại.");
+          console.log("  Phân biệt ⑴ với ⑵: chạy `bridge-cli.mjs dom-probe --target <profile>` và xem `answerScope.pre`.");
           console.log("  `pre: 0` mà màn hình vẫn có nút copy ⇒ là khả năng ⑵, đừng dán lại gì cả.");
-          ghi({ su_kien: "CHUA_CO_GIAO_KEO", vong, thay_vi: qd.vi });
+          ghi({ su_kien: "CHUA_CO_GIAO_KEO", vong, thay_vi: qd.vi,
+            chu_luot_cuoi: tlCuoi ? chuCuoi : null, id_luot_cuoi: tlCuoi?.id ?? null, co_the_dut: dut });
         }
         break;
       }

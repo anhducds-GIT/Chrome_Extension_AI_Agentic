@@ -1252,3 +1252,65 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓓ đọc hỏng: liên tiếp và tổng là hai số khác nhau, cả hai ra tới người đọc");
 }
+
+/* Ⓔ B-90 — "KHÔNG THẤY KHỐI" CÓ BA KHẢ NĂNG, KHÔNG PHẢI HAI.
+ *
+ * Đo 13/09: lượt trả lời cuối dài ĐÚNG 13 ký tự ("MODE: Explain"), `generating: false`,
+ * `blocks_in_turn: 0`, máy soi DOM trả `pre: []` · `canvas: null` · thẻ lạ `[]`. Tức trên màn
+ * hình cũng không có gì, và lượt ấy giữ id tạm qua cả một lượt nạp lại — một câu sinh ra rồi
+ * chết giữa chừng thì không bao giờ được chốt id.
+ *
+ * Cả hai khả năng in ra trước đó đều SAI cho ca này: không phải "chưa có giao kèo" (dán lại vô
+ * ích), không phải "bộ đọc mù" (máy soi cũng không thấy). Người đọc bị đẩy đi tìm ở hai chỗ đều
+ * sai. Con số để nói đúng thì bộ chạy đã cầm sẵn: độ dài lượt trả lời cuối và id của nó.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const i0 = src.indexOf('lyDo = "KHONG_THAY_KHOI');
+  const i1 = src.indexOf('ghi({ su_kien: "CHUA_CO_GIAO_KEO"', i0);
+  assert.ok(i0 > 0 && i1 > i0, "mỏ neo cắt nhánh KHONG_THAY_KHOI phải hợp lệ và đúng thứ tự");
+  const nhanh = src.slice(i0, i1);
+  assert.ok(nhanh.length > 200 && nhanh.length < 2500,
+    `lát cắt nhánh KHONG_THAY_KHOI phải GỌN (đang ${nhanh.length} ký tự)`);
+
+  /* ⒜ SỐ ĐO PHẢI RA MẶT, KHÔNG CHỈ LỜI KHUYÊN. Ca 13/09 chỉ phân biệt được bằng hai con số
+     bộ chạy đã cầm sẵn — giấu chúng đi là bắt người đọc đi soi DOM để biết thứ đã nằm trong
+     tay bộ chạy. */
+  assert.ok(/Lượt trả lời cuối/.test(nhanh),
+    "phải in độ dài và id của lượt trả lời cuối — đó là hai con số duy nhất phân biệt được ⑶");
+  assert.ok(/KHÔNG CÓ lượt trả lời nào/.test(nhanh),
+    "không có lượt trả lời nào cũng phải nói ra, đừng in `undefined ký tự`");
+
+  /* ⒝ ĐỦ BA KHẢ NĂNG, và lời dẫn phải nói ĐÚNG số ba. Bản trước nói "Hai khả năng" — một câu
+     đếm sai làm người đọc ngừng tìm sau khả năng thứ hai. */
+  assert.ok(/Ba khả năng/.test(nhanh), "lời dẫn phải nói đúng số khả năng đang liệt kê");
+  for (const so of ["⑴", "⑵", "⑶"]) {
+    assert.ok(nhanh.includes(so), `thiếu khả năng ${so}`);
+  }
+  assert.ok(/ĐỨT giữa chừng/.test(nhanh), "khả năng ⑶ phải nói rõ bệnh: câu trả lời đứt");
+
+  /* ⒞ VÀ NÓ PHẢI CHỈ ĐÚNG VIỆC CẦN LÀM. Ca ⑶ mà khuyên "dán lại giao kèo" là đẩy người đi làm
+     một việc vô ích — đúng thứ mà cả khối chú thích 12/09 phía trên sinh ra để chặn. */
+  assert.ok(/Đừng dán lại giao kèo/.test(nhanh),
+    "khớp ⑶ thì phải nói thẳng: đừng dán lại giao kèo");
+
+  /* ⒟ BA ĐIỀU KIỆN CỦA `dut` PHẢI CÙNG CÓ MẶT. Thiếu `daNapLai` thì nó sẽ khớp ngay ở lượt đọc
+     đầu, lúc câu trả lời mới chỉ đang ngắn vì chưa sinh xong — và khuyên sai ngay từ đầu. */
+  const iDut = src.indexOf("const dut =");
+  assert.ok(iDut > 0, "phải có phép đo `dut`");
+  const dongDut = src.slice(iDut, src.indexOf(";", iDut));
+  for (const ve of ["chuCuoi <", "luotDaChot", "daNapLai"]) {
+    assert.ok(dongDut.includes(ve),
+      `\`dut\` phải đòi cả vế \`${ve}\` — thiếu một vế là khuyên sai lúc trang mới đang sinh`);
+  }
+
+  /* ⒠ VÀO NHẬT KÝ NỮA. Đóng cửa sổ là mất màn hình; chẩn đoán nguội đọc lại từ nhật ký. */
+  const iGhi = src.indexOf('ghi({ su_kien: "CHUA_CO_GIAO_KEO"');
+  const dongGhi = src.slice(iGhi, src.indexOf("});", iGhi));
+  for (const truong of ["chu_luot_cuoi", "id_luot_cuoi", "co_the_dut"]) {
+    assert.ok(dongGhi.includes(truong), `nhật ký thiếu trường \`${truong}\``);
+  }
+
+  console.log("  ok  Ⓔ không thấy khối: ba khả năng chứ không hai, số đo ra mặt, ca đứt chỉ đúng việc cần làm");
+}
