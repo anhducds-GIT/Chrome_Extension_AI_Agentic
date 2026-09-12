@@ -47,7 +47,7 @@
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay.",
-      "tra_khi_chua_day": "1 commit (91b4bdea, chore(bang) sinh lai so commit) NAM LOCAL. safe-push tu choi dung: lane claude-gpt-chay-het-job vua commit 518b76a5 va no nam DUOI commit cua toi, nen day len la cuon viec chua duyet cua ho theo. Viec chinh cua lane nay (S-16..S-19) DA DAY xong o 3bf06a85. Commit con lai chi la bang may sinh, sinh lai luc nao cung duoc — lane kia day xong thi no tu het y nghia."
+      "tra_khi_chua_day": "1 commit cua lane nay (91b4bdea, chore(bang)) NAM LOCAL, duoi vai commit cua lane claude-gpt-chay-het-job. safe-push tu choi dung: day len la cuon viec chua duyet cua ho theo. Viec chinh cua lane nay (S-16..S-19) DA DAY xong o 3bf06a85. Commit con lai chi la bang may sinh — lane kia day xong thi no tu het y nghia. LOI CUA TOI, ghi ra: luot --amend luc 12/09 roi vao commit dc42d320 cua lane kia (ho commit xen vao giua git add va git commit), bien no thanh e80be828 va cho them mot dong claims.json cua toi vao trong do. KHONG sua lich su de che vi ho da commit tiep len tren, va sua lich su la viec phai hoi Duc. Bai hoc: repo nhieu lane thi KHONG DUOC --amend, chi commit moi."
     },
     "_docs": {
       "owner": null,
