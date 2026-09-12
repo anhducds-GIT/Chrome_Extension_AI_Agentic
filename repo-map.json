@@ -123,16 +123,16 @@
     {
       "id": "duc-scouter",
       "path": "workers/duc-scouter/v0.1.0",
-      "lifecycle": "paused",
+      "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào. Nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào — dùng lại thì NẠP LẠI extension trước.",
-      "human_action": "không",
+      "next_step": "Mở CHUOI-VIEC.md của gói, lấy ĐÚNG MỘT việc đang tới lượt ở bảng theo dõi — đừng đọc cả file. T1 tới T4 đã xong, cả bốn đo ngoài đời. Việc tới lượt là T5 (chạy lại lượt gửi prompt trên Udin để phân biệt hai giả thuyết) — cần Đức bật công tắc đường ghi và tài khoản đang rảnh. Không chạy được T5 thì làm T6 hoặc T10 (S-21).",
+      "human_action": "@Đức:bấm D2 còn một nửa — ghế thứ hai vẫn chưa có tên. Ghế đang dùng tên Udin_Scout và gọi bằng tên chạy tốt; ghế kia chưa đặt thì lượt gọi nào không nêu đích vẫn bị từ chối TARGET_AMBIGUOUS. Mở thẻ Hệ thống của cửa sổ Chrome kia, khối Hồ sơ ghế (Profile ID), gõ một tên KHÁC. @Đức:bấm T5 cần công tắc Cho phép bấm và gõ đang bật trên ghế chạy Udin.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "TẠM DỪNG 08/09 — Đức chuyển sang ba gói duc-auto-*. Gói dừng ở chỗ SẠCH: sổ nợ còn đúng hai mục nhỏ, suite xanh, đột biến 0 sống sót, không việc gì dở dang. Ba lệnh bấm và gõ đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Khối phanh vừa được vá 08/09 theo chốt của Đức: hai lỗi chỉ nổ khi nhiều lượt chồng nhau — phanh khẩn bị bật lại, và trần 200 bị vượt — nay đã đóng, có phép ghim tái hiện được và đột biến giết được. Hai việc lớn còn lại: chọn trang thử THỨ HAI, và cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+      "open_item": "Hoàn thiện SEED dùng chung — Scouter là ĐÍCH, trang Udin (vinfast.udinbv.com/optic) chỉ là CA THỬ để ép seed lộ chỗ nó còn hẹp. Ngày 12/09 ca thử đó ép lộ năm khuyết tật của SEED (S-16 tới S-20) và BỐN cái đã vá xong trong ngày, cả bốn đo ngoài đời chứ không chỉ trước máy giả. S-17: scout.click hỏi Chrome điểm sắp bấm thuộc về ai TRUOC khi bắn, có lớp che thì từ chối CLICK_OBSCURED. S-18: scout.wait nhận thêm state usable, phân biệt có mặt với dùng được, và nói ra VÌ SAO chưa dùng được. S-19: scout.navigate nạp lại được cùng một URL — 15 giây báo sai nguyên nhân xuống 254ms báo đúng. S-16: ba hạn chờ xuống dưới ngưỡng 35 giây của máy chủ, và ngưỡng đó nay có tên để phép ghim đọc thẳng thay vì gõ lại. Còn mở: S-20 (nghe mạng trong lúc bấm) và S-21 (target thỉnh thoảng không trả lời được câu hỏi hình học, chưa biết vì sao). Tên ghế đã nghiệm thu ngoài đời: Đức gõ Udin_Scout và định tuyến theo tên chạy đúng. Không thêm method Bridge nào trong lượt T4 — số method hiện ở cột Method Bridge [ĐO] trên DASHBOARD.md, đừng ghi tay vào đây."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào. Nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào — dùng lại thì NẠP LẠI extension trước.",
+      "title": "Mở CHUOI-VIEC.md của gói, lấy ĐÚNG MỘT việc đang tới lượt ở bảng theo dõi — đừng đọc cả file. T1 tới T4 đã xong, cả bốn đo ngoài đời. Việc tới lượt là T5 (chạy lại lượt gửi prompt trên Udin để phân biệt hai giả thuyết) — cần Đức bật công tắc đường ghi và tài khoản đang rảnh. Không chạy được T5 thì làm T6 hoặc T10 (S-21).",
       "rank": 4,
       "claim": null
     }
