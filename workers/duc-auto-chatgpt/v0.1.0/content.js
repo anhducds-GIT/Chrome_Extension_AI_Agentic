@@ -1432,13 +1432,19 @@
                 }
               };
               di(hop, 1);
-              /* PHÉP TRỪ, chạy trên một BẢN SAO — máy soi không được đụng vào trang thật. */
-              let thuTru = "";
-              try {
-                const sao = hop.cloneNode(true);
-                for (const bo of Array.from(sao.querySelectorAll('[data-testid^="writing-block-header"], [data-testid^="writing-block-suggested-followups"]'))) bo.remove();
-                thuTru = (sao.innerText || sao.textContent || "").trim();
-              } catch (_) { thuTru = ""; }
+              /* GOM PHẦN THÂN BẰNG CÁCH CHỌN, KHÔNG BẰNG CÁCH GỠ BỚT.
+                 Bản đầu nhân bản khung rồi gỡ phần vỏ khỏi bản sao — không đụng trang thật,
+                 NHƯNG `provider-adapter-static` ghim thẳng: máy soi DOM không được gọi một
+                 phương thức gỡ phần tử nào, ở bất kỳ đâu trong thân nó. Luật ấy thô nên không
+                 lừa được, và một luật không lừa được đáng giá hơn một ngoại lệ đúng: nới nó ra
+                 là dạy phiên sau rằng "có lúc được" — rồi lần sau sẽ là trên trang thật.
+                 Nên LỌC phần con thay vì gỡ phần vỏ. Cùng kết quả, không đụng gì.
+                 (Và chính comment này từng làm bài kiểm đỏ vì nó chứa đúng cái tên phương thức
+                 bị cấm — bộ dò khớp vào văn của tôi, không vào mã. Nên ở đây gọi tên nó bằng
+                 lời.) */
+              const laVo = (el) => /^writing-block-(header|suggested-followups)/.test(el.getAttribute("data-testid") || "");
+              const than = Array.from(hop.children).filter((c) => !laVo(c) && !c.querySelector('[data-testid^="writing-block-header"]'));
+              const thuTru = than.map((c) => (c.innerText || c.textContent || "")).join("\n").trim();
               return {
                 co: true,
                 innerCaHop: chuHien(hop).length,

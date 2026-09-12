@@ -47,7 +47,7 @@
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay.",
-      "tra_khi_chua_day": "3 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
+      "tra_khi_chua_day": "1 commit (91b4bdea, chore(bang) sinh lai so commit) NAM LOCAL. safe-push tu choi dung: lane claude-gpt-chay-het-job vua commit 518b76a5 va no nam DUOI commit cua toi, nen day len la cuon viec chua duyet cua ho theo. Viec chinh cua lane nay (S-16..S-19) DA DAY xong o 3bf06a85. Commit con lai chi la bang may sinh, sinh lai luc nao cung duoc — lane kia day xong thi no tu het y nghia."
     },
     "_docs": {
       "owner": null,
