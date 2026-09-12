@@ -274,13 +274,34 @@
        thắng — và lượt mới nhất dùng canvas thì nó chọn `pre`, không khớp gì trong khung, rồi
        báo "không có khối". Một hội thoại pha trộn hai kiểu là chuyện thường, nên chỗ hỏi phải
        là cái khung, không phải cả trang. Thứ tự trong danh sách là thứ tự ƯU TIÊN. */
+    /* B-86 · ƯU TIÊN LÀ VỊ TRÍ TRÊN TRANG, KHÔNG PHẢI THỨ TỰ TRONG DANH SÁCH.
+     *
+     * Đức 13/09: *"copy nhầm block. Chỉ được copy block cuối cùng từ dưới lên thôi."*
+     * Đo cùng lúc trên lượt trả lời của anh: khối mã đếm được 4, canvas 1. Bản B-82 của tôi
+     * thử ứng viên ĐẦU DANH SÁCH trước, thấy 4 cái, lấy cái cuối trong số đó — và KHÔNG BAO
+     * GIỜ nhìn tới canvas, dù canvas mới là khối nằm cuối. Chuỗi gửi đi một khối giữa bài.
+     *
+     * Nên hỏi CẢ DANH SÁCH TRONG MỘT LƯỢT: `querySelectorAll("a, b")` trả về theo THỨ TỰ TRÊN
+     * TRANG, không theo thứ tự token. Rồi lấy cái cuối. Danh sách selector giờ chỉ còn nghĩa
+     * "những thứ được TÍNH là khối", không còn nghĩa ưu tiên. */
     const ungVien = Array.isArray(blockSel) ? blockSel : (blockSel ? [blockSel] : []);
     let blocks = [];
-    for (const sel of ungVien) {
+    if (newestAssistant && ungVien.length) {
       try {
-        const thu = newestAssistant ? Array.from(newestAssistant.querySelectorAll(sel)) : [];
-        if (thu.length) { blocks = thu; break; }
-      } catch (_) { /* một selector mục nát không được làm hỏng cả lượt đọc */ }
+        blocks = Array.from(newestAssistant.querySelectorAll(ungVien.join(", ")));
+      } catch (_) {
+        /* Một selector mục nát không được làm hỏng cả lượt đọc: lùi về hỏi từng cái rồi tự xếp
+           lại theo vị trí. `compareDocumentPosition` là phép so vị trí thật của DOM. */
+        for (const sel of ungVien) {
+          try { blocks = blocks.concat(Array.from(newestAssistant.querySelectorAll(sel))); } catch (_) { /* bỏ cái hỏng */ }
+        }
+        try {
+          blocks.sort((x, y) => (x.compareDocumentPosition(y) & 4 /* FOLLOWING */) ? -1 : 1);
+        } catch (_) { /* không so được thì giữ nguyên, vẫn hơn là không có gì */ }
+      }
+      /* KHỐI LỒNG KHỐI: một `pre` nằm TRONG thân canvas cũng khớp, và nó đứng SAU canvas trên
+         trang — lấy nó là lấy một mảnh của khối, không phải cả khối. Giữ cái NGOÀI CÙNG. */
+      blocks = blocks.filter((b) => !blocks.some((k) => k !== b && typeof k.contains === "function" && k.contains(b)));
     }
     const block = blocks.length ? blocks[blocks.length - 1] : null;
     /* Canvas thì bóc vỏ; khối mã thì lấy nguyên như cũ. Nhận dạng bằng `data-testid` — cấu

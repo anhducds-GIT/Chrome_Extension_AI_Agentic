@@ -887,10 +887,20 @@ async function chinh() {
       if (cuoi && cuoi.text.startsWith(khoi.text.slice(0, 60))) {
         mocLuotNguoi = cuoi.id;
       } else if (cuoi) {
-        lyDo = `NGUOI_DANG_DUNG — ngay sau lượt gửi, lượt cuối lại không phải của tôi (${cuoi.id})`;
-        console.log(`  vòng ${vong}: ${lyDo}`);
-        ghi({ su_kien: "CANH_TAB", vong, vi: lyDo });
-        break;
+        /* B-86 ⓑ — CHƯA THẤY MÌNH ≠ THẤY NGƯỜI KHÁC. Đo live 12/09 lúc 16:51:36, chuỗi
+           "Prompt engineer 2": bộ chạy gửi xong, đọc lại 10 giây sau (sàn B-85), trang CHƯA
+           KỊP dựng lượt vừa gửi, nên lượt người cuối cùng vẫn là lượt CŨ. Bản trước kết luận
+           ngay `NGUOI_DANG_DUNG` và dừng chuỗi với `da_gui: 1` — trong khi không ai gõ gì.
+
+           Đây là lần thứ BA cùng một hình dạng lỗi trong hai ngày (B-80: mốc ghim bằng `null`;
+           B-83: lượt đọc sau khi gửi hết giờ). Cả ba đều là: **một thứ CHƯA ĐỌC RA bị xử như
+           một thứ ĐỌC RA KHÁC ĐI.**
+
+           Không kết luận ở đây nữa. Mốc để nguyên, và vòng sau `canhTab` tự phân xử bằng CHỮ:
+           lượt của tôi thì nó nhận ra và nhích mốc (B-83); người gõ thật thì chữ không khớp và
+           nó dừng đúng lúc đó. Mép KHÔNG bị nới — nó chỉ được dời sang chỗ có đủ dữ kiện. */
+        console.log(`  vòng ${vong}: đọc lại sau khi gửi chưa thấy lượt của mình (lượt cuối: ${cuoi.id}) — để vòng sau phân xử bằng chữ`);
+        ghi({ su_kien: "SAU_GUI_CHUA_THAY", vong, luot_cuoi: cuoi.id, moc: mocLuotNguoi ?? null });
       }
     }
     console.log(`  vòng ${vong}/${soVong}: đã gửi ${khoi.chars} ký tự — ${kl.vi}`);

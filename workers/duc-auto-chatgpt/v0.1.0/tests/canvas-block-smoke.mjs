@@ -125,16 +125,50 @@ const canvas = (than = THAN) => n("div", { "data-testid": "writing-block-contain
   console.log("  ok  ② `pre` ở lượt cũ không lấn canvas ở lượt mới");
 }
 
-/* ---- ca 3: VẾ NGƯỢC — `pre` vẫn phải thắng khi nó ở CHÍNH lượt mới nhất ----
-   Thiếu vế này thì một đột biến "luôn chọn canvas" sẽ thoát, và mọi khối mã thật đọc ra rỗng. */
+/* ---- ca 3: KHỐI CUỐI CÙNG TỪ DƯỚI LÊN THẮNG, bất kể nó thuộc loại nào — B-86 ----
+ *
+ * Đức 13/09: *"copy nhầm block. Chỉ được copy block cuối cùng từ dưới lên thôi."*
+ * Đo cùng lúc trên lượt trả lời thật của anh: 4 khối mã + 1 canvas trong CÙNG một lượt. Bản
+ * trước coi thứ tự danh sách selector là thứ tự ưu tiên, nên nó lấy khối mã thứ tư và không
+ * bao giờ nhìn tới canvas — gửi đi một khối GIỮA BÀI.
+ *
+ * Ca này ghim CẢ HAI CHIỀU trong cùng một khối: đảo vị trí thì đáp án đảo theo. Chỉ ghim một
+ * chiều thì một đột biến "luôn chọn canvas" hoặc "luôn chọn khối mã" đều thoát.
+ */
 {
-  const luot = n("div", { "data-turn": "assistant", "data-turn-id": "t1" }, [
-    n("pre", {}, "prompt trong khối mã"), canvas()
+  const boc = (con) => n("div", { "data-turn": "assistant", "data-turn-id": "t1" }, con);
+
+  // canvas đứng SAU ⇒ canvas thắng
+  const sauLaCanvas = readTurns(tai([boc([n("pre", {}, "khối mã ở giữa bài"), canvas()])]), A, U, 4, 20000, UNG_VIEN);
+  assert.equal(sauLaCanvas.last_copy_block.text, THAN,
+    "canvas nằm CUỐI thì canvas thắng — dù khối mã đứng trước trong danh sách selector");
+
+  // khối mã đứng SAU ⇒ khối mã thắng
+  const sauLaPre = readTurns(tai([boc([canvas(), n("pre", {}, "khối mã ở cuối bài")])]), A, U, 4, 20000, UNG_VIEN);
+  assert.equal(sauLaPre.last_copy_block.text, "khối mã ở cuối bài",
+    "khối mã nằm CUỐI thì khối mã thắng — ưu tiên là VỊ TRÍ, không phải loại");
+
+  // bốn khối mã + canvas cuối, đúng hình dạng lượt trả lời thật của Đức 13/09
+  const nhuThat = readTurns(tai([boc([
+    n("pre", {}, "mã 1"), n("pre", {}, "mã 2"), n("pre", {}, "mã 3"), n("pre", {}, "mã 4"), canvas()
+  ])]), A, U, 4, 20000, UNG_VIEN);
+  assert.equal(nhuThat.last_copy_block.text, THAN,
+    "4 khối mã + canvas cuối: phải lấy canvas — đây đúng ca Đức bắt được 13/09");
+
+  /* LỒNG NHAU: một khối mã NẰM TRONG thân canvas cũng khớp, và nó đứng SAU canvas trên trang.
+     Lấy nó là lấy một MẢNH của khối. Phải giữ cái ngoài cùng. */
+  const long = n("div", { "data-turn": "assistant", "data-turn-id": "t1" }, [
+    n("div", { "data-testid": "writing-block-container" }, [
+      n("div", { "data-testid": "writing-block-header-sticky-container" }, TIEU_DE),
+      n("div", { class: "mt4SwW_editor" }, [n("pre", {}, "mảnh bên trong canvas")])
+    ])
   ]);
-  const r = readTurns(tai([luot]), A, U, 4, 20000, UNG_VIEN);
-  assert.equal(r.last_copy_block.text, "prompt trong khối mã",
-    "`pre` đứng trước trong danh sách nên nó là ƯU TIÊN — thứ tự danh sách là thứ tự ưu tiên");
-  console.log("  ok  ③ khối mã vẫn thắng khi có mặt trong chính lượt mới nhất");
+  const rLong = readTurns(tai([long]), A, U, 4, 20000, UNG_VIEN);
+  assert.equal(rLong.last_copy_block.text, "mảnh bên trong canvas",
+    "khối lồng khối: lấy cái NGOÀI CÙNG (canvas), và thân nó chính là mảnh bên trong — không lấy riêng mảnh");
+  assert.ok(!rLong.last_copy_block.text.includes(TIEU_DE), "và vẫn bóc vỏ");
+
+  console.log("  ok  ③ khối CUỐI CÙNG từ dưới lên thắng, bất kể loại · khối lồng khối lấy cái ngoài cùng");
 }
 
 /* ---- ca 4: không có khối nào thì vẫn là `found: false` ----
@@ -170,8 +204,12 @@ const canvas = (than = THAN) => n("div", { "data-testid": "writing-block-contain
   assert.match(danhSach, /writing-block-container/,
     "adapter PHẢI khai selector canvas — không khai thì bộ đọc mù với canvas, và năm ca trên vẫn xanh vì chúng tự truyền selector");
   assert.match(danhSach, /"pre"/, "và vẫn phải giữ khối mã");
-  assert.ok(danhSach.indexOf('"pre"') < danhSach.indexOf("writing-block-container"),
-    "`pre` đứng TRƯỚC canvas: thứ tự là ưu tiên, và khối mã là thứ ưu tiên");
+  /* THỨ TỰ TRONG DANH SÁCH KHÔNG CÒN LÀ ƯU TIÊN — B-86. Bản trước ghim ngược lại
+     (*"`pre` đứng trước nên nó ưu tiên"*), và chính cái luật ấy làm chuỗi gửi đi một khối giữa
+     bài: 4 khối mã + 1 canvas trong cùng lượt, nó lấy khối mã thứ tư. Ưu tiên là VỊ TRÍ TRÊN
+     TRANG, và `readTurns` cưỡng chế điều đó bằng cách hỏi cả danh sách trong MỘT lượt
+     `querySelectorAll` — hàm ấy trả về theo thứ tự trang, không theo thứ tự token.
+     Danh sách giờ chỉ còn nghĩa: "những thứ được TÍNH là khối". */
   assert.ok(!/aria-label/.test(danhSach),
     "KHÔNG neo vào aria-label: nhãn tiếng Anh chết ngay lượt Đức đổi ngôn ngữ giao diện");
 
@@ -179,7 +217,7 @@ const canvas = (than = THAN) => n("div", { "data-testid": "writing-block-contain
      phân giải sẵn là hỏi `document`, tức hỏi cả trang. */
   assert.match(content, /function answerBlockSelector\(\)\s*\{\s*return Array\.isArray\(SEL\.answerBlock\)/,
     "`answerBlockSelector` phải trả cả danh sách cho `readTurns` tự thử trong khung");
-  console.log("  ok  ⑥ dây nối: adapter khai canvas, `pre` ưu tiên trước, danh sách xuống tới readTurns");
+  console.log("  ok  ⑥ dây nối: adapter khai CẢ HAI loại khối, danh sách xuống tới readTurns (thứ tự KHÔNG phải ưu tiên)");
 }
 
 console.log("canvas-block-smoke: xanh");
