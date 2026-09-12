@@ -569,8 +569,14 @@ check("File mới đã khai vào Bản đồ file", () => {
   // Cùng họ với mọi lỗ fail-open đã vá hôm nay, và là họ nguy hiểm nhất: gõ một nhãn phiên khác
   // là cổng đổi câu trả lời. Nên: lọc hết sạch mà vẫn CÓ file mới thì đó là `BỎ`, kèm câu nói
   // thẳng vì sao không kiểm được.
-  const themMoi = sessionChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file);
-  const added = themMoi.filter(mine).filter((f) => !laNhapDungChung(f));
+  /* LỌC NHÁP DÙNG CHUNG Ở `themMoi`, KHÔNG Ở `added` — sửa 12/09, ngay trong lượt vá.
+     Đặt sau `mine` thì file nháp VẪN nằm trong `themMoi`, `added` rỗng, và nhánh ngay dưới nổ
+     câu "file mới thuộc vùng phiên KHÁC đang giữ" — một chẩn đoán SAI HẲN cho một file mà luật
+     đã nói là không thuộc về ai. Sai kiểu này tệ hơn đỏ: nó gửi người đọc đi tìm một phiên
+     không tồn tại. */
+  const themMoi = sessionChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file)
+    .filter((f) => !laNhapDungChung(f));
+  const added = themMoi.filter(mine);
   if (themMoi.length > 0 && added.length === 0) {
     return {
       ok: true,
