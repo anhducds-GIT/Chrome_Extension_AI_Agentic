@@ -196,7 +196,7 @@ export function hoiThoaiCua(url) {
    ⑵ Lượt `user` cuối mang một id khác mốc = có ai đó gõ vào. Mốc chỉ nhích khi CHÍNH bộ chạy
       gửi xong, nên mọi thay đổi khác đều là người.
    Dừng, không gửi. Đây là mép duy nhất trong tệp này bảo vệ NGƯỜI chứ không bảo vệ chuỗi. */
-export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
+export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi, chuLuotNguoiCuoi = "", chuToiVuaGui = "" }) {
   /* SO BẰNG ĐỊNH DANH HỘI THOẠI, KHÔNG SO CẢ ĐỊA CHỈ. So cả địa chỉ là dương tính giả:
      ChatGPT tự gắn thêm/bỏ bớt phần `?...` sau lưng người dùng, và một chuỗi đang chạy
      ngon sẽ dừng với `DOI_HOI_THOAI` mà không có ai đổi gì. Hai bên không rút ra được
@@ -208,6 +208,19 @@ export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
     if (khac) return { dung: true, vi: `DOI_HOI_THOAI — ghim ${idGhim || urlGhim}, giờ là ${idNay || url}` };
   }
   if (idLuotNguoiCuoi && mocLuotNguoi !== undefined && idLuotNguoiCuoi !== mocLuotNguoi) {
+    /* B-83 — NHẬN RA CHÍNH TIN NHẮN CỦA MÌNH. Đo live 12/09, chuỗi "Prompt engineer 01": bộ
+       chạy gửi xong lúc 15:42:10, lượt đọc NGAY SAU ĐÓ hết giờ (tab nền bị bóp), nên mốc không
+       được nhích. Vòng kế tiếp đọc ra lượt người mới nhất — CHÍNH LÀ TIN NHẮN NÓ VỪA GỬI — thấy
+       khác mốc cũ, và kết tội Đức đang gõ: `NGUOI_DANG_DUNG`, dừng chuỗi, `da_gui: 1`.
+
+       Cùng hình dạng với B-80: một lượt ĐỌC KHÔNG ĐƯỢC bị xử như một lượt đọc ra thứ khác.
+
+       So bằng CHỮ, không bằng id: id của lượt vừa gửi là thứ ta không biết trước, còn chữ thì
+       biết chính xác — ta vừa gõ nó. 60 ký tự đầu, cùng phép so `daVaoChua` đang dùng.
+       Mép KHÔNG bị nới: một lượt người gõ thật không thể bắt đầu bằng đúng 60 ký tự đầu của
+       khối mà bộ chạy vừa dán. */
+    const cuaToi = Boolean(chuToiVuaGui) && String(chuLuotNguoiCuoi ?? "").startsWith(chuToiVuaGui);
+    if (cuaToi) return { dung: false, vi: null, cuaToi: true };
     return { dung: true, vi: `NGUOI_DANG_DUNG — có lượt gõ lạ (${idLuotNguoiCuoi}), không phải lượt tôi gửi` };
   }
   return { dung: false, vi: null };
@@ -545,6 +558,9 @@ async function chinh() {
   /* B-81 — ĐÃ TỪNG THẤY KHỐI CHƯA, tính cho CẢ lượt chạy chứ không riêng một vòng. Đây là thứ
      phân biệt "chuỗi chạy hết" với "hội thoại chưa có giao kèo nối vòng". */
   let daThayKhoi = false;
+  /* B-83 — 60 ky tu dau cua khoi VUA GUI, de nhan ra chinh tin nhan cua minh o vong sau khi
+     luot doc ngay sau khi gui bi het gio. Xem khoi ly le o `canhTab`. */
+  let chuToiVuaGui = "";
   let lyDo = "HET_SO_VONG";
   /* Có `--url` thì ghim từ đó — lệch là dừng ở lượt đọc đầu. Không có thì ghim ở LƯỢT ĐỌC
      ĐẦU: bộ chạy nối vào một tab đang mở sẵn và không biết trước tab ấy ở hội thoại nào. */
@@ -653,6 +669,7 @@ async function chinh() {
          trước, không phải chặn song song. */
       const luotNguoi = (r.turns || []).filter((t) => t.role === "user");
       const idLuotNguoiCuoi = luotNguoi.length ? luotNguoi[luotNguoi.length - 1].id : null;
+      const chuLuotNguoiCuoi = luotNguoi.length ? String(luotNguoi[luotNguoi.length - 1].text || "") : "";
       if (urlGhim === null && r.url) { urlGhim = r.url; }
       /* B-80 — KHÔNG GHIM MỐC BẰNG `null`. Bắt tại trận 12/09, chuỗi "Prompt engineer 01":
          lượt đọc đầu hỏng vì `RECEIVER_LOST` (tab đang nạp lại); lượt kế tiếp THÀNH CÔNG nhưng
@@ -667,7 +684,10 @@ async function chinh() {
          Mép này KHÔNG bị nới: mốc chưa ghim thì `canhTab` cũng chưa so gì, mà lượt GỬI đầu tiên
          nằm sau đó — nên không có cửa sổ nào để một lượt gõ lạ lọt qua mà chuỗi vẫn gửi đè. */
       if (mocLuotNguoi === undefined && idLuotNguoiCuoi) { mocLuotNguoi = idLuotNguoiCuoi; }
-      const canh = canhTab({ url: r.url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi });
+      const canh = canhTab({ url: r.url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi, chuLuotNguoiCuoi, chuToiVuaGui });
+      /* Nhan ra tin nhan cua chinh minh thi NHICH MOC ngay — neu khong, moi vong sau deu phai
+         hoi lai cung mot cau, va mot luot nguoi go that xen vao giua se bi do cho tin nhan cu. */
+      if (canh.cuaToi) { mocLuotNguoi = idLuotNguoiCuoi; }
       if (canh.dung) {
         console.log(`  vòng ${vong}: ${canh.vi}`);
         /* GHI CẢ HAI ĐẦU CỦA PHÉP SO, không chỉ câu kết luận. Lượt 14:31 ngày 12/09 chỉ ghi
@@ -829,7 +849,17 @@ async function chinh() {
        nhích mù (xoá mốc đi để nó tự ghim lại): nếu người gõ ngay sau lượt tôi,
        nhích mù sẽ nhận lượt của người làm mốc và mép B-63 mất tác dụng đúng lúc cần nhất.
        So bằng 60 ký tự đầu của khối, giống `daVaoChua` — không so bằng từ khoá. */
+    /* B-83 — NHỚ CHỮ MÌNH VỪA GỬI, TRƯỚC lượt đọc lại. Đặt ở đây chứ không đặt trong nhánh
+       `sauGui.ok`: đúng cái ca hỏng là lượt đọc ấy HẾT GIỜ, và khi đó nhánh kia không chạy. */
+    chuToiVuaGui = khoi.text.slice(0, 60);
     const sauGui = await doc();
+    if (!sauGui.ok) {
+      /* Đọc không được thì KHÔNG kết luận gì — mốc để nguyên, và vòng sau `canhTab` sẽ nhận ra
+         tin nhắn của chính mình bằng chữ rồi tự nhích mốc. Nói ra để đừng ai đọc nhật ký thành
+         "đã kiểm và thấy ổn". */
+      console.log(`  vòng ${vong}: đọc lại sau khi gửi không được (${sauGui.error?.code || "?"}) — để vòng sau tự nhận ra tin nhắn của mình`);
+      ghi({ su_kien: "SAU_GUI_DOC_HONG", vong, ma: sauGui.error?.code || null });
+    }
     if (sauGui.ok) {
       const cuoi = [...(sauGui.result.turns || [])].reverse().find((t) => t.role === "user");
       if (cuoi && cuoi.text.startsWith(khoi.text.slice(0, 60))) {

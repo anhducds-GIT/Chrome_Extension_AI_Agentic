@@ -909,3 +909,53 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  ⓩ không thấy khối ≠ chạy hết: đòi cả hai vế, thoát 1, nêu cả hai khả năng + cách phân biệt");
 }
+
+/* Ⓐ B-83 — BỘ CHẠY PHẢI NHẬN RA CHÍNH TIN NHẮN CỦA MÌNH.
+ *
+ * Đo live 12/09, chuỗi "Prompt engineer 01": gửi xong lúc 15:42:10, lượt đọc NGAY SAU ĐÓ hết
+ * giờ (tab nền bị Chrome bóp), nên mốc canh tab không được nhích. Vòng kế tiếp đọc ra lượt
+ * người mới nhất — CHÍNH LÀ TIN NHẮN NÓ VỪA GỬI — thấy khác mốc, và kết tội Đức đang gõ:
+ *     CANH_TAB  NGUOI_DANG_DUNG — có lượt gõ lạ (14857279-…)   moc: cb6a301b-…
+ *     KET_THUC  da_gui: 1
+ * Cùng hình dạng với B-80: một lượt ĐỌC KHÔNG ĐƯỢC bị xử như một lượt đọc ra thứ khác.
+ */
+{
+  const KHOI = "NGƯỜI NHẬN: GPT Web\nMục đích: chuẩn hoá architecture theo hai path.";
+  const CHU60 = KHOI.slice(0, 60);
+
+  // ⒜ Tin nhắn của chính mình ⇒ KHÔNG báo động, và nói ra là của mình để bên gọi nhích mốc.
+  const tuGui = canhTab({
+    idLuotNguoiCuoi: "id-moi-toanh", mocLuotNguoi: "id-cu",
+    chuLuotNguoiCuoi: KHOI, chuToiVuaGui: CHU60
+  });
+  assert.equal(tuGui.dung, false, "lượt người mới nhất CHÍNH LÀ tin nhắn bộ chạy vừa gửi — không được dừng");
+  assert.equal(tuGui.cuaToi, true, "phải nói ra 'của tôi' để bên gọi nhích mốc, không thì mọi vòng sau hỏi lại cùng câu");
+
+  /* ⒝ VẾ NGƯỢC — mép vẫn phải bắt người gõ thật. Thiếu vế này thì một đột biến "luôn là của
+     tôi" sẽ thoát, và bộ chạy gõ đè lên hội thoại người khác đang dùng. */
+  const nguoiGo = canhTab({
+    idLuotNguoiCuoi: "id-nguoi", mocLuotNguoi: "id-cu",
+    chuLuotNguoiCuoi: "Đức gõ tay một câu hoàn toàn khác", chuToiVuaGui: CHU60
+  });
+  assert.equal(nguoiGo.dung, true, "chữ khác thì VẪN là người gõ — đây là lý do mép này tồn tại");
+
+  // ⒞ Chưa gửi gì thì không có gì để nhận ra: mọi lượt lạ đều là người gõ.
+  assert.equal(canhTab({ idLuotNguoiCuoi: "x", mocLuotNguoi: "y", chuLuotNguoiCuoi: KHOI, chuToiVuaGui: "" }).dung, true,
+    "chưa gửi vòng nào thì `chuToiVuaGui` rỗng, và rỗng KHÔNG được khớp với mọi thứ");
+
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  /* ⒟ NHỚ CHỮ TRƯỚC LƯỢT ĐỌC LẠI. Đặt sau `sauGui.ok` là đặt vào đúng nhánh KHÔNG chạy trong
+     ca hỏng — bản cũ hỏng đúng kiểu đó. */
+  const iGui = src.indexOf('chuToiVuaGui = khoi.text.slice(0, 60);');
+  const iDoc = src.indexOf("const sauGui = await doc();");
+  assert.ok(iGui > 0 && iDoc > iGui,
+    "phải nhớ chữ vừa gửi TRƯỚC lượt đọc lại — ca hỏng chính là lượt đọc ấy hết giờ");
+  assert.ok(src.includes("if (canh.cuaToi) { mocLuotNguoi = idLuotNguoiCuoi; }"),
+    "nhận ra của mình thì phải nhích mốc ngay");
+  assert.ok(src.includes('su_kien: "SAU_GUI_DOC_HONG"'),
+    "đọc lại sau khi gửi mà hỏng thì phải vào nhật ký — im lặng ở đây đọc ra như 'đã kiểm và thấy ổn'");
+
+  console.log("  ok  Ⓐ nhận ra tin nhắn của chính mình khi lượt đọc sau khi gửi hết giờ");
+}
