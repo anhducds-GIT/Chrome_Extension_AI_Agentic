@@ -697,3 +697,37 @@ khai `.githooks/` một dòng · `build-dashboard` + `build-overview` · ghi Log
 động hoá vướng một nguyên tắc đang có: **`upgrade` không ghi vào tầng chữ của repo đích**. Đức chốt.
 
 **Còn mở:** `npm test` của repo này — xem kết quả cổng ở lượt đóng tiếp theo.
+
+## 2026-09-12 · `claude-gpt-chay-het-job` — dọn 4 mục đỏ, và chúng che một bộ kiểm chết 3 ngày
+
+**Đức chốt:** *"4 mục đỏ đó bạn clean nốt cho tôi"*.
+
+**Thứ tìm thấy khi đào:** **18/31** bài kiểm gốc repo không chạy nổi, `npm test` chết ngay bài
+đầu — cả chuỗi vô hình từ **10/09** (migrate bộ khung `4da1e9e5` thêm 7 bài mới, **không xoá**
+bài cũ). Trong ba ngày ấy **bốn lớp bảo vệ chết không một tiếng kêu**, cả bốn lộ ra khi chữa
+lại chính những bài kiểm đó: `safe-push` mất cửa đối chiếu artifact với HEAD · bảng sống ba
+cửa ném lỗi **mỗi lần Đức nhấp** · luật `nhap_dung_chung` không máy nào cưỡng chế (N-64 lần
+hai) · cổng mất câu cảnh báo `--restamp`.
+
+**Dãy B 44 → 0 chỗ CHẶN.** Không chỗ nào là lỗi thật: 22 chỗ oan cho lượt gộp ADR **Đức tự
+chốt** (tầng LUẬT đã khai `decides:`/`moved_out` mà B12 không đọc), 20 chỗ cưỡng chế luật
+`ADR-0026` **đã thu hồi** 09/09. Nay B12 làm đúng việc ADR-0026 giao và **siết thêm hai vế**
+chưa ai cài: hai file cùng nhận một số = ĐỎ, `decides:` trỏ số chưa cấp = ĐỎ.
+
+**Ba byte điều khiển thô làm phép kiểm xanh giả** (`/\bareaOf(/` thành backspace) — một chỗ do
+**chính lượt này của tôi** đẻ ra.
+
+**Thước `docs/`:** đo trước khi nâng. 9340 đặt lúc 16:11 khi docs/ là 9303; migrate lúc 22:29 đẩy
+lên 9830 — **toàn bộ +527 là file của bộ khung**. Nâng đúng bằng chỗ vay mượn, ghi rõ là
+**không phải slack**.
+
+**Chống tái phát:** `dau-suite-smoke` nay cưỡng chế mọi tệp `tests/` phải nằm ở đúng một chuỗi,
+**và** mọi bài trong khu cách ly phải thật sự đỏ. Lượt chạy đầu bắt ngay **ba** bài chưa từng
+nằm trong chuỗi nào. `npm test` **thoát 0** — lần đầu kể từ 10/09.
+
+**Còn nợ:** `N-65` — 8 bài (9.365 dòng) viết cho API đã biến mất, đang cách ly ở
+`npm run test:chet`. Không xoá; cần Đức chốt viết lại hay bỏ.
+
+**Cũng làm:** gỡ khoá `HANDOFF.md` bỏ quên 58 tiếng của `harness-loi-01` (thêm cửa
+`--xong --duc-duyet` — trước nay khoá mức FILE **không lệnh nào gỡ được**) · commit mục Log
+bỏ quên của `codex-hnx-week-20260912`, không sửa một chữ.

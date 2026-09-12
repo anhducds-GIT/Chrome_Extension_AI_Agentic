@@ -469,4 +469,46 @@ try {
   }
 }
 
+/* ---- KHÔNG BÀI KIỂM NÀO ĐƯỢC CHẾT LẶNG LẼ -------------------------------
+ *
+ * Đo 12/09: **18 trên 31** bài kiểm ở gốc repo không chạy nổi, và `npm test` chết ngay bài thứ
+ * nhất — nên cả chuỗi vô hình từ 10/09. Cái giá không phải giả thuyết: trong lúc chuỗi ấy im,
+ * `safe-push` mất cửa đối chiếu artifact, bảng sống ba cửa của Đức ném lỗi mỗi lần nhấp, luật
+ * `nhap_dung_chung` nằm trong bản đồ mà không máy nào cưỡng chế, và cổng phiên mất câu cảnh
+ * báo `--restamp`. Bốn lớp bảo vệ, không lớp nào kêu một tiếng.
+ *
+ * Nên mỗi tệp trong `tests/` phải nằm ở ĐÚNG MỘT trong ba chỗ, và cả ba đều ĐẾM ĐƯỢC:
+ *   `test`          — chuỗi cổng, chạy mỗi lượt
+ *   `test:tuan-tu`  — tập phải chạy một mình
+ *   `test:chet`     — KHU CÁCH LY: bài viết cho bộ khung 0.3.0, nhập ký hiệu đã biến mất ở lượt
+ *                     migrate 4da1e9e5. Chúng KHÔNG được sửa để xanh và KHÔNG được xoá lặng lẽ;
+ *                     chúng nằm đây để đếm được, và mỗi cái là một khoản nợ có tên trong BACKLOG.
+ * Rơi khỏi cả ba = chết lặng lẽ, và mép này ĐỎ. Đó là toàn bộ việc của nó. */
+{
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const phu = ["test", "test:tuan-tu", "test:chet"].map((k) => String(pkg.scripts?.[k] ?? "")).join(" && ");
+  const coTrongTests = fs.readdirSync(path.join(ROOT, "tests"))
+    .filter((f) => f.endsWith(".mjs")).sort();
+
+  // MỎ NEO PHẢI CÒN BÁM: đọc ra 0 tệp thì mép này xanh vì rỗng, đúng bẫy đã trả giá.
+  assert.ok(coTrongTests.length > 20,
+    `chỉ đọc được ${coTrongTests.length} tệp trong tests/ — bộ đọc hỏng, mép này đang xanh vì rỗng`);
+
+  const chuaAiChay = coTrongTests.filter((f) => !phu.includes(`tests/${f}`));
+  assert.deepEqual(chuaAiChay, [],
+    `bài kiểm không nằm trong chuỗi nào — nó sẽ chết mà không ai biết:${chuaAiChay.map((f) => `\n    tests/${f}`).join("")}`
+    + `\n  → thêm vào \`test\` (chạy mỗi lượt), \`test:tuan-tu\` (chạy một mình), hoặc \`test:chet\` (khu cách ly, kèm một mục BACKLOG).`);
+
+  // Và khu cách ly phải THẬT SỰ đỏ. Một bài đã sửa được rồi mà còn nằm trong đó là lời khai sai
+  // theo hướng ngược: nó bảo "đang hỏng" trong khi nó chạy được, và không ai đi dọn.
+  const dsChet = [...String(pkg.scripts?.["test:chet"] ?? "").matchAll(/tests\/([A-Za-z0-9._-]+\.mjs)/g)].map((m) => m[1]);
+  assert.ok(dsChet.length > 0, "khai `test:chet` mà không đọc ra bài nào — cú pháp đã đổi");
+  for (const f of dsChet) {
+    const r = spawnSync(process.execPath, [path.join(ROOT, "tests", f)], { encoding: "utf8", timeout: 120000 });
+    assert.notEqual(r.status, 0,
+      `tests/${f} nằm trong khu cách ly nhưng CHẠY ĐƯỢC — gỡ nó ra, đưa về \`test\`, và đóng mục BACKLOG của nó`);
+  }
+  ok(`không bài kiểm nào chết lặng lẽ: ${coTrongTests.length} tệp, ${dsChet.length} đang cách ly và cả ${dsChet.length} đều thật sự đỏ`);
+}
+
 console.log(`\n${so} passed, 0 failed, ${so} total`);

@@ -964,6 +964,34 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **đóng khi (bổ sung):** một `PHIEN.md` có trên đĩa mà không có trong `HEAD` cũng làm cổng ĐỎ ở
   đúng lane chịu trách nhiệm.
 
+## N-65 · Tám bài kiểm gốc repo viết cho bộ khung 0.3.0 — đang CÁCH LY, chưa ai viết lại
+
+- **nhóm:** cong
+- **mở:** 2026-09-12 · lane `claude-gpt-chay-het-job`
+- **vùng:** `_code`
+- **[ĐO] 12/09:** **18 trên 31** bài kiểm ở `tests/` không chạy nổi, và `npm test` chết ngay bài thứ
+  nhất — nên cả chuỗi vô hình từ **10/09**, ngày migrate bộ khung 0.3.0 → 1.8.0 (`4da1e9e5`).
+  Lượt migrate THÊM 7 bài của bộ khung mới và **không xoá bài nào của bộ cũ**, nên tám bài còn
+  lại nhập những ký hiệu đã biến mất khỏi `scripts/`: `CHUA_DAY` · `commitChuaDay` ·
+  `fileScriptCanChep` · `adrScopeOf` · `CHI_SO_KY_THUAT` · `BASELINE` · `CHUA_THAY_DAU_VET` ·
+  `PHU_THUOC_CHUNG_DONG_BANG` · `laTrongVungDongBang`. Không phải đổi tên — module đã bị thay cả.
+- **[ĐO] CÁI GIÁ, không phải giả thuyết.** Trong lúc chuỗi ấy im, **bốn lớp bảo vệ chết mà không
+  lớp nào kêu một tiếng**, cả bốn đều tìm ra bằng cách chữa lại chính những bài kiểm này:
+  `safe-push` mất cửa đối chiếu artifact với HEAD · bảng sống ba cửa của Đức ném lỗi **mỗi lần
+  nhấp** · luật `nhap_dung_chung` nằm trong bản đồ mà không máy nào cưỡng chế (N-64, lần hai) ·
+  cổng mất câu cảnh báo `--restamp`. Cộng ba bài kiểm xanh-giả vì byte điều khiển thô.
+- **đang ở đâu:** tám bài nằm ở `npm run test:chet` — khu cách ly ĐẾM ĐƯỢC.
+  `tests/dau-suite-smoke.mjs` cưỡng chế hai chiều: mọi tệp trong `tests/` phải nằm ở đúng một
+  trong ba chuỗi (`test` · `test:tuan-tu` · `test:chet`), **và** mọi bài trong khu cách ly phải
+  THẬT SỰ đỏ — sửa xong mà quên gỡ ra cũng ĐỎ. Lượt chạy đầu của mép này bắt ngay **ba** bài
+  khác chưa từng nằm trong chuỗi nào (`cua-index` · `dashboard-dirty-repo-regression` ·
+  `khong-byte-dieu-khien-smoke`) — đều xanh, chỉ là không ai chạy.
+- **vì sao CHƯA viết lại:** 9.365 dòng, nhắm vào một API không còn tồn tại. Viết lại đòi dựng lại
+  hợp đồng của bộ khung mới từ đầu; đoán sai thì đẻ ra phép kiểm xanh vì lý do sai, và đó là thứ
+  đã tốn của repo này ba ngày. **Không xoá** — mỗi bài nêu một lớp bảo vệ có thật (xem đầu file
+  từng bài). Cần Đức chốt: viết lại từng bài theo API mới, hay bỏ hẳn bài nào.
+- **đóng khi:** `test:chet` rỗng — mọi bài hoặc đã về `test`, hoặc đã bị bỏ kèm lý do ghi lại.
+
 ## N-64 · `drafts/` là nháp DÙNG CHUNG, nhưng bộ máy coi nó thuộc vùng `_root`
 
 - **nhóm:** cong
