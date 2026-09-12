@@ -864,3 +864,35 @@ nạp lại một ghế không chạm ghế kia · `targetId` đổi sau lượt
 của Đức thì phải trả lại được.
 
 Việc tới lượt: **T7**, không cần ai duyệt.
+
+## 2026-09-12 · `claude-scouter-udine` — T7: vòng đi được ba chặng, chặng bốn lộ ra một lời nói dối
+
+**Việc.** Khép vòng tự cải tiến một lần. Dựng bàn đo `pilots/trang-thu-cham/` — trang thử tự
+dựng (ô nhập · nút · kết quả hiện sau 1.200ms), máy chủ tĩnh **chỉ nghe 127.0.0.1**, client
+Bridge, phép dò, adapter, trình chạy cả vòng. README ngay trong đó.
+
+**Ba chặng đầu chạy trơn, không sửa tay** — số đo từng chặng ở `CHUOI-VIEC.md` mục `T7`, khối
+*Chạy 12/09*.
+
+**Chặng hai suýt đi sai, và chỗ suýt sai đáng ghi hơn chỗ đúng.** Chuỗi việc kê `scout.page ·
+scout.a11y · scout.query`. Dò đúng ba cái đó thì **ô kết quả biến mất**: nó là `div` ẩn, nên
+`scout.page` bỏ qua (không tương tác) và `scout.a11y` cũng không thấy (chưa hiện thì chưa vào
+cây trợ năng). Adapter sẽ biết bấm mà **không biết câu trả lời rơi vào đâu**. Chỉ `scout.tree`
+thấy — đã thêm nó vào phép dò kèm lý do ngay tại chỗ.
+
+**Chặng bốn dừng, và cái nó lộ ra lớn hơn chặng nó chặn — `S-22`.** `scout.type` trả
+`typed: 8` trong khi ô nhập vẫn **rỗng** (đọc `value` bằng `scout.a11y`, và ảnh chụp còn thấy
+chữ mờ gợi ý). `scout.click` trả `matchCount: 1, hit: {relation:"descendant"}` trong khi tay
+nghe lượt bấm của trang **không hề chạy**. `scout.key Enter` cũng vậy. Đường ghi **báo ĐẠT cho
+việc chưa xảy ra** — ngược hẳn `S-17`, vốn chỉ chữa ca đường ghi *từ chối* oan.
+
+**Năm thứ đã LOẠI TRỪ được, kèm bằng chứng từng cái, nằm ở `BACKLOG.md` mục `S-22`** — đừng đi
+dò lại. Gọn nhất: tab không đông cứng, vẫn được vẽ, toạ độ không lệch, không có lớp che, và
+cùng lượt gọi đó **có chạy lúc 16:41** rồi thôi chạy từ ~16:44.
+
+**Bài học đắt nhất.** Trang thử để độ trễ do `setTimeout` thì **không tách được** *"chưa tới
+lượt"* với *"không tới nơi"* — tôi mất một lượt đi tìm bộ đếm giờ bị bóp. Thứ tách được là một
+dấu đặt **ngay trong tay nghe**, không qua hẹn giờ. Trang thử sau nên có sẵn một dấu như thế.
+
+**Chưa làm:** vòng **chưa khép**, ghi đúng ở mức đó. `T11` đứng trước `T7` vì mọi việc còn lại
+đều dựng trên đường ghi này.

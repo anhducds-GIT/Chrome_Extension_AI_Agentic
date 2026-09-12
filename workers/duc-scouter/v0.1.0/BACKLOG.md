@@ -597,3 +597,45 @@ thu nhỏ, Chrome cho tab ngủ) · ⒝ một lượt gắn debugger hỏng đ�
 · **đóng khi:** tái hiện được có chủ ý ít nhất một lần (đưa tab ra sau rồi hỏi lại là phép thử
 rẻ nhất), rồi hoặc vá, hoặc ghi vào `README.md` như một giới hạn đã biết kèm cách nhận ra nó.
 **Đừng đóng bằng cách đoán** — mục này tồn tại chính vì chưa ai đo được nguyên nhân.
+
+## MỞ · S-22 (2026-09-12, `claude-scouter-udine`) — lượt bấm và lượt gõ báo ĐẠT trong khi trang không hề nhận
+
+**Đây là đúng cái hạng lỗi mà `S-17` sinh ra để chặn, ở một tầng sâu hơn.** `S-17` chữa ca
+*"bấm trúng lớp che"*. Ca này: **không có lớp che nào, toạ độ đúng, phép hỏi-điểm trả lời
+đúng — và sự kiện vẫn không tới trang.** Cả ba method ghi đều trả về như một lượt thành công.
+
+**Đo được, 12/09, trang tự dựng `127.0.0.1:8642`, ghế `Udin_Scout`:**
+
+| hỏi gì | trả lời |
+|---|---|
+| `scout.type` → ô nhập | `typed: 8` · nhưng `scout.a11y` đọc `value: ""`, và ảnh chụp thấy chữ mờ gợi ý vẫn nguyên |
+| `scout.click` → nút | `matchCount: 1`, `hit: {relation:"descendant"}` · nhưng tay nghe lượt bấm của trang **không chạy** |
+| `scout.key Enter` → nút | trả về đạt · tay nghe vẫn **không chạy** |
+| `scout.shot` | **28.488 byte, ảnh đúng trang** — target đang được vẽ tử tế |
+| mã lúc TẢI trang | **có chạy** (`?chan=1` dựng được tấm chắn) → renderer không hề đông cứng |
+| toạ độ | `x:87 y:275` (CSS px) ↔ `108,344` trên ảnh ở 125% — **khớp chính xác**, không lệch |
+
+Tay nghe được đo bằng một dấu đặt **ngay trong nó**, không qua bộ đếm giờ (`#ket-qua[data-bam]`).
+Không có dấu đó thì cả lượt trông y như *"trang trả lời chậm"* — và người gỡ lỗi sẽ đi nới hạn
+chờ, sai hoàn toàn hướng.
+
+**Khác `S-21`, đừng gộp hai mục.** `S-21`: đường ĐỌC hình học hỏng và **fail-closed** (không ai
+bấm nhầm). `S-22`: đường ĐỌC chạy hoàn hảo, đường GHI hỏng và **fail-open** — nó báo ĐẠT.
+Chỗ nguy hiểm là ở đó.
+
+**Biết chắc là nó KHÔNG phải:** ⑴ tab đông cứng — mã lúc tải chạy · ⑵ tab không được vẽ — ảnh
+chụp 28KB đúng trang · ⑶ toạ độ lệch vì màn hình 125% — đã đối chiếu với ảnh · ⑷ lớp che —
+`hit` trả `descendant`, và ảnh trống trơn · ⑸ trang hỏng — cùng trang, cùng ghế, cùng lượt gọi
+đó **chạy đúng lúc 16:41** rồi thôi chạy từ khoảng 16:44.
+
+**Giả thuyết chưa kiểm, đừng tin cái nào:** ⒜ cửa sổ Chrome của ghế đó đang thu nhỏ hoặc bị che
+nên renderer bỏ sự kiện nhập — **phép thử rẻ nhất, và cần tay Đức: đưa cửa sổ ra trước rồi chạy
+lại `vong.mjs`** · ⒝ một client debug khác đang giữ target · ⒞ Chrome hạ mức xử lý sự kiện nhập
+cho tab nền sau một khoảng.
+
+**Việc này chặn `T7`:** ba chặng đầu của vòng tự cải tiến chạy trơn; chặng 4 dừng ở đây.
+
+· **đóng khi:** biết được vì sao, **và** đường ghi thôi báo ĐẠT khi sự kiện không tới nơi —
+hoặc bằng một phép kiểm trong seed, hoặc bằng một dòng ở `README.md` nói rõ `scout.click` /
+`scout.type` **không** hứa điều gì. Một seed báo thành công cho việc chưa xảy ra thì mọi thứ
+dựng trên nó đều là phỏng đoán. **Đừng đóng bằng cách đoán nguyên nhân.**

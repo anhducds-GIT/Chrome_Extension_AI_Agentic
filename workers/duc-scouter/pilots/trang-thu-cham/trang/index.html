@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Trang thử chậm — bàn đo của Scouter</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 40px; max-width: 40rem; }
+  h1 { font-size: 1.25rem; }
+  label { display: block; margin-bottom: .4rem; font-weight: 600; }
+  #o-nhap { width: 100%; padding: .6rem; font: inherit; box-sizing: border-box; }
+  #nut-gui { margin-top: .8rem; padding: .6rem 1.1rem; font: inherit; cursor: pointer;
+             display: inline-flex; align-items: center; gap: .45rem; }
+  #nut-gui .bieu-tuong { font-size: 1.1em; line-height: 1; }
+  #ket-qua { margin-top: 1.4rem; padding: .8rem; border: 1px solid #999; }
+  #ket-qua[hidden] { display: none; }
+  #tam-chan { position: fixed; inset: 0; background: rgba(0,0,0,.45); color: #fff;
+              display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  #tam-chan[hidden] { display: none; }
+</style>
+</head>
+<body>
+  <h1>Trang thử chậm</h1>
+  <p>Một ô nhập, một nút, một kết quả hiện ra <strong>sau một khoảng trễ</strong>.
+     Độ trễ là phần bắt buộc: nó là thứ ép người gọi phải chờ cho đúng.</p>
+
+  <label for="o-nhap">Câu cần vọng lại</label>
+  <input id="o-nhap" type="text" autocomplete="off" placeholder="gõ gì đó rồi bấm Gửi">
+
+  <button id="nut-gui" type="button"><span class="bieu-tuong" aria-hidden="true">▶</span><span>Gửi</span></button>
+
+  <div id="ket-qua" hidden></div>
+
+  <div id="tam-chan" hidden>Đang bận — thử lại sau</div>
+
+<script>
+(function () {
+  "use strict";
+  var TRE_MS = 1200;
+  var oNhap = document.getElementById("o-nhap");
+  var nut = document.getElementById("nut-gui");
+  var oKetQua = document.getElementById("ket-qua");
+  var tamChan = document.getElementById("tam-chan");
+
+  // ?chan=1 dựng tấm chắn phủ kín trang. Cây DOM vẫn nguyên bên dưới, nên mọi
+  // selector vẫn khớp — đó đúng là ca đã làm scout.wait nói dối ngày 12/09.
+  if (new URLSearchParams(location.search).has("chan")) tamChan.hidden = false;
+
+  nut.addEventListener("click", function () {
+    // Dấu NGAY LÚC BẤM, không qua bộ đếm giờ: nhờ nó mà phân biệt được
+    // "lượt bấm không tới nơi" với "bộ đếm giờ không chạy".
+    oKetQua.dataset.bam = String(Number(oKetQua.dataset.bam || 0) + 1);
+    oKetQua.hidden = true;
+    window.setTimeout(function () {
+      oKetQua.textContent = "Đã vọng lại: " + oNhap.value;
+      oKetQua.hidden = false;
+    }, TRE_MS);
+  });
+})();
+</script>
+</body>
+</html>

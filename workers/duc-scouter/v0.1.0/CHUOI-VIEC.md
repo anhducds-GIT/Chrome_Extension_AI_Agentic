@@ -30,8 +30,9 @@
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T7** | **Đóng vòng tự cải tiến MỘT lần** — `ROADMAP` bước 2 | — | **tới lượt** |
-| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | @Đức:bấm công tắc · tài khoản rảnh | chờ Đức |
+| **T11** | **`S-22` — đường ghi báo ĐẠT khi sự kiện KHÔNG tới trang** | @Đức:bấm một phép thử 10 giây | **tới lượt** |
+| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T11 | **③/④ chặng** — bàn đo đã dựng, chặng 4 dừng ở `S-22` |
+| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T11 (cùng một đường ghi) · tài khoản rảnh | chờ |
 | **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target thỉnh thoảng không trả lời câu hỏi hình học | — | chưa bắt đầu |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T7 xong trước | chưa bắt đầu |
@@ -40,10 +41,15 @@
 | **D2** | Đức gõ tên cho ghế THỨ HAI | — | **nửa chừng** — ghế 1 đã tên `Udin_Scout` |
 | ~~T1 T2 T3 T4~~ | `S-17` `S-18` `S-19` `S-16` | — | **XONG 12/09**, cả bốn đo ngoài đời |
 
-**T7 đứng đầu bây giờ vì bốn việc kê dưới nó đều đang chờ nó trả lời một câu:** cả vòng có
-khép được không, và khép rồi thì còn thiếu gì thật. T6 xây sẵn một năng lực chưa ai cần là
-đúng thứ `ROADMAP` mục ④ cấm; T9 đóng gói một seed chưa khép vòng lần nào là đóng gói một lời
-hứa. T8 đứng cuối vì nó đổi tên hàng loạt và làm mọi diff khó đọc.
+**T11 chen lên đầu ngày 12/09, và đây là lý do:** lượt chạy T7 đo được rằng `scout.click` và
+`scout.type` **báo ĐẠT trong khi trang không nhận được gì**. Mọi việc còn lại trong chuỗi đều
+đứng trên đường ghi đó — T7 chặng 4, T5, T6 — nên làm tiếp trước khi biết đường ghi có nói thật
+hay không là **xây trên một con số không kiểm được**. T11 rẻ: phép thử đầu tiên tốn của Đức 10
+giây (xem `S-22` giả thuyết ⒜).
+
+**T7 vẫn là mục đích của cả gói**, và ba chặng đầu của nó đã chạy trơn — bàn đo nằm sẵn ở
+`pilots/trang-thu-cham/`, chạy lại bằng một lệnh. T8 vẫn đứng cuối vì nó đổi tên hàng loạt và
+làm mọi diff khó đọc.
 
 ---
 
@@ -196,11 +202,12 @@ sẵn cho một nhu cầu tưởng tượng là đúng thứ `ROADMAP` mục ④
 
 · **đóng khi:** chọn được một đường, và lý do ghi vào `BACKLOG.md` dưới `S-20`.
 
-## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ *việc tới lượt, và là mục đích của cả gói*
+## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ *mục đích của cả gói; đang ở chặng ④, chặn bởi T11*
 
 Scouter dò trang → AI ghi adapter xuống đĩa qua Bridge → `scout.reload` → adapter chạy.
 **Từng mảnh đã có và đã đo; cả vòng thì chưa ai khép một lần nào.** Cho tới khi nó khép, ta
-đang xây các bộ phận mà chưa biết chúng lắp vào nhau có chạy không.
+đang xây các bộ phận mà chưa biết chúng lắp vào nhau có chạy không. Lượt chạy 12/09 đi được
+ba chặng — xem khối *Chạy 12/09* ở cuối mục này trước khi bắt đầu lại từ đầu.
 
 ### Thứ đã biết — đừng đi dò lại
 
@@ -235,10 +242,62 @@ Scouter dò trang → AI ghi adapter xuống đĩa qua Bridge → `scout.reload`
 - **Đừng mượn tab việc thật của Đức.** Tab nào mượn thì phải trả lại được — cả đi lẫn về đều
   phải là http(s).
 
+### Chạy 12/09 — ba chặng đầu ĐẠT, chặng bốn dừng
+
+Bàn đo nằm ở `pilots/trang-thu-cham/` (README ở ngay đó). Không phải dựng lại; chạy lại bằng
+một lệnh. Đã đo:
+
+- **①** trang thử tự dựng, phục vụ qua http trên `127.0.0.1:8642`, kết quả hiện sau 1.200ms
+- **②** `scout.page` · `scout.a11y` · **`scout.tree`** rồi ghi báo cáo 18.354 byte xuống đĩa
+  qua `file.write`. **`scout.tree` không thừa:** ô kết quả là một `div` ẩn nên hai phép kia
+  KHÔNG thấy nó — dò thiếu nó là dựng ra adapter biết bấm mà không biết câu trả lời ở đâu
+- **③** adapter dựng **chỉ từ báo cáo**, không mở lại file HTML, kèm 9 phép ghim chạy không
+  cần trình duyệt. **Lượt audit độc lập bắt được một phép ghim rỗng** — bỏ phép kiểm
+  `satisfied` của lượt chờ kết quả đi thì tám khối kia vẫn xanh; đã thêm khối thứ chín
+- **④** `scout.navigate` nạp lại đúng URL đang đứng: **262ms**, `reloaded: true` (T3 chạy
+  ngoài đời lần hai). Rồi adapter dừng ở `S-22` → **T11**
+
+**Vòng CHƯA khép**, và ghi đúng ở mức đó.
+
 · **đóng khi:** cả bốn chặng chạy liền một mạch **không sửa tay giữa chừng**, và `docs/TRIALS.md`
 có một dòng cho lượt đó. **Một chặng phải sửa tay thì vòng CHƯA khép** — ghi rõ chặng nào và vì
 sao, đừng làm tròn. Kết quả "chưa khép được" cũng là kết quả, và nó đáng giá hơn một dòng xanh
 không đúng.
+
+## T11 · `S-22` — đường ghi báo ĐẠT khi sự kiện KHÔNG tới trang  ⟵ *việc tới lượt*
+
+Đo được 12/09 trong lúc chạy T7, trên trang tự dựng, ghế `Udin_Scout`: `scout.type` trả
+`typed: 8` mà ô nhập vẫn rỗng · `scout.click` trả `hit: {relation:"descendant"}` mà tay nghe
+lượt bấm của trang **không hề chạy** · `scout.key Enter` cũng thế. Cùng lúc đó `scout.shot`
+trả về một tấm ảnh 28KB đúng trang và mã lúc tải trang **có** chạy — nên không phải tab chết.
+
+**Đây là ca ngược của `S-17`.** `S-17` chữa *bấm trúng lớp che*: đường ghi **từ chối**. Ca này
+đường ghi **báo đạt**. Một seed nói dối theo hướng "đã xong" thì mọi thứ dựng trên nó là phỏng
+đoán, kể cả ba chặng T7 vừa chạy xanh.
+
+**Chặng 1 — rẻ nhất, và cần tay Đức (10 giây).** Đưa cửa sổ Chrome của ghế `Udin_Scout` ra
+trước màn hình (nếu đang thu nhỏ thì mở lên), rồi chạy:
+
+```bash
+node workers/duc-scouter/pilots/trang-thu-cham/phuc-vu.mjs
+SCOUTER_GHE=<id-ghe> node workers/duc-scouter/pilots/trang-thu-cham/scripts/vong.mjs
+```
+
+Chạy được → nguyên nhân là **khả kiến của cửa sổ**, và đó là một giới hạn phải ghi to vào
+`README.md`: Scouter **không tự động hoá được một cửa sổ đang khuất**. Vẫn hỏng → loại giả
+thuyết ⒜ và đi tiếp sang ⒝⒞ ở `S-22`.
+
+**Chặng 2 — bất kể chặng 1 ra gì.** Đường ghi phải thôi báo ĐẠT cho việc chưa xảy ra. Hai
+đường, chọn sau khi biết nguyên nhân, **đừng chọn trước**:
+
+| | đường | giá |
+|---|---|---|
+| ⒜ | `scout.type` tự soát lại bằng cây trợ năng (`value` của ô nhập) sau khi gõ | Lõi GHI phải hỏi được `Accessibility.*` — **thêm method CDP = hỏi Đức**. Và nó chỉ chữa được lượt gõ, không chữa lượt bấm |
+| ⒝ | `README.md` nói thẳng: `scout.click` hứa *"đã bắn chuột vào đúng điểm của đúng phần tử"*, **không** hứa *"trang đã nhận"* | Rẻ, thật, và không nới gì. Người viết adapter tự đặt dấu kiểm của mình — đúng như adapter `trang-thu-cham` đang làm |
+
+· **đóng khi:** biết vì sao (hoặc ghi rõ là chưa biết, kèm những gì đã LOẠI TRỪ được), **và**
+một trong hai đường trên đã làm xong. Không đóng bằng cách nới hạn chờ — hạn chờ không liên
+quan, và 12/09 nó suýt dẫn cả lượt gỡ lỗi đi sai hướng.
 
 ## T8 · `S-03` — đổi tên `observer` → `scouter`
 
