@@ -231,8 +231,14 @@ export function canhTab({ url, urlGhim, idLuotNguoiCuoi, mocLuotNguoi }) {
  *   ⒞ TIỆN ÍCH KHAI DỪNG CỨNG thì DỪNG. Không cãi. Nó biết trạng thái tab, bộ chạy thì không.
  */
 export const NGUONG_PING_DOC_HONG = 3;
-export const TRE_DOC_HONG_NEN_MS = 4000;
-export const TRE_DOC_HONG_TRAN_MS = 30000;
+/* Nền 15 giây, trần 2 phút — CHỐT LẠI 12/09 sau khi profile `kaito` ăn CAPTCHA.
+   Đức: *"đọc vài trăm lần chỉ trong vài chục giây thì là spam rồi còn gì."* Số cũ (4s → 30s)
+   vẫn cho ~120 lượt/giờ; bộ số này cho ~33. Đây KHÔNG phải chỉnh cho đẹp: lượt chạy 05:31
+   nện ~900 lượt trong 60 phút, và ChatGPT đòi xác minh con người ngay sau đó. */
+export const TRE_DOC_HONG_NEN_MS = 15000;
+export const TRE_DOC_HONG_TRAN_MS = 120000;
+/* SÀN CỨNG giữa hai lượt đọc bất kỳ, cưỡng chế trong `doc()` — xem khối lý lẽ ở đó. */
+export const SAN_GIUA_HAI_LUOT_DOC_MS = 10000;
 
 /** Thuần: lượt đọc hỏng thứ `docHong` thì nghỉ bao lâu, có in ra không, có hỏi ping không. */
 export function nhipDocHong(docHong, nen = TRE_DOC_HONG_NEN_MS, tran = TRE_DOC_HONG_TRAN_MS) {
@@ -467,8 +473,30 @@ async function chinh() {
     } catch (e) { out = String(e.stdout || ""); }
     try { return JSON.parse(out); } catch { return { ok: false, error: { code: "KHONG_PHAI_JSON" } }; }
   };
-  const doc = () => goi(["chat-read", "--limit", "4", "--max-chars", "20000"]);
   const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* B-78 — SÀN GIỮA HAI LƯỢT ĐỌC. Đức chốt 12/09: *"đọc vài trăm lần trong vài chục giây thì
+   * là spam rồi còn gì. Hãy đọc và maintain từ tốn thôi."*
+   *
+   * VÌ SAO ĐẶT Ở ĐÂY chứ không sửa từng chỗ: có BỐN đường đọc, mỗi đường tự chọn nhịp riêng
+   * (đọc hỏng · chờ trả lời · đọc lại sau lượt gửi · soi mốc sau khi gửi). Vá từng nhịp thì
+   * đường thứ năm thêm sau này lại tự chọn số của nó, và cái trần chung không ai canh. `doc()`
+   * là cửa DUY NHẤT mọi lượt đọc đi qua, nên sàn đặt ở đây là sàn thật — kể cả cho đường chưa
+   * viết. Đúng hình dạng của `runPrompt()` bên `content.js`: một chỗ hẹp, một luật.
+   *
+   * ĐO TỪ LÚC LƯỢT TRƯỚC XONG, không phải lúc nó bắt đầu. Một lượt `chat-read` có thể mất 30
+   * giây rồi mới hết giờ; đo từ lúc bắt đầu thì sàn đã "tiêu" hết vào thời gian chờ đó và hai
+   * lượt vẫn dính nhau. Đo từ lúc xong thì khoảng nghỉ là khoảng nghỉ thật.
+   *
+   * KHÔNG chạm `--limit 4 --max-chars 20000`: đó là cỡ một lượt đọc, không phải tần suất. */
+  let mocDocXong = 0;
+  const doc = async () => {
+    const con = SAN_GIUA_HAI_LUOT_DOC_MS - (Date.now() - mocDocXong);
+    if (mocDocXong && con > 0) await ngu(con);
+    const kq = goi(["chat-read", "--limit", "4", "--max-chars", "20000"]);
+    mocDocXong = Date.now();
+    return kq;
+  };
 
   const hanChung = Date.now() + tranPhut * 60000;
   /* `--tu-turn` gõ tay THẮNG chỗ dừng đọc từ nhật ký: người khai tường minh thì người đúng.
@@ -512,7 +540,7 @@ async function chinh() {
       if (fs.existsSync(path.join(thuMuc, "DUNG"))) { lyDo = "NGUOI_DUNG"; break; }
       if (Date.now() > hanChung) { lyDo = "QUA_TRAN_PHUT"; break; }
 
-      const d = doc();
+      const d = await doc();
       if (!d.ok) {
         /* SAI TRANG KHÔNG PHẢI PANEL BẬN — và chờ thêm không bao giờ chữa được nó.
            Đo 10/09: một chat MỚI (chưa gõ câu nào) nằm ở `chatgpt.com/`, không phải
@@ -660,11 +688,13 @@ async function chinh() {
     const daVaoChua = async () => {
       await ngu(45000);
       for (let i = 0; i < 12; i += 1) {
-        const lai = doc();
+        const lai = await doc();
         if (lai.ok) {
           const hoiCuoi = [...lai.result.turns].reverse().find((t) => t.role === "user");
           return Boolean(hoiCuoi && hoiCuoi.text.startsWith(khoi.text.slice(0, 60)));
         }
+        /* Cộng thêm vào SÀN của `doc()`, không thay nó: mỗi vòng ở đây cách nhau ~15 giây chứ
+           không phải 5. Đừng đọc con số này một mình mà kết luận nhịp — sàn mới là thứ cưỡng chế. */
         await ngu(5000);
       }
       return null;
@@ -705,7 +735,7 @@ async function chinh() {
        nhích mù (xoá mốc đi để nó tự ghim lại): nếu người gõ ngay sau lượt tôi,
        nhích mù sẽ nhận lượt của người làm mốc và mép B-63 mất tác dụng đúng lúc cần nhất.
        So bằng 60 ký tự đầu của khối, giống `daVaoChua` — không so bằng từ khoá. */
-    const sauGui = doc();
+    const sauGui = await doc();
     if (sauGui.ok) {
       const cuoi = [...(sauGui.result.turns || [])].reverse().find((t) => t.role === "user");
       if (cuoi && cuoi.text.startsWith(khoi.text.slice(0, 60))) {

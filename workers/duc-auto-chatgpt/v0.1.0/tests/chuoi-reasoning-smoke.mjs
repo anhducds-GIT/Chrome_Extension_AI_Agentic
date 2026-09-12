@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { quyetDinh, ketLuanGui, canhTab, chanDung, conSong, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
+import { quyetDinh, ketLuanGui, canhTab, chanDung, conSong, nhipDocHong, hoiThoaiCua, luotDaChot, khoaAnToan, docNhatKy, TRAN_VONG, TRAN_KY_TU_KHOI, NGUONG_YEN, NGUONG_PING_DOC_HONG, TRE_DOC_HONG_TRAN_MS, SAN_GIUA_HAI_LUOT_DOC_MS } from "../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs";
 
 const KHOI_CU = "11111111-1111-4111-8111-111111111111";
 const khoiTot = (text = "prompt vòng sau", turn = "22222222-2222-4222-8222-222222222222") =>
@@ -635,11 +635,14 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(t3 > t1, `phải giãn dần: lượt 3 (${t3}ms) phải lâu hơn lượt 1 (${t1}ms)`);
   assert.equal(nhipDocHong(50).treMs, TRE_DOC_HONG_TRAN_MS, "phải có trần, không giãn vô hạn");
   assert.ok(nhipDocHong(99).treMs <= TRE_DOC_HONG_TRAN_MS, "trần là trần");
-  /* Ghim cái GIÁ, không ghim con số: trần 60 phút mà nhịp phẳng 4 giây là ~900 lượt gõ cửa.
-     Đếm thật số lượt trong 60 phút theo nhịp hiện tại. */
+  /* Ghim cái GIÁ, không ghim con số: trần 60 phút mà nhịp phẳng 4 giây là ~900 lượt gõ cửa —
+     và lượt chạy 05:31 ngày 12/09 làm đúng thế, rồi ChatGPT đòi CAPTCHA. Đếm thật số lượt
+     trong 60 phút theo nhịp hiện tại. Đức chốt: *"đọc và maintain từ tốn thôi."* */
   let tong = 0, luot = 0;
   while (tong < 60 * 60 * 1000 && luot < 5000) { tong += nhipDocHong(luot + 1).treMs; luot += 1; }
-  assert.ok(luot < 300, `trong trần 60 phút phải dưới 300 lượt đọc hỏng, đang là ${luot}`);
+  assert.ok(luot <= 60, `trong trần 60 phút phải tối đa 60 lượt đọc hỏng (~1 lượt/phút), đang là ${luot}`);
+  assert.ok(nhipDocHong(1).treMs >= 10000,
+    "ngay lượt hỏng ĐẦU cũng phải nghỉ ≥10 giây — nện dồn từ lượt đầu là thứ đã gây CAPTCHA");
 
   // ⒟ Hỏi ping: KHÔNG hỏi ngay lượt đầu (hết giờ lẻ tẻ là chuyện thường), nhưng phải hỏi sớm.
   assert.equal(nhipDocHong(1).hoiPing, false, "một lượt hỏng chưa phải triệu chứng");
@@ -720,4 +723,56 @@ console.log("chuoi reasoning smoke tests: PASS");
     "khối thu khoá không được tự ghi bằng một lượt writeFileSync riêng — đó là đường vòng qua `wx`");
 
   console.log("  ok  ⓥ bị chặn ≠ xong: hỏi ping trước khi chấm HET_CHUOI · khoá mồ côi tự thu, vẫn qua `wx`");
+}
+
+/* ⓦ B-78 — SÀN GIỮA HAI LƯỢT ĐỌC. Đức chốt 12/09 sau khi profile `kaito` ăn CAPTCHA:
+ * *"đọc vài trăm lần chỉ trong vài chục giây thì là spam rồi còn gì. Hãy đọc và maintain từ
+ * tốn thôi."* Lượt 05:31 nện ~900 lượt/giờ, và ChatGPT đòi xác minh con người ngay sau đó.
+ *
+ * Ghim ở đây là ghim CHỖ HẸP, không ghim từng con số: có bốn đường đọc, mỗi đường tự chọn
+ * nhịp riêng. Vá từng nhịp thì đường thứ năm thêm sau lại tự chọn số của nó.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+
+  assert.ok(SAN_GIUA_HAI_LUOT_DOC_MS >= 10000,
+    `sàn giữa hai lượt đọc phải ≥10 giây, đang là ${SAN_GIUA_HAI_LUOT_DOC_MS}ms`);
+
+  // ⒜ Sàn phải nằm TRONG `doc()` — cửa duy nhất mọi lượt đọc đi qua.
+  const iDoc = src.indexOf("const doc = async () =>");
+  assert.ok(iDoc > 0, "`doc()` phải là một hàm async — sàn cần chờ được");
+  const thanDoc = src.slice(iDoc, src.indexOf("\n  };", iDoc));
+  assert.ok(thanDoc.includes("SAN_GIUA_HAI_LUOT_DOC_MS"),
+    "sàn phải cưỡng chế NGAY TRONG doc(), không phải ở từng chỗ gọi");
+  assert.ok(thanDoc.includes("chat-read"), "cắt nhầm thân hàm — phép ghim dưới sẽ vô nghĩa");
+  /* Đo từ lúc lượt trước XONG. Một lượt `chat-read` có thể mất 30 giây rồi mới hết giờ; đo từ
+     lúc bắt đầu thì sàn tiêu hết vào thời gian chờ đó và hai lượt vẫn dính nhau. */
+  assert.ok(thanDoc.indexOf("mocDocXong = Date.now()") > thanDoc.indexOf("chat-read"),
+    "mốc phải đặt SAU lượt gọi — đo từ lúc lượt trước xong, không phải lúc nó bắt đầu");
+
+  /* ⒝ MỌI chỗ gọi phải `await` — một chỗ quên là một đường đọc lọt qua sàn, và nó không đỏ ở
+     đâu cả: `doc()` không await trả về một Promise, mà `Promise.ok` là `undefined`, nên nhánh
+     "đọc hỏng" chạy mãi mãi trên một lượt đọc chưa bao giờ được chờ.
+
+     LỌC CHÚ THÍCH TRƯỚC KHI ĐẾM. Bản đầu đếm trên cả file và ra 6/3 — ba chỗ thừa là chính lời
+     chú thích của tôi nhắc tên `doc()`. Một bộ dò khớp vào văn của chính mình thì con số nó ra
+     không nói gì về mã. */
+  const chiMaDoc = src.split("\n").filter((d) => {
+    const t = d.trim();
+    return !t.startsWith("*") && !t.startsWith("//") && !t.startsWith("/*");
+  }).join("\n");
+  const soGoi = (chiMaDoc.match(/\bdoc\(\)/g) || []).length;
+  const soAwait = (chiMaDoc.match(/await doc\(\)/g) || []).length;
+  assert.ok(soAwait >= 3, `phải còn đủ các chỗ đọc, đang thấy ${soAwait}`);
+  assert.equal(soAwait, soGoi,
+    `mọi lượt gọi doc() phải có await: ${soAwait}/${soGoi} — chỗ quên await bỏ qua sàn và trả về Promise`);
+
+  // ⒞ Không đường đọc nào được nghỉ dưới sàn bằng một hằng số riêng.
+  for (const m of chiMaDoc.matchAll(/await ngu\((\d+)\)/g)) {
+    const ms = Number(m[1]);
+    assert.ok(ms >= 5000, `có chỗ nghỉ ${ms}ms — dưới 5 giây là nhịp của máy, không phải của người`);
+  }
+
+  console.log("  ok  ⓦ sàn nhịp đọc: cưỡng chế trong doc(), mọi chỗ gọi đều await, ≤60 lượt/giờ khi hỏng");
 }
