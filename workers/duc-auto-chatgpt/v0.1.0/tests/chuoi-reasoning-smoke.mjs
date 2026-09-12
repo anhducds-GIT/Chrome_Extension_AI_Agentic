@@ -706,9 +706,18 @@ console.log("chuoi reasoning smoke tests: PASS");
   //    nhau giữa hai câu lệnh sẽ cùng tin mình giữ khoá.
   assert.ok(boChay2.includes("conSong(cu.pid)"), "phải kiểm pid trước khi thu khoá");
   assert.equal((boChay2.match(/flag: "wx"/g) || []).length, 1,
-    "chỉ MỘT chỗ đặt khoá, và nó dùng `wx` — lượt thu lại phải đi qua đúng cửa nguyên tử đó");
-  assert.ok(boChay2.includes("const datKhoa = ()"),
-    "lượt đặt lại phải dùng lại đúng hàm đặt khoá, không chép một lượt ghi khác");
+    "chỉ MỘT chỗ đặt khoá, và nó dùng `wx`");
+  assert.ok(boChay2.includes("const datKhoa = ()"), "phải có một hàm đặt khoá dùng chung");
+  /* CẮT ĐÚNG KHỐI THU KHOÁ rồi mới khẳng định. Bản pin đầu chỉ đếm số chỗ có `wx` trên CẢ FILE
+     và hỏi hàm `datKhoa` có tồn tại không — cả hai vẫn đúng khi nhánh thu khoá lặng lẽ đổi sang
+     `writeFileSync` trần. Đột biến ⑤ đi lọt đúng khe đó: xanh vì lý do sai. */
+  const iThu = boChay2.indexOf("if (cu && !conSong(cu.pid))");
+  assert.ok(iThu > 0, "không tìm thấy khối thu khoá mồ côi — pin dưới đây sẽ vô nghĩa");
+  const khoiThu = boChay2.slice(iThu, boChay2.indexOf("} else {", iThu));
+  assert.ok(khoiThu.includes("datKhoa()"),
+    "lượt THU khoá phải gọi lại `datKhoa()` — tức vẫn đi qua `wx`; ghi đè trần thì hai bản chạy chen nhau đều tin mình giữ khoá");
+  assert.ok(!/writeFileSync/.test(khoiThu),
+    "khối thu khoá không được tự ghi bằng một lượt writeFileSync riêng — đó là đường vòng qua `wx`");
 
   console.log("  ok  ⓥ bị chặn ≠ xong: hỏi ping trước khi chấm HET_CHUOI · khoá mồ côi tự thu, vẫn qua `wx`");
 }
