@@ -671,6 +671,11 @@ async function chinh() {
     /* B-91 — MỘT lượt tự nạp lại tab cho `RECEIVER_LOST`, MỖI VÒNG MỘT LẦN, không hơn.
        Cờ này là cái chặn. Xem khối lý lẽ ở chỗ dùng, và đọc kèm RANH GIỚI ở đầu file. */
     let daTuNapVi = null;
+    /* B-94 — mốc để đo câu trả lời có DÀI RA giữa hai lượt đọc không. Khai trong vòng lặp vòng
+       (mỗi vòng một câu trả lời mới) nhưng ngoài vòng lặp đọc (phải sống qua các lượt đọc). */
+    let idTraLoiTruoc = null;
+    let chuTraLoiTruoc = 0;
+    let daBaoDangViet = false;
 
     while (true) {
       /* HAI CỬA DỪNG, cùng một đường ra. Phím bấm (B-79) là cửa thường dùng; cờ `DUNG` giữ lại
@@ -813,9 +818,46 @@ async function chinh() {
         break;
       }
 
-      if (r.generating === true) { daThayDangChay = true; soLanYen = 0; } else soLanYen += 1;
-
       const luotTL = [...(r.turns || [])].reverse().find((t) => t.role === "assistant");
+      /* B-94 — "LẶNG" KHÔNG PHẢI "XONG". CÂU TRẢ LỜI DÀI RA MỚI LÀ BẰNG CHỨNG CÒN SỐNG.
+       *
+       * Sự cố 13/09, hội thoại Project của Đức. Bộ chạy dừng vòng 2 với `LUOT_CHUA_CHOT`, còn
+       * trang lúc ấy đang hiện:
+       *     assistant request-…-0 · 35 ký tự — "Worked for 20s / Called tool / MODE: H"
+       * GPT ĐANG CHẠY TOOL. Nó chưa xong, chưa hỏng, chỉ là chậm.
+       *
+       * `B-59`/`B-60` đã ghi đúng nguyên nhân từ 10/09: `generating` đọc nút Stop, mà nút Stop
+       * BIẾN MẤT trong lúc model chạy tool. Nhưng lớp bù cho nó chỉ là CHỜ — 6 lượt yên, ~90
+       * giây. Một lượt tool chạy lâu hơn thế là thủng, và hội thoại có tool là hội thoại đầu
+       * tiên đủ điều kiện làm nó lộ ra. Không phải hồi quy: là một lỗ nằm sẵn.
+       *
+       * Chờ lâu hơn KHÔNG phải bản vá — nó chỉ dời cái ngưỡng đoán mò đi chỗ khác, và mọi con
+       * số tôi chọn đều sẽ sai với một lượt tool đủ dài. Phải thêm một TÍN HIỆU THẬT.
+       *
+       * Tín hiệu ấy đã nằm sẵn trong tay: mỗi lượt đọc đều trả về độ dài lượt trả lời cuối.
+       * Dài ra giữa hai lượt đọc = CHẮC CHẮN còn sống, mạnh hơn hẳn nút Stop. Và nó không đọc
+       * một chữ tiếng Anh nào trên màn hình, nên không vỡ khi ChatGPT đổi ngôn ngữ hay đổi câu
+       * chữ — đó là lý do tôi KHÔNG bắt chuỗi "Called tool".
+       *
+       * Chỉ so khi CÙNG MỘT lượt. Lượt đổi id thì phép so vô nghĩa, và lượt đọc đầu của mỗi
+       * vòng chỉ dựng mốc chứ không phán gì — không được để nó tự kết luận "đang sống". */
+      const chuTraLoi = Number(luotTL?.chars ?? 0);
+      const dangDaiRa = Boolean(luotTL) && luotTL.id === idTraLoiTruoc && chuTraLoi > chuTraLoiTruoc;
+      if (r.generating === true) { daThayDangChay = true; soLanYen = 0; }
+      else if (dangDaiRa) {
+        if (soLanYen > 0) {
+          console.log(`  vòng ${vong} · vẫn đang viết: ${chuTraLoiTruoc} → ${chuTraLoi} ký tự (đồng hồ yên đặt lại từ ${soLanYen})`);
+        }
+        if (!daBaoDangViet) {
+          daBaoDangViet = true;
+          ghi({ su_kien: "CON_DANG_VIET", vong, tu: chuTraLoiTruoc, den: chuTraLoi, turn_id: luotTL.id, yen_truoc_do: soLanYen });
+        }
+        daThayDangChay = true;
+        soLanYen = 0;
+      } else soLanYen += 1;
+      idTraLoiTruoc = luotTL?.id ?? null;
+      chuTraLoiTruoc = chuTraLoi;
+
       if (r.last_copy_block?.found) daThayKhoi = true;
       const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, chuKhoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
       if (qd.viec === "CHO") {

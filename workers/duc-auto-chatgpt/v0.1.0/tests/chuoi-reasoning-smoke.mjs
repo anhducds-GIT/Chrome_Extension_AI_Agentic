@@ -1472,3 +1472,68 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓗ nhật ký giữ số đo, không chỉ giữ phán quyết — và canh cả họ, không canh một dòng");
 }
+
+/* Ⓘ B-94 — "LẶNG" KHÔNG PHẢI "XONG": CÂU TRẢ LỜI DÀI RA MỚI LÀ BẰNG CHỨNG CÒN SỐNG.
+ *
+ * Sự cố 13/09 trên hội thoại Project của Đức: chuỗi dừng vòng 2 bằng `LUOT_CHUA_CHOT`, còn
+ * trang lúc ấy đang hiện `assistant request-…-0 · 35 ký tự — "Worked for 20s / Called tool"`.
+ * GPT đang CHẠY TOOL. `B-59`/`B-60` đã ghi đúng nguyên nhân từ 10/09 (nút Stop biến mất trong
+ * lúc chạy tool), nhưng lớp bù cho nó chỉ là CHỜ ~90 giây — tool lâu hơn thế là thủng.
+ *
+ * Chờ lâu hơn không phải bản vá: nó chỉ dời ngưỡng đoán mò đi chỗ khác. Phép ghim này canh cái
+ * TÍN HIỆU THẬT, và canh cả ba chiều nó có thể hỏng:
+ *   ⑴ có so độ dài giữa hai lượt đọc không;
+ *   ⑵ chỉ so khi CÙNG một lượt (id đổi thì phép so vô nghĩa);
+ *   ⑶ và KHÔNG bắt chuỗi tiếng Anh trên màn hình — thứ vỡ ngay khi ChatGPT đổi câu chữ.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒜ MỐC PHẢI SỐNG QUA CÁC LƯỢT ĐỌC, và chết mỗi vòng: khai TRONG vòng lặp vòng, NGOÀI vòng
+     lặp đọc. Khai trong vòng lặp đọc là mỗi lượt đọc một mốc mới — phép so luôn ra `false` và
+     bản vá im lặng không chạy. */
+  const iVong = ma.indexOf("for (let vong = 1");
+  const iKhai = ma.indexOf("let chuTraLoiTruoc", iVong);
+  const iWhile = ma.indexOf("while (true) {", iVong);
+  assert.ok(iVong > 0 && iKhai > iVong && iWhile > iKhai,
+    "`chuTraLoiTruoc` phải khai TRONG vòng lặp vòng nhưng NGOÀI vòng lặp đọc");
+
+  /* ⒝ PHÉP ĐO PHẢI ĐÒI CẢ BA VẾ. Thiếu vế `id` thì một lượt trả lời MỚI (ngắn hơn lượt cũ) vẫn
+     có thể bị chấm là "đang dài ra"; thiếu vế `>` thì nó thành phép so bằng. */
+  const iDo = ma.indexOf("const dangDaiRa =");
+  assert.ok(iDo > 0, "phải có phép đo `dangDaiRa`");
+  const dongDo = ma.slice(iDo, ma.indexOf(";", iDo));
+  for (const ve of ["luotTL.id === idTraLoiTruoc", "chuTraLoi > chuTraLoiTruoc", "Boolean(luotTL)"]) {
+    assert.ok(dongDo.includes(ve), `\`dangDaiRa\` thiếu vế \`${ve}\``);
+  }
+
+  /* ⒞ DÀI RA THÌ ĐẶT LẠI ĐỒNG HỒ YÊN, và tính là ĐÃ THẤY TRANG CHẠY — chữ dài ra là bằng chứng
+     mạnh hơn nút Stop, không yếu hơn. */
+  const iNhanh = ma.indexOf("else if (dangDaiRa)");
+  assert.ok(iNhanh > 0, "phải có nhánh riêng cho `dangDaiRa`");
+  const than = ma.slice(iNhanh, ma.indexOf("} else soLanYen += 1;", iNhanh));
+  assert.ok(/soLanYen = 0/.test(than), "dài ra thì phải đặt lại đồng hồ yên");
+  assert.ok(/daThayDangChay = true/.test(than), "dài ra là bằng chứng còn sống, mạnh hơn nút Stop");
+  assert.ok(/su_kien: "CON_DANG_VIET"/.test(than), "phải vào nhật ký — nếu không, một lần cứu được là một lần vô hình");
+
+  /* ⒟ MỐC PHẢI ĐƯỢC NHÍCH SAU MỖI LƯỢT ĐỌC, không chỉ khi dài ra. Nhích có điều kiện thì một
+     lượt đứng yên sẽ giữ mãi mốc cũ, và lượt sau so với một con số đã cũ hai nhịp. */
+  const iNhich = ma.indexOf("chuTraLoiTruoc = chuTraLoi;");
+  assert.ok(iNhich > iNhanh, "mốc phải nhích SAU nhánh phán quyết");
+  const truocNhich = ma.slice(ma.indexOf("} else soLanYen += 1;", iNhanh), iNhich);
+  assert.ok(!/if\s*\(/.test(truocNhich),
+    "mốc phải nhích VÔ ĐIỀU KIỆN mỗi lượt đọc — nhích có điều kiện là so với một con số đã cũ");
+  assert.ok(ma.includes("idTraLoiTruoc = luotTL?.id ?? null;"), "mốc id cũng phải nhích mỗi lượt");
+
+  /* ⒠ VÀ TUYỆT ĐỐI KHÔNG BẮT CHUỖI TIẾNG ANH TRÊN MÀN HÌNH. "Called tool" / "Worked for" là
+     chữ của giao diện: ChatGPT đổi câu chữ hoặc người dùng đổi ngôn ngữ là phép dò chết lặng,
+     và một phép dò chết lặng đọc ra y hệt một trang đang yên. Đếm ký tự thì không có ngôn ngữ. */
+  for (const chu of ["Called tool", "Worked for", "Thinking", "Đang gọi"]) {
+    assert.ok(!ma.includes(`"${chu}`) && !ma.includes(`'${chu}`),
+      `KHÔNG được dò bằng chuỗi giao diện "${chu}" — đổi ngôn ngữ là phép dò chết lặng`);
+  }
+
+  console.log("  ok  Ⓘ dài ra = còn sống: so cùng lượt, nhích mốc vô điều kiện, không dò bằng chữ trên màn hình");
+}
