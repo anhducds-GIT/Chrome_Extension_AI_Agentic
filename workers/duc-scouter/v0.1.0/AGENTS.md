@@ -54,6 +54,8 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
    **đừng đảo lại** dù trông thừa: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm) và **trừ
    trước, bấm sau** (lượt bấm hỏng vẫn tốn ngân sách). `P1..P12` canh khối này; lý do đầy đủ ở
    [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md).
+9. **Tra `docs/GIA-THUYET.md` TRƯỚC mỗi phép thử; ghi dòng `CHƯA` trước khi thử, sửa kết quả
+   sau.** Dòng `SAI` thì đừng thử lại. Đức chốt 13/09 vì phiên đi vòng lại việc đã làm.
 
 ## Bản đồ file
 
@@ -88,6 +90,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `icons/` · `scripts/make-icons.mjs` | Icon extension, sinh bằng script |
 | `docs/PROMPT-thiet-ke-bang-ben.md` | Câu Đức dán cho GPT web. Chứa bản khai **năng lực thật** — Scouter đổi thì **sửa mục đó trước khi dán** |
 | `docs/TRIALS.md` | Sổ các trang đã thử: trang nào · thử gì · kết quả |
+| `docs/GIA-THUYET.md` | Sổ giả thuyết: câu hỏi · cách thử · ĐÚNG/SAI/CHƯA · bằng chứng. **Tra trước khi thử** |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
 | `ROADMAP.md` · `STATUS.md` · `HANDOFF.md` · `HANDOFF-ARCHIVE-01.md` · `BACKLOG.md` | Thứ tự đi · trạng thái một trang cho Đức (frontmatter sinh `DASHBOARD.md`) · nhật ký (**thêm ở cuối**) · đuôi đã cắt, chỉ đọc · việc còn mở `S-xx` |

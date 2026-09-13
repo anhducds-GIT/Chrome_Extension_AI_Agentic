@@ -11,6 +11,9 @@ import { chay } from "./adapter.mjs";
 
 const URL_TRANG = process.env.TRANG_THU || "http://127.0.0.1:8642/";
 const CAU = process.argv[2] || "vong khep mot lan";
+/* Tab MƯỢN thì phải TRẢ. Đặt `TRA_VE=<url http(s) cũ>` thì dù vòng đạt hay hỏng,
+ * tab cũng được đưa về đó ở cuối. Không đặt thì để nguyên ở trang thử. */
+const TRA_VE = process.env.TRA_VE || null;
 
 async function main() {
   const tabCu = await timTab(URL_TRANG);
@@ -28,7 +31,21 @@ async function main() {
   if (!dung) process.exitCode = 1;
 }
 
-main().catch((loi) => {
-  console.error(String(loi.message || loi));
-  process.exitCode = 1;
-});
+async function traTab() {
+  if (!TRA_VE) return;
+  try {
+    const tab = await timTab(URL_TRANG);
+    const ve = await goi("scout.navigate", { target_id: tab, url: TRA_VE, timeout_ms: 20000 });
+    console.log(`⑤ đã trả tab về ${ve.data.url}`);
+  } catch (loi) {
+    console.error(`⑤ KHÔNG trả được tab về ${TRA_VE}: ${loi.message || loi}`);
+    process.exitCode = 1;
+  }
+}
+
+main()
+  .catch((loi) => {
+    console.error(String(loi.message || loi));
+    process.exitCode = 1;
+  })
+  .finally(traTab);

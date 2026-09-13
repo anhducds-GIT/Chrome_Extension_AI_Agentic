@@ -30,7 +30,7 @@
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T11** | **`S-22` — đường ghi báo ĐẠT khi sự kiện KHÔNG tới trang** | @Đức:bấm một phép thử 10 giây | **tới lượt** |
+| **T11** | **`S-23` rồi `S-22`** — T1 hỏng lượt bấm phải cuộn; đường ghi báo ĐẠT khi trang không nhận | — | **tới lượt** |
 | **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T11 | **③/④ chặng** — bàn đo đã dựng, chặng 4 dừng ở `S-22` |
 | **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T11 (cùng một đường ghi) · tài khoản rảnh | chờ |
 | **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
@@ -275,17 +275,10 @@ trả về một tấm ảnh 28KB đúng trang và mã lúc tải trang **có** 
 đường ghi **báo đạt**. Một seed nói dối theo hướng "đã xong" thì mọi thứ dựng trên nó là phỏng
 đoán, kể cả ba chặng T7 vừa chạy xanh.
 
-**Chặng 1 — rẻ nhất, và cần tay Đức (10 giây).** Đưa cửa sổ Chrome của ghế `Udin_Scout` ra
-trước màn hình (nếu đang thu nhỏ thì mở lên), rồi chạy:
-
-```bash
-node workers/duc-scouter/pilots/trang-thu-cham/phuc-vu.mjs
-SCOUTER_GHE=<id-ghe> node workers/duc-scouter/pilots/trang-thu-cham/scripts/vong.mjs
-```
-
-Chạy được → nguyên nhân là **khả kiến của cửa sổ**, và đó là một giới hạn phải ghi to vào
-`README.md`: Scouter **không tự động hoá được một cửa sổ đang khuất**. Vẫn hỏng → loại giả
-thuyết ⒜ và đi tiếp sang ⒝⒞ ở `S-22`.
+**Sửa 13/09:** "tab ẩn" là SAI (Đức xác nhận). Mọi phép thử nay ở `docs/GIA-THUYET.md` — đọc
+khối *Kết luận* và *Cách làm* ở đầu file đó trước. Lộ thêm **`S-23`**: T1 làm hỏng lượt bấm phải
+cuộn tới — **làm S-23 trước**, vì nó đo được trên Chrome riêng (`npm run scouter:action-probe`),
+không cần ghế của Đức.
 
 **Chặng 2 — bất kể chặng 1 ra gì.** Đường ghi phải thôi báo ĐẠT cho việc chưa xảy ra. Hai
 đường, chọn sau khi biết nguyên nhân, **đừng chọn trước**:

@@ -45,6 +45,28 @@
   // selector vẫn khớp — đó đúng là ca đã làm scout.wait nói dối ngày 12/09.
   if (new URLSearchParams(location.search).has("chan")) tamChan.hidden = false;
 
+  // DẤU CHẨN ĐOÁN cho S-22 — trang tự kể nó đang ở trạng thái nào, vì Scouter
+  // cố ý KHÔNG chạy được mã tuỳ ý trên trang. Đọc lại bằng scout.query, ví dụ
+  // `body[data-hien="visible"]`. Chỉ ghi thuộc tính, không bao giờ ghi nội dung.
+  var than = document.body;
+  function ghiHien() {
+    than.dataset.hien = document.visibilityState;
+    than.dataset.focus = document.hasFocus() ? "co" : "khong";
+  }
+  ghiHien();
+  document.addEventListener("visibilitychange", ghiHien);
+  window.addEventListener("focus", ghiHien);
+  window.addEventListener("blur", ghiHien);
+  // Nghe ở tầng CỬA SỔ, pha bắt: sự kiện tới được trang thì ở đây thấy trước mọi
+  // tay nghe khác. Không thấy ở đây nghĩa là nó không tới trang, không phải tay
+  // nghe của nút hỏng.
+  window.addEventListener("mousedown", function () {
+    than.dataset.chuot = String(Number(than.dataset.chuot || 0) + 1);
+  }, true);
+  window.addEventListener("keydown", function () {
+    than.dataset.phim = String(Number(than.dataset.phim || 0) + 1);
+  }, true);
+
   nut.addEventListener("click", function () {
     // Dấu NGAY LÚC BẤM, không qua bộ đếm giờ: nhờ nó mà phân biệt được
     // "lượt bấm không tới nơi" với "bộ đếm giờ không chạy".

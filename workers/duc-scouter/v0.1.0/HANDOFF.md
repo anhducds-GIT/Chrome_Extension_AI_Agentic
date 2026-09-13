@@ -896,3 +896,17 @@ dấu đặt **ngay trong tay nghe**, không qua hẹn giờ. Trang thử sau n�
 
 **Chưa làm:** vòng **chưa khép**, ghi đúng ở mức đó. `T11` đứng trước `T7` vì mọi việc còn lại
 đều dựng trên đường ghi này.
+
+## 2026-09-13 · `claude-scouter-udine` — sổ giả thuyết, và T1 có hồi quy
+
+**Việc.** Gỡ `S-22`. Tôi đi vòng: đoán "tab ẩn", dựng cả phép chặn trong adapter trên đó — Đức
+xác nhận đã debug trước là SAI. Đã gỡ phép chặn.
+
+**Đức chốt cơ chế:** `docs/GIA-THUYET.md` — mỗi giả thuyết một dòng, ĐÚNG/SAI/CHƯA + bằng chứng,
+**tra trước khi thử**. Luật gói số 9 đưa nó vào `PHIEN.md`.
+
+**Tìm được:** `npm run scouter:action-probe` (Chrome riêng) đỏ ở ca bấm phải cuộn tới. Chia đôi:
+lõi trước T1 đạt; bỏ bước hỏi-điểm thì đạt; mã trả về là `CLICK_HIT_TEST_FAILED`. Mở `S-23`.
+`S-22` (ca không cuộn, trả `ok`) vẫn chưa rõ.
+
+**Bài học:** đọc mã trả về trước khi đoán — bốn lượt thử mất vì chỉ nhìn trang.

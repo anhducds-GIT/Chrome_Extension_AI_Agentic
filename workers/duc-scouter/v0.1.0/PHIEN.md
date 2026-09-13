@@ -79,9 +79,11 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
    **đừng đảo lại** dù trông thừa: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm) và **trừ
    trước, bấm sau** (lượt bấm hỏng vẫn tốn ngân sách). `P1..P12` canh khối này; lý do đầy đủ ở
    [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md).
+9. **Tra `docs/GIA-THUYET.md` TRƯỚC mỗi phép thử; ghi dòng `CHƯA` trước khi thử, sửa kết quả
+   sau.** Dòng `SAI` thì đừng thử lại. Đức chốt 13/09 vì phiên đi vòng lại việc đã làm.
 
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Mo CHUOI-VIEC.md, doc khoi Luat cua chuoi roi nhay THANG toi T11 — dung doc ca file. T11 chen len dau vi luot chay T7 do duoc: scout.type tra typed:8 ma o nhap van RONG, scout.click tra hit:descendant ma tay nghe cua trang KHONG chay (S-22). Duong ghi bao DAT cho viec chua xay ra, va moi viec con lai deu dung tren no. Ban do da dung san o pilots/trang-thu-cham/ — chay lai bang mot lenh, dung dung lai tu dau."
-- human_action: "@Duc:bam T11 ton 10 giay — dua cua so Chrome cua ghe Udin_Scout ra TRUOC man hinh roi bao mot tieng. Do la phep thu re nhat de biet duong ghi hong co phai vi cua so dang khuat. @Duc:bam D2 con mot nua — The He thong, khoi Ho so ghe, go cho ghe THU HAI mot ten khac Udin_Scout."
+- next_step: "T11 trong CHUOI-VIEC.md. Doc TRUOC khoi Ket luan va Cach lam o dau docs/GIA-THUYET.md — dong SAI thi khong thu lai. Lam S-23 truoc (T1 hong luot bam phai cuon toi; do bang npm run scouter:action-probe, khong can ghe cua Duc), roi moi quay lai S-22."
+- human_action: "@Duc:bam D2 con mot nua — ghe THU HAI chua co ten. Khong co viec nao khac can tay Duc luc nay."

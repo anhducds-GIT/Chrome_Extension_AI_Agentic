@@ -1,0 +1,66 @@
+# SỔ GIẢ THUYẾT — Scouter
+
+> **TRA SỔ NÀY TRƯỚC KHI THỬ BẤT CỨ GÌ.** Đức chốt 13/09, sau khi một phiên đi vòng lại đúng
+> những giả thuyết đã loại trừ: *"cần một bản ghi các giả thuyết và kết quả, để trong quá trình
+> trial có thể tra cứu và không lặp lại việc đã làm."*
+>
+> Cách tra: `grep -n "<từ khoá>" workers/duc-scouter/v0.1.0/docs/GIA-THUYET.md` — ví dụ `ẩn`,
+> `cuộn`, `hit-test`, `setTimeout`. Thấy dòng **SAI** thì đừng thử lại; thấy **CHƯA** thì đọc
+> cột *cách thử* để khỏi làm lại phần đã làm.
+
+## Kết luận hiện tại (13/09)
+
+- **T1 gây hồi quy `S-23`:** bấm phần tử phải cuộn tới → hỏi-điểm hỏng → `CLICK_HIT_TEST_FAILED`.
+  Fail-closed (không bấm nhầm), nhưng bấm dưới màn hình **không dùng được**. Lõi trước T1: đạt.
+- **`S-22` vẫn CHƯA rõ:** trên ghế Đức, lượt bấm KHÔNG cuộn trả `ok` mà trang không nhận. Đã loại
+  G-02..G-07. Không phải cùng lỗi với S-23 (S-23 trả lỗi, S-22 trả `ok`).
+
+## Cách làm — đọc trước khi thử
+
+1. Grep sổ này. Dòng SAI thì bỏ qua.
+2. **Đọc mã trả về trước khi đoán.** G-15..G-18 mất bốn lượt vì chỉ nhìn trang, không nhìn lệnh trả gì.
+3. **Chia đôi bằng phép đo có sẵn** (bảng cuối) thay vì dựng giả thuyết mới. Một biến một lượt.
+4. Hai thứ **trùng lúc** chưa phải nguyên nhân — ghi CHƯA, đừng dựng code trên nó (G-07).
+
+## Luật ghi
+
+1. **Ghi TRƯỚC khi thử**, dòng trạng thái `CHƯA`. Thử xong thì sửa đúng ô *kết quả* — không
+   xoá dòng, không viết lại câu hỏi. Giả thuyết sai **quý như** giả thuyết đúng: nó là thứ phiên
+   sau không phải trả tiền lần hai.
+2. **Kết quả chỉ có ba chữ:** `ĐÚNG` · `SAI` · `CHƯA`. `ĐÚNG`/`SAI` bắt buộc có *bằng chứng* đo
+   được (lệnh, số, tên phép đo). Không đo mà ghi `SAI` vì người khác nói thì ghi rõ nguồn.
+3. **Một dòng một câu hỏi.** Hai biến trong một phép thử thì tách hai dòng.
+4. Mã `G-<số>`, tăng dần, không dùng lại. Mục nợ ở `BACKLOG.md` trỏ về mã `G-`, không chép lại.
+
+## Sổ
+
+| mã | ngày | mục | giả thuyết | cách thử | kết quả | bằng chứng |
+|---|---|---|---|---|---|---|
+| G-01 | 12/09 | S-17 | Chrome trả **nút văn bản** cho `DOM.getNodeForLocation` nên `<button>Gửi</button>` bị từ chối oan | trang tự dựng, bấm nút chữ thuần qua Bridge | **SAI** | Chrome tự đi lên phần tử cha → `relation: "self"` (TRIALS 12/09, `127.0.0.1:38411`) |
+| G-02 | 13/09 | S-22 | Kết quả không hiện vì `setTimeout` của tab nền bị Chrome bóp | chờ 120s sau lượt bấm | **SAI** | 120s không hiện; dấu `data-bam` đặt NGAY trong tay nghe cũng không có → tay nghe không chạy |
+| G-03 | 13/09 | S-22 | Tab bị Chrome **đông cứng** | `?chan=1` — mã lúc tải trang dựng tấm chắn | **SAI** | tấm chắn dựng được → mã trang có chạy |
+| G-04 | 13/09 | S-22 | Tab **không được vẽ** | `scout.shot` | **SAI** | 28.488 byte, ảnh đúng trang |
+| G-05 | 13/09 | S-22 | Toạ độ lệch vì màn hình 125% | so `clickedAt` với ảnh chụp | **SAI** | `x:87 y:275` CSS px ↔ `108,344` trên ảnh = ×1,25 đúng |
+| G-06 | 13/09 | S-22 | Có lớp che | `hit` + ảnh chụp | **SAI** | `relation: "descendant"`, ảnh trống trơn |
+| G-07 | 13/09 | S-22 | Tab ẩn (`visibilityState: hidden`) làm mất sự kiện nhập | trang tự ghi `visibilityState` vào `body[data-hien]` | **SAI** | Đo được tab `hidden` và không `mousedown` nào tới cửa sổ — nhưng hai thứ chỉ **trùng lúc**. Đức xác nhận 13/09 đã debug trước: tab ẩn **không** ảnh hưởng bấm. Và G-08 tái hiện lỗi trên Chrome riêng |
+| G-08 | 13/09 | S-22 | Lỗi nằm ở **lõi ghi**, không riêng ghế `Udin_Scout` | `npm run scouter:action-probe` — Chrome riêng, hồ sơ trống, chạy chính lõi hiện tại | **ĐÚNG, một phần** | `CLICK_REACHES_BELOW_THE_FOLD` ĐỎ, tái hiện 3/3; bấm/gõ/Enter trên màn hình vẫn XANH. Ca không cuộn ở ghế Đức thì chưa tái hiện được ở đây |
+| G-09 | 13/09 | S-22 | Lỗi có từ TRƯỚC bản sửa T1 | chạy cùng phép đo với lõi ở commit `be4f16b5` | **SAI** | lõi trước T1: 11/11 XANH → **T1 gây ra** |
+| G-10 | 13/09 | S-22 | Thủ phạm là **làm tròn toạ độ** (`Math.round`, T1) | lõi hiện tại, bỏ riêng làm tròn | **SAI** | vẫn ĐỎ |
+| G-11 | 13/09 | S-22 | Thủ phạm là **bước hỏi-điểm** (`kiemDiemBam`, T1) | lõi hiện tại, bỏ riêng lượt gọi `kiemDiemBam` | **ĐÚNG** | XANH lại, trang báo đúng nút `duoi` |
+| G-12 | 13/09 | S-22 | Chạy đua: chờ 100ms giữa hỏi-điểm và bấm là đủ | chèn `setTimeout 100` | **SAI** | vẫn ĐỎ |
+| G-13 | 13/09 | S-22 | Phải `mouseMoved` trước khi hỏi-điểm | gửi `mouseMoved` trước `kiemDiemBam` | **SAI** | vẫn ĐỎ |
+| G-14 | 13/09 | S-21 | Target thỉnh thoảng trả `-32000 No node found` vì tab nằm sau / cửa sổ thu nhỏ | — | **CHƯA** | giả thuyết ⒜ của `S-21`; lưu ý G-07 đã SAI cho một triệu chứng khác |
+| G-15 | 13/09 | S-22 | Thủ phạm là `DOM.querySelectorAll` (bước tìm con cháu), không phải `DOM.getNodeForLocation` | lõi hiện tại, gọi `getNodeForLocation` rồi bỏ qua kết quả, không gọi `querySelectorAll` | **ĐÚNG** | XANH, trang báo đúng `duoi`. Nên nút `duoi` — **đọc sai**, xem G-17 |
+| G-16 | 13/09 | S-22 | Hỏi-điểm làm trang **dịch đi** sau lượt cuộn, nên toạ độ đã tính bị cũ | đo lại hộp ngay sau hỏi-điểm, so với hộp trước | **CHƯA** | Lần thử 13/09 KHÔNG ra số: `console.error` chạy trong extension thử, không ra stdout của phép đo. Muốn đo thì phải trả số qua kết quả của lệnh, không qua log |
+| G-17 | 13/09 | S-22 | Chỉ riêng `DOM.querySelectorAll` (không đổi gì khác) là đủ gây lỗi | lõi hiện tại, giữ nguyên `getNodeForLocation`, thay nhánh con cháu bằng `relation: "descendant"` không hỏi | **SAI** | vẫn ĐỎ. G-15 xanh vì nó NUỐT lỗi của hỏi-điểm, không vì bỏ `querySelectorAll` |
+| G-18 | 13/09 | S-22 | Bản vá: hỏi danh sách con cháu **TRƯỚC** lượt cuộn, rồi mới cuộn–đo–hỏi-điểm–bấm | lõi hiện tại, dời `querySelectorAll` lên trước `centreOf` | **SAI** | vẫn ĐỎ |
+| G-19 | 13/09 | S-22 | Sau lượt cuộn, hỏi-điểm NÉM lỗi → lượt bấm bị TỪ CHỐI (fail-closed), phép đo chỉ đọc trang nên tưởng là mất | đọc mã trả về của lượt bấm dưới màn hình (`--json`) | **ĐÚNG** | `click_duoi: {ok:false, code:"CLICK_HIT_TEST_FAILED", scrollY:1288}` |
+
+## Phép đo dùng lại được — đừng dựng lại
+
+| cần biết | dùng | tốn |
+|---|---|---|
+| lõi ghi có bấm/gõ **tới trang** không, ngoài trình duyệt của Đức | `npm run scouter:action-probe` | ~30s, Chrome riêng |
+| một bản sửa của lõi có gây lỗi không | chép lõi cũ bằng `git show <commit>:…/scouter-actions-core.mjs` vào thư mục tạm cạnh bản chép của phép đo, chạy ở đó | ~30s |
+| sự kiện có **tới trang** không, trên ghế thật | trang `pilots/trang-thu-cham/` — `body[data-chuot]` · `body[data-phim]` · `#ket-qua[data-bam]` đọc bằng `scout.query` | vài giây |
+| tab đang hiện/ẩn, có focus không | cùng trang — `body[data-hien]` · `body[data-focus]` | vài giây |

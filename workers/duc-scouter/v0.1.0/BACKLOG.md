@@ -639,3 +639,41 @@ cho tab nền sau một khoảng.
 hoặc bằng một phép kiểm trong seed, hoặc bằng một dòng ở `README.md` nói rõ `scout.click` /
 `scout.type` **không** hứa điều gì. Một seed báo thành công cho việc chưa xảy ra thì mọi thứ
 dựng trên nó đều là phỏng đoán. **Đừng đóng bằng cách đoán nguyên nhân.**
+
+**S-22 · đo thêm 13/09 — giả thuyết ⒜ nay có số, CHƯA có phép thử ngược.** Trang thử tự ghi
+trạng thái của nó vào thuộc tính `body` (Scouter cố ý không chạy được mã tuỳ ý, nên trang phải
+tự kể), rồi đọc lại bằng `scout.query`:
+
+| lúc | `visibilityState` | `hasFocus()` | `mousedown` tới cửa sổ | `keydown` tới cửa sổ |
+|---|---|---|---|---|
+| sau khi tải | **hidden** | không | — | — |
+| sau `scout.click` | **hidden** | **có** | **không** | — |
+| sau `scout.type` | **hidden** | có | không | **không** |
+
+Nghe ở **pha bắt của cửa sổ** — tầng đầu tiên một sự kiện tới trang phải đi qua. Không thấy ở
+đó thì sự kiện **không tới trang**, không phải tay nghe của nút hỏng. Và `hasFocus` đổi sang
+*có* sau lượt bấm: lõi ghi gọi focus được, nhưng chuột và phím thì không tới.
+
+Tab nào đang mở trong cửa sổ thì Scouter **không hỏi được** — `hidden` chỉ nói tab mượn KHÔNG
+phải tab đó, hoặc cửa sổ đang thu nhỏ. Lượt chạy đúng lúc 16:41 ngày 12/09 có thể trùng lúc tab
+đó đang mở — **đoán, chưa đo.**
+
+**Còn thiếu đúng một phép đo để đóng giả thuyết ⒜:** cùng lượt gọi, lúc tab `visible`. Chạy
+được → nguyên nhân là tab ẩn. Vẫn hỏng → loại ⒜. Adapter `trang-thu-cham` nay dừng ngay bằng
+`TAB_DANG_AN` thay vì gõ-bấm vào khoảng không rồi chờ 8 giây.
+
+**Hai đường vá có thể có, CẢ HAI cần Đức duyệt vì là method CDP mới, và chưa làm cái nào:**
+`Page.bringToFront` (kéo tab lên trước — giật màn hình của Đức, xâm lấn) · `Emulation.setFocusEmulationEnabled`
+(cho trang tưởng mình được focus — chưa biết có đủ cho tab `hidden` không). **Đừng chọn trước
+phép đo còn thiếu.**
+
+**S-22 · sửa 13/09:** giả thuyết tab ẩn là **SAI** (Đức xác nhận; `docs/GIA-THUYET.md` G-07). Mọi
+phép thử của mục này nay ghi ở sổ đó, không ở đây.
+
+## MỞ · S-23 (2026-09-13, `claude-scouter-udine`) — T1 làm hỏng lượt bấm phải cuộn tới
+
+`npm run scouter:action-probe`: `CLICK_REACHES_BELOW_THE_FOLD` ĐỎ, trả `CLICK_HIT_TEST_FAILED` sau
+khi cuộn 1288px. Lõi trước T1 (`be4f16b5`) đạt. Bỏ riêng bước hỏi-điểm thì đạt. Chi tiết G-08..G-19.
+Fail-closed nên không bấm nhầm — nhưng mọi nút dưới màn hình không bấm được.
+
+· **đóng khi:** `scouter:action-probe` đạt 11/11 **và** chốt ⑸ (từ chối lớp che) vẫn giữ, có đột biến canh.
