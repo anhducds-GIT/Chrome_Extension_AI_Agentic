@@ -10,8 +10,9 @@
 
 ## Kết luận hiện tại (13/09)
 
-- **T1 gây hồi quy `S-23`:** bấm phần tử phải cuộn tới → hỏi-điểm hỏng → `CLICK_HIT_TEST_FAILED`.
-  Fail-closed (không bấm nhầm), nhưng bấm dưới màn hình **không dùng được**. Lõi trước T1: đạt.
+- **`S-23` ĐÃ VÁ:** `DOM.getNodeForLocation` nói theo hệ TRANG, hộp/chuột theo hệ KHUNG NHÌN.
+  Cộng độ cuộn (hộp `:root`) ở cả hai lõi. Probe 11/11, đột biến 128/128.
+- **Udin:** Scouter vượt màn "User Limit Reached" bằng Try Again — adapter `pilots/udin-optic/`.
 - **`S-22` vẫn CHƯA rõ:** trên ghế Đức, lượt bấm KHÔNG cuộn trả `ok` mà trang không nhận. Đã loại
   G-02..G-07. Không phải cùng lỗi với S-23 (S-23 trả lỗi, S-22 trả `ok`).
 
@@ -55,6 +56,15 @@
 | G-17 | 13/09 | S-22 | Chỉ riêng `DOM.querySelectorAll` (không đổi gì khác) là đủ gây lỗi | lõi hiện tại, giữ nguyên `getNodeForLocation`, thay nhánh con cháu bằng `relation: "descendant"` không hỏi | **SAI** | vẫn ĐỎ. G-15 xanh vì nó NUỐT lỗi của hỏi-điểm, không vì bỏ `querySelectorAll` |
 | G-18 | 13/09 | S-22 | Bản vá: hỏi danh sách con cháu **TRƯỚC** lượt cuộn, rồi mới cuộn–đo–hỏi-điểm–bấm | lõi hiện tại, dời `querySelectorAll` lên trước `centreOf` | **SAI** | vẫn ĐỎ |
 | G-19 | 13/09 | S-22 | Sau lượt cuộn, hỏi-điểm NÉM lỗi → lượt bấm bị TỪ CHỐI (fail-closed), phép đo chỉ đọc trang nên tưởng là mất | đọc mã trả về của lượt bấm dưới màn hình (`--json`) | **ĐÚNG** | `click_duoi: {ok:false, code:"CLICK_HIT_TEST_FAILED", scrollY:1288}` |
+| G-20 | 13/09 | S-23 | Chrome ném lỗi gì ở hỏi-điểm sau lượt cuộn | phép đo ghi thêm `detail` của lượt bấm `#duoi` | **ĐÚNG** | `-32000 No node found at given location` tại (38, 772) — **cùng câu với S-21** |
+| G-21 | 13/09 | S-23 | Điểm (38, 772) nằm NGOÀI khung nhìn, hoặc hộp đo được là hộp cũ trước khi cuộn xong | phép đo ghi `innerHeight` + `getBoundingClientRect()` của `#duoi` ngay sau lượt bấm | **SAI** | khung nhìn 1036×799, nút `y 754..789` → tâm 772 đúng và NẰM TRONG khung. Máy ở tỉ lệ **1,25** |
+| G-22 | 13/09 | S-23 | `DOM.getNodeForLocation` hiểu toạ độ khác hệ CSS px của `getBoxModel` (ví dụ nhân tỉ lệ 1,25) | sau lượt cuộn, hỏi-điểm ở nhiều điểm, so với `elementFromPoint` (hệ CSS) | **SAI** | sau cuộn, hỏng ở MỌI điểm thử (5/5), kể cả chỗ `elementFromPoint` thấy `div`/`button#duoi` → không phải lệch tỉ lệ |
+| G-23 | 13/09 | S-23 | Sau cuộn, `DOM.getNodeForLocation` nhận toạ độ theo **trang** (cộng `scrollY`), không theo khung nhìn | hỏi-điểm ở (38, 772+1288=2060) và vài điểm trang | **ĐÚNG** | (38, 2060) → `button#duoi`. Chưa cuộn thì hai hệ trùng nhau — vì thế T1 qua mọi phép thử lúc làm. Điểm ngoài vùng đang hiện vẫn `No node found` |
+| G-24 | 13/09 | S-23 | Độ cuộn đọc được bằng method SẴN CÓ: hộp `margin` của `<html>` (`DOM.getBoxModel`) lệch âm đúng bằng `scrollX/scrollY` | so với `window.scrollY` sau lượt cuộn | **ĐÚNG** | margin quad `[0,-1288,…]` ↔ `scrollY: 1288` |
+| G-25 | 13/09 | S-23 | Bản vá: cộng độ cuộn (hộp `:root`) vào điểm hỏi, ở CẢ HAI lõi | `scouter:action-probe` + suite + đột biến | **ĐÚNG** | probe 11/11; suite xanh; đột biến 128/128 (thêm CU1..CU4) |
+| G-26 | 13/09 | S-22 | Bản vá S-23 cũng chữa S-22 trên ghế Đức | `scout.reload` rồi `vong.mjs` trên `trang-thu-cham` | **CHƯA** | — |
+| G-27 | 13/09 | S-21 | `No node found` của S-21 (12/09) chính là S-23: trang lúc đó đã cuộn | — chưa có cách tái hiện lại lượt 12/09 | **CHƯA** | cùng câu lỗi; chưa đo độ cuộn lúc đó |
+| G-28 | 13/09 | Udin | Scouter vượt được màn "User Limit Reached" bằng nút Try Again | `pilots/udin-optic/scripts/qua-man-cho.mjs`: wait usable → click → wait overlay absent → wait prompt usable | **ĐÚNG** | click `relation: self` (768,455); màn chắn tắt; `textarea.agent-textarea` usable |
 
 ## Phép đo dùng lại được — đừng dựng lại
 

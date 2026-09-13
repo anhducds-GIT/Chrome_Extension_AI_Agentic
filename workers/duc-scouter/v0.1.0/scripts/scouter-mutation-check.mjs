@@ -342,7 +342,7 @@ BATCHES.push({
     {
       ma: "HB1",
       ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm: bấm thẳng, có lớp phủ cũng kệ (đúng bug S-17)",
-      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point);",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       thay: '    const hit = { relation: "self", hitNodeId: node.nodeId };',
       soLan: 1
     },
@@ -363,15 +363,15 @@ BATCHES.push({
     {
       ma: "HB4",
       ten: "CHỐT ⑸ — hỏi SAU khi bắn: câu trả lời chỉ còn là lời phân trần",
-      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point);" + NL + "    await clickAt(send, point);",
-      thay: "    await clickAt(send, point);" + NL + "    const hit = await kiemDiemBam(send, node.nodeId, point);",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));" + NL + "    await clickAt(send, point);",
+      thay: "    await clickAt(send, point);" + NL + "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       soLan: 1
     },
     {
       ma: "HB6",
       ten: "CHỐT ⑸ — để lỗi CDP thô lọt ra ngoài dây thay vì nói ra nguyên nhân hay gặp",
-      tim: "      x: point.x, y: point.y, includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) {",
-      thay: "      x: point.x, y: point.y, includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) { throw error; } if (false) { const error = null;",
+      tim: "      x: Math.round(point.x + goc.x), y: Math.round(point.y + goc.y), includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) {",
+      thay: "      x: Math.round(point.x + goc.x), y: Math.round(point.y + goc.y), includeUserAgentShadowDOM: false" + NL + "    });" + NL + "  } catch (error) { throw error; } if (false) { const error = null;",
       soLan: 1
     },
     {
@@ -379,6 +379,21 @@ BATCHES.push({
       ten: "CHỐT ⑸ — bỏ làm tròn: hỏi về một điểm rồi bấm vào một điểm khác",
       tim: "  return { x: Math.round(x), y: Math.round(y) };",
       thay: "  return { x, y };",
+      soLan: 1
+    },
+    /* ---- `S-23`, 13/09: hai hệ toạ độ. Hỏi-điểm nói theo TRANG, chuột theo KHUNG NHÌN. */
+    {
+      ma: "CU1",
+      ten: "`S-23` — quên cộng phần cuộn: trang cuộn là mọi nút bị từ chối No node found",
+      tim: "      x: Math.round(point.x + goc.x), y: Math.round(point.y + goc.y), includeUserAgentShadowDOM: false",
+      thay: "      x: point.x, y: point.y, includeUserAgentShadowDOM: false",
+      soLan: 1
+    },
+    {
+      ma: "CU2",
+      ten: "`S-23` — không đọc được độ cuộn thì coi như 0 rồi cứ bấm (hỏng thì MỞ)",
+      tim: '  throw new ActionError("CLICK_HIT_TEST_FAILED",' + NL + '    "Không đọc được trang đang cuộn tới đâu',
+      thay: '  return { x: 0, y: 0 }; throw new ActionError("CLICK_HIT_TEST_FAILED",' + NL + '    "Không đọc được trang đang cuộn tới đâu',
       soLan: 1
     },
     {
@@ -1136,7 +1151,7 @@ BATCHES.push({
     {
       ma: "NM7",
       ten: "`usable` cư xử y hệt `present` — đếm khớp thay vì đếm thứ thật sự bấm được",
-      tim: "        const dem = await demSoDungDuoc(send, nodeIds, minCount);" + NL
+      tim: "        const dem = await demSoDungDuoc(send, nodeIds, minCount, root.nodeId);" + NL
         + "        usableCount = dem.dem;" + NL + "        usableBlockedBy = dem.vuong;" + NL
         + "        satisfied = usableCount >= minCount;",
       thay: "        usableCount = matchCount;" + NL + "        usableBlockedBy = null;" + NL
@@ -1162,6 +1177,20 @@ BATCHES.push({
       ten: "Gộp 'Chrome không trả lời được' vào 'bị chắn' — đẩy người đọc đi tìm hộp thoại không có",
       tim: '  } catch { return "no_hit_test"; }',
       thay: '  } catch { return "covered"; }',
+      soLan: 1
+    },
+    {
+      ma: "CU3",
+      ten: "`S-23` lõi đọc — quên cộng phần cuộn: phần tử phải cuộn tới bị báo no_hit_test",
+      tim: "      x: Math.round(x + goc.x), y: Math.round(y + goc.y), includeUserAgentShadowDOM: false",
+      thay: "      x: Math.round(x), y: Math.round(y), includeUserAgentShadowDOM: false",
+      soLan: 1
+    },
+    {
+      ma: "CU4",
+      ten: "`S-23` lõi đọc — không đọc được độ cuộn thì coi như 0 và vẫn báo dùng được",
+      tim: '    const lyDo = goc ? await dungDuoc(send, nodeId, goc) : "no_hit_test";',
+      thay: "    const lyDo = await dungDuoc(send, nodeId, goc || { x: 0, y: 0 });",
       soLan: 1
     },
     {

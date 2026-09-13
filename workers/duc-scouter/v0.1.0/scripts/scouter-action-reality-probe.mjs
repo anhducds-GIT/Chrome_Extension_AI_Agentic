@@ -391,8 +391,11 @@ async function measure() {
     /* ④ nút dưới 1800px khoảng trống — phải cuộn XUỐNG */
     const r4 = await act("input.click", { selector: "#duoi" });
     m.click_duoi = {
-      ok: r4.ok, code: r4.code, hit: await lastClick(),
-      scrollY: Number(await readPage("window.scrollY"))
+      ok: r4.ok, code: r4.code, detail: r4.detail ?? r4.message ?? null, hit: await lastClick(),
+      scrollY: Number(await readPage("window.scrollY")),
+      /* Toạ độ thật của nút SAU lượt bấm, để so với điểm lõi đã tính (`S-23`). */
+      khung: JSON.parse(await readPage(
+        "JSON.stringify({innerHeight: innerHeight, innerWidth: innerWidth, dpr: devicePixelRatio, rect: document.querySelector('#duoi').getBoundingClientRect()})"))
     };
 
     /* ⑤ rồi bấm ngược lên nút đã trôi khỏi màn hình — phải cuộn LÊN */

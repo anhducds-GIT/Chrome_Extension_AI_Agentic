@@ -148,7 +148,7 @@ await ghim("W5 mỗi lượt hỏi có một lượt DOM.getDocument đi kèm", 
  * `trungDiemLaCon` dựng ca nút-có-icon: điểm giữa rơi vào `<path>` bên trong nút. Không có
  * ca này thì một bản vá "chỉ nhận đúng phần tử" sẽ XANH trọn, rồi ngoài đời mọi nút có icon
  * bị báo là không dùng được. */
-function lamSendChe({ cheToiLuot = Infinity, trungDiemLaCon = false, hoiHong = false } = {}) {
+function lamSendChe({ cheToiLuot = Infinity, trungDiemLaCon = false, hoiHong = false, cuon = { x: 0, y: 0 }, gocHong = false } = {}) {
   const goi = [];
   let luot = 0;
   return {
@@ -157,6 +157,12 @@ function lamSendChe({ cheToiLuot = Infinity, trungDiemLaCon = false, hoiHong = f
       goi.push({ method, params });
       if (method === "DOM.enable") return {};
       if (method === "DOM.getDocument") return { root: { nodeId: 1 } };
+      /* `S-23`: hộp `:root` bắt đầu ở (-scrollX, -scrollY). */
+      if (method === "DOM.querySelectorAll" && params?.selector === ":root") return { nodeIds: [50] };
+      if (method === "DOM.getBoxModel" && params?.nodeId === 50) {
+        if (gocHong) throw new Error("Could not compute box model.");
+        return { model: { margin: [-cuon.x, -cuon.y, 1000, -cuon.y, 1000, 3000, -cuon.x, 3000] } };
+      }
       if (method === "DOM.querySelectorAll") {
         /* Hỏi từ gốc = tìm phần tử. Hỏi từ phần tử = tìm con cháu nó. */
         if (params?.nodeId === 1) { luot += 1; return { nodeIds: [100] }; }
@@ -227,6 +233,31 @@ await ghim("W13 điểm giữa rơi vào con cháu vẫn tính là dùng đượ
       { selector: "button.icon", state: "usable", timeoutMs: 5000, pollMs: 500 });
     assert.equal(r.data.satisfied, true, "nút có icon bị từ chối oan");
     assert.equal(r.data.usableCount, 1);
+  } finally { dh.tra(); }
+});
+
+/* ---- W16 · `S-23`: trang ĐÃ CUỘN vẫn tính đúng -----------------------------
+ * Hỏi-điểm nói theo hệ TRANG; hộp phần tử nói theo hệ KHUNG NHÌN. Quên cộng phần cuộn thì mọi
+ * phần tử phải cuộn tới bị báo `no_hit_test` — đo 13/09 trên Chrome thật. */
+await ghim("W16 trang đã cuộn: hỏi-điểm cộng phần cuộn, usable vẫn thoả", async () => {
+  const dh = lamDongHo();
+  try {
+    const may = lamSendChe({ cheToiLuot: 0, cuon: { x: 0, y: 700 } });
+    const r = await runProbe("dom.wait", { sendRaw: may.sendRaw, sleep: dh.sleep },
+      { selector: "button.gui", state: "usable", timeoutMs: 5000, pollMs: 500 });
+    assert.equal(r.data.satisfied, true);
+    const hoi = may.goi.find((g) => g.method === "DOM.getNodeForLocation").params;
+    assert.deepEqual([hoi.x, hoi.y], [60, 740], "không cộng phần cuộn");
+  } finally { dh.tra(); }
+});
+
+await ghim("W17 không đọc được độ cuộn thì KHÔNG báo dùng được", async () => {
+  const dh = lamDongHo();
+  try {
+    const r = await runProbe("dom.wait", { sendRaw: lamSendChe({ cheToiLuot: 0, gocHong: true }).sendRaw, sleep: dh.sleep },
+      { selector: "button.gui", state: "usable", timeoutMs: 1000, pollMs: 500 });
+    assert.equal(r.data.satisfied, false);
+    assert.equal(r.data.usableBlockedBy, "no_hit_test");
   } finally { dh.tra(); }
 });
 

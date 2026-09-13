@@ -33,8 +33,12 @@ globalThis.chrome = {
       if (method === "Target.getTargetInfo") {
         return { targetInfo: { title: "Extension surface", url: "chrome-extension://abc/ui.html?tok=SECRET-DO-NOT-LEAK" } };
       }
+      /* `S-23`: lõi hỏi hộp của `:root` để biết trang đang cuộn tới đâu. Trang giả không cuộn. */
+      if (method === "DOM.querySelectorAll" && params?.selector === ":root") return { nodeIds: [2] };
       if (method === "DOM.querySelectorAll") return { nodeIds: soKhopQuery };
-      if (method === "DOM.getBoxModel") return { model: { content: [10, 20, 110, 20, 110, 60, 10, 60] } };
+      if (method === "DOM.getBoxModel") {
+        return { model: { content: [10, 20, 110, 20, 110, 60, 10, 60], margin: [0, 0, 1000, 0, 1000, 800, 0, 800] } };
+      }
       /* Chốt ⑸ (S-17) hỏi điểm sắp bấm là ai. Trang giả trả về CHÍNH phần tử đã khớp —
        * ca "có lớp phủ chắn" ghim ở `scouter-actions-smoke.mjs`, chỗ này chỉ cần đường vui. */
       if (method === "DOM.getNodeForLocation") return { nodeId: soKhopQuery[0], backendNodeId: 900 };

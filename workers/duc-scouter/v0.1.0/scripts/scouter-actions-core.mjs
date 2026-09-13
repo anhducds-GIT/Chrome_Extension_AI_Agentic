@@ -197,7 +197,7 @@ const ACTIONS = {
     const point = await centreOf(send, node.nodeId);
     /* Chốt ⑸ đứng ĐÚNG Ở ĐÂY, giữa "đã có toạ độ" và "đã bắn": sớm hơn thì chưa có điểm để
      * hỏi, muộn hơn thì chuột đã đi rồi và câu trả lời chỉ còn là lời phân trần. */
-    const hit = await kiemDiemBam(send, node.nodeId, point);
+    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
     await clickAt(send, point);
     return { selector, matchCount: node.matchCount, clickedAt: point, hit, method: "Input.dispatchMouseEvent" };
   },
@@ -434,7 +434,7 @@ async function locateOne(send, selector) {
       `Selector khớp ${nodeIds.length} phần tử. Hành động chỉ chạy khi khớp đúng một — ` +
       "bấm vào 'cái đầu tiên' là chỗ tự động hoá phá hỏng đồ thật.");
   }
-  return { nodeId: nodeIds[0], matchCount: nodeIds.length };
+  return { nodeId: nodeIds[0], matchCount: nodeIds.length, rootNodeId: root.nodeId };
 }
 
 /* Chốt ⑶ sống ở đây: toạ độ suy từ hộp của chính phần tử, không từ tham số nào. */
@@ -480,11 +480,11 @@ async function centreOf(send, nodeId) {
  * Tìm con cháu bằng `DOM.querySelectorAll(nodeId của phần tử, "*")` — method đã có sẵn trong
  * danh sách, nên chốt này chỉ tốn ĐÚNG MỘT method mới. Hằng số `"*"` gõ cứng trong mã, không
  * ghép từ dữ liệu người gọi. */
-async function kiemDiemBam(send, nodeId, point) {
+async function kiemDiemBam(send, nodeId, point, goc) {
   let o;
   try {
     o = await send("DOM.getNodeForLocation", {
-      x: point.x, y: point.y, includeUserAgentShadowDOM: false
+      x: Math.round(point.x + goc.x), y: Math.round(point.y + goc.y), includeUserAgentShadowDOM: false
     });
   } catch (error) {
     if (error instanceof ActionError) throw error;
@@ -527,6 +527,29 @@ async function kiemDiemBam(send, nodeId, point) {
     `Điểm (${point.x}, ${point.y}) là tâm của phần tử đã khớp, nhưng thứ nằm trên cùng ở đó là ` +
     `một phần tử KHÁC (node ${nutTrungDiem}). Bấm bây giờ là bấm vào thứ đang chắn, và lượt bấm ` +
     "sẽ trông như thành công. Thường gặp: hộp thoại, lớp phủ tải, tấm chắn báo hết chỗ.");
+}
+
+/* `S-23` — HAI HỆ TOẠ ĐỘ. `DOM.getBoxModel` và `Input.dispatchMouseEvent` nói theo KHUNG NHÌN;
+ * `DOM.getNodeForLocation` nói theo TRANG (đã cộng phần cuộn). Đo 13/09 (`docs/GIA-THUYET.md`
+ * G-23): sau khi cuộn 1288px, hỏi (38, 772) ra `No node found`, hỏi (38, 2060) ra đúng nút.
+ * Chưa cuộn thì hai hệ trùng nhau — vì thế T1 qua mọi phép thử lúc làm.
+ *
+ * Độ cuộn đọc bằng method SẴN CÓ, không xin thêm: hộp `margin` của `:root` bắt đầu ở
+ * `(-scrollX, -scrollY)` (G-24). Không đọc được thì KHÔNG bấm — hỏng thì đóng. */
+async function gocCuon(send, rootNodeId) {
+  try {
+    const goc = await send("DOM.querySelectorAll", { nodeId: rootNodeId, selector: ":root" });
+    const hop = await send("DOM.getBoxModel", { nodeId: goc?.nodeIds?.[0] });
+    const q = hop?.model?.margin;
+    const x = -Math.min(q[0], q[2], q[4], q[6]);
+    const y = -Math.min(q[1], q[3], q[5], q[7]);
+    if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+  } catch (error) {
+    if (error instanceof ActionError) throw error;
+  }
+  throw new ActionError("CLICK_HIT_TEST_FAILED",
+    "Không đọc được trang đang cuộn tới đâu, nên không đổi được toạ độ sang hệ của phép hỏi-điểm. " +
+    "Không kiểm được thì không bấm — xem `S-23`.");
 }
 
 /* Ba khung, đúng thứ tự đã đo. */

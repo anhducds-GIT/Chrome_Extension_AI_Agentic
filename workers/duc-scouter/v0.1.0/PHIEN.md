@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T11 trong CHUOI-VIEC.md. Doc TRUOC khoi Ket luan va Cach lam o dau docs/GIA-THUYET.md — dong SAI thi khong thu lai. Lam S-23 truoc (T1 hong luot bam phai cuon toi; do bang npm run scouter:action-probe, khong can ghe cua Duc), roi moi quay lai S-22."
+- next_step: "Thuan hoa Udin tiep. Da xong 13/09: S-23 (bam phai cuon) va vuot man User Limit Reached (pilots/udin-optic/scripts/qua-man-cho.mjs). Buoc ke tren Udin: go prompt vao textarea.agent-textarea roi bam Send, kiem bang ket qua tren trang. Tra docs/GIA-THUYET.md truoc moi phep thu."
 - human_action: "@Duc:bam D2 con mot nua — ghe THU HAI chua co ten. Khong co viec nao khac can tay Duc luc nay."

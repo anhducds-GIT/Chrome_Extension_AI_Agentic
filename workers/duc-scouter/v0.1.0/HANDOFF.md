@@ -910,3 +910,12 @@ lõi trước T1 đạt; bỏ bước hỏi-điểm thì đạt; mã trả về 
 `S-22` (ca không cuộn, trả `ok`) vẫn chưa rõ.
 
 **Bài học:** đọc mã trả về trước khi đoán — bốn lượt thử mất vì chỉ nhìn trang.
+
+## 2026-09-13 · `claude-scouter-udine` — S-23 vá xong; Scouter vượt màn chờ của Udin
+
+**S-23:** `DOM.getNodeForLocation` dùng hệ toạ độ TRANG, còn hộp phần tử và chuột dùng KHUNG NHÌN —
+chưa cuộn thì trùng nhau, nên T1 lọt. Vá hai lõi: cộng độ cuộn đọc từ hộp `:root` (method sẵn có).
+Probe 11/11, đột biến 128/128. Tìm ra bằng chia đôi, ghi ở `docs/GIA-THUYET.md` G-20..G-25.
+
+**Udin:** `pilots/udin-optic/scripts/qua-man-cho.mjs` — chờ Try Again `usable` → bấm → kiểm màn chắn
+tắt → ô prompt `usable`. Chạy thật: ĐẠT. `S-22` vẫn mở.

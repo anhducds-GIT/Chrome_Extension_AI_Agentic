@@ -467,7 +467,7 @@ const PROBES = {
         /* `usable`: khớp thôi chưa đủ, phải có ĐỦ `minCount` phần tử mà điểm giữa của chúng
          * thật sự thuộc về chúng. Đếm lại mỗi nhịp, không nhớ kết quả nhịp trước — tấm chắn
          * biến mất giữa hai nhịp là chuyện thường, và đó chính là thứ ta đang chờ. */
-        const dem = await demSoDungDuoc(send, nodeIds, minCount);
+        const dem = await demSoDungDuoc(send, nodeIds, minCount, root.nodeId);
         usableCount = dem.dem;
         usableBlockedBy = dem.vuong;
         satisfied = usableCount >= minCount;
@@ -766,11 +766,13 @@ function readIndex(raw, fallback, label, min = 0, max = Number.MAX_SAFE_INTEGER)
  * không trả thêm đồng nào. */
 const MAX_USABLE_CHECKS = 10;
 
-async function demSoDungDuoc(send, nodeIds, minCount) {
+async function demSoDungDuoc(send, nodeIds, minCount, rootNodeId) {
   let dem = 0;
   let vuong = null;
+  /* Một lần mỗi nhịp, không một lần mỗi phần tử: trong một nhịp trang không cuộn. */
+  const goc = await docGocCuon(send, rootNodeId);
   for (const nodeId of nodeIds.slice(0, MAX_USABLE_CHECKS)) {
-    const lyDo = await dungDuoc(send, nodeId);
+    const lyDo = goc ? await dungDuoc(send, nodeId, goc) : "no_hit_test";
     if (lyDo === "yes") {
       dem += 1;
       if (dem >= minCount) break;
@@ -789,7 +791,23 @@ async function demSoDungDuoc(send, nodeIds, minCount) {
  * bấm. Ở đây thì trả `false`, và đó không phải nới lỏng: `false` nghĩa là *chưa thấy nó dùng
  * được*, và lượt chờ sẽ hỏi lại ở nhịp sau rồi kết thúc bằng `satisfied: false`. Cả hai đều
  * là hỏng-thì-đóng, chỉ khác nhau ở chỗ một bên phải quyết ngay còn một bên được chờ. */
-async function dungDuoc(send, nodeId) {
+/* `S-23`: `DOM.getNodeForLocation` nói theo TRANG, hộp phần tử nói theo KHUNG NHÌN. Hộp `margin`
+ * của `:root` bắt đầu ở `(-scrollX, -scrollY)` (`docs/GIA-THUYET.md` G-23, G-24). Viết RIÊNG
+ * với bản ở lõi ghi — luật gói số 6. Không đọc được thì `null` → `no_hit_test`, hỏng thì đóng. */
+async function docGocCuon(send, rootNodeId) {
+  try {
+    const goc = await send("DOM.querySelectorAll", { nodeId: rootNodeId, selector: ":root" });
+    const hop = await send("DOM.getBoxModel", { nodeId: goc?.nodeIds?.[0] });
+    const q = hop?.model?.margin;
+    const x = -Math.min(q[0], q[2], q[4], q[6]);
+    const y = -Math.min(q[1], q[3], q[5], q[7]);
+    return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function dungDuoc(send, nodeId, goc) {
   let hop;
   try { hop = await send("DOM.getBoxModel", { nodeId }); }
   catch { return "no_box"; }
@@ -804,7 +822,7 @@ async function dungDuoc(send, nodeId) {
   let o;
   try {
     o = await send("DOM.getNodeForLocation", {
-      x: Math.round(x), y: Math.round(y), includeUserAgentShadowDOM: false
+      x: Math.round(x + goc.x), y: Math.round(y + goc.y), includeUserAgentShadowDOM: false
     });
   } catch { return "no_hit_test"; }
   const trungDiem = o?.nodeId;

@@ -677,3 +677,6 @@ khi cuộn 1288px. Lõi trước T1 (`be4f16b5`) đạt. Bỏ riêng bước h�
 Fail-closed nên không bấm nhầm — nhưng mọi nút dưới màn hình không bấm được.
 
 · **đóng khi:** `scouter:action-probe` đạt 11/11 **và** chốt ⑸ (từ chối lớp che) vẫn giữ, có đột biến canh.
+
+**~~S-23~~ ĐÓNG 13/09:** hỏi-điểm dùng hệ toạ độ TRANG; hai lõi nay cộng độ cuộn đọc từ hộp `:root`.
+`scouter:action-probe` 11/11 · ghim `ⓔ2` `W16` `W17` · đột biến `CU1..CU4`. Chi tiết `docs/GIA-THUYET.md` G-20..G-25.

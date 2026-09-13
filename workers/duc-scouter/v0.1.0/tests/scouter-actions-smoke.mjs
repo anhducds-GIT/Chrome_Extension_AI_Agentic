@@ -82,6 +82,13 @@ function makeFakePage(options = {}) {
     async sendRaw(method, params) {
       sent.push({ method, params });
       if (method === "DOM.getDocument") return { root: { nodeId: 1 } };
+      /* `S-23`: hộp `:root` bắt đầu ở (-scrollX, -scrollY). `options.cuon` dựng trang ĐÃ cuộn. */
+      if (method === "DOM.querySelectorAll" && params?.selector === ":root") return { nodeIds: [50] };
+      if (method === "DOM.getBoxModel" && params?.nodeId === 50) {
+        if (options.gocHong) throw new Error("Could not compute box model.");
+        const c = options.cuon || { x: 0, y: 0 };
+        return { model: { margin: [-c.x, -c.y, 1000 - c.x, -c.y, 1000 - c.x, 3000 - c.y, -c.x, 3000 - c.y] } };
+      }
       if (method === "DOM.querySelectorAll") {
         if (options.selectorThrows) throw new Error("DOM Error while querying");
         /* Hỏi từ GỐC tài liệu là đi tìm phần tử; hỏi từ một phần tử là đi tìm con cháu nó.
@@ -274,6 +281,24 @@ function makeFakePage(options = {}) {
   }
   assert.ok(Number.isInteger(hoi[0].params.x) && Number.isInteger(hoi[0].params.y),
     "DOM.getNodeForLocation chỉ nhận số nguyên");
+
+  /* ⓔ2 `S-23` — TRANG ĐÃ CUỘN. Hỏi-điểm nói theo hệ TRANG, chuột nói theo hệ KHUNG NHÌN.
+   * Đo 13/09: quên cộng phần cuộn thì mọi nút phải cuộn tới đều bị từ chối `No node found`.
+   * Chưa cuộn thì hai hệ trùng nhau, nên ⓔ ở trên không bao giờ bắt được chỗ này. */
+  const cuon = makeFakePage({ cuon: { x: 7, y: 500 } });
+  const rCuon = await runAction("input.click", { sendRaw: cuon.sendRaw }, { selector: BTN });
+  assert.equal(rCuon.ok, true, rCuon.detail);
+  const hoiCuon = cuon.calls("DOM.getNodeForLocation")[0].params;
+  const bamCuon = cuon.calls("Input.dispatchMouseEvent")[1].params;
+  assert.deepEqual([hoiCuon.x, hoiCuon.y], [bamCuon.x + 7, bamCuon.y + 500],
+    "hỏi-điểm phải cộng phần cuộn — không thì trang cuộn là không bấm được");
+  assert.deepEqual([bamCuon.x, bamCuon.y], [60, 40], "chuột vẫn phải bắn theo hệ khung nhìn");
+
+  /* Không đọc được trang cuộn tới đâu → KHÔNG bấm. Hỏng thì đóng. */
+  const gocHong = makeFakePage({ gocHong: true });
+  const rGocHong = await runAction("input.click", { sendRaw: gocHong.sendRaw }, { selector: BTN });
+  assert.equal(rGocHong.code, "CLICK_HIT_TEST_FAILED");
+  assert.deepEqual(gocHong.calls("Input.dispatchMouseEvent"), [], "không biết độ cuộn mà vẫn bắn chuột");
 
   /* ⓕ THỨ TỰ: hỏi TRƯỚC khi bắn. Hỏi sau thì chuột đã đi rồi và câu trả lời chỉ còn là lời
    * phân trần — bản vá vẫn "chạy đúng" trên mọi phép ghim chỉ nhìn kết quả cuối. */

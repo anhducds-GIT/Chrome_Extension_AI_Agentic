@@ -30,7 +30,7 @@
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T11** | **`S-23` rồi `S-22`** — T1 hỏng lượt bấm phải cuộn; đường ghi báo ĐẠT khi trang không nhận | — | **tới lượt** |
+| **T11** | ~~`S-23`~~ **XONG 13/09** · `S-22` còn mở | — | Udin: đã vượt màn chờ (`pilots/udin-optic/`) |
 | **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T11 | **③/④ chặng** — bàn đo đã dựng, chặng 4 dừng ở `S-22` |
 | **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T11 (cùng một đường ghi) · tài khoản rảnh | chờ |
 | **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
