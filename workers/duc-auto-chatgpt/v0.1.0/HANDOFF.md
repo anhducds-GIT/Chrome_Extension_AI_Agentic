@@ -715,35 +715,34 @@ một cảnh báo sẽ bị bỏ qua, và ngày nó ĐÚNG thì không ai đọc
 vẫn đủ 43 ký tự base64url để `validatePairing` nhận, và mang dấu `fake` — đúng dấu mà chính bộ
 dò khai trong `DAU_HANG_GIA`. Suite gói **136/136**.
 
-## 2026-09-13 · `claude-gpt-chay-het-job` — sáu lỗi GIÁC QUAN, và chuỗi chạy trọn trên trang thật
+## 2026-09-13 · `claude-gpt-chay-het-job` — mười lỗi GIÁC QUAN, tìm bằng cách tự chạy chuỗi thật
 
-Tôi tự khởi chạy `chuoi-reasoning.mjs` bốn lượt trên hồ sơ `anhducds`, đọc nhật ký, chẩn đoán,
-vá, chạy lại. **Cả sáu lỗi chỉ lộ ra khi chạy thật.** Đo đầy đủ trong các commit
-`661cd52` `a7bc3ae` `82e4f89` `fe7e682` `c84c9d3` `8a59388` — đây là con trỏ.
+Tự khởi chạy `chuoi-reasoning.mjs` tám lượt trên hồ sơ `anhducds`, tự đọc nhật ký, tự vá, tự
+chạy lại. **Cả mười lỗi chỉ lộ ra khi chạy thật.** Đo đầy đủ ở `661cd52` `a7bc3ae` `82e4f89`
+`fe7e682` `c84c9d3` `8a59388` `6fc11df` `3d96e2e` `11e59ee` `ed96127`.
 
-- `~~B-87~~` id tạm bị lấy làm đại diện cho *chưa đọc được gì*; nay đo thẳng `chars > 0`, chống
-  trùng so bằng **chữ** khi id chưa chốt.
-- `~~B-88~~` **nặng nhất.** `daVaoChua` dồn cả 12 lượt kiên nhẫn cho khả năng *đọc hỏng*, không
-  cho *trang chưa dựng kịp*, nên trả `false` (= giấy phép GỬI LẠI) trong khi tin nhắn ĐÃ bay.
-- `~~B-89~~` bộ đếm *liên tiếp* một mình đọc ra như đang treo. Thêm bộ đếm TỔNG.
-- `~~B-90~~` *không thấy khối* có **ba** khả năng; thứ ba là GPT trả lời rồi **đứt**.
-- `~~B-91~~` `RECEIVER_LOST` nay **tự nạp lại tab**, ĐÚNG một lần mỗi vòng (Đức chốt: *"từ sau
-  bạn tự F5 được nhé"*). ⛔ Đây đúng là lỗi đã gây CAPTCHA 12/09 — xem RANH GIỚI đầu file.
-- `~~B-92~~` lượt gửi hỏng nay giữ cả **câu** lẫn mã.
+`~~B-87~~` id tạm ≠ *chưa đọc được gì* · `~~B-88~~` **nặng nhất**: đọc lại sau khi gửi trả
+`false` — giấy phép GỬI LẠI — khi tin nhắn ĐÃ bay · `~~B-89~~` đếm *liên tiếp* đọc ra như treo ·
+`~~B-90~~` *không thấy khối* có BA khả năng · `~~B-91~~` `RECEIVER_LOST` **tự F5**, một lần mỗi
+vòng (⛔ lỗi gây CAPTCHA 12/09) · `~~B-92~~`/`~~B-93~~`/`~~B-95~~` nhật ký giữ **câu** và **số
+đo** · `~~B-94~~`/`~~B-96~~` "lặng" ≠ "xong": đo **thay đổi** bằng vân tay cả chuỗi.
 
-**NGHIỆM THU LIVE 01:11–01:23** — chuỗi 2/2 vòng, gửi 1167 rồi 1267 ký tự, hai lượt GPT trả lời
-2254 và 6637 ký tự. Đọc lại hội thoại: **3 lượt người, 0 vân tay trùng nhau.** Không có bản gửi
-trùng nào.
+**NGHIỆM THU LIVE** — 2/2 vòng thoát 0 lúc 01:23; **7 lượt gửi, 7 lượt bay, 0 vân tay trùng**.
 
 **`VALIDATION_FAILED` ở lượt gửi KHÔNG phải lỗi tham số** — `khongThuLai()` gói mọi lượt gửi
-không khẳng định được vào đúng mã ấy, cố ý, vì nó `retryable: false`, tức một lời **cấm gửi
-lại**. Tiện ích đúng; phía nhận của cái bắt tay ấy hỏng cho tới B-88.
+không khẳng định được vào đúng mã ấy, cố ý, vì nó `retryable: false`: một lời **cấm gửi lại**.
+Trên tab nền lượt gửi **gần như luôn** báo lỗi (tiện ích buông ở 30s, CLI ở 40s), nên B-88
+không phải vá ca biên — nó là thứ làm việc chạy nền hoạt động được.
 
-**Ba lần phép ghim của chính tôi lọt lưới ở lượt đột biến đầu**, cùng một họ — đo nhầm thứ: ca
-thử không phân biệt được hai nhánh · `some()` khớp phải con số hàng xóm · đo THỨ TỰ trong khi
-đột biến đổi chiều. **Đếm thì không có chiều để đo nhầm.**
+**NĂM lần phép ghim của chính tôi lọt lưới ở lượt đột biến đầu**, cùng họ — đo nhầm thứ: ca thử
+không phân biệt hai nhánh · `some()` khớp phải con số hàng xóm · đo THỨ TỰ trong khi đột biến
+đổi chiều · thêm biến mới mà quên nới phép ghim (2 lần). **Đếm thì không có chiều.**
 
-**Đo được:** hậu tố id tạm **không ổn định theo cả hai chiều** — có lúc đứng yên qua nhiều lượt
-nạp lại (`-0`), có lúc nhích (`-1`). Câu cũ nói nó "KHÔNG đổi" đã **gạch bỏ tại chỗ**.
+**HAI lần tôi kết luận ngược nhau về CÙNG một trang**, vì đọc **một ảnh chụp** thay vì so hai.
+Chốt: `Worked for 4m 49s…MODE:` giống nhau **từng byte** lúc 02:17 và 02:26 → chết thật. Muốn
+nói "đứng im" thì phải so HAI lượt đọc.
 
-Suite **138/138**. Đột biến 6/6 · 6/6 · 5/5 · 8/8 · 8/8 · 6/6.
+Suite **138/138**. Đột biến: 6/6 · 6/6 · 5/5 · 8/8 · 8/8 · 6/6 · 8/8 · 9/9 · 5/5 · 7/7.
+
+**CHỜ ĐỨC:** hội thoại `Prompt engineer 2` có câu trả lời cuối **đứt ở `MODE:`** — cần bấm
+regenerate. Chuỗi không tự chữa được, và bộ chạy nay báo đúng bệnh (`~~B-90~~` khả năng ⑶).
