@@ -1496,18 +1496,43 @@ console.log("chuoi reasoning smoke tests: PASS");
      bản vá im lặng không chạy. */
   const iVong = ma.indexOf("for (let vong = 1");
   const iKhai = ma.indexOf("let chuTraLoiTruoc", iVong);
+  const iKhaiVan = ma.indexOf("let vanTayTruoc", iVong);
   const iWhile = ma.indexOf("while (true) {", iVong);
   assert.ok(iVong > 0 && iKhai > iVong && iWhile > iKhai,
     "`chuTraLoiTruoc` phải khai TRONG vòng lặp vòng nhưng NGOÀI vòng lặp đọc");
+  /* CẢ MỐC VÂN TAY NỮA. Đột biến W6 lọt lưới đúng vì phép ghim chỉ canh mốc độ dài: thêm một
+     mốc mới mà quên nới phép ghim sang là để ngỏ đúng nửa đang gánh việc. */
+  assert.ok(iKhaiVan > iVong && iWhile > iKhaiVan,
+    "`vanTayTruoc` cũng phải khai TRONG vòng lặp vòng nhưng NGOÀI vòng lặp đọc");
 
   /* ⒝ PHÉP ĐO PHẢI ĐÒI CẢ BA VẾ. Thiếu vế `id` thì một lượt trả lời MỚI (ngắn hơn lượt cũ) vẫn
      có thể bị chấm là "đang dài ra"; thiếu vế `>` thì nó thành phép so bằng. */
   const iDo = ma.indexOf("const dangDaiRa =");
   assert.ok(iDo > 0, "phải có phép đo `dangDaiRa`");
   const dongDo = ma.slice(iDo, ma.indexOf(";", iDo));
-  for (const ve of ["luotTL.id === idTraLoiTruoc", "chuTraLoi > chuTraLoiTruoc", "Boolean(luotTL)"]) {
+  for (const ve of ["luotTL.id === idTraLoiTruoc", "vanTayTraLoi !== vanTayTruoc", "Boolean(luotTL)"]) {
     assert.ok(dongDo.includes(ve), `\`dangDaiRa\` thiếu vế \`${ve}\``);
   }
+
+  /* ⒝′ B-96 — ĐO THAY ĐỔI, KHÔNG ĐO TĂNG ĐỘ DÀI. Bản đầu của phép ghim này đòi
+     `chuTraLoi > chuTraLoiTruoc`, tức nó ghim ĐÚNG phép đo sai. Đo live 13/09, nguyên văn lượt
+     trả lời lúc bộ chạy sắp bỏ cuộc:
+         "Worked for 4m 49s\nTalked to App\nCalled tool\nTalked to App\n\nMODE:"
+     GPT đã chạy gần năm phút và vẫn đang chạy — nhưng `4m 49s` và `4m 50s` dài BẰNG NHAU từng
+     ký tự, nên phép so độ dài ra `false` ở mọi lượt đọc. Một phép ghim xanh trên một phép đo mù
+     là thứ nguy hiểm hơn không có phép ghim nào. */
+  assert.ok(!dongDo.includes("chuTraLoi > chuTraLoiTruoc"),
+    "KHÔNG được quay về so độ dài — nội dung đổi mà độ dài giữ nguyên là ca ĐÃ ĐO ĐƯỢC, không phải giả thiết");
+
+  /* ⒝″ VÂN TAY PHẢI PHỦ CẢ CHUỖI. Chỗ đổi ở ca 13/09 nằm ở ĐẦU (`4m 49s`), nên một vân tay lấy
+     phần đuôi — hay lấy 200 ký tự đầu như phép chống-trùng khối — sẽ bỏ sót đúng chỗ ấy. */
+  const iVan = ma.indexOf("const vanTayTraLoi =");
+  assert.ok(iVan > 0, "phải dựng vân tay của lượt trả lời");
+  const dongVan = ma.slice(iVan, ma.indexOf(";", iVan));
+  assert.ok(/createHash\(/.test(dongVan), "vân tay phải băm, không phải cắt");
+  assert.ok(!/\.slice\(/.test(dongVan),
+    "vân tay KHÔNG được cắt đầu/đuôi — chỗ đổi ở ca đo được nằm ở ĐẦU chuỗi");
+  assert.ok(/luotTL\?\.text/.test(dongVan), "vân tay phải băm CHÍNH VĂN BẢN của lượt trả lời");
 
   /* ⒞ DÀI RA THÌ ĐẶT LẠI ĐỒNG HỒ YÊN, và tính là ĐÃ THẤY TRANG CHẠY — chữ dài ra là bằng chứng
      mạnh hơn nút Stop, không yếu hơn. */
@@ -1526,6 +1551,11 @@ console.log("chuoi reasoning smoke tests: PASS");
   assert.ok(!/if\s*\(/.test(truocNhich),
     "mốc phải nhích VÔ ĐIỀU KIỆN mỗi lượt đọc — nhích có điều kiện là so với một con số đã cũ");
   assert.ok(ma.includes("idTraLoiTruoc = luotTL?.id ?? null;"), "mốc id cũng phải nhích mỗi lượt");
+  /* Và mốc VÂN TAY — đột biến W5 lọt lưới đúng ở đây. Quên nhích nó thì mọi lượt đọc sau lượt
+     đầu đều so với một vân tay đã cũ, và phép đo ra `true` mãi mãi: bộ chạy không bao giờ dám
+     kết luận xong, treo tới hết trần phút. Hỏng theo chiều ngược với W1 nhưng cùng một gốc. */
+  assert.ok(ma.includes("vanTayTruoc = vanTayTraLoi;"),
+    "mốc vân tay phải nhích mỗi lượt đọc — quên nhích là bộ chạy treo tới hết trần phút");
 
   /* ⒠ VÀ TUYỆT ĐỐI KHÔNG BẮT CHUỖI TIẾNG ANH TRÊN MÀN HÌNH. "Called tool" / "Worked for" là
      chữ của giao diện: ChatGPT đổi câu chữ hoặc người dùng đổi ngôn ngữ là phép dò chết lặng,

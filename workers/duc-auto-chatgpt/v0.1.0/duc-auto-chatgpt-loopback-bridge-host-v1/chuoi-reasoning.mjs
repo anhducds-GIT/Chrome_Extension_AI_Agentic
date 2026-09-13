@@ -675,6 +675,7 @@ async function chinh() {
        (mỗi vòng một câu trả lời mới) nhưng ngoài vòng lặp đọc (phải sống qua các lượt đọc). */
     let idTraLoiTruoc = null;
     let chuTraLoiTruoc = 0;
+    let vanTayTruoc = "";
     let daBaoDangViet = false;
 
     while (true) {
@@ -841,12 +842,29 @@ async function chinh() {
        *
        * Chỉ so khi CÙNG MỘT lượt. Lượt đổi id thì phép so vô nghĩa, và lượt đọc đầu của mỗi
        * vòng chỉ dựng mốc chứ không phán gì — không được để nó tự kết luận "đang sống". */
+      /* B-96 — ĐO **THAY ĐỔI**, ĐỪNG ĐO **TĂNG ĐỘ DÀI**.
+       *
+       * Bản đầu của `~~B-94~~` so `chuTraLoi > chuTraLoiTruoc`. Đo live 13/09 cho thấy nó mù
+       * đúng với tín hiệu sống rõ nhất trên màn hình. Nguyên văn lượt trả lời lúc bộ chạy sắp
+       * bỏ cuộc:
+       *     "Worked for 4m 49s\nTalked to App\nCalled tool\nTalked to App\n\nMODE:"
+       * GPT đã chạy GẦN NĂM PHÚT và vẫn đang chạy. Nhưng `Worked for 4m 49s` và
+       * `Worked for 4m 50s` dài **bằng nhau từng ký tự** — phép so độ dài ra `false` ở mọi lượt
+       * đọc, `soLanYen` leo tới 6, và bộ chạy kết luận "trang đứng im" về một trang đang bận
+       * nhất. Tôi đọc con số mà không đọc chữ, và rút ra kết luận NGƯỢC: đã báo với Đức là câu
+       * trả lời "chết giữa chừng", trong khi nó đang làm việc.
+       *
+       * Vân tay của CHÍNH VĂN BẢN thì bắt được cả hai chiều: dài ra, và đổi tại chỗ. Và nó vẫn
+       * KHÔNG đọc một chữ giao diện nào — nó so văn bản với chính nó ở lượt đọc trước, nên đổi
+       * ngôn ngữ hay đổi câu chữ đều không hề gì. Băm cả chuỗi chứ không lấy đầu/đuôi: chỗ đổi
+       * ở đây nằm ở ĐẦU (`4m 49s`), mà một vân tay lấy phần đuôi sẽ bỏ sót đúng chỗ ấy. */
       const chuTraLoi = Number(luotTL?.chars ?? 0);
-      const dangDaiRa = Boolean(luotTL) && luotTL.id === idTraLoiTruoc && chuTraLoi > chuTraLoiTruoc;
+      const vanTayTraLoi = crypto.createHash("sha1").update(String(luotTL?.text ?? "")).digest("hex");
+      const dangDaiRa = Boolean(luotTL) && luotTL.id === idTraLoiTruoc && vanTayTraLoi !== vanTayTruoc;
       if (r.generating === true) { daThayDangChay = true; soLanYen = 0; }
       else if (dangDaiRa) {
         if (soLanYen > 0) {
-          console.log(`  vòng ${vong} · vẫn đang viết: ${chuTraLoiTruoc} → ${chuTraLoi} ký tự (đồng hồ yên đặt lại từ ${soLanYen})`);
+          console.log(`  vòng ${vong} · vẫn đang viết: ${chuTraLoiTruoc} → ${chuTraLoi} ký tự, nội dung ĐỔI (đồng hồ yên đặt lại từ ${soLanYen})`);
         }
         if (!daBaoDangViet) {
           daBaoDangViet = true;
@@ -857,6 +875,7 @@ async function chinh() {
       } else soLanYen += 1;
       idTraLoiTruoc = luotTL?.id ?? null;
       chuTraLoiTruoc = chuTraLoi;
+      vanTayTruoc = vanTayTraLoi;
 
       if (r.last_copy_block?.found) daThayKhoi = true;
       const qd = quyetDinh({ generating: r.generating, khoi: r.last_copy_block, khoiCu, chuKhoiCu, daNapLai, daThayDangChay, soLanYen, idLuotTraLoiCuoi: luotTL?.id ?? null });
