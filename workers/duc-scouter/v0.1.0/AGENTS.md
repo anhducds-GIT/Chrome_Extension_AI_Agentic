@@ -90,6 +90,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `icons/` · `scripts/make-icons.mjs` | Icon extension, sinh bằng script |
 | `docs/PROMPT-thiet-ke-bang-ben.md` | Câu Đức dán cho GPT web. Chứa bản khai **năng lực thật** — Scouter đổi thì **sửa mục đó trước khi dán** |
 | `docs/TRIALS.md` | Sổ các trang đã thử: trang nào · thử gì · kết quả |
+| `docs/CAPABILITIES.md` | **Đo tiến độ** (Đức chốt 13/09): bảng năng lực seed có bằng chứng · checklist bổ sung · hợp đồng workflow từng trang · lộ trình. Sửa ô khi có bằng chứng chạy thật |
 | `docs/GIA-THUYET.md` | Sổ giả thuyết: câu hỏi · cách thử · ĐÚNG/SAI/CHƯA · bằng chứng. **Tra trước khi thử** |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |

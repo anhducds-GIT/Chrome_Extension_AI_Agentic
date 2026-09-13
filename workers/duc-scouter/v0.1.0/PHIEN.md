@@ -82,8 +82,9 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 9. **Tra `docs/GIA-THUYET.md` TRƯỚC mỗi phép thử; ghi dòng `CHƯA` trước khi thử, sửa kết quả
    sau.** Dòng `SAI` thì đừng thử lại. Đức chốt 13/09 vì phiên đi vòng lại việc đã làm.
 
+
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Thuan hoa Udin tiep. Da xong 13/09: vuot man cho (qua-man-cho.mjs) va gui prompt tron vong (gui-prompt.mjs: go -> Send mo khoa -> bam -> cho xong -> dem anh moi; chay that DAT 2 lan). Buoc ke: lay anh ket qua ve dia qua Bridge file.write. Tra docs/GIA-THUYET.md truoc moi phep thu."
+- next_step: "Doc docs/CAPABILITIES.md (Duc chot mo hinh 13/09). Chang P1: dong S-22, W3 lay anh Udin ve dia qua scout.fetch + file.write, roi E2E Udin. Cho Duc chot cac muc tay (O8 I4 I5 I6 I7). Tra docs/GIA-THUYET.md truoc moi phep thu."
 - human_action: "@Duc:bam D2 con mot nua — ghe THU HAI chua co ten. Khong co viec nao khac can tay Duc luc nay."

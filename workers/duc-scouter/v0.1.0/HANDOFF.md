@@ -929,3 +929,11 @@ còn chữ cũ làm phép kiểm "Send mở khoá" vô nghĩa; đếm nút DOM r
 khi đang chạy hoặc ô có chữ; đếm theo src. Chạy thật ĐẠT 3 lần (lần cuối 51s, đúng 4 ảnh). Ghim 10
 khối, 12 đột biến tay chết.
 `GIA-THUYET` G-29, G-30. Bước kế: lấy ảnh kết quả về đĩa qua Bridge.
+
+## 2026-09-13 · `claude-scouter-udine` — mô hình đo 3 cấp, `docs/CAPABILITIES.md`
+
+Đức chốt: code giữ Seed → Adapter → Record; đo theo Capability → Workflow → Site Mastery (mastery
+tính ra, không lưu). File mới: bảng 40 năng lực (19/39 đã chứng minh), checklist bổ sung có cột ✋
+cần Đức duyệt, 8 workflow Udin (2 ĐẠT, 3 CHẶN), lộ trình P0–P5. 8 mốc bảng bên giữ nguyên.
+Commit `feat(udin)` trước đó chưa lên được: safe-push chặn vì 2 commit của `claude-gpt-chay-het-job`
+nằm xen giữa.
