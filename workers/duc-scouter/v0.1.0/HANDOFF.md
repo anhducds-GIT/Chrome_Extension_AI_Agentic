@@ -919,3 +919,13 @@ Probe 11/11, đột biến 128/128. Tìm ra bằng chia đôi, ghi ở `docs/GIA
 
 **Udin:** `pilots/udin-optic/scripts/qua-man-cho.mjs` — chờ Try Again `usable` → bấm → kiểm màn chắn
 tắt → ô prompt `usable`. Chạy thật: ĐẠT. `S-22` vẫn mở.
+
+## 2026-09-13 · `claude-scouter-udine` — Udin: gửi prompt tròn vòng
+
+`pilots/udin-optic/scripts/gui-prompt.mjs`: qua màn chờ → gõ → chờ nút Send mở khoá → bấm → chờ
+`stop-button` hiện (Udin đã nhận) → chờ nó tắt → so TẬP `src` ảnh trước/sau. Selector từ DOM thật.
+Audit độc lập bắt 2 lỗi: nút Send và Stop là cùng một phần tử (bấm nhầm Stop → báo nhận giả), ô
+còn chữ cũ làm phép kiểm "Send mở khoá" vô nghĩa; đếm nút DOM ra 8 cho 4 ảnh. Đã vá: từ chối gửi
+khi đang chạy hoặc ô có chữ; đếm theo src. Chạy thật ĐẠT 3 lần (lần cuối 51s, đúng 4 ảnh). Ghim 10
+khối, 12 đột biến tay chết.
+`GIA-THUYET` G-29, G-30. Bước kế: lấy ảnh kết quả về đĩa qua Bridge.

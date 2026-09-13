@@ -65,6 +65,8 @@
 | G-26 | 13/09 | S-22 | Bản vá S-23 cũng chữa S-22 trên ghế Đức | `scout.reload` rồi `vong.mjs` trên `trang-thu-cham` | **CHƯA** | — |
 | G-27 | 13/09 | S-21 | `No node found` của S-21 (12/09) chính là S-23: trang lúc đó đã cuộn | — chưa có cách tái hiện lại lượt 12/09 | **CHƯA** | cùng câu lỗi; chưa đo độ cuộn lúc đó |
 | G-28 | 13/09 | Udin | Scouter vượt được màn "User Limit Reached" bằng nút Try Again | `pilots/udin-optic/scripts/qua-man-cho.mjs`: wait usable → click → wait overlay absent → wait prompt usable | **ĐÚNG** | click `relation: self` (768,455); màn chắn tắt; `textarea.agent-textarea` usable |
+| G-29 | 13/09 | Udin | `scout.type` vào `textarea.agent-textarea` tới được React: nút `button.agent-send-button` hết `disabled` | type → query nút Send, xem còn thuộc tính `disabled` không | **ĐÚNG** | gõ "a red car" (typed 9) → 800ms sau nút Send mất `disabled`. Chưa bấm Send |
+| G-30 | 13/09 | Udin | `scout.click` nút Send tới trang: Udin nhận prompt (nút Send khoá lại / DOM đổi) | đếm phần tử trước-sau click | **ĐÚNG** | click `descendant` (352,652) → 1,5s: nút thành `stop-button`, `agent-message-item user` hiện → 68s: `stop-button` tắt, 4 `img.batch-grid-image` "Variation 1..4" |
 
 ## Phép đo dùng lại được — đừng dựng lại
 
