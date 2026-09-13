@@ -828,7 +828,17 @@ async function chinh() {
       }
       if (qd.viec === "NAP_LAI") {
         console.log(`  vòng ${vong}: ${qd.vi}`);
-        ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi });
+        /* B-93 — GHI CẢ SỐ ĐO ĐẺ RA PHÁN QUYẾT, KHÔNG CHỈ GHI PHÁN QUYẾT.
+         *
+         * `qd.vi` nói "LUOT_CHUA_CHOT — id tạm …", nhưng cửa ấy đo BA thứ: id có chốt chưa,
+         * khối có `found` không, và `chars` bằng bao nhiêu. Chỉ một trong ba lọt vào nhật ký.
+         * Đo 13/09: để phân biệt ca 11/09 (`chars: 0`, nạp lại là ĐÚNG) với ca 13/09
+         * (`chars: 164`, nạp lại là PHÍ rồi dừng sai), tôi phải đi đọc TRANG SỐNG — trong khi
+         * cả hai con số đã nằm trong tay bộ chạy ở đúng khoảnh khắc nó ghi dòng này.
+         * Cùng họ với `~~B-90~~` và `~~B-92~~`: nhật ký giữ kết luận, vứt bằng chứng. */
+        ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi,
+          thay: Boolean(r.last_copy_block?.found), chu: Number(r.last_copy_block?.chars ?? 0),
+          so_khoi: Number(r.last_copy_block?.blocks_in_turn ?? 0), turn_id: r.last_copy_block?.turn_id ?? null });
         goi(["chat-reload", "--request-id", khoaAnToan(nhan, `-v${vong}-reload`)]);
         daNapLai = true;
         /* ĐẶT LẠI CỬA SỔ QUAN SÁT SAU KHI NẠP LẠI. Bản đầu nạp lại rồi kết luận DỪNG ở
@@ -1037,7 +1047,9 @@ async function chinh() {
          tin nhắn của chính mình bằng chữ rồi tự nhích mốc. Nói ra để đừng ai đọc nhật ký thành
          "đã kiểm và thấy ổn". */
       console.log(`  vòng ${vong}: đọc lại sau khi gửi không được (${sauGui.error?.code || "?"}) — để vòng sau tự nhận ra tin nhắn của mình`);
-      ghi({ su_kien: "SAU_GUI_DOC_HONG", vong, ma: sauGui.error?.code || null });
+      /* B-93 — CÙNG LÝ DO VỚI `~~B-92~~`: mã gộp nhiều bệnh vào một nhãn, câu mới nói bệnh. */
+      ghi({ su_kien: "SAU_GUI_DOC_HONG", vong, ma: sauGui.error?.code || null,
+        vi: String(sauGui.error?.message ?? "").slice(0, 300) || null });
     }
     if (sauGui.ok) {
       const cuoi = [...(sauGui.result.turns || [])].reverse().find((t) => t.role === "user");

@@ -1414,3 +1414,61 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓖ lượt gửi hỏng: giữ cả câu lẫn mã, cả hai lượt, cắt 300 ký tự, ra cả màn hình");
 }
+
+/* Ⓗ B-93 — NHẬT KÝ PHẢI GIỮ SỐ ĐO ĐẺ RA PHÁN QUYẾT, KHÔNG CHỈ GIỮ PHÁN QUYẾT.
+ *
+ * Rà cả 15 loại sự kiện sau khi vá `~~B-90~~` và `~~B-92~~`: còn đúng hai chỗ cùng bệnh.
+ *   · `NAP_LAI` ghi `qd.vi` — nhưng cửa đẻ ra nó đo BA thứ (id chốt chưa · `found` · `chars`),
+ *     và chỉ một lọt vào nhật ký. Đo 13/09: để phân biệt ca 11/09 (`chars: 0`, nạp lại ĐÚNG)
+ *     với ca 13/09 (`chars: 164`, nạp lại PHÍ rồi dừng sai) tôi phải đi đọc TRANG SỐNG, trong
+ *     khi cả hai con số đã nằm trong tay bộ chạy đúng lúc nó ghi dòng ấy.
+ *   · `SAU_GUI_DOC_HONG` ghi mã, vứt câu — y hệt bệnh `~~B-92~~` vừa vá ở đường gửi.
+ *
+ * Phép ghim này canh CẢ HỌ, không canh một dòng: mọi sự kiện kết luận từ một lượt đọc đều phải
+ * mang theo số đo của lượt đọc ấy. Thêm một `ghi()` mới mà quên là hỏng lại đúng kiểu này.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  const dongCua = (ten) => {
+    const i = ma.indexOf(`su_kien: "${ten}"`);
+    assert.ok(i > 0, `không thấy sự kiện ${ten} trong nhật ký`);
+    return ma.slice(i, ma.indexOf("});", i));
+  };
+
+  /* ⒜ `NAP_LAI` phải mang đủ ba số đo đã sinh ra quyết định nạp lại. */
+  const napLai = dongCua("NAP_LAI");
+  for (const [truong, vi] of [["thay", "có thấy khối không"], ["chu", "khối dài bao nhiêu"], ["so_khoi", "trong lượt có mấy khối"]]) {
+    /* `includes`, không `RegExp` dựng từ chuỗi. Bản đầu viết `new RegExp(\`\\b${truong}:\`)` và
+       heredoc nuốt mất một lớp gạch chéo, nên nó thành ký tự BACKSPACE chứ không phải mép từ —
+       phép ghim không khớp gì cả, và cái đỏ đọc ra y hệt một thiếu sót thật. */
+    assert.ok(napLai.includes(`${truong}:`),
+      `NAP_LAI thiếu \`${truong}\` (${vi}) — thiếu nó là phải đi đọc trang sống để biết thứ bộ chạy đã cầm trong tay`);
+  }
+  assert.ok(/turn_id:/.test(napLai), "NAP_LAI phải ghi cả `turn_id` — id là vế còn lại của cửa");
+  /* Và `chu` phải là SỐ, không phải cờ: `chars > 0` với `chars` bao nhiêu là hai câu hỏi khác
+     nhau, và chính con số mới phân biệt được ca 11/09 với ca 13/09. */
+  assert.ok(/chu: Number\(/.test(napLai),
+    "`chu` phải là con số thật, không phải cờ có/không — con số mới phân biệt được hai ca");
+
+  /* ⒝ `SAU_GUI_DOC_HONG` phải mang câu, không chỉ mã. */
+  const sauGui = dongCua("SAU_GUI_DOC_HONG");
+  assert.ok(/\bvi:/.test(sauGui), "SAU_GUI_DOC_HONG phải mang CÂU lỗi, không chỉ mã");
+  assert.ok(/\bma:/.test(sauGui), "và vẫn giữ mã — câu để người đọc, mã để máy lọc");
+  assert.ok(/\.slice\(0, 300\)/.test(sauGui), "câu phải cắt 300 ký tự, nhật ký không phải chỗ đổ log");
+
+  /* ⒞ CANH CẢ HỌ. Mọi sự kiện mang một mã lỗi đều phải mang câu đi kèm — nếu không, một `ghi()`
+     mới thêm sau này sẽ lặp lại đúng bệnh mà phép ghim vẫn xanh. */
+  const mangMa = [...ma.matchAll(/ghi\(\{ su_kien: "([A-Z_]+)"[^;]*?\bma:/g)].map((m) => m[1]);
+  assert.ok(mangMa.length >= 3, `phải có ít nhất 3 sự kiện mang mã lỗi (thấy ${mangMa.length}) — ít hơn là lát cắt trượt`);
+  for (const ten of mangMa) {
+    const dong = dongCua(ten);
+    const coCau = /\bvi:/.test(dong) || /\bdiagnosis:/.test(dong) || /\bdebug:/.test(dong);
+    assert.ok(coCau,
+      `sự kiện \`${ten}\` ghi MÃ mà không ghi CÂU — mã gộp nhiều bệnh vào một nhãn, và đó đúng là chỗ đã làm mất một vòng chẩn đoán`);
+  }
+
+  console.log("  ok  Ⓗ nhật ký giữ số đo, không chỉ giữ phán quyết — và canh cả họ, không canh một dòng");
+}
