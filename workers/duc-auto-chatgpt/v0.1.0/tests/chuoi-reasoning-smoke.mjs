@@ -1373,3 +1373,44 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓕ RECEIVER_LOST: tự nạp lại tab, ĐÚNG một lần mỗi vòng, vẫn qua sàn và vẫn giãn nhịp");
 }
+
+/* Ⓖ B-92 — GIỮ LẤY CÂU, ĐỪNG CHỈ GIỮ MÃ.
+ *
+ * Đo 13/09: lượt gửi đầu trả `ma: "VALIDATION_FAILED"` kèm `da_bay: true`. Hai thứ đó không đi
+ * với nhau được, và tôi mất một vòng đi tìm một lỗi THAM SỐ không hề tồn tại. Sự thật nằm trong
+ * CÂU: tiện ích ném "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi. ĐỌC LẠI
+ * bằng chat.read trước khi gửi lại." qua `khongThuLai()`, và hàm ấy gói MỌI lượt gửi không
+ * khẳng định được vào đúng một mã `VALIDATION_FAILED` — cố ý, vì mã đó `retryable: false`.
+ *
+ * Nhãn nói sai bệnh; câu nói đúng. Ghi mã mà vứt câu là để lại một nhật ký không phân biệt được
+ * "tham số sai" với "đã gõ nhưng chưa xác nhận được" — hai ca đòi hai cách xử khác hẳn.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒜ CẢ HAI LƯỢT GỬI, không chỉ lượt đầu. Lượt ⑵ là lượt hiếm hơn và vì thế khó chẩn đoán
+     hơn — bỏ quên nó là bỏ quên đúng ca cần nhật ký nhất. */
+  for (const lan of [1, 2]) {
+    const iGhi = ma.indexOf(`su_kien: "GUI_LOI_DOC_LAI", vong, lan: ${lan}`);
+    assert.ok(iGhi > 0, `thiếu dòng nhật ký cho lượt gửi ⑵/⑴ (lần ${lan})`);
+    const dong = ma.slice(iGhi, ma.indexOf("});", iGhi));
+    assert.ok(/\bvi: viGui\d\b/.test(dong),
+      `nhật ký lượt gửi lần ${lan} phải mang CÂU lỗi, không chỉ mã — mã gộp nhiều bệnh vào một nhãn`);
+    assert.ok(/\bma: lan\d\.error\?\.code/.test(dong),
+      `và vẫn phải giữ mã ở lượt ${lan} — câu để người đọc, mã để máy lọc`);
+  }
+
+  /* ⒝ CÂU PHẢI ĐƯỢC CẮT. Thông điệp lỗi có thể ôm cả vết ngăn xếp; nhật ký là dòng một-lượt-
+     một-dòng, không phải chỗ đổ log. */
+  const cats = (ma.match(/String\(lan\d\.error\?\.message \?\? ""\)\.slice\(0, 300\)/g) || []).length;
+  assert.equal(cats, 2, "cả hai lượt phải cắt câu lỗi ở 300 ký tự");
+
+  /* ⒞ VÀ RA CẢ MÀN HÌNH. Người ngồi nhìn cửa sổ chạy phải thấy ngay câu ấy — đó chính là lúc
+     họ đang quyết định có nên bấm `[m] chạy MỚI` hay không, và câu ấy nói "đừng". */
+  const inRa = (ma.match(/console\.log\(`\s*lần [⑴⑵] nói: \$\{viGui\d\}`\)/g) || []).length;
+  assert.equal(inRa, 2, "cả hai lượt phải in câu lỗi ra màn hình, không chỉ vào nhật ký");
+
+  console.log("  ok  Ⓖ lượt gửi hỏng: giữ cả câu lẫn mã, cả hai lượt, cắt 300 ký tự, ra cả màn hình");
+}

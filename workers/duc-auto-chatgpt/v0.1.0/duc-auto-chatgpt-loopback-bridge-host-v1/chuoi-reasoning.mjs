@@ -986,7 +986,23 @@ async function chinh() {
     let ok1 = Boolean(lan1.ok), daBay1 = false, ok2 = false, daBay2 = false;
     if (!ok1) {
       daBay1 = await daVaoChua();
-      ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 1, ma: lan1.error?.code || null, da_bay: daBay1 });
+      /* B-92 — GIỮ LẤY CÂU, ĐỪNG CHỈ GIỮ MÃ.
+       *
+       * Đo 13/09, lượt gửi đầu của chuỗi này: `ma: "VALIDATION_FAILED"`, `da_bay: true`. Hai
+       * thứ đó không đi với nhau được, và tôi mất một vòng đi tìm một lỗi THAM SỐ không hề tồn
+       * tại. Sự thật nằm trong CÂU chứ không trong mã: tiện ích ném
+       *     "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi. ĐỌC LẠI bằng
+       *      chat.read trước khi gửi lại."
+       * qua `khongThuLai()`, và hàm ấy đóng gói MỌI lượt gửi không khẳng định được vào đúng một
+       * mã `VALIDATION_FAILED` — cố ý, vì mã đó `retryable: false`, tức là một lời CẤM gửi lại.
+       * Nhãn nói sai bệnh, nhưng nó nói đúng điều quan trọng hơn: đừng thử lại.
+       *
+       * Bản trước ghi mã rồi vứt câu. Nhật ký vì thế không phân biệt được "tham số sai" với
+       * "đã gõ nhưng chưa xác nhận được" — hai ca đòi hai cách xử hoàn toàn khác nhau. Cắt 300
+       * ký tự: đây là câu chẩn đoán, không phải bài đọc. */
+      const viGui1 = String(lan1.error?.message ?? "").slice(0, 300) || null;
+      if (viGui1) console.log(`     lần ⑴ nói: ${viGui1}`);
+      ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 1, ma: lan1.error?.code || null, vi: viGui1, da_bay: daBay1 });
       // Chỉ gửi lại khi đọc được VÀ không thấy. `null` (không đọc được) đi thẳng xuống
       // `ketLuanGui` để dừng — gửi lại lúc mù là đúng thứ exact-once cấm.
       if (daBay1 === false) {
@@ -996,7 +1012,9 @@ async function chinh() {
         // chấm `REQUEST_TIMEOUT` ở lần hai thành thất bại, trong khi tin nhắn đã bay.
         if (!ok2) {
           daBay2 = await daVaoChua();
-          ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 2, ma: lan2.error?.code || null, da_bay: daBay2 });
+          const viGui2 = String(lan2.error?.message ?? "").slice(0, 300) || null;
+          if (viGui2) console.log(`     lần ⑵ nói: ${viGui2}`);
+          ghi({ su_kien: "GUI_LOI_DOC_LAI", vong, lan: 2, ma: lan2.error?.code || null, vi: viGui2, da_bay: daBay2 });
         }
       }
     }
