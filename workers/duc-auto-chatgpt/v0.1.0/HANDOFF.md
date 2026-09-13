@@ -715,32 +715,35 @@ một cảnh báo sẽ bị bỏ qua, và ngày nó ĐÚNG thì không ai đọc
 vẫn đủ 43 ký tự base64url để `validatePairing` nhận, và mang dấu `fake` — đúng dấu mà chính bộ
 dò khai trong `DAU_HANG_GIA`. Suite gói **136/136**.
 
-## 2026-09-13 · `claude-gpt-chay-het-job` — bốn lỗi GIÁC QUAN, tìm ra bằng cách tự chạy chuỗi thật
+## 2026-09-13 · `claude-gpt-chay-het-job` — sáu lỗi GIÁC QUAN, và chuỗi chạy trọn trên trang thật
 
-Tôi tự khởi chạy `chuoi-reasoning.mjs` hai lượt trên hồ sơ `anhducds`, đọc nhật ký, chẩn đoán,
-vá, chạy lại — Đức không phải làm gì. **Cả bốn lỗi chỉ lộ ra khi chạy thật.** Đo đầy đủ nằm
-trong bốn commit `661cd52` `a7bc3ae` `82e4f89` `fe7e682`; đây chỉ là con trỏ.
+Tôi tự khởi chạy `chuoi-reasoning.mjs` bốn lượt trên hồ sơ `anhducds`, đọc nhật ký, chẩn đoán,
+vá, chạy lại. **Cả sáu lỗi chỉ lộ ra khi chạy thật.** Đo đầy đủ trong các commit
+`661cd52` `a7bc3ae` `82e4f89` `fe7e682` `c84c9d3` `8a59388` — đây là con trỏ.
 
-- `~~B-87~~` id tạm bị lấy làm đại diện cho *chưa đọc được gì*. Đo: `request-…-0` kèm `chars: 164`,
-  câu trả lời xong hẳn. Nay đo thẳng `chars > 0`; chống trùng so bằng **chữ** khi id chưa chốt.
-- `~~B-88~~` **nặng nhất.** Lượt đọc lại sau khi gửi chấm `da_bay: false` trong khi tin nhắn ĐÃ
-  bay (đúng một bản). Bộ chạy báo `GUI_THAT_BAI · đã gửi 0`, rồi `chay-chuoi.bat` mời `[m] chạy
-  MỚI` — tức mời **gửi trùng**, đúng thứ exact-once sinh ra để chặn. Gốc: `daVaoChua` dồn cả 12
-  lượt kiên nhẫn cho khả năng *đọc hỏng*, không cho *trang chưa dựng kịp*.
-- `~~B-89~~` bộ đếm *liên tiếp* một mình đọc ra như đang treo. Thêm bộ đếm TỔNG mỗi vòng.
-- `~~B-90~~` *không thấy khối* có **ba** khả năng: khả năng thứ ba là GPT trả lời rồi **đứt**
-  (đo: lượt cuối 13 ký tự, DOM cũng trống). Hai khả năng cũ đều đẩy người đi tìm sai chỗ.
+- `~~B-87~~` id tạm bị lấy làm đại diện cho *chưa đọc được gì*; nay đo thẳng `chars > 0`, chống
+  trùng so bằng **chữ** khi id chưa chốt.
+- `~~B-88~~` **nặng nhất.** `daVaoChua` dồn cả 12 lượt kiên nhẫn cho khả năng *đọc hỏng*, không
+  cho *trang chưa dựng kịp*, nên trả `false` (= giấy phép GỬI LẠI) trong khi tin nhắn ĐÃ bay.
+- `~~B-89~~` bộ đếm *liên tiếp* một mình đọc ra như đang treo. Thêm bộ đếm TỔNG.
+- `~~B-90~~` *không thấy khối* có **ba** khả năng; thứ ba là GPT trả lời rồi **đứt**.
+- `~~B-91~~` `RECEIVER_LOST` nay **tự nạp lại tab**, ĐÚNG một lần mỗi vòng (Đức chốt: *"từ sau
+  bạn tự F5 được nhé"*). ⛔ Đây đúng là lỗi đã gây CAPTCHA 12/09 — xem RANH GIỚI đầu file.
+- `~~B-92~~` lượt gửi hỏng nay giữ cả **câu** lẫn mã.
 
-**Ba lần trong một phiên phép ghim của chính tôi lọt lưới ở lượt đột biến đầu**, cả ba cùng một
-họ — đo nhầm thứ: ca thử không phân biệt được hai nhánh · `some()` khớp phải con số hàng xóm ·
-đo THỨ TỰ trong khi đột biến đổi chiều. Bài học: phép ghim có chiều thì hỏi ngay chiều ngược;
-**đếm thì không có chiều để đo nhầm**.
+**NGHIỆM THU LIVE 01:11–01:23** — chuỗi 2/2 vòng, gửi 1167 rồi 1267 ký tự, hai lượt GPT trả lời
+2254 và 6637 ký tự. Đọc lại hội thoại: **3 lượt người, 0 vân tay trùng nhau.** Không có bản gửi
+trùng nào.
 
-**Đo được, ghi để khỏi tìm lại:** hậu tố id tạm **không ổn định theo cả hai chiều** — có lúc
-đứng yên qua nhiều lượt nạp lại (`-0`), có lúc nhích (`-1`). Câu cũ trong chú thích B-87 nói nó
-"KHÔNG đổi" đã **gạch bỏ tại chỗ**, không xoá.
+**`VALIDATION_FAILED` ở lượt gửi KHÔNG phải lỗi tham số** — `khongThuLai()` gói mọi lượt gửi
+không khẳng định được vào đúng mã ấy, cố ý, vì nó `retryable: false`, tức một lời **cấm gửi
+lại**. Tiện ích đúng; phía nhận của cái bắt tay ấy hỏng cho tới B-88.
 
-Suite **138/138**. Đột biến 6/6 · 6/6 · 5/5 · 8/8.
+**Ba lần phép ghim của chính tôi lọt lưới ở lượt đột biến đầu**, cùng một họ — đo nhầm thứ: ca
+thử không phân biệt được hai nhánh · `some()` khớp phải con số hàng xóm · đo THỨ TỰ trong khi
+đột biến đổi chiều. **Đếm thì không có chiều để đo nhầm.**
 
-**Còn nợ:** B-88 **chưa nghiệm thu trên trang thật** — vòng hai không tới được cửa gửi vì hội
-thoại `Prompt engineer 2` kẹt ở một câu trả lời đứt. Cần một hội thoại còn giao kèo lành.
+**Đo được:** hậu tố id tạm **không ổn định theo cả hai chiều** — có lúc đứng yên qua nhiều lượt
+nạp lại (`-0`), có lúc nhích (`-1`). Câu cũ nói nó "KHÔNG đổi" đã **gạch bỏ tại chỗ**.
+
+Suite **138/138**. Đột biến 6/6 · 6/6 · 5/5 · 8/8 · 8/8 · 6/6.
