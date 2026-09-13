@@ -1537,3 +1537,51 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓘ dài ra = còn sống: so cùng lượt, nhích mốc vô điều kiện, không dò bằng chữ trên màn hình");
 }
+
+/* Ⓙ B-95 — LƯỢT DỪNG LÀ LƯỢT CẦN SỐ ĐO NHẤT, VÀ NÓ ĐANG LÀ LƯỢT DUY NHẤT KHÔNG CÓ.
+ *
+ * `~~B-93~~` đưa số đo của KHỐI vào `NAP_LAI` và ngay lượt chạy đầu đã trả lời được "khối có
+ * thật không" mà không tốn lượt RPC nào. Nhưng nó vẫn thiếu con số `~~B-94~~` dùng để biết GPT
+ * có đang viết hay không: độ dài LƯỢT TRẢ LỜI. Và nhánh DỪNG thì không ghi số đo nào cả —
+ * `KET_THUC` chỉ có lý do.
+ *
+ * Đo 13/09: vòng 2 nạp lại lúc 02:09:09 rồi bỏ cuộc lúc 02:11:10. Nhật ký nói khối chưa có,
+ * nhưng KHÔNG nói được GPT lúc ấy đang viết văn xuôi dở dang hay đứng im hẳn — hai ca đòi hai
+ * cách xử ngược nhau. Một dòng nhật ký trả lời được nửa câu hỏi vẫn bắt người đọc đoán nửa kia.
+ *
+ * Phép ghim đòi HAI ĐẦU cùng một bộ số, vì giá trị nằm ở phép SO giữa chúng: khác nhau = GPT
+ * có tiến triển và ta thiếu kiên nhẫn; giống hệt = trang đứng im thật.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+  const dongCua = (ten) => {
+    const i = ma.indexOf(`su_kien: "${ten}"`);
+    assert.ok(i > 0, `không thấy sự kiện ${ten}`);
+    return ma.slice(i, ma.indexOf("});", i));
+  };
+
+  /* ⒜ NHÁNH DỪNG PHẢI CÓ DÒNG SỐ ĐO CỦA RIÊNG NÓ. Không có nó thì lượt quan trọng nhất của cả
+     lượt chạy là lượt duy nhất không để lại gì đo được. */
+  const dung = dongCua("DUNG_VI_QUYET_DINH");
+  assert.ok(/da_nap_lai:/.test(dung),
+    "lượt dừng phải ghi đã nạp lại hay chưa — đó là vế quyết định giữa `nạp lại` và `bỏ cuộc`");
+
+  /* ⒝ HAI ĐẦU PHẢI CÙNG MỘT BỘ SỐ. Lệch một trường là mất chính phép so mà cả bản vá này tồn
+     tại để phục vụ. */
+  const napLai = dongCua("NAP_LAI");
+  for (const truong of ["chu_tra_loi", "id_tra_loi", "yen", "da_thay_chay", "thay", "chu", "so_khoi"]) {
+    assert.ok(napLai.includes(`${truong}:`), `NAP_LAI thiếu \`${truong}\``);
+    assert.ok(dung.includes(`${truong}:`), `lượt DỪNG thiếu \`${truong}\` — lệch bộ số là mất phép so hai đầu`);
+  }
+
+  /* ⒞ `chu_tra_loi` phải lấy từ ĐÚNG biến mà `~~B-94~~` dùng để đo tăng trưởng. Lấy từ chỗ khác
+     là hai nguồn sự thật cho cùng một câu hỏi, và chúng sẽ lệch nhau vào đúng ngày cần chúng. */
+  for (const [ten, dong] of [["NAP_LAI", napLai], ["DUNG_VI_QUYET_DINH", dung]]) {
+    assert.ok(/chu_tra_loi: chuTraLoi\b/.test(dong),
+      `${ten} phải ghi \`chu_tra_loi: chuTraLoi\` — cùng biến với phép đo tăng trưởng, không phải một phép đo thứ hai`);
+  }
+
+  console.log("  ok  Ⓙ lượt dừng có số đo riêng, cùng bộ với lượt nạp lại, cùng nguồn với phép đo tăng trưởng");
+}

@@ -878,7 +878,18 @@ async function chinh() {
          * (`chars: 164`, nạp lại là PHÍ rồi dừng sai), tôi phải đi đọc TRANG SỐNG — trong khi
          * cả hai con số đã nằm trong tay bộ chạy ở đúng khoảnh khắc nó ghi dòng này.
          * Cùng họ với `~~B-90~~` và `~~B-92~~`: nhật ký giữ kết luận, vứt bằng chứng. */
+        /* B-95 — GHI CẢ ĐỘ DÀI LƯỢT TRẢ LỜI, KHÔNG CHỈ ĐỘ DÀI KHỐI.
+         *
+         * `~~B-93~~` thêm số đo của KHỐI vào dòng này, và ngay lượt chạy đầu nó đã trả lời được
+         * "khối có thật không" mà không tốn một lượt RPC nào. Nhưng nó vẫn thiếu đúng con số mà
+         * `~~B-94~~` dùng để biết GPT có đang viết hay không: độ dài LƯỢT TRẢ LỜI.
+         *
+         * Đo 13/09, vòng 2 dừng lúc 02:11:10 sau khi nạp lại lúc 02:09:09. Nhật ký nói khối
+         * chưa có (`thay: false`), nhưng KHÔNG nói được GPT lúc ấy đang viết văn xuôi dở dang
+         * hay đứng im hẳn — hai ca đòi hai cách xử ngược nhau, và tôi vẫn phải đoán.
+         * Một dòng nhật ký trả lời được nửa câu hỏi thì vẫn bắt người đọc đi đoán nửa còn lại. */
         ghi({ su_kien: "NAP_LAI", vong, vi: qd.vi,
+          chu_tra_loi: chuTraLoi, id_tra_loi: luotTL?.id ?? null, yen: soLanYen, da_thay_chay: daThayDangChay,
           thay: Boolean(r.last_copy_block?.found), chu: Number(r.last_copy_block?.chars ?? 0),
           so_khoi: Number(r.last_copy_block?.blocks_in_turn ?? 0), turn_id: r.last_copy_block?.turn_id ?? null });
         goi(["chat-reload", "--request-id", khoaAnToan(nhan, `-v${vong}-reload`)]);
@@ -896,6 +907,15 @@ async function chinh() {
       }
       if (qd.viec === "DUNG") {
         lyDo = qd.vi;
+        /* B-95 — LƯỢT DỪNG LÀ LƯỢT CẦN SỐ ĐO NHẤT, và nó đang là lượt DUY NHẤT không có.
+           `KET_THUC` chỉ ghi lý do; mọi con số sinh ra lý do ấy chết theo cửa sổ chạy. Ghi cùng
+           bộ số với `NAP_LAI` để đọc nguội so được hai đầu: lúc nạp lại thế nào, lúc bỏ cuộc
+           thế nào. Khác nhau nghĩa là GPT có tiến triển và ta thiếu kiên nhẫn; giống hệt nhau
+           nghĩa là trang đứng im thật. Đó đúng là câu tôi không trả lời được ở lượt 02:11. */
+        ghi({ su_kien: "DUNG_VI_QUYET_DINH", vong, vi: qd.vi,
+          chu_tra_loi: chuTraLoi, id_tra_loi: luotTL?.id ?? null, yen: soLanYen, da_thay_chay: daThayDangChay,
+          thay: Boolean(r.last_copy_block?.found), chu: Number(r.last_copy_block?.chars ?? 0),
+          so_khoi: Number(r.last_copy_block?.blocks_in_turn ?? 0), da_nap_lai: daNapLai });
         /* B-77 — HỎI PING TRƯỚC KHI DÁM NÓI "XONG". Đo 12/09, chuỗi "mo rong scouter 2":
            bộ chạy đọc được trang, không thấy khối mới, nạp lại một lần, vẫn không thấy, rồi
            chấm `HET_CHUOI` và **thoát 0 — tức THÀNH CÔNG**. Ping cùng lúc trả lời
