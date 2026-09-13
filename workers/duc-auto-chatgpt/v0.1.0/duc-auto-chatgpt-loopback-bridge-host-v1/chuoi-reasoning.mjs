@@ -668,6 +668,9 @@ async function chinh() {
      *
      * Một con số nữa là đủ: liên tiếp KHÁC tổng thì tức là có lượt đọc được xen vào. */
     let hongTong = 0;
+    /* B-91 — MỘT lượt tự nạp lại tab cho `RECEIVER_LOST`, MỖI VÒNG MỘT LẦN, không hơn.
+       Cờ này là cái chặn. Xem khối lý lẽ ở chỗ dùng, và đọc kèm RANH GIỚI ở đầu file. */
+    let daTuNapVi = null;
 
     while (true) {
       /* HAI CỬA DỪNG, cùng một đường ra. Phím bấm (B-79) là cửa thường dùng; cờ `DUNG` giữ lại
@@ -699,6 +702,39 @@ async function chinh() {
            tim ở dưới không bao giờ chạy tới. Mọi nhánh `continue` phải nói ra mình là ai. */
         docHong += 1;
         hongTong += 1;
+        /* B-91 — `RECEIVER_LOST` TỰ CHỮA ĐƯỢC, VÀ BỘ CHẠY ĐÃ CẦM SẴN THUỐC.
+         *
+         * Đo 13/09: sau khi Đức nạp lại extension, mọi lượt `chat.read` trả `INTERNAL_ERROR`
+         * kèm `debug: "RECEIVER_LOST: ChatGPT receiver unavailable. Reload the ChatGPT tab
+         * once."` — content script trong tab đang mở bị mồ côi cho tới khi CHÍNH TAB ĐÓ nạp
+         * lại. Bản trước chỉ giãn nhịp rồi lặp cho hết trần phút: câu lỗi nói thẳng việc cần
+         * làm, `chat.reload` nằm ngay trong tay bộ chạy, mà nó ngồi đợi một thứ không bao giờ
+         * tự hết. Đức chốt 13/09: *"từ sau bạn tự F5 được nhé."*
+         *
+         * ⛔ VÀ ĐÂY ĐÚNG LÀ LỖI ĐÃ GÂY RA CAPTCHA NGÀY 12/09 — đọc lại RANH GIỚI ở đầu file:
+         * bản cũ gặp `RECEIVER_LOST` rồi thử lại ĐỀU 4 giây, ~900 lượt trong 60 phút, và
+         * ChatGPT trả `SECURITY_HARD_STOP`. Nên chỗ này KHÔNG được thành một vòng thử lại mới:
+         *   · ĐÚNG MỘT lượt nạp lại cho mỗi vòng, cờ `daTuNapVi` chặn lượt thứ hai;
+         *   · lượt nạp đi qua `goi()` nên vẫn chịu sàn 10 giây như mọi lời gọi khác;
+         *   · nạp xong vẫn rơi vào nhịp giãn dần bên dưới, không nhảy cóc.
+         * Nếu nạp một lần mà chưa khỏi thì đó KHÔNG phải việc thử lại thêm giải quyết được —
+         * để nó chạm trần phút và dừng, rồi người nhìn.
+         *
+         * KHÔNG đặt `daNapLai = true`: cờ ấy là cửa cho kết luận `HET_CHUOI`/`LUOT_CHUA_CHOT`,
+         * và một lượt nạp để CỨU KẾT NỐI không phải một lượt nạp để XÁC MINH nội dung. Trộn
+         * hai thứ là cho bộ chạy quyền kết luận sớm hơn một bước. */
+        if (/RECEIVER_LOST/.test(JSON.stringify(d.error ?? "")) && !daTuNapVi) {
+          daTuNapVi = "RECEIVER_LOST";
+          console.log(`  vòng ${vong}: RECEIVER_LOST — tiện ích không với được tab. Tự nạp lại tab MỘT lần.`);
+          ghi({ su_kien: "TU_NAP_LAI", vong, vi: "RECEIVER_LOST", so_luot_hong: hongTong });
+          goi(["chat-reload", "--request-id", khoaAnToan(nhan, `-v${vong}-reload-ket-noi`)]);
+          /* Trang vừa dựng lại từ đầu nên cửa sổ quan sát phải chạy lại trọn vẹn — cùng lý do
+             B-59/B-60 đã ghi ở nhánh `NAP_LAI` bên dưới. */
+          daThayDangChay = false;
+          soLanYen = 0;
+          await ngu(nhipDocHong(docHong).treMs);
+          continue;
+        }
         /* IN CHẨN ĐOÁN NẾU CÓ. Từ 11/09 host kèm `diagnosis` + `remedy` vào lượt hết giờ của
            CHÍNH nó. Bản trước in cứng "panel đang bận" cho mọi lỗi đọc — một câu đoán, và nó
            che mất câu thật ngay bên dưới. Không có chẩn đoán thì nói "chưa rõ vì sao", đừng

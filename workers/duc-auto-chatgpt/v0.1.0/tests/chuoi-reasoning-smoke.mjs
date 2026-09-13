@@ -1314,3 +1314,62 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓔ không thấy khối: ba khả năng chứ không hai, số đo ra mặt, ca đứt chỉ đúng việc cần làm");
 }
+
+/* Ⓕ B-91 — `RECEIVER_LOST` TỰ CHỮA ĐƯỢC, NHƯNG ĐÚNG MỘT LẦN MỖI VÒNG.
+ *
+ * Đo 13/09: sau khi Đức nạp lại extension, mọi lượt `chat.read` trả `INTERNAL_ERROR` kèm
+ * `debug: "RECEIVER_LOST: … Reload the ChatGPT tab once."` — content script trong tab đang mở
+ * bị mồ côi tới khi CHÍNH TAB ĐÓ nạp lại. Bản trước chỉ giãn nhịp rồi lặp cho hết trần phút,
+ * trong khi `chat.reload` nằm ngay trong tay bộ chạy.
+ *
+ * ⛔ VÀ ĐÂY ĐÚNG LÀ LỖI ĐÃ GÂY RA CAPTCHA 12/09 (profile `kaito`, ~900 lượt/giờ đều 4 giây).
+ * Nên phép ghim này canh HAI chiều cùng lúc, và chiều thứ hai mới là chiều quan trọng:
+ *   ⑴ có tự nạp lại — nếu không thì lại bắt Đức F5;
+ *   ⑵ CHỈ MỘT LẦN mỗi vòng — nếu không thì nó thành đúng vòng lặp đã sinh ra CAPTCHA.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒜ CỜ CHẶN PHẢI SỐNG TRONG PHẠM VI MỘT VÒNG: khai bên trong vòng lặp vòng (nên nó về `null`
+     mỗi vòng mới) nhưng NGOÀI vòng lặp đọc (nên nó không về `null` mỗi lượt đọc). Khai sai chỗ
+     thứ hai là mất sạch tác dụng chặn — và đó đúng là hình dạng của sự cố 12/09. */
+  const iVong = ma.indexOf("for (let vong = 1");
+  const iKhai = ma.indexOf("let daTuNapVi", iVong);
+  const iWhile = ma.indexOf("while (true) {", iVong);
+  assert.ok(iVong > 0 && iKhai > iVong && iWhile > iKhai,
+    "`daTuNapVi` phải khai TRONG vòng lặp vòng nhưng NGOÀI vòng lặp đọc — sai chỗ là cờ chặn vô dụng");
+
+  /* ⒝ VÀ CHỈ ĐƯỢC CÓ ĐÚNG MỘT CHỖ GÁN CHO NÓ. Gán lại về rỗng ở đâu đó là mở lại cửa. */
+  const ganLai = (ma.match(/daTuNapVi = /g) || []).length;
+  assert.equal(ganLai, 2,
+    `\`daTuNapVi\` chỉ được có 1 chỗ khai + 1 chỗ đặt cờ (đang ${ganLai}) — mọi chỗ gán thêm là một cửa mở lại vòng lặp đã gây CAPTCHA`);
+
+  /* ⒞ NHÁNH PHẢI ĐÒI CẢ HAI VẾ. Thiếu `!daTuNapVi` thì mỗi lượt đọc hỏng là một lượt nạp lại:
+     đúng nhịp ~900 lượt/giờ của sự cố 12/09. */
+  const iNhanh = ma.indexOf("RECEIVER_LOST/.test");
+  assert.ok(iNhanh > 0, "phải có nhánh nhận ra RECEIVER_LOST ở đường đọc hỏng");
+  const dieuKien = ma.slice(iNhanh, ma.indexOf(")", ma.indexOf("&&", iNhanh)) + 1);
+  assert.ok(/!daTuNapVi/.test(dieuKien),
+    "nhánh tự nạp lại PHẢI đòi cờ chặn — thiếu nó là mỗi lượt hỏng một lượt nạp, đúng nhịp đã gây CAPTCHA");
+
+  const than = ma.slice(iNhanh, ma.indexOf("continue;", iNhanh));
+  /* ⒟ LƯỢT NẠP ĐI QUA `goi()`, không gọi thẳng — `goi()` là chỗ SÀN 10 giây được cưỡng chế. */
+  assert.ok(/goi\(\["chat-reload"/.test(than),
+    "phải nạp qua `goi()` — gọi thẳng là đi vòng qua sàn nhịp, tức gỡ chính ranh giới này");
+  /* ⒠ NẠP XONG VẪN NGHỈ THEO NHỊP GIÃN DẦN, không nhảy cóc sang lượt đọc kế. */
+  assert.ok(/ngu\(nhipDocHong\(docHong\)\.treMs\)/.test(than),
+    "nạp xong vẫn phải nghỉ theo nhịp giãn dần — bỏ nghỉ là quay lại nhịp 4 giây của 12/09");
+  /* ⒡ CỬA SỔ QUAN SÁT CHẠY LẠI: trang vừa dựng từ đầu, cùng lý do B-59/B-60. */
+  assert.ok(/daThayDangChay = false/.test(than) && /soLanYen = 0/.test(than),
+    "nạp lại thì cửa sổ quan sát phải chạy lại trọn vẹn");
+  /* ⒢ NHƯNG KHÔNG ĐƯỢC ĐẶT `daNapLai`: nạp để CỨU KẾT NỐI khác nạp để XÁC MINH nội dung.
+     Trộn hai thứ là cho bộ chạy quyền kết luận `HET_CHUOI` sớm hơn một bước. */
+  assert.ok(!/daNapLai = true/.test(than),
+    "lượt nạp cứu kết nối KHÔNG được đặt `daNapLai` — đó là cửa cho kết luận HET_CHUOI, không phải cửa này");
+  /* ⒣ VÀO NHẬT KÝ. Đóng cửa sổ là mất màn hình. */
+  assert.ok(/su_kien: "TU_NAP_LAI"/.test(than), "lượt tự nạp lại phải vào nhật ký");
+
+  console.log("  ok  Ⓕ RECEIVER_LOST: tự nạp lại tab, ĐÚNG một lần mỗi vòng, vẫn qua sàn và vẫn giãn nhịp");
+}
