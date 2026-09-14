@@ -67,7 +67,7 @@ const chu = (n, k = "x") => Buffer.from(k.repeat(n), "utf8");
     ["co che, khoa co dinh", "xin chao", { masked: true, maskKey }],
     ["ping", "p", { opcode: 0x9 }],
     ["pong", "p", { opcode: 0xa }],
-    ["close", "è", { opcode: 0x8 }],
+    ["close", Buffer.from([0x03, 0xe8]), { opcode: 0x8 }],
     ["control qua 125 byte", chu(126).toString(), { opcode: 0x9 }],
     ["opcode nhi phan chua mo", "x", { opcode: 0x2 }],
     ["opcode bay", "x", { opcode: 0x7 }],

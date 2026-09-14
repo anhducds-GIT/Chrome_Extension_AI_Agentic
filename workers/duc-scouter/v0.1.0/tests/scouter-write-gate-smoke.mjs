@@ -193,7 +193,12 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     ["scout.clear", { target_id: "T1", selector: "#in" }],
     /* Doi trang la DIEU KHIEN trang, nen no phai tra dung cai gia ma scout.click tra.
      * Them mot hanh dong GHI ma quen dong nay la mo mot cua di vong qua phanh. */
-    ["scout.navigate", { target_id: "T1", url: "https://vi-du.test/x" }]
+    ["scout.navigate", { target_id: "T1", url: "https://vi-du.test/x" }],
+    /* Ba lenh "di lai" mo 14/09. Chung DOI thu Duc dang nhin tren man hinh cua chinh anh,
+     * nen chung phai tra dung cai gia ma scout.click tra — khong co ngoai le nao. */
+    ["scout.hover", { target_id: "T1", selector: "#menu" }],
+    ["scout.scroll", { target_id: "T1", selector: "body", direction: "down" }],
+    ["scout.history", { target_id: "T1", direction: "back" }]
   ];
   for (const [method, params] of cases) {
     const { handlers, engine } = makeHandlers(undefined);

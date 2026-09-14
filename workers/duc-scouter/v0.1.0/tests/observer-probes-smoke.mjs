@@ -291,7 +291,7 @@ const FAKE_TARGETS = [
 /* ---- ⑥ Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
   assert.deepEqual([...PROBE_NAMES],
-    ["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch", "dom.text"]);
+    ["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch", "dom.text", "page.view"]);
   for (const bogus of ["dom.eval", "runtime.evaluate", "page.click", ""]) {
     const res = await runProbe(bogus, { sendRaw: async () => ({}) }, {});
     assert.equal(res.ok, false, `tên lạ phải bị từ chối: ${bogus}`);

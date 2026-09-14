@@ -27,7 +27,7 @@
  * `bridge/scouter-bridge-host.mjs`. Nhân bản seed sang extension khác thì đổi cả hai.
  */
 
-import { NAMED_KEY_NAMES } from "./scouter-actions-core.mjs";
+import { MOUSE_BUTTON_NAMES, NAMED_KEY_NAMES, SCROLL_DIRECTION_NAMES } from "./scouter-actions-core.mjs";
 
 /* ---- Hằng số trên dây (khớp bridge-host.mjs) ----------------------------- */
 
@@ -134,6 +134,31 @@ function requiredTypedText(value) {
 function requiredKeyName(value) {
   if (typeof value !== "string" || !NAMED_KEY_NAMES.includes(value)) {
     invalidParams("params.key", `expected one of: ${NAMED_KEY_NAMES.join(", ")}`);
+  }
+  return value;
+}
+
+/* Ba bảng dưới đây cũng ĐỌC THẲNG bảng của lõi, cùng lý do với `requiredKeyName`: khai lại ở
+ * đây là dựng bản thứ hai, và hai bản thì lệch. `HISTORY_DIRECTIONS` thì gõ tại chỗ vì nó chỉ
+ * có hai giá trị và lõi không xuất nó ra — nếu có ngày nó dài hơn hai, hãy xuất và đọc. */
+function optionalMouseButton(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string" || !MOUSE_BUTTON_NAMES.includes(value)) {
+    invalidParams("params.button", `expected one of: ${MOUSE_BUTTON_NAMES.join(", ")}`);
+  }
+  return value;
+}
+
+function requiredScrollDirection(value) {
+  if (typeof value !== "string" || !SCROLL_DIRECTION_NAMES.includes(value)) {
+    invalidParams("params.direction", `expected one of: ${SCROLL_DIRECTION_NAMES.join(", ")}`);
+  }
+  return value;
+}
+
+function requiredHistoryDirection(value) {
+  if (value !== "back" && value !== "forward") {
+    invalidParams("params.direction", "expected one of: back, forward");
   }
   return value;
 }
@@ -274,6 +299,19 @@ const METHOD_ENTRIES = [
       };
     }
   }),
+  /* ---- `scout.view` MỞ 14/09 — [ADR-0007], phép ĐỌC của nhóm "nhìn & đi lại" ----
+   * Đứng TRƯỚC `scout.scroll` và `scout.zoom` trong lộ trình, và thứ tự đó là bắt buộc chứ
+   * không phải tiện: ba method ghi hứa *"đã bắn sự kiện"*, không hứa *"trang đã nhận"* — nên
+   * một lệnh đổi tầm nhìn mà không có đường đọc lại tầm nhìn là một lệnh không kiểm được. */
+  registryEntry({
+    name: "scout.view", read_only: true, deadline_ms: 10000,
+    description: "Where the page is being looked at: scroll position, viewport size, document size, how much is left to scroll, and the browser zoom. Read this before and after any command that changes the view.",
+    params_schema: { target_id: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id"]);
+      return { target_id: requiredTargetId(params.target_id) };
+    }
+  }),
   registryEntry({
     name: "scout.query", read_only: true, deadline_ms: 30000,
     description: "Count and describe the elements one CSS selector matches. This is the evidence golden rule 1 asks for.",
@@ -388,10 +426,10 @@ const METHOD_ENTRIES = [
   }),
   registryEntry({
     name: "scout.shot", read_only: true, deadline_ms: 30000,
-    description: "Screenshot the visible page as base64. Defaults to jpeg quality 60 because a full png usually exceeds the envelope. Refuses rather than truncating.",
-    params_schema: { target_id: "string", format: "jpeg|png?", quality: "integer:1..100?" },
+    description: "Screenshot as base64. Defaults to jpeg quality 60 because a full png usually exceeds the envelope. full_page captures the whole document, not just what is on screen; scale (0.1..1) shrinks it, which is how you fit a whole artboard into a small image. Refuses rather than truncating.",
+    params_schema: { target_id: "string", format: "jpeg|png?", quality: "integer:1..100?", full_page: "boolean?", scale: "number:0.1..1?" },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "format", "quality"]);
+      const params = objectParams(raw, ["target_id", "format", "quality", "full_page", "scale"]);
       if (params.format !== undefined && params.format !== null
         && params.format !== "jpeg" && params.format !== "png") {
         invalidParams("params.format", "expected jpeg or png");
@@ -401,10 +439,19 @@ const METHOD_ENTRIES = [
       if (params.format === "png" && params.quality !== undefined && params.quality !== null) {
         invalidParams("params.quality", "png ignores quality; drop it or use jpeg");
       }
+      if (params.full_page !== undefined && params.full_page !== null && typeof params.full_page !== "boolean") {
+        invalidParams("params.full_page", "expected a boolean");
+      }
+      if (params.scale !== undefined && params.scale !== null
+        && (typeof params.scale !== "number" || !Number.isFinite(params.scale) || params.scale < 0.1 || params.scale > 1)) {
+        invalidParams("params.scale", "expected a number in 0.1..1");
+      }
       return {
         target_id: requiredTargetId(params.target_id),
         format: params.format === "png" ? "png" : "jpeg",
-        quality: optionalInt(params.quality, "params.quality", 1, 100)
+        quality: optionalInt(params.quality, "params.quality", 1, 100),
+        full_page: params.full_page === undefined ? undefined : params.full_page,
+        scale: params.scale === undefined ? undefined : params.scale
       };
     }
   }),
@@ -428,11 +475,55 @@ const METHOD_ENTRIES = [
    * mục này không tái phát bằng một lượt gõ tay nữa. */
   registryEntry({
     name: "scout.click", read_only: false, deadline_ms: 30000,
-    description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller.",
+    description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller. Optional button (left|right|middle) and click_count (1..3) for right-click and double-click; omitting both behaves exactly as before.",
+    params_schema: { target_id: "string", selector: "string", button: "left|right|middle?", click_count: "integer:1..3?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "button", "click_count"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        button: optionalMouseButton(params.button),
+        click_count: optionalInt(params.click_count, "params.click_count", 1, 3)
+      };
+    }
+  }),
+  /* ---- HAI LỆNH "ĐI LẠI" MỞ 14/09 — [ADR-0007] --------------------------
+   * Cả hai đi kèm luật ĐỌC-TRƯỚC: `scout.view` đọc lại tầm nhìn là thứ duy nhất kiểm được
+   * chúng, vì cả hai chỉ hứa *"đã bắn sự kiện"*. */
+  registryEntry({
+    name: "scout.hover", read_only: false, deadline_ms: 30000,
+    description: "Move the real mouse onto one element without clicking, for menus that only exist while hovered. Same locks as scout.click: exactly one match, coordinates computed from the element box, and a hit test before the event so hovering something covered refuses instead of lying.",
     params_schema: { target_id: "string", selector: "string" },
     params_validator: (raw) => {
       const params = objectParams(raw, ["target_id", "selector"]);
       return { target_id: requiredTargetId(params.target_id), selector: requiredSelector(params.selector) };
+    }
+  }),
+  registryEntry({
+    name: "scout.scroll", read_only: false, deadline_ms: 30000,
+    description: "Scroll with the real mouse wheel over one element, for lists that only load more as you scroll. The selector says WHAT to scroll (use body for the page) because the wheel scrolls whatever is under the pointer. Promises the wheel event was sent, NOT that anything moved — check with scout.view.",
+    params_schema: { target_id: "string", selector: "string", direction: "up|down|left|right", amount: "integer:1..5000?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "direction", "amount"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        direction: requiredScrollDirection(params.direction),
+        amount: optionalInt(params.amount, "params.amount", 1, 5000)
+      };
+    }
+  }),
+  registryEntry({
+    name: "scout.history", read_only: false, deadline_ms: 34000,
+    description: "Go back or forward ONE step in this tab's own history, keeping the state the page kept there. The caller names a direction; the history entry id is computed inside and never accepted from outside. Refuses when there is nothing on that side instead of silently doing nothing.",
+    params_schema: { target_id: "string", direction: "back|forward", timeout_ms: "integer:1000..30000?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "direction", "timeout_ms"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        direction: requiredHistoryDirection(params.direction),
+        timeout_ms: optionalInt(params.timeout_ms, "params.timeout_ms", 1000, 30000)
+      };
     }
   }),
   registryEntry({

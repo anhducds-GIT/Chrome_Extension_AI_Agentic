@@ -24,7 +24,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Hai mươi** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Hai mươi bốn** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -33,6 +33,7 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.targets` | không | liệt kê và phân loại các target debug của Chrome |
 | `scout.page` | không | metadata trang + kiểm kê phần tử tương tác, có phân trang |
 | `scout.query` | không | một selector khớp mấy phần tử, và chúng là gì |
+| `scout.view` | không | **Scouter đang nhìn phần nào của trang**: độ cuộn, cỡ khung nhìn, cỡ cả trang, **còn bao nhiêu để cuộn nữa**, và mức thu phóng. Đọc nó TRƯỚC và SAU mọi lệnh đổi tầm nhìn ([ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md)) |
 | `scout.text` | không | **chữ của ĐÚNG MỘT phần tử** khớp selector. Khớp 0 hay 2+ thì từ chối; trần 5.000 ký tự; không bao giờ trả `outerHTML` ([ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)) |
 | `scout.tree` | không | cây DOM tới độ sâu N, thuộc tính đã che |
 | `scout.a11y` | không | cây trợ năng — cái mà trình đọc màn hình thấy, không phải cái mắt thấy |
@@ -42,6 +43,9 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`). Kiểm điểm sắp bấm thuộc về ai TRƯỚC khi bắn; có thứ chắn thì từ chối `CLICK_OBSCURED` |
 | `scout.type` | **có** | gõ một chuỗi bằng **bàn phím thật**, từng phím một. Không xoá nội dung cũ |
 | `scout.key` | **có** | gõ một phím có tên: Enter · Tab · Escape · Backspace · Delete · bốn mũi tên · Home · End |
+| `scout.hover` | **có** | đưa chuột tới một phần tử mà **không bấm** — cho những menu chỉ tồn tại khi có chuột rê lên. Cùng ba cái khoá của `scout.click`, kể cả hỏi-điểm trước khi bắn |
+| `scout.scroll` | **có** | cuộn bằng **bánh xe chuột thật** — cho những danh sách chỉ tải thêm khi cuộn. `selector` nói cuộn CÁI GÌ (`body` là cuộn cả trang), vì bánh xe cuộn thứ nằm dưới con trỏ. Hứa *đã bắn sự kiện*, không hứa *đã cuộn* — kiểm bằng `scout.view` |
+| `scout.history` | **có** | lùi / tiến **một bước** trong lịch sử của chính tab đó, giữ nguyên trạng thái trang đã cất ở đó. Người gọi nói HƯỚNG; chỉ số mục lịch sử tính ở trong. Hết đường thì từ chối, không im lặng |
 | `scout.clear` | **có** | **xoá sạch một ô nhập** bằng bàn phím thật: `Ctrl+A` rồi `Delete`. Phím và phím bổ trợ **gõ cứng trong lõi ghi** — không tham số nào đổi được, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt (`Ctrl+W` đóng tab). Trên macOS **không xoá được** (ở đó là `Cmd+A`) |
 | `scout.fetch` | **có** | gọi một URL http(s) bằng **chồng mạng của chính trình duyệt**. Trả văn bản; `as: "base64"` cho thân nhị phân như PDF. Không kèm cookie trừ khi khai `with_credentials` |
 | `scout.grab` | **có** | tải TỆP mà một phần tử trỏ tới (`src` hoặc `href`), dùng URL đọc được **bên trong** trình duyệt. **Không trả URL** — ảnh sau URL ký sẵn thì chữ ký không lọt ra nhật ký hay xuống đĩa. Nhận selector, không nhận url |

@@ -114,9 +114,13 @@ function makeFakePage(options = {}) {
 
 /* ---- ① Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.clear", "input.navigate", "input.grabUrl"]);
+  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.clear", "input.navigate", "input.grabUrl",
+    "input.scroll", "input.hover", "input.history"]);
 
-  for (const bogus of ["input.drag", "input.scroll", "dom.query", "Input.dispatchMouseEvent", ""]) {
+  /* `input.zoom` nằm trong danh sách này CÓ Ý: nó là cái tên hiển nhiên nhất cho một lệnh thu
+   * phóng, và `T27` đã cố ý KHÔNG tạo nó (xem khối giải trình ở `page.shot`). Ai thêm nó mà
+   * không đọc khối ấy sẽ thấy dòng này đỏ. `input.scroll` từng đứng ở đây tới 14/09. */
+  for (const bogus of ["input.drag", "input.zoom", "dom.query", "Input.dispatchMouseEvent", ""]) {
     const page = makeFakePage();
     const result = await runAction(bogus, { sendRaw: page.sendRaw }, { selector: BTN });
     assert.equal(result.ok, false, `tên lạ phải bị từ chối: ${bogus}`);

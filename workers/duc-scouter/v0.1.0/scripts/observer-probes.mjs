@@ -77,7 +77,20 @@ export const PROBE_NAMES = Object.freeze([
    * Không mở cửa CDP nào: nó dùng lại `DOM.getDocument` + `DOM.querySelectorAll` +
    * `DOM.describeNode` mà `dom.query` và `dom.tree` đã dùng. Chữ lấy từ `nodeValue` của các
    * nút `#text` con cháu — không có `Runtime.*`, nên không có đường nào chạy mã để lấy nó. */
-  "dom.text"
+  "dom.text",
+  /* ---- `page.view` MỞ 14/09 — Đức uỷ quyền nhóm "nhìn & đi lại", [ADR-0007] ----
+   * Đây là phép ĐỌC của cả nhóm, và nó phải có TRƯỚC mọi lệnh đổi tầm nhìn (cuộn, thu phóng).
+   * Lý do không phải thẩm mỹ: ba method ghi của Scouter hứa *"đã bắn sự kiện"*, **không** hứa
+   * *"trang đã nhận"* — luật đã ghi ở `README` sau `S-22`. Một lệnh cuộn không có đường đọc lại
+   * tầm nhìn là một lệnh ghi không có dấu kiểm, và cái `usable` của `dom.wait` đứng ngay trên
+   * con số nó trả về.
+   *
+   * Nó cũng trả một món nợ: lõi GHI hôm nay đọc độ cuộn bằng một **mẹo** — hộp `margin` của
+   * `:root` (`G-24`) — vì không có đường đọc tử tế. Mẹo đó ở lại trong lõi ghi (luật gói số 6:
+   * hai lõi không mượn method của nhau), nhưng từ nay người gọi có một con số THẬT để đối chiếu.
+   *
+   * Mở đúng MỘT cửa CDP: `Page.getLayoutMetrics`, giải trình ở `READ_ONLY_CDP_METHODS`. */
+  "page.view"
 ]);
 
 /* Method CDP được phép. CỐ Ý không có `Runtime.*`, không có `Input.*`, không có
@@ -108,6 +121,15 @@ export const READ_ONLY_CDP_METHODS = Object.freeze([
   "Accessibility.enable",
   "Accessibility.getFullAXTree",
   "Page.captureScreenshot",
+  /* `Page.getLayoutMetrics` — MỞ 14/09 cho `page.view`. Getter thuần theo đúng nghĩa chặt nhất:
+   * hỏi một câu, nhận bốn cái hộp, hết. Không sửa một byte nào của trang, không chạy một dòng
+   * mã nào của người gọi, không đăng ký dòng sự kiện nào (khác `Network.enable` ở dưới).
+   *
+   * Nó ở cùng miền `Page` với `Page.navigate` và `Page.setDeviceMetricsOverride` — và **không
+   * cái nào trong hai cái đó có mặt ở đây**. Đó là chỗ phải nhìn kỹ: cùng một miền không có
+   * nghĩa cùng một quyền. `getLayoutMetrics` ĐỌC tầm nhìn; hai cái kia ĐỔI nó, và chúng thuộc
+   * về lõi ghi nếu có ngày nào được mở. */
+  "Page.getLayoutMetrics",
   /* ---- `Network.*` MỞ NGÀY 12/09, và nó KHÔNG phải getter thuần ------------
    * Nói thẳng chỗ khác biệt trước khi nói vì sao vẫn nhận: mọi dòng phía trên là **getter** —
    * hỏi một câu, nhận một câu trả lời, hết. `Network.enable` là một **lượt đăng ký**: bật
@@ -219,6 +241,11 @@ const MAX_URL_FILTER_LENGTH = 200;
 const MAX_AX_NODES = 1500;
 const DEFAULT_AX_NODES = 400;
 const MAX_SHOT_BYTES = 700 * 1024;
+/* Trần ĐIỂM ẢNH của một lượt chụp, tính trên ảnh SAU khi thu nhỏ. Nó không trùng việc với trần
+ * byte ở trên: trần byte bắt cái đã chụp xong, còn cái giết service worker là chính lượt dựng
+ * ảnh — `dom.snapshot` đã bị bỏ 08/09 vì đúng lý do ấy. Một trang dài 40.000px ở tỉ lệ 1 là
+ * ~60 triệu điểm ảnh; từ chối TRƯỚC kèm câu "hạ `scale` xuống" rẻ hơn một lượt chết. */
+const MAX_SHOT_PIXELS = 25000000;
 const DEFAULT_SHOT_QUALITY = 60;
 const MAX_ATTR_LENGTH = 200;
 /* Trần chữ cho `dom.text` ([ADR-0006]). Đủ cho một câu trả lời, một thông báo lỗi, một nhãn —
@@ -668,17 +695,110 @@ const PROBES = {
     const send = requireSend(ctx);
     const format = params.format === "png" ? "png" : "jpeg";
     const quality = readIndex(params.quality, DEFAULT_SHOT_QUALITY, "quality", 1, 100);
+
+    /* ---- `full_page` + `scale` MỞ 14/09 — đây là `O12` "nhìn toàn cảnh", [ADR-0007] ----
+     * Đức nêu nhu cầu bằng chữ "zoom", cho layout dạng artboard (Udin, Vizcom). Đường hiển
+     * nhiên là `Emulation.setDeviceMetricsOverride`, và đường đó KHÔNG đi được ở kiến trúc này:
+     * `observer-engine.js` GẮN RỒI THÁO debugger quanh **từng lượt gọi một**, mà một override
+     * của `Emulation` sống theo phiên debugger. Lượt gọi kết thúc là override đi theo — nên một
+     * `scout.zoom` đứng riêng sẽ trả về "đã thu phóng" rồi không còn gì thu phóng nữa.
+     *
+     * Nên chỗ thu phóng phải nằm TRONG chính lượt chụp, và CDP đã có sẵn: `clip.scale` +
+     * `captureBeyondViewport`. Cái này trả đúng nhu cầu ⑴ của Đức — cả artboard trong một ảnh
+     * mà ít byte — và trả luôn dòng "Chụp cả trang dài: CHƯA CÓ" của `O5`.
+     *
+     * CÁI NÓ KHÔNG TRẢ, nói thẳng: nhu cầu ⑵ — *ứng dụng canvas có VẼ THÊM phần tử khi thu nhỏ
+     * không* (`G-65`). Câu đó cần một lượt thu phóng THẬT làm trang dựng lại, tức là một
+     * override sống qua nhiều lượt gọi, tức là phải đổi vòng đời gắn debugger. Đó là một quyết
+     * định kiến trúc, không phải một tham số — để `G-69` trả lời trước. */
+    const toanTrang = params.full_page === true;
+    const ti = readTiLe(params.scale);
+
+    let clip;
+    if (toanTrang || ti !== 1) {
+      const m = await send("Page.getLayoutMetrics", {});
+      const nguon = toanTrang
+        ? (m?.cssContentSize || m?.contentSize)
+        : (m?.cssLayoutViewport || m?.layoutViewport);
+      if (!nguon) throw new ProbeError("NO_LAYOUT_METRICS", "Chrome không trả về số đo bố cục, nên không cắt được khung chụp.");
+      const rong = Number(toanTrang ? nguon.width : nguon.clientWidth);
+      const cao = Number(toanTrang ? nguon.height : nguon.clientHeight);
+      if (!Number.isFinite(rong) || !Number.isFinite(cao) || rong <= 0 || cao <= 0) {
+        throw new ProbeError("NO_LAYOUT_METRICS", "Số đo bố cục không cho ra một khung chụp hữu hạn.");
+      }
+      const diem = Math.round(rong * ti) * Math.round(cao * ti);
+      if (diem > MAX_SHOT_PIXELS) {
+        throw new ProbeError("SHOT_TOO_LARGE",
+          "Khung chụp " + Math.round(rong) + "×" + Math.round(cao) + " ở tỉ lệ " + ti + " ra " + diem +
+          " điểm ảnh, quá trần " + MAX_SHOT_PIXELS + ". Hạ `scale` xuống.");
+      }
+      clip = {
+        x: toanTrang ? 0 : Number(nguon.pageX) || 0,
+        y: toanTrang ? 0 : Number(nguon.pageY) || 0,
+        width: rong, height: cao, scale: ti
+      };
+    }
+
+    const chung = clip
+      ? { clip, captureBeyondViewport: toanTrang }
+      : { captureBeyondViewport: false };
     const raw = await send("Page.captureScreenshot", format === "png"
-      ? { format: "png", captureBeyondViewport: false }
-      : { format: "jpeg", quality, captureBeyondViewport: false });
+      ? { format: "png", ...chung }
+      : { format: "jpeg", quality, ...chung });
     const data = typeof raw?.data === "string" ? raw.data : "";
     if (data === "") throw new ProbeError("NO_SCREENSHOT", "Chrome không trả về ảnh nào.");
     const bytes = Math.floor(data.length * 3 / 4);
     if (bytes > MAX_SHOT_BYTES) {
       throw new ProbeError("SHOT_TOO_LARGE",
-        "Ảnh " + bytes + " byte, quá trần " + MAX_SHOT_BYTES + " byte. Hạ quality, hoặc dùng jpeg thay vì png.");
+        "Ảnh " + bytes + " byte, quá trần " + MAX_SHOT_BYTES + " byte. Hạ quality, hạ `scale`, hoặc dùng jpeg thay vì png.");
     }
-    return { format, quality: format === "jpeg" ? quality : null, bytes, base64: data };
+    return {
+      format, quality: format === "jpeg" ? quality : null, bytes, base64: data,
+      fullPage: toanTrang, scale: ti,
+      /* Kích thước khung ĐÃ CẮT, theo đơn vị CSS. Người gọi cần nó để biết ảnh vừa nhận phủ
+       * được bao nhiêu phần trang — một ảnh nhỏ vì trang nhỏ và một ảnh nhỏ vì cắt hụt trông
+       * y hệt nhau nếu không nói ra. */
+      clip: clip ? { x: clip.x, y: clip.y, width: clip.width, height: clip.height } : null
+    };
+  },
+
+  /* page.view — "Scouter đang nhìn vào phần nào của trang". Xem khối giải trình ở `PROBE_NAMES`.
+   *
+   * Đọc bằng ĐƠN VỊ CSS (`cssLayoutViewport`, `cssVisualViewport`, `cssContentSize`), không
+   * bằng pixel thiết bị. Đó là đơn vị mà selector, `DOM.getBoxModel` và mọi toạ độ của lõi ghi
+   * đang dùng — trộn hai hệ đơn vị ở đây là đẻ ra một lớp lỗi chỉ hiện trên màn hình HiDPI.
+   * Chrome cũ không có ba trường `css*` thì ngã về ba trường cũ, và `donVi` nói ra đã dùng cái
+   * nào, vì một con số không biết mình đo bằng gì thì không đối chiếu được với cái gì.
+   *
+   * `conLai` là thứ người gọi THẬT SỰ cần trước khi cuộn: còn bao nhiêu để cuộn nữa. Không có
+   * nó thì "cuộn thêm 500" là một lệnh bắn vào bóng tối — bắn xong không biết đã tới đáy chưa. */
+  async "page.view"(ctx) {
+    const send = requireSend(ctx);
+    const m = await send("Page.getLayoutMetrics", {});
+    const khung = m?.cssLayoutViewport || m?.layoutViewport;
+    const nhin = m?.cssVisualViewport || m?.visualViewport;
+    const trang = m?.cssContentSize || m?.contentSize;
+    if (!khung || !trang) throw new ProbeError("NO_LAYOUT_METRICS", "Chrome không trả về số đo bố cục nào.");
+
+    const so = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : 0);
+    const cuon = { x: so(khung.pageX), y: so(khung.pageY) };
+    const khungNhin = { width: so(khung.clientWidth), height: so(khung.clientHeight) };
+    const coTrang = { width: so(trang.width), height: so(trang.height) };
+    return {
+      scroll: cuon,
+      viewport: khungNhin,
+      document: coTrang,
+      /* Còn lại để cuộn. Kẹp ở 0: trang ngắn hơn khung nhìn thì số âm không có nghĩa gì. */
+      conLai: {
+        x: Math.max(0, coTrang.width - khungNhin.width - cuon.x),
+        y: Math.max(0, coTrang.height - khungNhin.height - cuon.y)
+      },
+      /* `zoom` là mức thu phóng của trình duyệt (Ctrl +/−). `scale` là thu phóng chụm hai ngón
+       * của khung nhìn ảo. Hai thứ khác nhau, nên trả cả hai và không gộp. */
+      zoom: nhin && Number.isFinite(Number(nhin.zoom)) ? Number(nhin.zoom) : null,
+      scale: nhin && Number.isFinite(Number(nhin.scale)) ? Number(nhin.scale) : null,
+      donVi: m?.cssLayoutViewport ? "css" : "thiet-bi"
+    };
   },
 
   /* ⑧ network.watch — "nghe trang nói chuyện với máy chủ trong N giây rồi kể lại".
@@ -820,6 +940,16 @@ const PROBES = {
 function requireSend(ctx) {
   if (typeof ctx.send !== "function") throw new ProbeError("DEPS_MISSING", "Phép dò này cần deps.sendRaw.");
   return ctx.send;
+}
+
+/* Tỉ lệ chụp: số THỰC, không phải số nguyên — nên nó không dùng được `readIndex`. Khoảng
+ * 0,1..1: phóng to một ảnh chụp không thêm một điểm ảnh thông tin nào, nó chỉ thêm byte. */
+function readTiLe(raw) {
+  if (raw === undefined || raw === null) return 1;
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0.1 || raw > 1) {
+    throw new ProbeError("PARAM_INVALID", "Tham số `scale` phải là số trong khoảng 0.1..1.");
+  }
+  return raw;
 }
 
 function readIndex(raw, fallback, label, min = 0, max = Number.MAX_SAFE_INTEGER) {

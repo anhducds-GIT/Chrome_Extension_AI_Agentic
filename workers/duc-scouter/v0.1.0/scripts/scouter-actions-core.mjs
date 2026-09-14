@@ -54,7 +54,15 @@ export const ACTION_NAMES = Object.freeze([
    * nó trả về URL ĐẦY ĐỦ (kể cả chữ ký trong query), nên nó chỉ được gọi TỪ TRONG máy,
    * bởi `scout.grab` — thứ tải file rồi trả BYTE, không trả URL. Ánh xạ nó ra dây là mở
    * đúng cái lỗ mà `S-24` sinh ra để bịt. Con `GR9` canh chỗ đó. */
-  "input.grabUrl"
+  "input.grabUrl",
+  /* ---- NHÓM "ĐI LẠI" MỞ 14/09 — Đức uỷ quyền, [ADR-0007] ------------------
+   * Cả ba đi kèm MỘT luật, và luật đó viết ở ADR chứ không phải ở đây: `scout.view` (ĐỌC)
+   * phải có TRƯỚC chúng. Ba lệnh này hứa *"đã bắn sự kiện"*, **không** hứa *"trang đã nhận"* —
+   * cùng lời hứa hẹp của `scout.click`. Thứ kiểm được lời hứa ấy là một con số đọc lại từ
+   * trang, và đó là việc của `scout.view`. */
+  "input.scroll",
+  "input.hover",
+  "input.history"
 ]);
 
 /* Method CDP được phép ở đường GHI. Ba lệnh `DOM.*` đầu chỉ để TÌM và ĐƯA VÀO TẦM NHÌN đúng
@@ -100,7 +108,21 @@ export const WRITE_CDP_METHODS = Object.freeze([
    * `Target.getTargetInfo` vào cùng vì đường điều hướng phải ĐỌC LẠI url sau khi đi, và một
    * lượt đi không kiểm được đích đến thì không nói được nó đã tới đâu. */
   "Page.navigate",
-  "Target.getTargetInfo"
+  "Target.getTargetInfo",
+  /* MỞ 14/09 cho `input.history` (lùi / tiến) — Đức uỷ quyền nhóm "đi lại", [ADR-0007].
+   *
+   * `Page.getNavigationHistory` CHỈ ĐỌC. Nó ở danh sách đường GHI, không ở đường đọc, và đó là
+   * cố ý: chỗ duy nhất cần nó là ngay TRƯỚC một lượt lùi/tiến, để biết **có gì ở phía sau
+   * không** thay vì bắn một lệnh vào hư không rồi đoán. Luật gói số 6 — mỗi lõi khai lấy thứ
+   * nó dùng, kể cả khi hai bên khai cùng một cái tên.
+   *
+   * Nó cũng là thứ giữ cho `input.history` KHÔNG nhận chỉ số từ người gọi: người gọi nói
+   * "lùi" hay "tiến", còn chỉ số mục lịch sử tính ở TRONG từ danh sách vừa đọc. Cùng khuôn với
+   * chốt ⑶ (toạ độ tính ở trong): một hướng có TÊN, không phải một con trỏ tự do vào lịch sử
+   * duyệt web của Đức — `navigateToHistoryEntry` với một `entryId` bất kỳ nhảy được tới **bất
+   * kỳ trang nào trong lịch sử của tab đó**. */
+  "Page.getNavigationHistory",
+  "Page.navigateToHistoryEntry"
 ]);
 
 /* Khoá tham số CHỞ TOẠ ĐỘ. Chốt ⑶ chặn theo HÌNH DẠNG tham số của NGƯỜI GỌI, nên nó còn sống
@@ -131,6 +153,34 @@ export const NAMED_KEY_NAMES = Object.freeze(Object.keys(NAMED_KEYS));
  * chỉ `input.clear` dùng nó. Thêm một hằng số nữa vào chỗ này là bước đầu tiên để có một tham
  * số `modifiers` — xem khối giải trình ở `input.clear`. */
 const CTRL = 2;
+
+/* ---- BA BẢNG CỐ ĐỊNH của nhóm "đi lại" (14/09, [ADR-0007]) ----------------
+ * Cùng khuôn với `NAMED_KEYS`, và vì cùng một lý do: người gọi chọn một CÁI TÊN trong bảng, họ
+ * không bao giờ đưa một giá trị thô. Nhận `button: "left"` thì `button` là dữ liệu có biên; nhận
+ * một chuỗi bất kỳ rồi chuyển thẳng xuống CDP là mở lại đúng cái cửa chốt ⑴ vừa đóng.
+ *
+ * `mask` là mặt nạ `buttons` của CDP (trái=1, phải=2, giữa=4) — nó phải khớp với `name`, nếu
+ * không thì trang nhận được một sự kiện tự mâu thuẫn và xử lý nó theo kiểu không ai đoán nổi. */
+const MOUSE_BUTTONS = Object.freeze({
+  left: { name: "left", mask: 1 },
+  right: { name: "right", mask: 2 },
+  middle: { name: "middle", mask: 4 }
+});
+export const MOUSE_BUTTON_NAMES = Object.freeze(Object.keys(MOUSE_BUTTONS));
+const MAX_CLICK_COUNT = 3;
+
+/* Bốn hướng cuộn, không nhận vector tự do. Một `{deltaX, deltaY}` mở là một đường đưa toạ độ
+ * từ ngoài vào — thứ chốt ⑶ cấm — chỉ khác cái tên. */
+const SCROLL_DIRECTIONS = Object.freeze({
+  down: { x: 0, y: 1 }, up: { x: 0, y: -1 }, right: { x: 1, y: 0 }, left: { x: -1, y: 0 }
+});
+export const SCROLL_DIRECTION_NAMES = Object.freeze(Object.keys(SCROLL_DIRECTIONS));
+/* Trần một lượt cuộn. Không phải để "an toàn" — để một con số sai (ví dụ thừa ba số 0) dừng lại
+ * ở đây kèm câu giải thích, thay vì thành một cú nhảy mà người gọi không hiểu vì sao. */
+const MAX_SCROLL_AMOUNT = 5000;
+const DEFAULT_SCROLL_AMOUNT = 600;
+
+const HISTORY_DIRECTIONS = Object.freeze(["back", "forward"]);
 
 const MAX_SELECTOR_LENGTH = 1024;
 const MAX_TEXT_LENGTH = 2000;
@@ -208,15 +258,141 @@ function rejectCoordinates(params) {
 
 const ACTIONS = {
   /* ① input.click — bấm vào ĐÚNG MỘT phần tử, bằng chuột thật của trình duyệt. */
+  /* `button` và `click_count` MỞ 14/09 (`I7` — bấm phải / bấm đúp, [ADR-0007]). Thêm THAM SỐ
+   * chứ không thêm method, cố ý: một lượt bấm phải khác một lượt bấm trái đúng hai trường trên
+   * dây, và mọi thứ đắt giá của lượt bấm — khớp đúng một, đưa vào tầm nhìn, hỏi-điểm trước khi
+   * bắn — thì y hệt. Tách thành `scout.rightclick` là chép ba cái chốt ấy sang chỗ thứ hai, và
+   * chỗ thứ hai là chỗ người ta quên cập nhật.
+   *
+   * Không khai gì thì cư xử Y HỆT như trước: trái, một lượt. */
   async "input.click"(send, params) {
     const selector = readSelector(params.selector);
+    const nut = readNutChuot(params.button);
+    const soLan = readSoLanBam(params.click_count);
     const node = await locateOne(send, selector);
     const point = await centreOf(send, node.nodeId);
     /* Chốt ⑸ đứng ĐÚNG Ở ĐÂY, giữa "đã có toạ độ" và "đã bắn": sớm hơn thì chưa có điểm để
      * hỏi, muộn hơn thì chuột đã đi rồi và câu trả lời chỉ còn là lời phân trần. */
     const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
-    await clickAt(send, point);
-    return { selector, matchCount: node.matchCount, clickedAt: point, hit, method: "Input.dispatchMouseEvent" };
+    await clickAt(send, point, nut, soLan);
+    return {
+      selector, matchCount: node.matchCount, clickedAt: point, hit,
+      button: nut.name, clickCount: soLan, method: "Input.dispatchMouseEvent"
+    };
+  },
+
+  /* input.hover — ĐƯA CHUỘT TỚI một phần tử mà KHÔNG bấm (`I6`).
+   *
+   * Vì sao cần: một phần menu chỉ tồn tại khi có chuột rê lên. Không rê được thì Scouter không
+   * bao giờ nhìn thấy chúng, và mọi selector trỏ vào chúng đều báo `SELECTOR_NO_MATCH` — một
+   * câu trả lời đúng cho một câu hỏi sai.
+   *
+   * NÓ VẪN HỎI-ĐIỂM TRƯỚC (chốt ⑸), y như lượt bấm, và đó không phải thừa: rê chuột lên một
+   * phần tử đang bị che thì sự kiện tới CÁI CHE, còn Scouter thì báo thành công. Đúng kiểu nói
+   * dối mà `S-17` mô tả, chỉ đổi loại sự kiện.
+   *
+   * HỨA GÌ: *đã đưa chuột tới đúng phần tử đã khớp.* KHÔNG hứa *"menu đã hiện"* — muốn biết
+   * menu đã hiện thì hỏi trang bằng `scout.wait`. */
+  async "input.hover"(send, params) {
+    const selector = readSelector(params.selector);
+    const node = await locateOne(send, selector);
+    const point = await centreOf(send, node.nodeId);
+    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0
+    });
+    return { selector, matchCount: node.matchCount, hoveredAt: point, hit, method: "Input.dispatchMouseEvent" };
+  },
+
+  /* input.scroll — CUỘN bằng bánh xe chuột thật (`I5`).
+   *
+   * Vì sao cần, dù `input.click` đã tự cuộn tới phần tử: cuộn-tới-phần-tử chỉ đi được tới thứ
+   * ĐÃ CÓ trong DOM. Một danh sách tải-thêm-khi-cuộn thì thứ cần lại chưa tồn tại, nên không có
+   * selector nào trỏ tới nó — phải cuộn trước, nó mới sinh ra.
+   *
+   * VÌ SAO VẪN ĐÒI `selector`, dù "cuộn trang" nghe như không cần trỏ vào đâu: bánh xe chuột
+   * cuộn **thứ nằm dưới con trỏ**, không cuộn "trang" một cách trừu tượng. Một trang có bảng
+   * bên cuộn riêng thì "cuộn xuống" là hai việc khác nhau tuỳ chuột đang ở đâu. Bắt nói ra chỗ
+   * cuộn là bắt người gọi nói rõ họ muốn cuộn CÁI GÌ — và giữ đúng luật gói số 7: toạ độ suy ra
+   * từ một phần tử đã khớp, không nhận từ ngoài. Cuộn cả trang thì trỏ `body`.
+   *
+   * CỐ Ý KHÔNG hỏi-điểm ở đây, khác `input.click` và `input.hover`: cuộn thứ đang nằm trên cùng
+   * tại điểm đó là **đúng ý** — một lớp phủ cuộn được thì cuộn nó mới là việc người gọi cần.
+   *
+   * HỨA GÌ: *đã bắn một sự kiện bánh xe tại điểm đó.* KHÔNG hứa *"trang đã cuộn"*, và ở đây lời
+   * hứa hẹp ấy đắt hơn mọi chỗ khác — một phần tử không cuộn được thì sự kiện đi vào hư không
+   * mà không có lỗi nào. Thứ kiểm được là `scout.view`: đọc `scroll` trước và sau. */
+  async "input.scroll"(send, params) {
+    const selector = readSelector(params.selector);
+    const huong = readHuongCuon(params.direction);
+    const luong = readLuongCuon(params.amount);
+    const node = await locateOne(send, selector);
+    const point = await centreOf(send, node.nodeId);
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseWheel", x: point.x, y: point.y, button: "none", buttons: 0,
+      deltaX: huong.vec.x * luong, deltaY: huong.vec.y * luong
+    });
+    return {
+      selector, matchCount: node.matchCount, direction: huong.ten, amount: luong,
+      wheeledAt: point, method: "Input.dispatchMouseEvent"
+    };
+  },
+
+  /* input.history — LÙI / TIẾN trong lịch sử của đúng tab đó (`N5`).
+   *
+   * Vì sao cần: nhiều luồng việc là "vào xem chi tiết rồi quay lại danh sách". Làm việc đó bằng
+   * `scout.navigate` tới url cũ là một trang KHÁC — mất vị trí cuộn, mất bộ lọc, mất trạng thái
+   * mà trang giữ trong lịch sử. Lùi thật thì không mất.
+   *
+   * CHỐT AN TOÀN, và nó là lý do khối này dài hơn vẻ ngoài của nó: `Page.navigateToHistoryEntry`
+   * nhận một `entryId` và nhảy tới **bất kỳ mục nào** trong lịch sử của tab. Người gọi ở đây
+   * KHÔNG chạm tới `entryId`: họ nói `"back"` hoặc `"forward"`, còn chỉ số tính ở trong từ danh
+   * sách vừa đọc, và chỉ đi được MỘT bước. Mở một tham số `entry_id` (hay `delta`) là biến một
+   * lệnh lùi thành một con trỏ tự do vào lịch sử duyệt web của Đức.
+   *
+   * HẾT ĐƯỜNG THÌ TỪ CHỐI, không im lặng: `Page.navigateToHistoryEntry` với chỉ số ngoài khoảng
+   * không báo lỗi ở nhiều phiên bản Chrome, nên một lượt "lùi" ở trang đầu tiên sẽ trông y hệt
+   * một lượt lùi thành công. Đó là chỗ phải đỏ. */
+  async "input.history"(send, params, ctx) {
+    const huong = readHuongDi(params.direction);
+    const hanMs = readHanCho(params.timeout_ms);
+
+    const lichSu = await send("Page.getNavigationHistory", {});
+    const muc = Array.isArray(lichSu?.entries) ? lichSu.entries : [];
+    const viTri = Number(lichSu?.currentIndex);
+    if (muc.length === 0 || !Number.isInteger(viTri) || viTri < 0 || viTri >= muc.length) {
+      throw new ActionError("HISTORY_UNREADABLE",
+        "Không đọc được lịch sử của tab này, nên không biết lùi/tiến sẽ đi đâu. Không biết thì không đi.");
+    }
+    const dich = viTri + (huong === "back" ? -1 : 1);
+    if (dich < 0 || dich >= muc.length) {
+      throw new ActionError("HISTORY_AT_END",
+        `Không còn trang nào ở phía '${huong}': đang ở mục ${viTri + 1}/${muc.length} của lịch sử tab này.`);
+    }
+
+    const urlTruoc = muc[viTri]?.url ?? null;
+    const taiLieuTruoc = (await danhTinhTaiLieu(send)) ?? null;
+    await send("Page.navigateToHistoryEntry", { entryId: muc[dich].id });
+
+    const batDau = ctx.now();
+    let urlSau = urlTruoc;
+    while (ctx.now() - batDau < hanMs) {
+      await ctx.cho(250);
+      const tin = await send("Target.getTargetInfo", {});
+      urlSau = tin?.targetInfo?.url ?? null;
+      const taiLieuSau = await danhTinhTaiLieu(send);
+      if (taiLieuSau === undefined) continue;
+      const doiTaiLieu = taiLieuTruoc !== null && taiLieuSau !== null && taiLieuSau !== taiLieuTruoc;
+      if (!(urlSau && urlSau !== urlTruoc) && !doiTaiLieu) continue;
+      return {
+        direction: huong, from: urlTruoc, url: urlSau,
+        entry: dich + 1, entries: muc.length, ms: ctx.now() - batDau,
+        arrivedBy: doiTaiLieu ? "new_document" : "url_change"
+      };
+    }
+    throw new ActionError("HISTORY_TIMEOUT",
+      `Quá ${hanMs}ms mà chưa thấy trang đổi. Xin '${huong}' tới mục ${dich + 1}/${muc.length}, ` +
+      `đang ở '${urlSau ?? "không đọc được"}'.`);
   },
 
   /* ② input.type — gõ một chuỗi vào ĐÚNG MỘT phần tử, từng phím một.
@@ -507,6 +683,48 @@ function readText(value) {
   return value;
 }
 
+function readNutChuot(value) {
+  if (value === undefined || value === null) return MOUSE_BUTTONS.left;
+  if (typeof value !== "string" || !Object.hasOwn(MOUSE_BUTTONS, value)) {
+    throw new ActionError("BUTTON_NOT_ALLOWED",
+      `Nút chuột "${value}" không có trong bảng. Bảng cố định: ${MOUSE_BUTTON_NAMES.join(", ")}.`);
+  }
+  return MOUSE_BUTTONS[value];
+}
+
+function readSoLanBam(value) {
+  if (value === undefined || value === null) return 1;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > MAX_CLICK_COUNT) {
+    throw new ActionError("CLICK_COUNT_INVALID", `\`click_count\` phải là số nguyên trong 1..${MAX_CLICK_COUNT}.`);
+  }
+  return value;
+}
+
+function readHuongCuon(value) {
+  if (typeof value !== "string" || !Object.hasOwn(SCROLL_DIRECTIONS, value)) {
+    throw new ActionError("DIRECTION_NOT_ALLOWED",
+      `Hướng cuộn "${value}" không có trong bảng. Bảng cố định: ${SCROLL_DIRECTION_NAMES.join(", ")}.`);
+  }
+  return { ten: value, vec: SCROLL_DIRECTIONS[value] };
+}
+
+function readLuongCuon(value) {
+  if (value === undefined || value === null) return DEFAULT_SCROLL_AMOUNT;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > MAX_SCROLL_AMOUNT) {
+    throw new ActionError("SCROLL_AMOUNT_INVALID",
+      `\`amount\` phải là số nguyên trong 1..${MAX_SCROLL_AMOUNT} (điểm ảnh CSS).`);
+  }
+  return value;
+}
+
+function readHuongDi(value) {
+  if (typeof value !== "string" || !HISTORY_DIRECTIONS.includes(value)) {
+    throw new ActionError("DIRECTION_NOT_ALLOWED",
+      `Hướng "${value}" không có trong bảng. Bảng cố định: ${HISTORY_DIRECTIONS.join(", ")}.`);
+  }
+  return value;
+}
+
 function readKeyName(value) {
   if (typeof value !== "string" || !Object.hasOwn(NAMED_KEYS, value)) {
     throw new ActionError("KEY_NOT_ALLOWED",
@@ -678,10 +896,15 @@ async function gocCuon(send, rootNodeId) {
 }
 
 /* Ba khung, đúng thứ tự đã đo. */
-async function clickAt(send, point) {
+/* `clickCount` TĂNG DẦN qua từng cặp nhấn-nhả (1 rồi 2), không phải gửi thẳng số 2 một lần.
+ * Đó là hình dạng trình duyệt thật sinh ra, và trang nào nghe `dblclick` thì nghe đúng cái
+ * chuỗi đó — gửi một cặp mang `clickCount: 2` là một sự kiện không trình duyệt nào tạo ra. */
+async function clickAt(send, point, nut = MOUSE_BUTTONS.left, soLan = 1) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0 });
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: "left", buttons: 1, clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: "left", buttons: 0, clickCount: 1 });
+  for (let lan = 1; lan <= soLan; lan += 1) {
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: nut.name, buttons: nut.mask, clickCount: lan });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: nut.name, buttons: 0, clickCount: lan });
+  }
 }
 
 /* ponytail: chỉ chữ cái, chữ số và dấu cách có `code` + mã phím Windows ĐÚNG. Ký tự khác gửi

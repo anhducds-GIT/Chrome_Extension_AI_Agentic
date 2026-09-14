@@ -30,7 +30,8 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.a11y": "a11y.tree",
   "scout.shot": "page.shot",
   "scout.wait": "dom.wait",
-  "scout.network": "network.watch"
+  "scout.network": "network.watch",
+  "scout.view": "page.view"
 });
 
 /* Ba hành động GHI, ánh xạ sang tên của `scripts/scouter-actions-core.mjs`. Bảng riêng, cố ý:
@@ -41,7 +42,10 @@ const ACTION_BY_METHOD = Object.freeze({
   "scout.navigate": "input.navigate",
   "scout.type": "input.type",
   "scout.key": "input.key",
-  "scout.clear": "input.clear"
+  "scout.clear": "input.clear",
+  "scout.hover": "input.hover",
+  "scout.scroll": "input.scroll",
+  "scout.history": "input.history"
 });
 
 /* Trần chống bão nạp lại. Vòng tự cải tiến của ADR-0009 là: AI ghi code → gọi `scout.reload`
@@ -130,8 +134,17 @@ const WRITE_CAP_PER_UNLOCK = 200;
  * Nên 64 KiB KHÔNG phải "dưới ngưỡng an toàn" — không có ngưỡng nào cả. Nó chỉ là **ít rủi ro
  * hơn**, và người gọi vẫn phải thử lại. Đây là **hạ**, hướng an toàn hơn; không nới gì. Giá phải
  * trả: một ảnh 746 KB thành **16 khúc** = 16 đơn vị trần ghi và 16 lượt tải. Chữa gốc là `S-25`
- * (`_shared/bridge-host`, lõi dùng chung với ba gói đóng băng) → câu của Đức. */
-const FETCH_MAX_BODY_BYTES = 64 * 1024;
+ * (`_shared/bridge-host`, lõi dùng chung với ba gói đóng băng) → câu của Đức.
+ *
+ * ── 14/09, SAU `T24`: gốc đã chữa, con số này trả về 512 KiB ──
+ * `G-67` chỉ ra gốc là một dòng trong `_shared/bridge-host/websocket-core.mjs`: nó **ném lỗi ở
+ * mọi mảnh nối**, mà Chrome cắt mảnh mọi tin vượt ~64 KiB. Nên "ngưỡng 64 KiB" chưa bao giờ là
+ * một giới hạn thật — nó là **cái mép nơi Chrome bắt đầu cắt mảnh**, và sự chập chờn của `G-63`
+ * chính là cỡ tin dao động quanh cái mép ấy. Lõi ghép được rồi thì con số này không còn việc gì.
+ *
+ * Trần THẬT giờ là phong bì Bridge: 1 MiB. 512 KiB **sau base64** là một nửa của nó — không phải
+ * một con số chạm mép, mà một con số có chỗ hở cho phần vỏ và cho mọi lượt đo sai của tôi. */
+const FETCH_MAX_BODY_BYTES = 512 * 1024;
 /* Bao nhiêu byte THÔ nhét vừa trần trên, sau khi base64 phồng 4/3. Con số này là thứ chia tệp
  * thành khúc — suy ra từ trần, không gõ riêng, để hai số không bao giờ lệch nhau. */
 const FETCH_MAX_RAW_BYTES = Math.floor(FETCH_MAX_BODY_BYTES / 4) * 3;
@@ -343,6 +356,13 @@ export function createSeedHandlers(deps = {}) {
       return await runProbe("scout.page", target, { offset: params.offset, limit: params.limit });
     },
 
+    /* `scout.view` — phép ĐỌC của nhóm "nhìn & đi lại" ([ADR-0007]). Không tham số nào ngoài
+     * `target_id`: nó hỏi trang đang ở đâu, không đề nghị trang đi đâu. */
+    async "scout.view"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runProbe("scout.view", target, {});
+    },
+
     async "scout.query"(params) {
       const target = await resolveTarget(params.target_id);
       return await runProbe("scout.query", target, {
@@ -385,7 +405,10 @@ export function createSeedHandlers(deps = {}) {
 
     async "scout.shot"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runProbe("scout.shot", target, { format: params.format, quality: params.quality });
+      return await runProbe("scout.shot", target, {
+        format: params.format, quality: params.quality,
+        full_page: params.full_page, scale: params.scale
+      });
     },
 
     async "scout.navigate"(params) {
@@ -395,7 +418,30 @@ export function createSeedHandlers(deps = {}) {
 
     async "scout.click"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runAction("scout.click", target, { selector: params.selector });
+      return await runAction("scout.click", target, {
+        selector: params.selector, button: params.button, click_count: params.click_count
+      });
+    },
+
+    /* Ba lệnh "đi lại" ([ADR-0007]). Cả ba đi qua `runAction`, nên cả ba chui qua cái phanh và
+     * trả giá hạn mức y như `scout.click` — chúng ĐỔI trang, không đọc trang. */
+    async "scout.hover"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.hover", target, { selector: params.selector });
+    },
+
+    async "scout.scroll"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.scroll", target, {
+        selector: params.selector, direction: params.direction, amount: params.amount
+      });
+    },
+
+    async "scout.history"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.history", target, {
+        direction: params.direction, timeout_ms: params.timeout_ms
+      });
     },
 
     async "scout.type"(params) {

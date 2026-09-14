@@ -1247,4 +1247,92 @@ BATCHES.push({
   ]
 });
 
+/* ---- NHÓM "NHÌN & ĐI LẠI" (`T25` `T26` `T27` `T28` `T30`) ----------------
+ * Sáu dòng bảng năng lực đổi sang `CÓ` trong một lượt, và không dòng nào có lượt chạy thật.
+ * Khi khoảng cách giữa "có mã" và "đã chứng minh" rộng như thế, bộ đo đột biến là thứ duy nhất
+ * còn nói được câu nào về chất lượng — nên nó phải canh cả hai chiều, và chiều khó là `V5`:
+ * *lượt bấm cũ có đổi hành vi không*. */
+BATCHES.push({
+  ten: "NHÌN — `page.view` và lượt chụp toàn cảnh",
+  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-view-smoke.mjs"),
+  mutants: [
+    {
+      ma: "V1",
+      ten: "Đọc bộ số THIẾT BỊ thay vì bộ CSS — đúng trên màn thường, sai trên HiDPI",
+      tim: "    const khung = m?.cssLayoutViewport || m?.layoutViewport;",
+      thay: "    const khung = m?.layoutViewport || m?.cssLayoutViewport;",
+      soLan: 1
+    },
+    {
+      ma: "V2",
+      ten: "`conLai` không kẹp ở 0 — trang ngắn hơn khung nhìn báo 'cuộn ngược lên được'",
+      tim: "        x: Math.max(0, coTrang.width - khungNhin.width - cuon.x),",
+      thay: "        x: coTrang.width - khungNhin.width - cuon.x,",
+      soLan: 1
+    },
+    {
+      ma: "V3",
+      ten: "`full_page` quên `captureBeyondViewport` — vẫn chỉ chụp phần đang thấy",
+      tim: "      ? { clip, captureBeyondViewport: toanTrang }",
+      thay: "      ? { clip, captureBeyondViewport: false }",
+      soLan: 1
+    },
+    {
+      ma: "V4",
+      ten: "Trần điểm ảnh chặn SAU khi Chrome đã dựng ảnh — chặn nhầm chỗ đã giết service worker",
+      tim: "      if (diem > MAX_SHOT_PIXELS) {",
+      thay: "      if (false) {",
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "ĐI LẠI — cuộn · rê chuột · lùi/tiến · bấm phải-đúp",
+  target: path.join(ROOT, "scripts", "scouter-actions-core.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-dilai-smoke.mjs"),
+  mutants: [
+    {
+      ma: "V5",
+      ten: "CHIỀU NGƯỢC: `clickCount` gõ cứng 1 — lượt bấm đúp im lặng thành hai lượt bấm đơn",
+      tim: "clickCount: lan });",
+      thay: "clickCount: 1 });",
+      soLan: 2
+    },
+    {
+      ma: "V6",
+      ten: "Mặt nạ `buttons` gõ cứng 1 — bấm phải gửi đi một sự kiện tự mâu thuẫn",
+      tim: "buttons: nut.mask, clickCount: lan });",
+      thay: "buttons: 1, clickCount: lan });",
+      soLan: 1
+    },
+    {
+      ma: "V7",
+      ten: "Rê chuột bỏ hỏi-điểm — rê lên thứ đang bị che vẫn báo thành công (`S-17`, khác loại sự kiện)",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
+    await send(\"Input.dispatchMouseEvent\", {
+      type: \"mouseMoved\"",
+      thay: "    const hit = { relation: \"self\", hitNodeId: node.nodeId };
+    await send(\"Input.dispatchMouseEvent\", {
+      type: \"mouseMoved\"",
+      soLan: 1
+    },
+    {
+      ma: "V8",
+      ten: "Lùi/tiến bỏ kiểm biên — lùi ở trang đầu tiên trông y hệt một lượt lùi thành công",
+      tim: "    if (dich < 0 || dich >= muc.length) {",
+      thay: "    if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "V9",
+      ten: "Cuộn lấy vector của hướng KHÁC — 'xuống' thành 'lên'",
+      tim: "      deltaX: huong.vec.x * luong, deltaY: huong.vec.y * luong",
+      thay: "      deltaX: huong.vec.x * luong, deltaY: -huong.vec.y * luong",
+      soLan: 1
+    }
+  ]
+});
+
 process.exit(chayDotBien(BATCHES, ROOT));

@@ -26,6 +26,7 @@ const EXPECTED_METHODS = [
   "system.ping",
   "scout.targets",
   "scout.page",
+  "scout.view",
   "scout.query",
   "scout.text",
   "scout.tree",
@@ -34,6 +35,9 @@ const EXPECTED_METHODS = [
   "scout.network",
   "scout.shot",
   "scout.click",
+  "scout.hover",
+  "scout.scroll",
+  "scout.history",
   "scout.type",
   "scout.key",
   "scout.clear",
@@ -51,11 +55,11 @@ const EXPECTED_METHODS = [
  * gói) thì một lượt gọi mạng chạm được mọi trang đang đăng nhập, nên nó phải trả đúng cái giá
  * mà `scout.click` trả. Đổi dòng này thành `read_only: true` là mở cho nó chạy tự do đúng lúc
  * nó nguy hiểm nhất. */
-const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.clear", "scout.fetch", "scout.grab", "scout.navigate"]);
+const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.hover", "scout.scroll", "scout.history", "scout.type", "scout.key", "scout.clear", "scout.fetch", "scout.grab", "scout.navigate"]);
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
-const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key", "input.clear", "input.navigate"]);
+const EXPECTED_ACTIONS = new Set(["input.click", "input.hover", "input.scroll", "input.history", "input.type", "input.key", "input.clear", "input.navigate"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
-const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.text", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch"]);
+const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.text", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch", "page.view"]);
 
 const POISON = "'); doSomething(); ('";
 const TARGET_ID = "TARGET-1";
@@ -404,10 +408,13 @@ function request(method, params) {
  *
  * TÁM → CHÍN ngày 14/09: `scout.text` — chữ của ĐÚNG MỘT phần tử, [ADR-0006]. Nó nới một điều
  * khoản của chính sách che đã ký, nên con số này phải đổi bằng TAY: không ai được thêm một
- * đường đọc chữ mà cổng vẫn xanh. */
+ * đường đọc chữ mà cổng vẫn xanh.
+ *
+ * CHÍN → MƯỜI ngày 14/09: `scout.view` — Scouter đang nhìn phần nào của trang, [ADR-0007]. Nó
+ * mở thêm MỘT cửa CDP (`Page.getLayoutMetrics`), nên cũng phải đổi bằng tay. */
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
-  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 9);
+  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 10);
 }
 
 /* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------
