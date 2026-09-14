@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "CHAN o S-24 — Duc chot mot trong ba duong cho URL ky san (anh Udin la S3 presigned; loi doc cat query theo chinh sach che, G-35). Truoc do W3 va E2E khong chay lai duoc. Viec chay duoc ngay ma khong cho ai: S-22 (G-26, tren trang-thu-cham). Cho Duc chot cac muc tay (O8 I4 I5 I6 I7).",
-      "human_action": "@Duc:chốt S-24 — ảnh Udin nằm sau URL ký sẵn mà lõi đọc cắt mất chữ ký (bảo vệ đang làm đúng việc, tôi không được tự nới). Ba đường ở BACKLOG.md mục S-24; tôi đề xuất đường ⒜ thêm method scout.grab. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên.",
+      "next_step": "Hai viec doc lap. (1) S-24: Duc chot mot trong ba duong cho URL ky san — truoc do W3/E2E dung. (2) S-22 chap chon: G-47 la bien cuoi chua thu (tab active vs tab nen tren Chrome cua Duc); may cho scratchpad/cho-tab-hien.mjs tu chay khi Duc bam vao tab 127.0.0.1:8642. Tam gia thuyet da chet, xem docs/GIA-THUYET.md truoc khi thu bat cu gi.",
+      "human_action": "@Duc:(1) bấm vào tab 127.0.0.1:8642 trên hồ sơ Dummy_Scout cho nó hiện lên — máy chờ tự đo tiếp, không cần báo lại; đây là biến cuối cùng của S-22. (2) chốt S-24: ảnh Udin nằm sau URL ký sẵn mà lõi đọc cắt mất chữ ký, ba đường ở BACKLOG.md, tôi đề xuất đường ⒜ scout.grab. (3) ghế còn lại (hồ sơ duyệt web) vẫn chưa có tên.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "CHAN o S-24 — Duc chot mot trong ba duong cho URL ky san (anh Udin la S3 presigned; loi doc cat query theo chinh sach che, G-35). Truoc do W3 va E2E khong chay lai duoc. Viec chay duoc ngay ma khong cho ai: S-22 (G-26, tren trang-thu-cham). Cho Duc chot cac muc tay (O8 I4 I5 I6 I7).",
+      "title": "Hai viec doc lap. (1) S-24: Duc chot mot trong ba duong cho URL ky san — truoc do W3/E2E dung. (2) S-22 chap chon: G-47 la bien cuoi chua thu (tab active vs tab nen tren Chrome cua Duc); may cho scratchpad/cho-tab-hien.mjs tu chay khi Duc bam vao tab 127.0.0.1:8642. Tam gia thuyet da chet, xem docs/GIA-THUYET.md truoc khi thu bat cu gi.",
       "rank": 4,
       "claim": null
     }
