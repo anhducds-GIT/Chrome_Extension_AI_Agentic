@@ -28,9 +28,9 @@
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-13T01:43:02.080Z",
-      "task": "chay tiep chuoi reasoning, theo doi loi moi",
-      "released_at": "2026-09-13T02:27:28.276Z",
+      "claimed_at": "2026-09-14T15:15:13.560Z",
+      "task": "Nâng trần thời gian chờ cho job text dài, và mở đường chạy tiếp sau halt READINESS_TIMEOUT_AFTER_SAVE",
+      "released_at": "2026-09-14T15:42:49.939Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-14T04:51:55.329Z",
-      "task": "dong phien: bang",
-      "released_at": null,
+      "claimed_at": "2026-09-14T18:08:01.492Z",
+      "task": "sinh lai trang tong",
+      "released_at": "2026-09-14T18:11:02.421Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -52,9 +52,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-12T02:13:06.495Z",
-      "task": "Duc chot 12/09: clean 4 muc do con lai cua cong",
-      "released_at": "2026-09-12T03:35:07.408Z",
+      "claimed_at": "2026-09-14T17:31:39.684Z",
+      "task": "ghi HANDOFF goc",
+      "released_at": "2026-09-14T17:45:25.979Z",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-12T15:12:53.057Z",
-      "task": "Scouter S-16..S-19",
-      "released_at": null,
+      "claimed_at": "2026-09-14T17:20:49.125Z",
+      "task": "them script kiem cai dat vao package.json",
+      "released_at": "2026-09-14T17:45:26.123Z",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -77,24 +77,24 @@
     "workers/duc-scouter": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T04:34:01.269Z",
-      "task": "S-24 duong (a): them scout.grab",
+      "claimed_at": "2026-09-14T15:14:50.192Z",
+      "task": "T7 chang 2 tren Udin",
       "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T14:57:12.815Z",
-      "task": "S-16: dat ten cho nguong cho 35s cua may chu Bridge, khong doi hanh vi",
-      "released_at": "2026-09-12T15:05:44.248Z"
+      "claimed_at": "2026-09-14T19:14:45.349Z",
+      "task": "T21 chang (1): dua goi-bridge.mjs ve _shared, bo ten goi go cung",
+      "released_at": null
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-12T15:29:54.065Z",
       "task": "Dong bo transport; chay suite cho cong nhin thay",
-      "released_at": null
+      "released_at": "2026-09-14T11:49:51.386Z"
     }
   },
-  "_fingerprint": "030ff4f0503374ed"
+  "_fingerprint": "420b1f6e771d5e0b"
 }
