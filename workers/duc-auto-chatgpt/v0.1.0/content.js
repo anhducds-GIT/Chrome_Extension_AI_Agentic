@@ -1639,7 +1639,7 @@
 
     if (message.type === "DAC_RUN_PROMPT") {
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
-      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 3600000));
 
       if (!prompt) {
         sendResponse({ ok: false, error: "Prompt is empty." });
@@ -1653,7 +1653,7 @@
     }
 
     if (message.type === "DAC_WAIT_CHAT_READY") {
-      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 900000));
+      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 3600000));
       const safetyCooldownSec = Math.max(0, Math.min(Number(message.safetyCooldownSec) || 0, 120));
       waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false, abPollAction: message.abPollAction })
         .then((result) => sendResponse(result))
@@ -1664,7 +1664,7 @@
     if (message.type === "DAC_RUN_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
-      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 3600000));
       if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
         sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
         return false;
@@ -1682,7 +1682,7 @@
     if (message.type === "DAC_RUN_TEXT_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
-      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 3600000));
       if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
         sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
         return false;

@@ -425,7 +425,7 @@
     const allowed = ["timeout_sec", "max_retries", "safety_cooldown_sec", "output_folder"];
     rejectUnknown(settings, allowed, path);
     const normalized = {};
-    if (settings.timeout_sec !== undefined) normalized.timeout_sec = integerValue(settings.timeout_sec, `${path}.timeout_sec`, 15, 900);
+    if (settings.timeout_sec !== undefined) normalized.timeout_sec = integerValue(settings.timeout_sec, `${path}.timeout_sec`, 15, 3600);
     if (settings.max_retries !== undefined) normalized.max_retries = integerValue(settings.max_retries, `${path}.max_retries`, 0, 5);
     if (settings.safety_cooldown_sec !== undefined) {
       const value = settings.safety_cooldown_sec;
@@ -665,7 +665,7 @@
     if (!Object.keys(params).some((key) => key !== "if_ledger_etag")) invalidParams("params", "expected at least one run setting");
     const normalized = {};
     if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
-    if (params.timeout_sec !== undefined) normalized.timeout_sec = integerValue(params.timeout_sec, "params.timeout_sec", 15, 900);
+    if (params.timeout_sec !== undefined) normalized.timeout_sec = integerValue(params.timeout_sec, "params.timeout_sec", 15, 3600);
     if (params.max_retries !== undefined) normalized.max_retries = integerValue(params.max_retries, "params.max_retries", 0, 5);
     if (params.delay_min_sec !== undefined) normalized.delay_min_sec = integerValue(params.delay_min_sec, "params.delay_min_sec", 1, 120);
     if (params.delay_max_sec !== undefined) normalized.delay_max_sec = integerValue(params.delay_max_sec, "params.delay_max_sec", 1, 120);

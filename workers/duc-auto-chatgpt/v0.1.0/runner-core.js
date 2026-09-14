@@ -58,7 +58,16 @@
     return { min, max, value: min === max ? min : `${min}-${max}` };
   }
   function config(raw = {}) {
-    const timeout = whole(raw.timeout_sec, DEFAULTS.timeout_sec, 15, 900, "timeout_sec");
+    // TRẦN TIMEOUT CỦA NGƯỜI VẬN HÀNH = 3600 giây (Đức chốt 14/09).
+    //
+    // Trước đó là 900. Đức đo thật: có task GPT suy luận 10-15 phút, nên 900 là trần
+    // NẰM ĐÚNG TRÊN độ dài của việc thật -- job chạy xong rồi vẫn halt vì còn phải
+    // chờ trang rảnh, mà cả hai chặng ăn CHUNG một con số này.
+    //
+    // KHÔNG ĐỤNG ĐẾN `LIMITS.trial_timeout_cap_sec` (ADR-0015, vẫn 900): đó là phanh
+    // của đường `run.trial` -- thứ một con AI tự bấm được. Trần ở đây là trần cho
+    // run do CHÍNH ĐỨC bấm. Nới phanh của người không phải nới phanh của máy.
+    const timeout = whole(raw.timeout_sec, DEFAULTS.timeout_sec, 15, 3600, "timeout_sec");
     const legacyDelay = raw.delay_sec === undefined || raw.delay_sec === "" ? null : whole(raw.delay_sec, null, 1, 120, "delay_sec");
     const min = whole(raw.delay_min_sec, legacyDelay ?? DEFAULTS.delay_min_sec, 1, 120, "delay_min_sec");
     const max = whole(raw.delay_max_sec, legacyDelay ?? DEFAULTS.delay_max_sec, 1, 120, "delay_max_sec");

@@ -746,3 +746,35 @@ Suite **138/138**. Đột biến: 6/6 · 6/6 · 5/5 · 8/8 · 8/8 · 6/6 · 8/8 
 
 **CHỜ ĐỨC:** hội thoại `Prompt engineer 2` có câu trả lời cuối **đứt ở `MODE:`** — cần bấm
 regenerate. Chuỗi không tự chữa được, và bộ chạy nay báo đúng bệnh (`~~B-90~~` khả năng ⑶).
+
+## 2026-09-14 (lượt 1) · `claude-gpt-chay-het-job` — trần timeout 900 → 3600, và vì sao halt sau khi ĐÃ lưu chặn cả Continue Run
+
+Đức đo thật: **có task GPT suy luận 10-15 phút**, trần cũ **900 giây nằm ĐÚNG TRÊN** độ dài việc
+thật. Tệ hơn: MỘT con số `timeout_sec` nuôi **cả hai chặng** — chờ câu trả lời, VÀ chờ trang rảnh
+sau khi đã lưu. Halt của Đức rơi ở chặng thứ hai: `READINESS_TIMEOUT_AFTER_SAVE`, chữ đã ghi và
+đã xác minh rồi mới hết giờ.
+
+**Đã nới trần NGƯỜI = 3600** ở bốn nơi: `runner-core.js` (cửa nút Run), `bridge-core.js` ×2
+(`jobs.add`, `run_settings.configure`), `sidepanel.html` (`max`), `content.js` ×4 nắp trong trang
+(gồm `DAC_WAIT_CHAT_READY` — chính chặng đã halt). **Mặc định vẫn 180.**
+
+⛔ **KHÔNG đụng `LIMITS.trial_timeout_cap_sec` (ADR-0015, vẫn 900)** — phanh của đường `run.trial`,
+thứ một con AI tự bấm được. Hai cửa `DAC_PROVIDER_REPAIR` và `DAC_CHAT_SAY` cũng cố ý **giữ
+900000**: nới phanh của người không được kéo theo phanh của máy. Ghim ở
+`tests/tran-timeout-nguoi-van-hanh-smoke.mjs` (vế ③ và ⑷ canh chỗ đó, **đếm** chứ không xét thứ tự).
+
+**CHẨN ĐOÁN CHƯA VÁ — đọc trước khi động vào resume.** Job text halt kiểu này bị
+`markInterrupted()` (`sidepanel.js:6308`) ghi `status: INTERRUPTED`. Chạy tiếp thì
+`resume-core.js` `classify()` thấy status ấy → `hasSubmittedBoundary` đúng → rơi xuống
+**`AMBIGUOUS_SUBMITTED` / BLOCKER** → **Continue Run bị chặn hẳn**, dù `persistence_verified`
+đúng và `response_sha256` băm lại KHỚP. Lối ra còn lại là **Recreate**, mà Recreate **gửi lại
+prompt** — đốt thêm 10-15 phút cho câu trả lời đã nằm trên đĩa. Luật hiện hành đang **đẩy Đức về
+phía gửi lại**, ngược đúng thứ exact-once sinh ra để chặn.
+
+Chữ chỉ chốt khi **không thấy nút Dừng · tab không bị che · đứng yên ≥ `TEXT_SETTLE_MS` · không
+`looksTruncated`** (`content.js:920-940`), nên lúc readiness hết giờ **việc sinh chữ đã xong từ
+trước**: câu đã lưu KHÔNG có nguy cơ bị cắt. Readiness chỉ nói về job **KẾ TIẾP**.
+
+**CHỜ ĐỨC:** chọn cách chạy tiếp. Đây là luật an toàn (attribution/exact-once) nên không tự đổi.
+
+Suite **139/139**.
