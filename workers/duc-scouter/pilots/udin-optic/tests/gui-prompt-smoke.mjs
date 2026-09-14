@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { guiPrompt, choXong, UdinDangChay, HAN_URL_MS, SEL } from "../scripts/gui-prompt.mjs";
 
-function lam({ chuSan = "", dangChaySan = false, goToi = true, nhan = true, vongChay = 2, anhMoi = 4, nutLap = 1, anhCu = 2, tranMs = 300000 } = {}) {
+function lam({ chuSan = "", xoaDuoc = true, dangChaySan = false, goToi = true, nhan = true, vongChay = 2, anhMoi = 4, nutLap = 1, anhCu = 2, tranMs = 300000 } = {}) {
   const nk = [];
   /* `guiDi` = "lượt đang chạy này sẽ đẻ ra ảnh khi xong". Đúng cho cả lượt MÌNH gửi lẫn lượt
    * đã chạy sẵn từ trước — và vế thứ hai là đúng cảnh `--noi-lai` phải xử lý. */
@@ -26,6 +26,9 @@ function lam({ chuSan = "", dangChaySan = false, goToi = true, nhan = true, vong
       }
       if (p.selector === SEL.nutSend) return trang.chay ? q(0) : q(1, [{ attributes: trang.chu ? { title: "Send" } : { title: "Send", disabled: "" } }]);
     }
+    /* `xoaDuoc: false` dựng đúng ca `scout.clear` trả `ok` mà ô VẪN còn chữ — *lệnh hoàn tất*
+     * không phải *trang đã nhận* (`S-22`). Máy giả mà luôn xoá được thì khối ⓒ3 vô nghĩa. */
+    if (method === "scout.clear") { if (xoaDuoc) trang.chu = ""; return { data: { cleared: true } }; }
     if (method === "scout.type") { if (goToi) trang.chu += p.text; return { data: { typed: p.text.length } }; }
     if (method === "scout.click") {
       assert.equal(p.selector, SEL.nutSend);
@@ -53,6 +56,24 @@ const bam = (nk) => nk.filter((g) => g.method === "scout.click").length;
 { const t = lam({ dangChaySan: true, vongChay: 99 }); t.nk.length = 0;
   await assert.rejects(() => guiPrompt("x", t), /đang chạy/); assert.equal(bam(t.nk), 0);
   assert.ok(!t.nk.some((g) => g.method === "scout.type")); }
+// ⓒ2 W7 — ô có chữ sẵn + `xoaOCu` → xoá, KIỂM BẰNG TRANG, rồi gõ prompt MỚI nguyên vẹn
+{ const t = lam({ chuSan: "prompt cua luot truoc" });
+  const k = await guiPrompt("a bronze desk lamp", { ...t, xoaOCu: true });
+  assert.equal(k.anhMoi, 4);
+  const go = t.nk.filter((g) => g.method === "scout.type");
+  /* chữ gõ ra phải là prompt MỚI, không dính một mẩu nào của lượt trước — đây là cả lý do W7 tồn tại */
+  assert.equal(go.length, 1);
+  assert.equal(go[0].p.text, "a bronze desk lamp");
+  const iXoa = t.nk.findIndex((g) => g.method === "scout.clear");
+  assert.equal(t.nk.filter((g) => g.method === "scout.clear").length, 1, "xoá đúng một lần");
+  assert.ok(iXoa >= 0 && iXoa < t.nk.findIndex((g) => g.method === "scout.type"), "xoá TRƯỚC khi gõ"); }
+
+// ⓒ3 xoá xong mà nút Send VẪN mở → ĐỎ, và KHÔNG bấm lần nào (không tiêu credit cho prompt dính chữ cũ)
+{ const t = lam({ chuSan: "cu", xoaDuoc: false });
+  await assert.rejects(() => guiPrompt("x", { ...t, xoaOCu: true }), /VẪN mở/);
+  assert.equal(bam(t.nk), 0);
+  assert.equal(t.nk.filter((g) => g.method === "scout.type").length, 0, "chưa xoá được thì không gõ"); }
+
 // ⓒ ô có chữ sẵn → không gõ, không bấm
 { const t = lam({ chuSan: "cu" }); await assert.rejects(() => guiPrompt("x", t), /có chữ sẵn/); assert.equal(bam(t.nk), 0);
   assert.ok(!t.nk.some((g) => g.method === "scout.type")); }
@@ -97,4 +118,4 @@ const bam = (nk) => nk.filter((g) => g.method === "scout.click").length;
 assert.match(SEL.nutSend, /:not\(\.stop-button\)/);
 // ⓗ prompt rỗng → không đụng trang
 { const t = lam(); await assert.rejects(() => guiPrompt("  ", t), /Thiếu prompt/); assert.equal(t.nk.length, 0); }
-console.log("  · udin gui-prompt: 13 khối xanh");
+console.log("  · udin gui-prompt: 15 khối xanh");

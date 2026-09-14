@@ -106,7 +106,31 @@ export async function guiPrompt(prompt, tuyChon = {}) {
   const nutTruoc = await dem(SEL.nutSend);
   if (nutTruoc.matchCount !== 1) throw new Error(`Cần đúng một nút Send, thấy ${nutTruoc.matchCount} — trang Udin đã đổi?`);
   if (!("disabled" in (nutTruoc.items[0]?.attributes || {}))) {
-    throw new Error("Ô prompt đang có chữ sẵn (nút Send đã mở) — gõ thêm sẽ dính vào chữ cũ; chưa gửi.");
+    /* W7 — prompt lần hai trên cùng một ô. Lời từ chối cũ là một LỚP BẢO VỆ, không phải thiếu
+     * sót: ô có chữ sẵn có thể là chữ Đức đang gõ dở. Nên đường xoá là thứ người gọi phải XIN,
+     * còn mặc định vẫn từ chối. Hạ lời từ chối xuống cho tiện là nới bảo vệ. */
+    if (!tuyChon.xoaOCu) {
+      throw new Error(
+        "Ô prompt đang có chữ sẵn (nút Send đã mở) — gõ thêm sẽ dính vào chữ cũ; chưa gửi. " +
+        "Muốn gửi lượt hai trên cùng ô thì truyền `xoaOCu: true` — nó XOÁ chữ đang có.",
+      );
+    }
+    await goi("scout.clear", { target_id: tab, selector: SEL.oPrompt }, tuyChon);
+    /* KIỂM BẰNG TRANG, không tin lời báo của lệnh xoá — nút Send phải khoá lại. Đây đúng cơ chế
+     * đã dùng cho lượt gõ ngay bên dưới (`G-29`): trạng thái nút là thứ React thật sự biết, còn
+     * `ok` của một lệnh ghi chỉ nói *lệnh hoàn tất*, không nói *trang đã nhận* (`S-22`). */
+    let daXoa = false;
+    for (let i = 0; i < 10 && !daXoa; i++) {
+      const nut = await dem(SEL.nutSend);
+      daXoa = nut.matchCount === 1 && "disabled" in (nut.items[0]?.attributes || {});
+      if (!daXoa) await nghi(300);
+    }
+    if (!daXoa) {
+      throw new Error(
+        "Đã gọi `scout.clear` mà nút Send VẪN mở — chữ cũ còn trong ô; chưa gửi. " +
+        "Gõ tiếp sẽ dính vào chữ cũ và lượt chạy sẽ tiêu tiền cho một prompt không ai muốn.",
+      );
+    }
   }
 
   const truoc = await tapAnh();

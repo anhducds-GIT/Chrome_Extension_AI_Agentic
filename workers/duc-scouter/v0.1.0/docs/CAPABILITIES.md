@@ -167,17 +167,22 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
 | W3 | Lấy ảnh kết quả về đĩa | O11 | **ĐẠT** 14/09 | `lay-anh.mjs` · trước: có ảnh mới của lượt này · thao tác: chọn selector duy nhất → grab từng khúc → `file.write` + `file.append` · thành công: **kích thước thật trên đĩa** khớp `bytes_total` · thất bại: selector không duy nhất · tệp đổi giữa chừng · đĩa nhận thiếu. Bằng chứng: hai ảnh 330.270 + 290.214 byte, `TRIALS` 14/09 |
-| W4 | Đọc câu trả lời chữ của agent | O8 | **HẾT CHẶN, chưa làm** | Chặn tan 14/09: [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) ký chính sách che và mở `scout.text`, `O8` **ĐÃ CHỨNG MINH** trên chính Udin (`G-57`). Còn lại là việc của adapter, không của seed |
+| W4 | Đọc câu trả lời chữ của agent | O8 | **ĐẠT** 14/09 | `doc-tra-loi.mjs` · trước: một lượt đã chạy xong · thao tác: hỏi lại trang từng ứng viên selector → cái khớp đúng MỘT → `scout.text` · thành công: chữ khác rỗng, không bị cắt, **và khác câu đọc được trước lượt gửi** · thất bại: không ứng viên nào khớp đúng một (khớp 0 = agent chưa đáp; khớp nhiều = trang đổi hình dạng) · chữ rỗng · chữ cụt ở trần 5.000 · chữ y hệt lượt trước. Bằng chứng `G-76`: đọc đúng câu trả lời cho prompt vừa gửi, 251 ký tự |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | Dính `S-22` như mọi lượt bấm trên ghế này |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09. Một cú bấm — nên nó dính `S-22` y như `W5` |
-| W7 | Gửi prompt lần hai trên cùng ô | I4 | **HẾT CHẶN, chưa làm** | Chặn tan 14/09: `scout.clear` (`I4`) ra đời. Đây là thứ biến Udin từ *một lượt* thành *một phiên làm việc* — và `gui-prompt.mjs` hôm nay vẫn **từ chối** khi ô có chữ, nên chỗ sửa đã biết chính xác |
-| W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **ĐẠT một phần** 14/09 | Ba chặng chạy **một mạch, không sửa tay**: W1 vượt màn chắn → W2 sinh 4 ảnh → W3 lấy được **2/4** rồi dừng vì **hết trần 200 lượt ghi** — một cái trần, không phải một khuyết tật. **Con số đó nay đã đổi**: `S-25` xong và trần khúc về 512 KiB, nên một ảnh 688 KB tốn **2 đơn vị thay vì 14**; đủ 4 ảnh còn ~8 đơn vị chứ không phải ~64. Chạy lại là `T33`, và đây là phép thử rẻ nhất còn lại của cả gói |
+| W7 | Gửi prompt lần hai trên cùng ô | I4 | **ĐẠT** 14/09 | `gui-prompt.mjs` cờ `xoaOCu` · trước: ô prompt CÓ chữ sẵn (nút Send đã mở) · thao tác: `scout.clear` → **chờ nút Send khoá lại** → gõ prompt mới · thành công: chữ gõ ra không dính một mẩu nào của lượt trước · thất bại: không xin `xoaOCu` thì **vẫn từ chối như cũ** (lời từ chối là lớp bảo vệ, không phải thiếu sót); xoá xong mà Send vẫn mở thì ĐỎ và **không bấm lần nào**. Bằng chứng `G-77` |
+| W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | `T29` `scout.upload` (`I9`) — dòng năng lực THẬT cuối cùng còn lại của cả gói |
+| **E2E** | Mở trang → W1 → W2 → W3 → W4 | | **ĐẠT** 14/09 | `T33` 14/09 chạy **một mạch, không sửa tay** và lấy **4/4** ảnh: 764.000 + 686.422 + 787.096 + 603.660 byte, kích thước thật trên đĩa khớp từng byte. Tốn **9 đơn vị** trần ghi cho cả bốn ảnh, chỗ lượt 14/09 trước đó tốn 16 cho MỘT ảnh và chết ở 2/4 — `T24` đáng giá đúng con số đó. Chặng W4 nối thêm cùng ngày, và nó ĐỌC nên đứng SAU lượt tiêu tiền: một W4 đỏ không bao giờ làm mất ảnh đã nằm trên đĩa. `G-76` `G-78` |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
-Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **2 / 8 workflow ĐẠT · 4 CHẶN · E2E CHẶN**.
+Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **5 / 8 workflow ĐẠT · 1 CHẶN (`W8`) · E2E ĐẠT**.
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
+
+**Và đây là chỗ câu hỏi ⓪ của Đức đã tự trả gần hết.** Đề xuất bắt buộc là `W1 W2 W3 W4 W7` +
+E2E — **cả sáu nay đều ĐẠT**. Ba `W` còn lại đúng là ba cái đề xuất để NGOÀI: `W5` `W6` dính
+`S-22`, `W8` cần `T29`. Nên ⓪ không còn định cỡ phần còn lại nữa; nó chỉ còn là một chữ ký xác
+nhận rằng **điều kiện tách Udin đã đủ**, hoặc một câu nói Đức muốn thêm gì vào danh sách.
 
 ## 5. Lộ trình — viết lại 14/09 quanh MỘT câu hỏi của Đức
 
@@ -236,8 +241,8 @@ nhiêu, nên nó đứng trước mọi việc khác trong bảng dưới.
 |---|---|---|---|
 | ~~P0…P2a · ① · ②~~ | mô hình đo · `T13` · `S-22` · `O8` · `T24` `S-25` · `T31` · nhìn & đi lại · `T32` chạy thật | **XONG 12–14/09** | — |
 | **⓪** | **Chốt `W` nào BẮT BUỘC** trước khi tách | có một danh sách `W` đóng, ghi vào §4 | **Đức** |
-| **②c** | `T33` chạy lại **E2E trọn vẹn** | bốn ảnh của một lượt đều xuống đĩa, không chạm trần ghi | không ai |
-| **②d** | `T34` `W4` đọc chữ · `T35` `W6` thêm ảnh vào canvas · `T36` `W7` prompt lần hai | mỗi `W` có hợp đồng ⟨trước · thao tác · thành công · thất bại⟩ và một lượt chạy thật | không ai |
+| ~~**②c**~~ | ~~`T33` chạy lại **E2E trọn vẹn**~~ | **XONG 14/09** — 4/4 ảnh, 9 đơn vị trần ghi | — |
+| **②d** | ~~`T34` `W4` đọc chữ~~ **XONG** · ~~`T36` `W7` prompt lần hai~~ **XONG** · `T35` `W6` thêm ảnh vào canvas | mỗi `W` có hợp đồng ⟨trước · thao tác · thành công · thất bại⟩ và một lượt chạy thật | không ai |
 | **②e** | `T29` `scout.upload` (`I9`) → `W8` | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở **máy chủ** | không ai |
 | **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ⓪ ②c ②d ②e |
 | **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |

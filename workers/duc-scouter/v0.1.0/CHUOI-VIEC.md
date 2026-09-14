@@ -39,11 +39,11 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T26** | `scout.scroll` (`I5`) | T25 | **XONG + CHẠY THẬT 14/09.** Bản đầu (bánh xe) treo và **khoá cả tab** (`G-72`) — đổi sang `DOM.scrollIntoViewIfNeeded`, cuộn **1.972 điểm ảnh** đo bằng `scout.view` (`G-73`) |
 | **T27** | `O12` thu phóng | T25 | **NỬA ⑴ XONG 14/09**: `scout.shot` nhận `full_page` + `scale`. Đo thật: thắng lớn ở **trang dài** (bốn lần diện tích, hai phần ba số byte), nhưng **trên artboard thì KHÔNG được gì** — tài liệu đúng bằng khung nhìn nên không có gì thêm để chụp. **Nửa ⑵ chặn bởi KIẾN TRÚC** → `G-69`, **câu của Đức** |
 | **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`click_count` (`I7`) | T25 | **XONG về mã.** Chạy thật: lệnh hoàn tất, **trang không nhận** — đó là `S-22`, Đức đã chốt ngừng điều tra. Dừng ở `CÓ` (`G-74`) |
-| **⓪** | **Chốt `W` nào BẮT BUỘC trước khi tách** | — | **câu của Đức.** Bảng `W` (§4 `CAPABILITIES.md`) vẫn ghi *"Đức chốt mục nào bắt buộc"* — chưa ai trả lời, mà nó quyết định phần còn lại dài bao nhiêu |
-| **T33** | **Chạy lại E2E TRỌN VẸN** trên Udin | — | **việc kế, và rẻ nhất.** Không viết thêm dòng nào: nền đã đổi (một ảnh tốn **2 đơn vị thay vì 14**), nên lượt trước dừng ở 2/4 ảnh vì trần ghi thì nay phải đi trọn |
-| **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | hết chặn từ 14/09 (`ADR-0006` + `scout.text` đã chạy thật trên Udin) |
-| **T35** | `W6` — đưa một ảnh vào canvas | T33 | hết chặn. **Dính `S-22`**: nó là một cú bấm |
-| **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | hết chặn từ khi có `scout.clear`. Đây là thứ biến Udin từ *một lượt* thành *một phiên* |
+| **⓪** | **Chốt `W` nào BẮT BUỘC trước khi tách** | — | **câu của Đức — nhưng nay chỉ còn là chữ ký.** Danh sách đề xuất `W1 W2 W3 W4 W7` + E2E **đã ĐẠT trọn** ngày 14/09, nên ⓪ không còn định cỡ gì nữa: gật là đủ điều kiện tách, hoặc nói thêm `W` nào |
+| **T33** | **Chạy lại E2E TRỌN VẸN** trên Udin | — | **XONG + CHẠY THẬT 14/09: 4/4 ảnh**, kích thước trên đĩa khớp từng byte, **9 đơn vị** trần ghi cho cả bốn (lượt trước: 16 cho MỘT). Không viết thêm một dòng nào — `TRIALS` 14/09, `G-68` `G-78` |
+| **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | **XONG + CHẠY THẬT 14/09** — `doc-tra-loi.mjs`, nay là chặng thứ tư của E2E. Đọc đúng câu trả lời cho prompt vừa gửi (`G-76`) |
+| **T35** | `W6` — đưa một ảnh vào canvas | — | **việc kế.** Hết chặn, nhưng **dính `S-22`**: nó là một cú bấm, nên có thể viết xong mà vẫn không ĐẠT *trên ghế này* |
+| **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | **XONG + CHẠY THẬT 14/09** — cờ `xoaOCu` trong `gui-prompt.mjs`; **lời từ chối cũ giữ nguyên làm mặc định** (`G-77`) |
 | **T29** | `scout.upload` (`I9`) → `W8` | — | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng |
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
 | **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
@@ -116,29 +116,33 @@ nói gì, lấy được kết quả, và ra lệnh tiếp lần hai. `W5` `W6` 
 dính `S-22`**; `W8` cần `T29`. Để hai nhóm đó ngoài danh sách bắt buộc thì việc tách đi được ngay
 sau `T29`, mà không mất năng lực nào — chúng vẫn làm được sau khi tách, từ gói mới.
 
-## T33 · Chạy lại E2E TRỌN VẸN  ⟵ *việc kế, và rẻ nhất còn lại*
+## T33 T34 T36 · XONG 14/09 — đọc `TRIALS.md` hai dòng cuối
 
-**Không viết thêm một dòng nào.** Lượt E2E 14/09 dừng ở **2/4 ảnh** vì hết trần 200 lượt ghi —
-mỗi ảnh tốn 16 khúc. Nền đã đổi: trần khúc về 512 KiB nên **một ảnh 688 KB tốn 2 đơn vị**, bốn ảnh
-còn khoảng 8 đơn vị thay vì 64.
+Ba việc đóng trong một lượt, vì cùng cần một thứ khan hiếm: **ghế sống + công tắc ghi đang mở**.
+Ba điều đáng mang đi, phần còn lại ở `TRIALS.md` và `G-76` `G-77` `G-78`:
 
-*Đóng khi:* một lượt chạy **một mạch, không sửa tay** đi trọn `W1` → `W2` → `W3` với **đủ số ảnh
-của lượt đó xuống đĩa**, kích thước thật trên đĩa khớp `bytes_total` từng tệp, và **không chạm
-trần ghi**. Ghi số đơn vị đã tiêu vào `TRIALS.md` — đó là con số nói lên `T24` đáng giá bao nhiêu.
+⑴ **`T33` không sửa một dòng adapter nào** mà đi từ 2/4 ảnh lên 4/4. Chỗ hỏng ngày trước chưa bao
+giờ ở adapter — nó ở tầng vận chuyển. *Sửa đúng gốc thì việc ở tầng trên tự xong.*
 
-*Chỗ đừng làm sai:* mỗi lượt chạy thật tốn credit của Đức và **phải dùng một prompt MỚI** (luật
-thường trực). Đừng chạy lại bằng prompt cũ để "cho nhanh".
+⑵ **Lời từ chối của `gui-prompt` là một lớp bảo vệ.** Mở `W7` bằng một cờ người gọi phải XIN,
+không hạ lời từ chối xuống cho tiện. Mặc định vẫn từ chối, và có phép ghim canh đúng chỗ đó.
 
-## T34 T35 T36 · Ba `W` vừa hết chặn
+⑶ **Selector nghe hợp lý nhất khớp 20.** `:last-of-type` xét theo tên thẻ trong TỪNG cha. Luôn
+hỏi lại trang từng ứng viên — đây là lần thứ hai cơ chế ấy cứu một chặng (`G-54`, rồi `G-76`).
+
+## T35 · `W6` đưa một ảnh vào canvas  ⟵ *việc kế*
 
 | | `W` | Chặn tan vì | Chỗ đừng làm sai |
 |---|---|---|---|
-| `T34` | `W4` đọc câu trả lời chữ | `ADR-0006` + `scout.text` (đã chạy thật trên Udin) | `scout.text` **từ chối** khi selector khớp ≠ 1 — đó là chốt, không phải phiền. Tìm selector đúng một, đừng nới phép kiểm |
 | `T35` | `W6` đưa ảnh vào canvas | vốn chỉ cần `I1` | **Dính `S-22`**: một cú bấm. Viết được, nhưng có thể không ĐẠT **trên ghế này**, và đó không phải lỗi adapter |
-| `T36` | `W7` prompt lần hai | `scout.clear` (`I4`) | `gui-prompt.mjs` hôm nay **từ chối khi ô có chữ** — chỗ sửa đã biết chính xác. Sau khi xoá phải **kiểm bằng trang** (nút Send khoá lại), không tin lệnh xoá đã xong |
 
-Cả ba đóng khi có **hợp đồng ⟨trước · thao tác · thành công · thất bại⟩** ghi vào bảng `W`, một
-lượt chạy thật, và phép ghim cho đường hỏng — không chỉ đường đúng.
+Đóng khi có **hợp đồng ⟨trước · thao tác · thành công · thất bại⟩** ghi vào bảng `W`, một lượt
+chạy thật, và phép ghim cho đường hỏng — không chỉ đường đúng. `T34` và `T36` đã đóng theo đúng
+khuôn ấy ngày 14/09; chép lại hình dạng của chúng thay vì nghĩ ra khuôn mới.
+
+**Và biết trước một chuyện**: `T35` có thể viết xong, ghim xanh, chạy thật mà **vẫn không ĐẠT**,
+vì cú bấm không tới trang trên ghế này. Đó là `S-22`, không phải lỗi adapter — đừng đi tìm bug
+trong `pilots/udin-optic/`, và đừng nới phép kiểm để nó xanh.
 
 ## T29 · `scout.upload` (`I9`) — đưa một tệp vào trang
 
