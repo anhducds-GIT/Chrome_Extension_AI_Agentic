@@ -652,13 +652,20 @@ const PROBES = {
     const root = doc?.root;
     if (!root?.nodeId) throw new ProbeError("NO_DOCUMENT", "Target không trả về document nào.");
 
-    const budget = { left: maxNodes, truncated: false };
+    const budget = { left: maxNodes, truncated: false, cutByDepth: 0, childrenDropped: 0 };
     const tree = shapeNode(root, budget);
     return {
       depth,
       maxNodes,
       nodeCount: maxNodes - budget.left,
       truncated: budget.truncated,
+      /* HAI nhát cắt, không phải một — và bản cũ chỉ khai một. `truncated` canh NGÂN SÁCH NÚT;
+       * `cutByDepth` canh MÉP ĐỘ SÂU, thứ mà `maxNodes` không bao giờ chạm tới. Đo 14/09 trên
+       * Udin: `truncated:false` · `nodeCount:202` trên trần 500 — nghe như đã dò hết — trong khi
+       * 42 nút bị cắt ở mép `depth:10` và 79 nút con rơi ra ngoài, gồm cả 36 ảnh kết quả. Một
+       * báo cáo khai đủ mà thiếu còn tệ hơn một báo cáo khai thiếu (`G-83`). */
+      cutByDepth: budget.cutByDepth,
+      childrenDropped: budget.childrenDropped,
       tree,
       redaction: redactionNote()
     };
@@ -1112,6 +1119,15 @@ function shapeNode(node, budget, flat = false) {
   if (flat) return shaped;
   const kids = Array.isArray(node.children) ? node.children : [];
   shaped.children = [];
+  /* Ở đúng mép `depth`, CDP KHÔNG gửi `children` — nhưng nút vẫn khai `childNodeCount` THẬT.
+   * Hai con số ấy đá nhau chính là dấu vân tay của nhát cắt theo độ sâu, và nó đã nằm sẵn
+   * trong dữ liệu trả về từ đầu; chỉ là chưa ai đếm. Đánh dấu tại chỗ để người đọc báo cáo
+   * biết ĐÚNG NHÁNH NÀO bị cụt, chứ không chỉ biết là có cụt ở đâu đó. */
+  if (kids.length === 0 && shaped.childNodeCount > 0) {
+    shaped.cutByDepth = true;
+    budget.cutByDepth += 1;
+    budget.childrenDropped += shaped.childNodeCount;
+  }
   for (const kid of kids) {
     const child = shapeNode(kid, budget);
     if (child === null) break;

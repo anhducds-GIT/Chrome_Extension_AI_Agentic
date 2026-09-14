@@ -66,20 +66,30 @@ function attrsOf(i) {
   ];
 }
 
-function childTree(depth, id) {
-  if (depth <= 0) return { nodeId: id, nodeType: 1, nodeName: "SPAN", localName: "span", childNodeCount: 0, attributes: ["id", `n${id}`] };
-  return {
+/* `conLai` = còn được phép trả bao nhiêu tầng (mép `depth` của lượt hỏi).
+ * `sauThat` = cây THẬT còn sâu bao nhiêu tầng nữa.
+ *
+ * Hai con số phải tách nhau thì trang giả mới dựng được ca đáng sợ: cây thật sâu hơn lượt hỏi.
+ * Ở đúng mép ấy CDP vẫn khai `childNodeCount` THẬT nhưng KHÔNG gửi `children` — và bản cũ của
+ * hàm này trả `childNodeCount: 0` ở mép, tức là vẽ một cái cây lúc nào cũng vừa khít lượt hỏi.
+ * Vì thế không phép ghim nào nhìn ra nhát cắt độ sâu đang im lặng (`G-83`, đo thật trên Udin:
+ * `truncated:false` trong khi 42 nhánh bị cụt). Trang giả mã hoá niềm tin của người viết nó. */
+function childTree(conLai, id, sauThat = Infinity) {
+  if (sauThat <= 0) return { nodeId: id, nodeType: 1, nodeName: "SPAN", localName: "span", childNodeCount: 0, attributes: ["id", `n${id}`] };
+  const nut = {
     nodeId: id,
     nodeType: 1,
     nodeName: "DIV",
     localName: "div",
     childNodeCount: 2,
-    attributes: ["id", `n${id}`, "data-secret", "SECRET-DO-NOT-LEAK"],
-    children: [childTree(depth - 1, id * 10), childTree(depth - 1, id * 10 + 1)]
+    attributes: ["id", `n${id}`, "data-secret", "SECRET-DO-NOT-LEAK"]
   };
+  if (conLai <= 0) return nut;   // mép độ sâu: CÓ con, mà không gửi con
+  nut.children = [childTree(conLai - 1, id * 10, sauThat - 1), childTree(conLai - 1, id * 10 + 1, sauThat - 1)];
+  return nut;
 }
 
-function makeFakePage({ matchCount = 3 } = {}) {
+function makeFakePage({ matchCount = 3, sauThat = Infinity } = {}) {
   const seen = [];       // mọi lệnh lọt tới "trang"
   const writes = [];     // lệnh nào KHÔNG read-only mà tới được đây = lớp bảo vệ đã thủng
   const sendRaw = async (method, params = {}) => {
@@ -101,7 +111,7 @@ function makeFakePage({ matchCount = 3 } = {}) {
         childNodeCount: 1,
         attributes: []
       };
-      if (depth > 0) root.children = [childTree(depth - 1, 2)];
+      if (depth > 0) root.children = [childTree(depth - 1, 2, sauThat - 1)];
       return { root };
     }
     if (method === "DOM.querySelectorAll") {
@@ -232,6 +242,29 @@ const FAKE_TARGETS = [
   const small = await runProbe("dom.tree", { sendRaw: page.sendRaw }, { depth: 4, maxNodes: 3 });
   assert.equal(small.data.truncated, true, "vượt ngân sách nút thì phải NÓI là đã cắt");
   assert.equal(small.data.nodeCount, 3);
+
+  /* ---- NHÁT CẮT THEO ĐỘ SÂU — cái xanh giả của `G-83` -------------------
+   * Ca đắt nhất KHÔNG phải "cắt mà báo là cắt", mà là **cắt trong lúc mọi con số đều nói là
+   * chưa cắt**: ngân sách nút còn thừa, `truncated:false`, và cây vẫn cụt ở mép độ sâu. Đúng
+   * hình dạng đó đã làm báo cáo chặng ② trên Udin thiếu mất 36 ảnh kết quả mà vẫn tự khai đủ. */
+  {
+    const sau = await runProbe("dom.tree", { sendRaw: page.sendRaw }, { depth: 3, maxNodes: 500 });
+    assert.equal(sau.data.truncated, false, "ngân sách nút còn thừa — ca cần thử đúng là ca này");
+    assert.ok(sau.data.cutByDepth > 0, "cây thật sâu hơn lượt hỏi mà khai cutByDepth:0 là nói dối");
+    assert.equal(sau.data.childrenDropped, sau.data.cutByDepth * 2, "phải đếm ĐÚNG số nút con rơi ra ngoài, không chỉ số nhánh cụt");
+    /* và nó phải chỉ ra ĐÚNG NHÁNH NÀO cụt, không chỉ đưa một con số tổng */
+    const memMep = [];
+    (function di(n) { if (n.cutByDepth) memMep.push(n); for (const k of n.children || []) di(k); })(sau.data.tree);
+    assert.equal(memMep.length, sau.data.cutByDepth, "mỗi nhánh cụt phải tự mang dấu, để người đọc biết đi tiếp từ đâu");
+    assert.ok(memMep.every((n) => (n.children || []).length === 0 && n.childNodeCount > 0));
+  }
+  {
+    /* Chiều ngược: cây thật NÔNG hơn lượt hỏi thì không được bịa ra nhát cắt nào. */
+    const nong = makeFakePage({ sauThat: 2 });
+    const du = await runProbe("dom.tree", { sendRaw: nong.sendRaw }, { depth: 8, maxNodes: 500 });
+    assert.equal(du.data.cutByDepth, 0, "dò hết cây mà vẫn kêu bị cắt thì lần sau không ai tin nữa");
+    assert.equal(du.data.childrenDropped, 0);
+  }
 
   for (const bad of [0, 11, 2.5, "3", -1]) {
     const r = await runProbe("dom.tree", { sendRaw: page.sendRaw }, { depth: bad });
