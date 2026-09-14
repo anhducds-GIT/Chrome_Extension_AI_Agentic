@@ -83,9 +83,9 @@ GPT 35 file `.js` · Gemini 34.
 | `runner-core.js` | 401 | 223 | 178 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `background.js` | 293 | 202 | 91 |
+| `resume-core.js` | 210 | 122 | 88 |
 | `reconciliation-core.js` | 154 | 69 | 85 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
-| `resume-core.js` | 189 | 122 | 67 |
 | `output-location-core.js` | 424 | 373 | 51 |
 | `output-profile-core.js` | 149 | 100 | 49 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
