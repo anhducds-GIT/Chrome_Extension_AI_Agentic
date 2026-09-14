@@ -14,6 +14,11 @@ function lam({ nhan = true } = {}) {
     if (method === "scout.query") {
       if (p.selector === ".concurrency-overlay") return q(0);
       if (p.selector === SEL.anhKetQua) return q(trang.anh.length, trang.anh.map((src) => ({ attributes: { src } })), false);
+      /* Ứng viên selector mà `lay-anh` dựng để chỉ ĐÚNG MỘT nút ảnh. Trang giả này không có
+       * `alt`/`id`, nên đường duy nhất là tiền tố `src` — và nó phải khớp đúng một. */
+      { const m = p.selector.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/);
+        if (m) { const h = trang.anh.filter((s) => s.startsWith(m[1]));
+          return q(h.length, h.map((src) => ({ attributes: { src } })), false); } }
       if (p.selector === SEL.dangChay) {
         if (trang.chay && trang.vong-- <= 0) { trang.chay = false; trang.anh.push("https://cdn.udin/moi-1.webp", "https://cdn.udin/moi-2.webp"); }
         return q(trang.chay ? 1 : 0);
@@ -26,7 +31,13 @@ function lam({ nhan = true } = {}) {
       if (p.selector === SEL.dangChay) return { data: { satisfied: p.state === "present" ? trang.chay : !trang.chay } };
       return { data: { satisfied: true } };
     }
-    if (method === "scout.fetch") return { ok: true, status: 200, content_type: "image/webp", bytes: 3, body_base64: "QUFB" };
+    if (method === "scout.grab") {
+      const m = p.selector.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/);
+      const h = trang.anh.filter((s) => m && s.startsWith(m[1]));
+      if (h.length !== 1) throw new Error(`SELECTOR_AMBIGUOUS — ${h.length}`);
+      return { action: "grab", ok: true, status: 200, content_type: "image/webp", bytes: 3, body_base64: "QUFB",
+               source: { selector: p.selector, attribute: p.attribute, masked: h[0], matchCount: 1 } };
+    }
     if (method === "file.write") return { path: p.path, bytes: 3, size: 3 };
     throw new Error("method lạ " + method + " " + (p.selector || ""));
   };
@@ -41,7 +52,7 @@ function lam({ nhan = true } = {}) {
   const daGhi = t.nk.filter((g) => g.method === "file.write").map((g) => g.p.path);
   assert.equal(daGhi.length, 2, "chỉ ghi ảnh của lượt này");
   assert.ok(daGhi.every((p) => /moi-/.test(p)), `phải là ảnh mới, thấy ${daGhi.join(" ")}`);
-  assert.ok(t.nk.findIndex((g) => g.method === "scout.click") < t.nk.findIndex((g) => g.method === "scout.fetch"), "lấy ảnh sau khi gửi"); }
+  assert.ok(t.nk.findIndex((g) => g.method === "scout.click") < t.nk.findIndex((g) => g.method === "scout.grab"), "lấy ảnh sau khi gửi"); }
 
 // ⓑ mặc định KHÔNG nạp lại tab của Đức
 { const t = lam(); await e2e("a green door", t);
@@ -59,6 +70,6 @@ function lam({ nhan = true } = {}) {
 { const t = lam({ nhan: false });
   await assert.rejects(() => e2e("a red gate", t), /không chạy/);
   assert.equal(t.nk.filter((g) => g.method === "file.write").length, 0);
-  assert.equal(t.nk.filter((g) => g.method === "scout.fetch").length, 0); }
+  assert.equal(t.nk.filter((g) => g.method === "scout.grab").length, 0); }
 
 console.log("  · udin e2e: 5 khối xanh");
