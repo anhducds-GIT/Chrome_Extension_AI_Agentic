@@ -1195,3 +1195,31 @@ trong DOM, nên `quaManCho` đọc *"không màn chắn"* rồi trả về **s�
 **Đo:** suite **29/29** · đột biến repo **128/128** · **16 con đột biến làm tay** trên bốn mục
 mới, cả 16 giết được. **Chặn duy nhất còn lại là Udin đang hết chỗ** — vòng chờ tự chạy, không
 cần ai bấm.
+
+## 2026-09-14 · `scouter-review` — tìm ra một LỖI NỀN mà mọi thứ khác đang đứng trên
+
+**`S-25`: Bridge khai dối cỡ phong bì.** Nó khai `max_envelope_bytes: 1.048.576` ra ngoài dây;
+thực tế phong bì lớn làm **đứt kết nối** — không thành một lỗi có tên, mà thành
+`TRANSPORT_DISCONNECTED` rồi `EXTENSION_OFFLINE` cho tới khi extension tự nối lại. Đây là nguyên
+nhân chung của `G-56` (`scout.shot` chết hôm nay dù 13/09 còn chạy) và của **mọi** lượt
+`scout.grab` trả thân thật. Chốt chặn cỡ ở đường gửi ra đo theo `MAX_ENVELOPE_BYTES` nên nó
+**không bao giờ** bắt được ca này. Chữa gốc đụng `_shared/bridge-host` — lõi dùng chung với ba
+gói đóng băng → **câu của Đức**.
+
+**Và một kết luận SAI của tôi, sửa trong cùng ngày.** Lần đo đầu trông như một NGƯỠNG sạch
+(74.668 base64 chạy · 85.336 đứt) và tôi đã viết nó ra. Đo lại **cùng một cỡ nhiều lượt**:
+65.536 chạy · 65.536 **đứt** · 65.536 chạy. Không phải ngưỡng — **chập chờn**. *Mỗi cỡ thử một
+lần thì một lỗi chập chờn luôn trông như một ngưỡng* (`G-63`).
+
+**`G-62`: header `Range` giết service worker.** Chia đôi: bỏ đúng header đó, giữ nguyên mọi thứ
+khác → grab chạy. Nên đường "lấy theo khúc bằng `Range`" chết (`G-61` SAI). Thay bằng: tải cả
+tệp rồi **chỉ mã hoá khúc này** — không giữ trạng thái, service worker bị giết giữa chừng cũng
+không hỏng loạt. Khúc 64 KiB + **thử lại có trần 3 lượt**, chỉ bắt hai mã lỗi đứt dây. Ghi rõ
+là **vật che**, không phải bản vá. Giá: một ảnh 746 KB = **16 khúc** = 16 đơn vị trần ghi.
+
+**`O12` — Đức nêu Zoom cho layout artboard (Udin, Vizcom), và nó vào danh sách đóng băng.**
+Hai cái được, cái thứ hai mới là lý do thật: ⑴ ảnh khung nhìn phủ cả artboard mà **ít byte hơn**
+ảnh cả trang — nên `captureBeyondViewport` **không** thay được nó chừng nào `S-25` còn đó
+(`G-66`); ⑵ ứng dụng canvas có thể **vẽ thêm phần tử** khi thu nhỏ, tức Scouter *nhìn được nhiều
+hơn*. Vế ⑵ ghi **CHƯA** (`G-65`): số có tăng (`div` 146→224) nhưng giữa hai lượt đo có một lượt
+nạp lại trang **và** một loạt ảnh mới — ba biến đổi cùng lúc thì con số không nói được gì.
