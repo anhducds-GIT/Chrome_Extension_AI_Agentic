@@ -34,30 +34,41 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| ~~T13~~ | Nối `lay-anh.mjs` sang `scout.grab` → đóng `W3` | — | **XONG 14/09** — **hai ảnh thật xuống đĩa** (330.270 + 290.214 byte). `O11` ĐÃ CHỨNG MINH |
-| ~~T22~~ | `gui-prompt` phân biệt *quá giờ* với *hỏng* | — | **XONG 14/09** — trần 900s (bằng hạn URL), `UdinDangChay` chở theo tập ảnh trước, `choXong()` nối lại được. 13 khối · 5 đột biến tay |
-| ~~H1~~ | Đức nạp lại extension + bật công tắc ghi | — | **XONG 14/09** — Bridge nay khai **18** method, `scout.grab` đã vào |
-| ~~Q1~~ | Chính sách che `de-xuat-chat-v1` | — | **CHỐT 14/09 đường ⒝** — [ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) |
-| ~~T15~~ | E2E Udin: mở trang → W1 → W2 → W3 một mạch | — | **ĐẠT một phần 14/09** — ba chặng một mạch, W3 lấy 2/4 ảnh rồi **hết trần 200 lượt ghi**. Đủ 4 ảnh cần ~64 đơn vị → `S-25` |
-| ~~T18~~ | `O8` đọc chữ trên trang | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`). 10 khối · 6 đột biến tay · 19 method |
-| **S-25** | ✋ **Bridge khai dối cỡ phong bì** — khai 1 MiB, rớt chập chờn quanh 65 KB | — | **việc kế, và là LỖI NỀN**: nó giết `scout.shot`, ép grab thành 16 khúc/ảnh. Đụng lõi dùng chung ba gói đóng băng → **câu của Đức** |
-| **T19** | `I9` tải file lên (`I4` xong 14/09) | ✋ Đức chốt hình dạng | mục cuối của danh sách đóng băng |
-| **O12** | ✋ Zoom cho layout artboard — Đức nêu 14/09 | một phép đo 10 giây | vào danh sách đóng băng; xem `G-65` |
-| **T20** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ✋ Đức, chốt gộp một lượt | bảo hiểm cho trang thứ hai |
-| **T17** | **Máy sinh bảng năng lực** thay cho gõ tay | — | nợ phát hiện 14/09: không dòng mã nào đọc `CAPABILITIES.md` |
-| **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị**, không bằng sự tồn tại | — | nợ do `G-48` để lại |
-| **T8** | `S-03` — đổi tên `observer` → `scouter` | T18 · T19 · T20 | mốc **đóng băng seed** |
-| **T9** | Đóng gói v1 cho người ngoài dùng được | T8 | mốc đóng băng seed |
-| **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình; lùi xuống sau đóng băng |
-| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | — | **③/④ chặng**; chặng 4 nay chạy được vì adapter tự kiểm bằng trang |
-| **T5** | Chạy lại lượt gửi prompt trên Udin | — | `W2` đã ĐẠT 3/3 — mục này gần như thừa, xem lại trước khi làm |
+| **T24** | **`S-25` — ghép được tin WebSocket bị cắt mảnh** | — | **việc kế.** Gốc đã tìm ra và đã chứng minh (`G-67`): `websocket-core.mjs:76` ném ở mọi mảnh nối |
+| **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · thu phóng · cỡ tài liệu | — | **nền của cả nhóm.** Không đọc được thì không kiểm được một lượt cuộn hay thu phóng **bằng trang** |
+| **T26** | `scout.scroll` (`I5`) | T25 | uỷ quyền [ADR-0007] |
+| **T27** | `scout.zoom` (`O12`) | T25 | uỷ quyền · Đức nêu cho layout artboard |
+| **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`clickCount` (`I7`) | T25 | uỷ quyền |
+| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | uỷ quyền |
+| **T30** | `N5` lùi / tiến (`Page.navigateToHistoryEntry`) | — | mảnh còn thiếu của nhóm đi lại |
+| **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | `G-68` — 64 KiB đặt ra để né đúng `G-67`; quên nó thì mỗi ảnh vẫn tốn 16 đơn vị |
+| **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | nợ do `G-48` để lại |
+| **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
+| **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |
+| **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình |
+| **T7** | Đóng vòng tự cải tiến MỘT lần | — | ③/④ chặng; chặng 4 nay chạy được |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
-| ~~T14~~ | ~~`S-22` — điều tra lượt bấm báo ĐẠT mà trang không nhận~~ | — | **ĐÓNG 14/09 bằng LỜI KHAI** trong `README`, không bằng bản vá. Đọc mục `T14` bên dưới trước khi nghĩ tới mở lại |
-| ~~D3~~ | ~~`scout.focus`~~ | — | **Đức trả lời 14/09: KHÔNG.** Cửa sổ chạy ẩn bên dưới; adapter phải chạy được trên tab nền |
-| ~~T12~~ | ~~W3 qua `scout.fetch`~~ | — | **CHẾT 14/09** — 403 vì URL ký sẵn (`S-24`); thay bằng T13 |
-| ~~D2~~ | Đặt tên ghế | — | **XONG 14/09** — ghế làm việc tên `Dummy_Scout`; ghế còn lại Đức không dùng |
-| ~~T1 T2 T3 T4 T11~~ | `S-16`…`S-19`, `S-23` | — | **XONG 12–13/09**, đo ngoài đời |
+| ~~T13 T15 T22 T18 T17~~ | grab · E2E · quá-giờ · `scout.text` · ghim bảng | — | **XONG 14/09** |
+| ~~T14 D3 D2 T12 T1–T4 T11~~ | `S-22` · `scout.focus` · tên ghế · `scout.fetch` · `S-16`…`S-19` `S-23` | — | **đóng 12–14/09** |
+
+## Lộ trình — ba chặng, và mỗi chặng đóng khi có gì
+
+**Chặng ①  SỬA NỀN** (`T24`, `T31`) — *một lỗi đang thu hẹp mọi năng lực khác.*
+Không mở năng lực nào, nhưng nó đang làm `scout.shot` chết và ép mỗi ảnh tốn 16 đơn vị trần ghi.
+**Đóng khi:** một tin 1 MiB đi trọn qua dây thật · `scout.shot` chạy lại trên Udin · `scout.grab`
+lấy một ảnh 746 KB trong ≤ 2 khúc · và có phép ghim chứng minh **tin KHÔNG cắt mảnh cư xử y hệt
+như trước** (vì lõi này dùng chung với ba gói đóng băng).
+
+**Chặng ②  NHÌN & ĐI LẠI** (`T25` → `T30`) — *nhóm Đức gộp lại, và nó đúng hơn cách bảng đang chia.*
+Bốn thứ trả lời cùng một câu: **Scouter đang nhìn vào phần nào của trang** — mà `usable` đứng trên
+câu đó, nên mọi lượt bấm cũng vậy. **`T25` đi trước và không được đảo thứ tự**: đọc trước, ghi sau.
+**Đóng khi:** mỗi lệnh có một lượt chạy thật · mỗi lệnh ghi **kiểm bằng `scout.view`**, không tin
+lời báo của chính nó · và lõi GHI thôi phải tự đọc độ cuộn bằng mẹo hộp `:root` (`G-24`).
+
+**Chặng ③  ĐÓNG BĂNG rồi TÁCH** (`T8`, `T9`, `T21`) — *đích Đức đặt ngày 14/09.*
+**Đóng khi:** các `W` bắt buộc của Udin ĐẠT **từ gói mới**, và **không một dòng nào của Scouter
+phải sửa**. Đó là phép kiểm duy nhất chứng minh việc tách đã thành.
 
 **T11 chen lên đầu ngày 12/09, và đây là lý do:** lượt chạy T7 đo được rằng `scout.click` và
 `scout.type` **báo ĐẠT trong khi trang không nhận được gì**. Mọi việc còn lại trong chuỗi đều
@@ -70,6 +81,75 @@ giây (xem `S-22` giả thuyết ⒜).
 làm mọi diff khó đọc.
 
 ---
+
+## T24 · `S-25` — ghép được tin WebSocket bị cắt mảnh  ⟵ *việc kế*
+
+**Sửa ở:** `workers/_shared/bridge-host/websocket-core.mjs` — **lõi dùng chung với ba gói đóng
+băng.** Đọc khối "Giá phải trả" của [ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md)
+trước khi gõ dòng đầu.
+
+**Chỗ hỏng, đã chứng minh (`G-67`):** dòng `if (!fin) throw new Error("Fragmented WebSocket
+messages are not supported.")`. Chrome **tự cắt mảnh** tin gửi ra khi nó vượt khoảng 64 KiB, nên
+một câu trả lời hơi lớn không thành lỗi — nó thành **đứt kết nối**, rồi mọi lệnh sau nhận
+`EXTENSION_OFFLINE` cho tới khi extension tự nối lại.
+
+**Vì sao sửa nó KHÔNG phạm luật "không nới bảo vệ":** mảnh nối là một ca **chưa viết** của chuẩn
+WebSocket, không phải một hàng rào ai đó dựng lên. Bản sửa **thuần thêm vào**: hôm nay mảnh nối
+giết kết nối, sau khi sửa thì chúng được ghép. Không một hành vi đang chạy nào đổi nghĩa.
+
+**Ba chỗ đừng làm sai:**
+⑴ Tin ghép lại vẫn phải chịu **cùng một trần** `maxPayloadBytes` — cộng dồn từng mảnh và **ném
+khi tổng vượt trần**, không thì mảnh nối thành đường vòng quanh chính cái trần đó.
+⑵ **Khung điều khiển (`opcode >= 0x8`) chen được vào giữa** một tin đang cắt mảnh — đó là chuẩn,
+và ping/pong đi đúng đường ấy. Xử lý chúng ngay, đừng gộp vào bộ đệm đang ghép.
+⑶ Mảnh nối phải mang `opcode = 0`; mảnh đầu mang opcode thật. Nhận sai chỗ này thì hai tin
+chồng lên nhau mà không ai thấy.
+
+· **đóng khi:** phép ghim cho ⑴ ⑵ ⑶ · một phép ghim chứng minh **tin KHÔNG cắt mảnh cư xử y hệt
+như trước** (đây là phép ghim quan trọng nhất, vì ba gói đóng băng đứng trên nó) · đột biến giết
+được cả hai chiều · một tin **1 MiB đi trọn qua dây THẬT** · `scout.shot` chạy lại trên Udin ·
+và `npm run test` của cả repo xanh, không chỉ suite của Scouter.
+
+## T25 · `scout.view` — ĐỌC tầm nhìn  ⟵ *nền của cả chặng ②, đi trước T26–T28*
+
+**Trả về:** cuộn (`x`, `y`) · khung nhìn (`width`, `height`) · thu phóng · cỡ tài liệu. ĐỌC, nên
+nó vào lõi đọc và **không tiêu trần ghi**.
+
+**Vì sao nó phải đi TRƯỚC.** Ba method ghi hứa *"đã bắn sự kiện"*, **không** hứa *"trang đã nhận"*
+(`README`, `S-22`). Nên một lượt `scout.scroll` chỉ kiểm được bằng cách **đọc lại xem trang đã
+cuộn chưa** — làm `T26` trước `T25` là dựng một lệnh ghi không có dấu kiểm.
+
+**Và nó trả một món nợ đang nằm trong lõi GHI:** hôm nay lõi ghi tự đọc độ cuộn bằng mẹo hộp
+`margin` của `:root` (`G-24`) vì không có đường đọc tử tế. Mẹo đó ở trong lõi ghi là chỗ nợ.
+**Nhưng đừng để lõi ghi gọi sang lõi đọc** (luật gói số 6) — mỗi lõi khai lấy thứ nó dùng.
+
+· **đóng khi:** đọc đúng trên một trang cuộn được và một trang không cuộn được · số khớp với thứ
+`scout.shot` nhìn thấy · có phép ghim cho trang chưa cuộn (hai hệ toạ độ trùng nhau, đúng chỗ
+`S-23` từng lừa cả một ngày).
+
+## T26–T28 · Ba lệnh đổi tầm nhìn
+
+| | Lệnh | Ghi chú thiết kế |
+|---|---|---|
+| `T26` | `scout.scroll { selector \| dx,dy }` | Cuộn **tới một phần tử** là cách bền; cuộn theo pixel là cách giòn. Mở cả hai thì mặc định phải là phần tử |
+| `T27` | `scout.zoom { factor }` | **Đổi thứ Đức đang nhìn** — cùng họ với `scout.focus` mà Đức đã từ chối. Nên nó phải **trả lại mức cũ được**, và `scout.view` phải đọc được mức hiện tại trước khi đổi |
+| `T28` | `scout.hover` · `scout.click` nhận `button` + `clickCount` | `I7` **không cần lệnh mới** — thêm hai tham số vào `scout.click` là đủ, và giữ nguyên lời hứa hẹp của nó. Ít method hơn, cùng năng lực |
+
+**Cả ba kiểm bằng `scout.view`, không tin lời báo của chính mình.** Và `scout.hover` có một cái
+bẫy riêng: menu hiện ra khi rê chuột sẽ **biến mất** ngay khi chuột rời đi, nên dấu kiểm phải đọc
+trang **trong lúc chuột còn ở đó**.
+
+## T29 · `scout.upload` (`I9`) — đưa một tệp vào trang
+
+**Chỉ nhận đường dẫn TƯƠNG ĐỐI**, và **máy chủ Bridge** ghép nó vào vùng ghi rồi mới chuyển xuống
+extension. Lý do: chỉ máy chủ biết vùng ghi ở đâu, nên chỉ nó kiểm được đường dẫn có chui ra
+ngoài không. Nhận đường dẫn tuyệt đối từ ngoài dây là giao cả ổ đĩa của Đức cho người gọi.
+
+Cần method CDP mới `DOM.setFileInputFiles`. Scouter có **Bridge host riêng**
+(`v0.1.0/bridge/scouter-bridge-host.mjs`), nên việc này **không** đụng lõi dùng chung.
+
+· **đóng khi:** `..` và đường dẫn tuyệt đối bị từ chối ở MÁY CHỦ (có phép ghim) · phần tử không
+phải `<input type=file>` thì từ chối · một lượt chạy thật đưa được một ảnh từ vùng ghi vào trang.
 
 ## ~~Q1~~ · Chính sách che `de-xuat-chat-v1` — Đức chốt 14/09: **đường ⒝**
 

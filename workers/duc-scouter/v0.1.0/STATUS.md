@@ -5,8 +5,8 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom."
-human_action: "@Duc:bon cau, chi tiet o CHUOI-VIEC.md. (1) S-25 sua tran phong bi o loi dung chung? (2) I9 upload di duong duong-dan-tuong-doi? (3) I5/I6/I7 gat mot luot cho ca ba? (4) O12 zoom: mot phep do 10 giay, zoom ra roi zoom lai ma khong dung gi khac."
+next_step: "T24 (S-25) — websocket-core.mjs nem loi o MOI tin WebSocket bi cat manh (G-67, da chung minh), ma Chrome tu cat manh khi tin vuot ~64 KiB. Mot ca CHUA VIET, khong phai mot lop bao ve. Sua o _shared/bridge-host (dung chung ba goi dong bang) nen phep ghim quan trong nhat: tin KHONG cat manh cu xu y het nhu truoc. Roi T31 nang lai tran khuc. Chang 2: T25 scout.view (DOC, di truoc) -> T26 cuon, T27 zoom, T28 hover + bam dup/phai, T30 lui/tien; roi T29 upload. Lo trinh day du o CHUOI-VIEC.md."
+human_action: "@Duc:khong co viec nao bat buoc. Duc da uy quyen 14/09 cho S-25, I9, I5/I6/I7, O12 — bien uy quyen ghi trong ADR-0007. Mot viec NHO neu ranh: zoom ra roi zoom lai ma khong dung gi khac, de dong G-65."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Hoan thien SEED dung chung roi moi tach Udin ra goi rieng — Duc dat lai 14/09. Thuoc do khong con la phan tram, ma la DANH SACH DONG BANG o docs/CAPABILITIES.md muc 5.2: tap nang luc phai xong TRUOC khi tach, vi them mot lenh Bridge sau khi tach phai sua tay sau cho trong Scouter. Udin la CA THU, khong phai dich. Ngay 14/09 dong duoc: scout.grab (O11, hai anh that xuong dia), scout.text (O8), scout.clear (I4), va ghim bang nang luc vao su that (T17). Con lai trong danh sach: I9 upload, I5/I6/I7, O12 zoom. Chan lon nhat khong phai mot nang luc ma la mot LOI: S-25."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
@@ -51,7 +51,13 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 ## Câu còn treo, chỉ Đức chốt được
 
-**Không còn câu nào treo.** `Q1` — chính sách che `de-xuat-chat-v1` — Đức chốt 14/09 đường ⒝:
+**Không còn câu nào treo, và Đức đã UỶ QUYỀN phần còn lại.** Ngày 14/09 Đức trao quyền tự quyết
+cho `S-25` · `I9` · `I5` `I6` `I7` · `O12`, theo hướng *"mở rộng năng lực để cover nhiều use case
+hiện tại và sau này"*. Biên của uỷ quyền ghi ngay trong
+[ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md) — nó **không** gồm nới một
+lớp bảo vệ, `Runtime.*`, toạ độ/URL/mã phím tự do từ ngoài, hay quyền `manifest` mới.
+
+`Q1` — chính sách che `de-xuat-chat-v1` — Đức chốt 14/09 đường ⒝:
 ký nguyên bản, kèm **một cửa hẹp** `scout.text` ([ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)).
 `O8` đóng cùng ngày và **đã chạy thật** trên Udin (`G-57`).
 

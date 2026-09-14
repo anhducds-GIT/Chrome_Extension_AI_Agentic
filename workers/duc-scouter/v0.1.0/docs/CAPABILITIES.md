@@ -203,25 +203,24 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 **`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
 thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp nhận mở lại Scouter một lần.
 
-### 5.3 Các chặng
+### 5.3 Các chặng — viết lại 14/09 sau khi Đức uỷ quyền ([ADR-0007](adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md))
 
 | Chặng | Việc | Xong khi | Chờ ai |
 |---|---|---|---|
-| ~~P0~~ | Chốt mô hình đo | **XONG 13/09** | — |
-| ~~P1b~~ | ~~`T14` đóng `S-22` bằng chẩn đoán~~ | **ĐÓNG 14/09 bằng LỜI KHAI**, không bằng bản vá — `README` khai `scout.click` không hứa *"trang đã nhận"*. Lý do dừng: năm lượt điều tra cùng một giả thuyết | — |
-| **P1a** | `T13` — `lay-anh.mjs` đi bằng `scout.grab`, chạy thật | một ảnh Udin nằm trên đĩa, và `scout.grab` có lượt chạy thật đầu tiên | **không ai** |
-| **P1c** | `T15` — E2E Udin (`W1→W2→W3`) | ba chặng chạy một mạch trên ghế thật | P1a |
-| ~~P2a~~ | ~~`O8` đọc chữ qua `scout.text`~~ | **XONG 14/09** — method chạy thật trên Udin (`G-57`). Còn `W4` (đọc câu trả lời của agent) chờ một lượt Udin rảnh chỗ | — |
-| **P2b** | `I4` xoá ô · `I9` upload | `W7` `W8` ĐẠT trên trang thật | ✋ Đức chốt từng mục |
-| **P2c** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ĐÃ CHỨNG MINH trên Chrome riêng | ✋ Đức chốt gộp một lượt |
-| **P2d** | `T17` — **máy sinh bảng §2**, thay cho gõ tay | một ô khai `ĐÃ CHỨNG MINH` không có dòng `TRIALS` thì cổng ĐỎ | không ai |
-| **P3** | **ĐÓNG BĂNG SEED** — `T8` đổi tên `observer`→`scouter`, `T9` đóng gói `v1` | không method mới nào được thêm sau mốc này mà không có ADR | P2a–P2d |
-| **P4** | **Tách Udin** thành gói riêng, điều khiển seed qua Bridge (không chép seed) | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng nào của Scouter phải sửa** | P3 |
-| **P5** | Trang thứ hai khác loại (node editor / timeline / CRUD) | có `W` ĐẠT mà không sửa seed | P4 |
+| ~~P0 P1a P1b P1c P2a~~ | mô hình đo · `T13` grab · `S-22` · E2E · `O8` | **XONG 12–14/09** | — |
+| **①** | **`T24` `S-25`** — ghép tin WebSocket bị cắt mảnh · rồi `T31` nâng lại trần khúc | tin 1 MiB đi trọn qua dây thật · `scout.shot` chạy lại · một ảnh 746 KB trong ≤ 2 khúc · **và** phép ghim chứng minh tin KHÔNG cắt mảnh cư xử y hệt | **không ai** |
+| **②** | **Nhìn & đi lại**: `T25` `scout.view` (ĐỌC, đi trước) → `T26` cuộn · `T27` thu phóng · `T28` rê chuột + bấm đúp/phải · `T30` lùi/tiến | mỗi lệnh có lượt chạy thật, và mỗi lệnh ghi **kiểm bằng `scout.view`** | **không ai** |
+| **②b** | `T29` `scout.upload` (`I9`) | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở máy chủ | **không ai** |
+| **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` đóng gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ① + ② |
+| **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |
+| **⑤** | Trang thứ hai khác loại (artboard: Vizcom / node editor / timeline) | có `W` ĐẠT mà không sửa seed | ④ |
 
-**Đổi so với bản sáng 14/09:** tách Udin từ **P3 lùi xuống P4**, và đứng sau một mốc đóng băng.
-Bản cũ cho tách trước khi mở `O8` `I4` `I9` — tức là đã hẹn sẵn ba lượt mở lại Scouter sau khi
-tách. Đó đúng là thứ Đức bảo tránh.
+**Vì sao ① đứng đầu dù nó không mở năng lực nào:** nó là một **lỗi**, và nó đang thu hẹp mọi năng
+lực khác — `scout.shot` chết, mỗi ảnh tốn 16 đơn vị trần ghi, và mọi đường *"nhìn toàn cảnh"* bị
+chặn kể cả `O12`.
+
+**Vì sao `T25` đi trước trong ②:** ba method ghi hứa *"đã bắn sự kiện"*, không hứa *"trang đã
+nhận"*. Một lệnh cuộn không có đường đọc lại tầm nhìn là một lệnh ghi **không có dấu kiểm**.
 
 ### 5.4 Rủi ro và nợ đang mở
 

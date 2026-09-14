@@ -10,6 +10,15 @@
 
 ## Kết luận hiện tại (14/09, sửa cuối ngày)
 
+- ✅ **`S-25` ĐÃ TÌM RA GỐC, và nó là MỘT DÒNG** (`G-67`): `_shared/bridge-host/websocket-core.mjs`
+  ném lỗi ở **mọi tin WebSocket bị cắt mảnh**, mà Chrome tự cắt mảnh khi tin vượt ~64 KiB. Nên
+  một câu trả lời hơi lớn làm **đứt kết nối** thay vì trả một lỗi có tên. Đây giải thích cả
+  `G-56` (`scout.shot` chết), mọi lượt `grab` trả thân thật, và ghi chép 08/09. **Đó là một ca
+  CHƯA VIẾT, không phải một lớp bảo vệ** — bản sửa thuần thêm vào. Việc `T24`.
+- ⚠️ **Một kết luận của tôi đã SAI và đã sửa trong ngày** (`G-63`): bảng đo đầu tiên trông như một
+  NGƯỠNG sạch, nên tôi viết ra rằng có ngưỡng. Đo lại **cùng một cỡ nhiều lượt** thì nó **chập
+  chờn**. *Mỗi cỡ thử một lần thì một lỗi chập chờn luôn trông y như một ngưỡng.*
+
 - 🛑 **`S-22` NGỪNG ĐIỀU TRA. Đức chốt 14/09.** Lý do không phải "đã hiểu" mà là **chi phí**:
   cùng một câu hỏi *"tab ẩn có làm mất cú bấm không"* đã được mở **năm lần** (`G-07` `G-38`
   `G-40` `G-42`, rồi `G-47` `G-49`), bốn lần trả lời **SAI**, và chính khối này đã ghi *"đừng
@@ -131,6 +140,8 @@
 | G-64 | 14/09 | S-25 | Tầng vận chuyển **rớt chập chờn** khi phong bì lớn, và đó là nguyên nhân chung của `G-56` (`scout.shot` chết hôm nay) lẫn mọi lượt `scout.grab` trả thân thật | gọi lặp cùng một khúc; đếm tỉ lệ đứt theo cỡ | **CHƯA** | Có bằng chứng đủ để **không đoán tiếp**: cùng cỡ hai kết quả khác nhau, và `TRANSPORT_DISCONNECTED` tự khai là *retryable*. Chốt chặn cỡ ở đường gửi ra đo theo `MAX_ENVELOPE_BYTES` (1 MiB) nên nó không bao giờ bắt được ca này. Cách đi tiếp **không phải** đo thêm: adapter thử lại có trần, và chữa gốc ghi thành `S-25` — nó đụng `_shared/bridge-host`, lõi dùng chung với ba gói đóng băng, nên là câu của Đức |
 | G-65 | 14/09 | O12 | **Zoom out làm ứng dụng dạng artboard vẽ ra THÊM phần tử**, nên Scouter nhìn được nhiều hơn — chứ không chỉ ảnh chụp gọn hơn | Đức zoom ra rồi zoom lại **mà không đụng gì khác**, đếm `div`/`button` hai lần | **CHƯA** | Đo sau khi Đức zoom: `div` **146 → 224**, `button` **10 → 35**. **KHÔNG kết luận được**: giữa hai lượt đo có một lượt nạp lại trang và một loạt ảnh mới, tức là **ba biến đổi cùng lúc**. Đây đúng cái bẫy `G-48` để lại. Phép thử sạch tốn của Đức 10 giây, và nó quyết định `O12` là năng lực THẬT hay chỉ là tiện cho ảnh chụp |
 | G-66 | 14/09 | O12 | Ảnh chụp cả trang (`captureBeyondViewport`) thay được zoom cho việc "nhìn toàn cảnh" | — | **SAI, do `G-63`** | Nó là một **tham số** của method đã có trong danh sách đọc, nên trông rẻ hơn hẳn. Nhưng ảnh cả trang của một artboard lớn thì to hơn ảnh khung nhìn nhiều lần, mà tầng vận chuyển đã đo được là **rớt chập chờn quanh 65 KB**. Zoom ra rồi chụp khung nhìn cho **cùng phạm vi với ít byte hơn**. Đường này chỉ mở lại được sau khi `S-25` xong |
+| G-67 | 14/09 | S-25 | ✅ **GỐC CỦA `S-25`**: bộ giải khung WebSocket của máy chủ **ném lỗi ở mọi tin bị cắt mảnh**, mà Chrome tự cắt mảnh khi tin vượt ~64 KiB | đưa thẳng một tin cắt hai mảnh đúng chuẩn (`fin=0` + `opcode=0`) vào `createFrameDecoder` | **ĐÚNG** | Ném ngay ở mảnh ĐẦU: *"Fragmented WebSocket messages are not supported."* (`_shared/bridge-host/websocket-core.mjs:76`). Khớp cả bốn triệu chứng: ngưỡng ~65 KB · **chập chờn** (Chrome cắt hay không tuỳ nhịp đệm, nên cùng một cỡ lượt chạy lượt đứt) · `scout.shot` chết · mọi lượt grab trả thân thật chết. Đây là một ca **CHƯA VIẾT**, không phải một lớp bảo vệ — nên sửa nó không phạm luật *"không nới bảo vệ"*; bản sửa thuần THÊM VÀO |
+| G-68 | 14/09 | S-25 | Sau khi ghép được mảnh nối, trần khúc của `scout.grab` nâng lại được và một ảnh Udin về **một hoặc hai** khúc | sửa `T24` xong rồi nâng `FETCH_MAX_BODY_BYTES`, đo lại bằng `scratchpad/may-do-co.mjs` | **CHƯA** | 64 KiB hiện nay đặt ra **để né đúng `G-67`**, không phải vì một giới hạn thật. Sửa gốc xong mà quên con số này thì mỗi ảnh vẫn tốn 16 đơn vị trần ghi |
 
 ## Phép đo dùng lại được — đừng dựng lại
 

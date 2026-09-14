@@ -1223,3 +1223,35 @@ Hai cái được, cái thứ hai mới là lý do thật: ⑴ ảnh khung nhìn
 (`G-66`); ⑵ ứng dụng canvas có thể **vẽ thêm phần tử** khi thu nhỏ, tức Scouter *nhìn được nhiều
 hơn*. Vế ⑵ ghi **CHƯA** (`G-65`): số có tăng (`div` 146→224) nhưng giữa hai lượt đo có một lượt
 nạp lại trang **và** một loạt ảnh mới — ba biến đổi cùng lúc thì con số không nói được gì.
+
+## 2026-09-14 · `scouter-review` — Đức uỷ quyền, và gốc `S-25` tìm ra là MỘT DÒNG
+
+**Uỷ quyền ([ADR-0007](adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md)).** Đức trao quyền tự
+quyết cho `S-25` · `I9` · `I5` `I6` `I7` · `O12`, theo hướng *"mở rộng năng lực để cover nhiều
+use case hiện tại và sau này"*, và giữ `I4`. **Biên của uỷ quyền ghi ngay trong ADR** — nó không
+gồm nới bảo vệ, `Runtime.*`, toạ độ/URL/mã phím tự do từ ngoài, hay quyền `manifest` mới. Uỷ
+quyền là *khỏi hỏi từng nước đi bên trong*, không phải *khỏi giữ luật*.
+
+**Đức gộp `I5` `I6` `I7` `O12` vào một chữ — *Navigation* — và cách gộp đó đúng hơn bảng đang
+chia** (cuộn ở nhóm "tay người", thu phóng ở nhóm "nhìn"). Bốn thứ trả lời **cùng một câu**:
+*Scouter đang nhìn phần nào của trang?* — mà `usable` đứng trên câu đó, nên mọi lượt bấm cũng vậy.
+Hệ quả bắt buộc, ghi thành luật của chặng: **`scout.view` (ĐỌC) đi TRƯỚC mọi lệnh đổi tầm nhìn.**
+Không đọc lại được thì một lượt cuộn là một lệnh ghi **không có dấu kiểm** — đúng cái `README` đã
+khai sau `S-22`. Nó cũng trả một món nợ: lõi GHI hôm nay tự đọc độ cuộn bằng mẹo hộp `:root`
+(`G-24`).
+
+**`S-25` — gốc tìm ra, và đã CHỨNG MINH (`G-67`), không phải suy đoán.**
+`_shared/bridge-host/websocket-core.mjs:76` — `if (!fin) throw`. Đưa thẳng một tin cắt hai mảnh
+đúng chuẩn vào `createFrameDecoder` thì nó **ném ngay ở mảnh đầu**. Chrome tự cắt mảnh khi tin
+vượt ~64 KiB, nên một câu trả lời hơi lớn **làm đứt kết nối** thay vì trả một lỗi có tên. Khớp cả
+bốn triệu chứng: ngưỡng ~65 KB · **chập chờn** (Chrome cắt hay không tuỳ nhịp đệm) · `scout.shot`
+chết · mọi lượt `grab` trả thân thật chết.
+
+**Đó là một ca CHƯA VIẾT, không phải một lớp bảo vệ** — phân biệt hai thứ đó là điều kiện để sửa
+mà không phạm luật *"không nới bảo vệ cho cổng xanh"*. Bản sửa thuần THÊM VÀO. Nhưng lõi này dùng
+chung với **ba gói đóng băng**, nên phép ghim quan trọng nhất không phải "mảnh nối ghép được" mà
+là **"tin KHÔNG cắt mảnh cư xử y hệt như trước"**.
+
+**Lộ trình ba chặng** ở `CHUOI-VIEC.md`: ① sửa nền (`T24` `T31`) · ② nhìn & đi lại (`T25`→`T30`,
+`T29`) · ③ đóng băng rồi tách (`T8` `T9` `T21`). Mỗi chặng có câu *đóng khi*; chặng ④ chỉ đóng
+khi các `W` của Udin ĐẠT **từ gói mới mà không sửa một dòng Scouter nào**.
