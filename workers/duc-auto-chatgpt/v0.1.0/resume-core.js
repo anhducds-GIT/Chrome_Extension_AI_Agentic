@@ -105,6 +105,27 @@
     // cái ChatGPT trả về. Hai việc khác nhau, hai cách xử lý khác nhau.
     if (hashVerdict === false) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RESPONSE_HASH_MISMATCH", message: "Câu trả lời đã lưu không còn khớp dấu vân tay response_sha256 ghi lúc chạy. Ô này đã bị sửa sau khi ghi." };
     if (bool(job.recreate_operator_approved)) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RECREATE_INCOMPLETE", message: "Operator-approved recreate has not produced a verified persisted output. Continue remains blocked." };
+    // HALT SAU KHI ĐÃ LƯU XONG — Đức chốt 14/09, sau khi một task 10-15 phút của anh bị chặn đúng kiểu này.
+    //
+    // `READINESS_TIMEOUT_AFTER_SAVE` KHÔNG nói gì về job này. Nó nói về job KẾ TIẾP: ô soạn của
+    // ChatGPT chưa dùng lại được trong thời gian cho phép. Job này thì đã xong hẳn từ trước đó:
+    // `content.js` chỉ chốt chữ khi **không thấy nút Dừng · tab không bị che · chữ đứng yên ≥ `TEXT_SETTLE_MS`
+    // · không `looksTruncated`**, nên lúc readiness hết giờ thì việc sinh chữ đã xong xuôi, chữ đã ghi,
+    // đã xác minh, và `response_sha256` băm lại được.
+    //
+    // Trước 14/09 hàng ấy rơi xuống `AMBIGUOUS_SUBMITTED` = BLOCKER, nên **Continue Run bị chặn hẳn**
+    // và lối ra duy nhất còn lại là **Recreate** — mà Recreate **gửi lại prompt**. Tức luật cũ
+    // ĐẨY người về phía gửi lại một câu trả lời đã nằm trên đĩa, ngược đúng thứ exact-once sinh ra để
+    // chặn. Bản vá này KHÔNG nới exact-once, nó SIẾT: SAFE_COMPLETE nghĩa là **BỎ QUA**, không gửi lại.
+    //
+    // BA ĐIỀU KIỆN, thiếu một là thôi, và từng cái gánh một việc riêng:
+    //   ① `hashVerdict === false` đã thoát Ở TRÊN — ô bị sửa tay vẫn trượt, không lọt qua cửa này.
+    //   ② `validSavedAttribution` — phải có bằng chứng đã ghi và đã xác minh, không phải chỉ có mã lỗi đẹp.
+    //   ③ `status === "interrupted"` — CỐ Ý HẸP. Đường ảnh vẫn thử lại như cũ (lúc ấy status là
+    //     `PENDING`), đúng như bảng Halt đã mô tả. Chỉ ca ĐÃ DỪNG HẲN mới được nhận ở đây.
+    if (status === "interrupted" && lower(job.failure_type) === "readiness_timeout_after_save" && validSavedAttribution(job, hashVerdict)) {
+      return { state: "SAFE_COMPLETE", code: "", message: "Readiness timed out AFTER this job's output was written and verified; the output stands and the job is skipped on continuation rather than resubmitted." };
+    }
     // FAILED is only ever reached after the runner exhausted every retry on a
     // non-hard-stop failure (pre- or post-submit alike) and deliberately gave
     // up -- see resolveJobFailure() in sidepanel.js. That is already a
