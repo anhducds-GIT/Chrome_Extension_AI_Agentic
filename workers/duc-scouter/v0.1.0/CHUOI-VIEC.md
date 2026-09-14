@@ -480,6 +480,24 @@ giữa. Nên phần còn nợ của `T7` gọn lại đúng một câu: **chạy
 nó là **gian lận với chính phép đo**. Lượt chạy thật phải sinh ra adapter MỚI vào một thư mục
 khác, rồi so kết quả với `udin-optic/`. Giống nhau thì vòng khép; khác thì cái khác đó là kết quả.
 
+### Chặng ② đã chạy trên Udin 14/09 — và nó ĐỎ đúng chỗ cần đỏ
+
+`do-trang.mjs` nay chạy được trên trang khác **không sửa một dòng nào** (`TRANG_THU` · `THU_MUC`
+· bốn trần đều là tham số), và **không điều hướng** khi đã có tab đứng sẵn — chặng ② chỉ ĐỌC,
+nó không có lý do gì đụng vào trạng thái trang.
+
+Báo cáo Udin: **219.730 byte**, cả ba phép dò khai `hasMore: false`. **Nhưng nó KHÔNG đủ để dựng
+adapter** — thiếu ô prompt, thiếu ảnh kết quả, thiếu khối chữ agent (`G-83`). Ba trong sáu thứ
+`udin-optic` thật sự dùng, và ba cái thiếu là ba cái quan trọng nhất.
+
+· **chặng ② đóng khi:** báo cáo trả lời được **ba câu** — *gõ ở đâu · bấm ở đâu · kết quả hiện ở
+đâu* — mỗi câu bằng một selector khớp **đúng một**. Hôm nay trả lời được **một**. Đừng nâng trần
+để chữa: trần không phải nguyên nhân, `hasMore: false` đã nói thế. Nguyên nhân là **ba phép dò
+này không nhìn thấy thứ không-tương-tác và không-trợ-năng**, và `scout.tree` sâu tối đa 10.
+
+· *Đừng làm sai:* đừng lấy selector từ `pilots/udin-optic/` nhét vào báo cáo cho nó xanh. Cả
+`T7` nằm ở chỗ báo cáo phải **tự** đủ.
+
 ### Cái bẫy đã biết, đừng vấp lại
 
 - **Hai ghế là hai HỒ SƠ Chrome.** `scout.reload` một ghế KHÔNG nạp lại ghế kia. Sửa mã xong

@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T8 T16 XONG 14/09. Chang (3) chan o T9 -> T7, va T7 chang (4) chan o S-22: adapter phai BAM mot nut tren trang thu, ma tab trang thu khong nhan su kien nhap — S-22 dung nhu README da khai, Duc chot NGUNG DIEU TRA. LOI RA KHONG CAN DUC: doi trang dich cua T7 tu trang thu sang UDIN. Udin nhan bam that (do lai 14/09: type -> nut Send KHOA->MO; click -> khoi dong mot luot sinh anh), va no du bon dieu kien chang (1): o nhap, mot nut, ket qua sau mot khoang tre 177s. Con thieu dung mot thu: chay LIEN MOT MACH do -> viet adapter -> scout.reload -> chay adapter, khong sua tay giua chung. Chi tiet o CHUOI-VIEC.md."
+- next_step: "T8 T16 XONG. T7 doi trang dich sang UDIN va chang (2) DA CHAY 14/09 — do-trang.mjs nay chay tren trang khac khong sua mot dong nao, va khong dieu huong khi da co tab dung san. KET QUA DO: bao cao 219.730 byte, ca ba phep do khai hasMore:false, NHUNG thieu o prompt, anh ket qua, khoi chu agent (G-83) — mot XANH GIA. Viec ke: chang (2) dong khi bao cao tra loi duoc BA cau (go o dau, bam o dau, ket qua hien o dau), moi cau mot selector khop dung mot; hom nay tra loi duoc MOT. Dung nang tran de chua — tran khong phai nguyen nhan. Chi tiet o CHUOI-VIEC.md."
 - human_action: "không"
