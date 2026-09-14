@@ -22,8 +22,21 @@ export async function quaManCho(tuyChon = {}) {
   const goi = tuyChon.goi || goiThat;
   const tab = await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon);
 
+  /* ĐỢI ỨNG DỤNG VẼ XONG TRƯỚC ĐÃ. Đo 14/09: ngay sau `scout.navigate`, cả màn chắn lẫn ô prompt
+   * đều CHƯA có, nên hàm này đọc "không màn chắn" rồi trả về *sẵn sàng* — và chặng sau ngã với
+   * "thấy 0 nút Send". **Vắng mặt cái chắn không phải là có mặt cái sẵn sàng** (cùng họ với
+   * `S-18`: *có mặt* khác *dùng được*). Ô prompt là dấu đúng: nó nằm trong DOM kể cả khi bị màn
+   * chắn phủ kín (đo `S-18` 12/09), nên `present` phân biệt được *chưa vẽ* với *đang bị chắn*. */
+  const veXong = await goi("scout.wait", { target_id: tab, selector: SEL.oPrompt, state: "present", timeout_ms: 20000 }, tuyChon);
+  if (!veXong.data.satisfied) throw new Error("Trang Udin chưa vẽ xong sau 20s — chưa có ô prompt trong DOM, chưa làm gì cả.");
+
   const chan = await goi("scout.query", { target_id: tab, selector: SEL.manChan }, tuyChon);
-  if (chan.data.matchCount === 0) return { daChan: false, bam: 0 };
+  if (chan.data.matchCount === 0) {
+    /* Không có màn chắn vẫn chưa đủ để nói *sẵn sàng*: ô prompt có thể còn bị thứ khác phủ. */
+    const o = await goi("scout.wait", { target_id: tab, selector: SEL.oPrompt, state: "usable", timeout_ms: 5000 }, tuyChon);
+    if (!o.data.satisfied) throw new Error(`Không có màn chắn nhưng ô prompt vẫn chưa dùng được: ${o.data.usableBlockedBy || "hết giờ"}`);
+    return { daChan: false, bam: 0 };
+  }
 
   const san = await goi("scout.wait", { target_id: tab, selector: SEL.nutThuLai, state: "usable", timeout_ms: 5000 }, tuyChon);
   if (!san.data.satisfied) throw new Error(`Nút Try Again chưa bấm được: ${san.data.usableBlockedBy || "hết giờ"}`);
