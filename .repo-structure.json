@@ -389,6 +389,7 @@
       "tran_ky_tu": 6600,
       "goi": [
         "workers/duc-scouter/v0.1.0",
+        "workers/udin-optic/v0.1.0",
         "workers/duc-auto-gemini/v0.2.0",
         "workers/duc-auto-gg-flow-video/v0.1.0",
         "workers/duc-auto-chatgpt/v0.1.0"

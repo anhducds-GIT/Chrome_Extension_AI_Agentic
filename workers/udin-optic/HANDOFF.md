@@ -1,6 +1,6 @@
 # HANDOFF — `workers/udin-optic/`
 
-> Nhật ký của gói. Luật của gói: `AGENTS.md` cạnh file này.
+> Nhật ký của gói. Luật của gói: `v0.1.0/AGENTS.md` cạnh file này.
 > Ghi thêm ở CUỐI, không sửa mục cũ. Trần một mục: 2.600 byte.
 
 ## Log

@@ -14,7 +14,7 @@ khong_lam_duoc: "Khong tu chay. Khong do trang la: khong co scout.page, scout.tr
 dung_the_nao: "Sinh tep ghep cap rieng bang tao-tep-ghep-cap.mjs --goi udin-optic, bat may chu Bridge cua goi nay, nap thu muc v0.1.0 vao Chrome, chon tep ghep cap o bang ben, roi bat cong tac Cho phep bam va go. Phanh khan: Ctrl+Shift+U (KHAC Scouter co y — trung phim thi mot goi mat phanh)."
 ref_readme: workers/udin-optic/README.md
 ref_handoff: workers/udin-optic/HANDOFF.md
-ref_runbook: workers/udin-optic/AGENTS.md
+ref_runbook: workers/udin-optic/v0.1.0/AGENTS.md
 ---
 
 # Udin Optic
