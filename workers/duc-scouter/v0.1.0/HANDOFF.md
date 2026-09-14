@@ -944,21 +944,26 @@ nằm xen giữa.
 chặng `P1` đều cần ghế thật. Nên phiên này làm trọn phần không cần trình duyệt và **không đổi
 mục nào sang ĐẠT**. `S-22` không đụng tới được.
 
-**`lay-anh.mjs` (W3):** `scout.fetch as:"base64"` → `file.write encoding:"base64"`, xuống vùng ghi
-của máy chủ. Không lệnh Bridge mới. Ba chỗ cố ý ĐỎ, mỗi chỗ một mã lỗi riêng, để lượt chạy đầu
-**tự trả lời** ba câu chưa biết: ⑴ `src` dạng `blob:` thuộc về tab, máy phục vụ nền không với
-tới — chữa bằng cách hỏi Đức, **không** nới cửa `scout.fetch`; ⑵ 200 OK mà `content-type` không
-phải ảnh (bài học `hnx.vn`: 200 OK không đủ để kết luận có dữ liệu — thiếu chốt này thì một trang
-đăng nhập nằm trên đĩa dưới tên `.webp`); ⑶ byte ghi ≠ byte tải, đúng loại hỏng im lặng đã làm
-mất một PDF ngày 08/09.
+**`lay-anh.mjs` (W3):** `scout.fetch as:"base64"` → `file.write encoding:"base64"`. Không lệnh
+Bridge mới. Ba chỗ cố ý ĐỎ, mỗi chỗ một mã lỗi riêng, để lượt chạy đầu **tự trả lời** ba câu chưa
+biết: `src` dạng `blob:` (thuộc về tab — chữa bằng cách hỏi Đức, **không** nới cửa `scout.fetch`) ·
+200 OK mà `content-type` không phải ảnh (bài học `hnx.vn`) · byte ghi ≠ byte tải (hỏng im lặng
+kiểu PDF 08/09).
 
-**`e2e.mjs`:** W1→W2→W3 một mạch. `scout.navigate` **mặc định không chạy** (nó nạp lại tab Đức
-đang mở), và **prompt là tham số bắt buộc** — mỗi lượt tiêu credit một chữ mới, không có mặc định.
-`guiPrompt` nay trả cả `src` ảnh mới, nhờ đó E2E lấy đúng ảnh của lượt này.
+**`e2e.mjs`:** W1→W2→W3 một mạch. `scout.navigate` **mặc định không chạy**, và **prompt là tham số
+bắt buộc** — mỗi lượt tiêu credit một chữ mới. `guiPrompt` nay trả cả `src` ảnh mới.
 
-**Đo:** suite gói **25/25** · ghim mới 14 khối · **5 đột biến tay chết cả 5**. Con đầu **TRƯỢT
-NEO** vì dấu `\` trong chuỗi neo bị nuốt qua heredoc — đếm neo trước khi tin, một SKIP im lặng
-đọc y hệt một cái pass.
+**Audit độc lập ba vòng (Codex), và nó kiếm được tiền của nó.** Vòng 1 **FAIL**: `layAnh([])` rơi
+về quét cả trang, nên một lượt **không sinh ảnh nào** sẽ lặng lẽ tải ảnh CŨ rồi báo xong — đúng
+hình dạng "báo ĐẠT cho việc chưa xảy ra" mà gói này sợ nhất. Nay `null` = quét trang, mảng rỗng =
+ĐỎ. Vòng 2 **FAIL**: tôi khai "mọi throw đi qua một helper" mà lỗi **ném từ dây** thì không —
+hỏng giữa chừng là mất luôn chỗ để file dở. Nay cả thân vòng lặp nằm trong một lượt bọc. Vòng 3
+**CONDITIONAL PASS**, hai nhắc đúng: dấu ghi chú đổi sang `Symbol` riêng của module (một lỗi từ
+dây mang sẵn trường cùng tên thì lách qua được), và giữ `cause` để mã lỗi gốc không bốc hơi.
+
+**Đo:** suite gói **25/25** · ghim mới **20 khối** · **14 đột biến tay, chết cả 14**. Hai con
+**TRƯỢT NEO** ở hai lượt khác nhau (dấu `\` bị heredoc nuốt; neo cũ sau khi đổi sang `Symbol`) —
+bộ đột biến in số lần khớp neo, không thì "trượt neo" đọc y hệt một cái pass.
 
 **Việc kế:** `G-31..G-34` đều `CHƯA`; lệnh chạy thật ở `CHUOI-VIEC.md` mục `T12` — dòng đầu
 **không tiêu credit**.

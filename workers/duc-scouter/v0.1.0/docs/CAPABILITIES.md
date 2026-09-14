@@ -138,13 +138,13 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 |---|---|---|---|---|
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
-| W3 | Lấy ảnh kết quả về đĩa | D3 | **CHƯA** | `lay-anh.mjs` 14/09: mã + 10 khối ghim + 5 đột biến tay chết. **Chưa chạy thật lần nào** — cần Bridge bật và ghế Udin mở. Ba câu chưa biết ở `GIA-THUYET` G-31 G-32 G-33 |
+| W3 | Lấy ảnh kết quả về đĩa | D3 | **CHƯA** | `lay-anh.mjs` 14/09: mã + 15 khối ghim + 14 đột biến tay chết + audit độc lập 3 vòng (vòng 3 CONDITIONAL PASS). **Chưa chạy thật lần nào** — cần Bridge bật và ghế Udin mở. Ba câu chưa biết ở `GIA-THUYET` G-31 G-32 G-33 |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **CHẶN** | |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **CHƯA** | `e2e.mjs` 14/09: mã + 4 khối ghim. Chưa chạy thật (`G-34`). Prompt là tham số **bắt buộc**: mỗi lượt tiêu credit một chữ mới |
+| **E2E** | Mở trang → W1 → W2 → W3 | | **CHƯA** | `e2e.mjs` 14/09: mã + 5 khối ghim. Chưa chạy thật (`G-34`). Prompt là tham số **bắt buộc**: mỗi lượt tiêu credit một chữ mới |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 

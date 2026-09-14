@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { e2e } from "../scripts/e2e.mjs";
 import { SEL } from "../scripts/gui-prompt.mjs";
 
-function lam() {
+function lam({ nhan = true } = {}) {
   const nk = [];
   const trang = { chu: "", chay: false, vong: 0, anh: ["https://cdn.udin/cu-1.webp", "https://cdn.udin/cu-2.webp"] };
   const q = (n, items = [], hasMore = false) => ({ data: { matchCount: n, items, hasMore } });
@@ -21,7 +21,7 @@ function lam() {
       if (p.selector === SEL.nutSend) return trang.chay ? q(0) : q(1, [{ attributes: trang.chu ? {} : { disabled: "" } }]);
     }
     if (method === "scout.type") { trang.chu += p.text; return { data: { typed: p.text.length } }; }
-    if (method === "scout.click") { trang.chay = true; trang.vong = 1; trang.chu = ""; return { data: {} }; }
+    if (method === "scout.click") { if (nhan) { trang.chay = true; trang.vong = 1; trang.chu = ""; } return { data: {} }; }
     if (method === "scout.wait") {
       if (p.selector === SEL.dangChay) return { data: { satisfied: p.state === "present" ? trang.chay : !trang.chay } };
       return { data: { satisfied: true } };
@@ -55,4 +55,10 @@ function lam() {
 // ⓓ thiếu prompt → không đụng tới trang (mỗi lượt chạy thật phải có chữ mới)
 { const t = lam(); await assert.rejects(() => e2e("  ", t), /chữ MỚI/); assert.equal(t.nk.length, 0); }
 
-console.log("  · udin e2e: 4 khối xanh");
+// ⓔ chặng W2 hỏng → cả vòng ĐỎ, và chặng W3 KHÔNG chạy (không ghi file nào)
+{ const t = lam({ nhan: false });
+  await assert.rejects(() => e2e("a red gate", t), /không chạy/);
+  assert.equal(t.nk.filter((g) => g.method === "file.write").length, 0);
+  assert.equal(t.nk.filter((g) => g.method === "scout.fetch").length, 0); }
+
+console.log("  · udin e2e: 5 khối xanh");
