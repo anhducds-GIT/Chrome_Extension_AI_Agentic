@@ -82,7 +82,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
 | D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** | `hnx.vn` 07/09. Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn) — đường đúng là `scout.grab`, xem O11 | |
-| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **MỘT PHẦN** | Đức chốt `S-24` đường ⒜ 14/09. Đã nạp vào extension và **đã gọi thật** trên Udin: đọc `src` đầy đủ bên trong, gọi mạng, trả mã trạng thái (`G-52`). **Chưa có lượt 200 → byte → đĩa**, vì mọi ảnh trên trang đã quá hạn 900s (`G-51`). Chờ một lượt Udin rảnh chỗ. 11 khối ghim · đột biến 128/128 | |
+| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **ĐÃ CHỨNG MINH** | Udin 14/09: **hai ảnh thật xuống đĩa**, 330.270 và 290.214 byte, kiểm bằng kích thước thật trên đĩa. Tệp lớn hơn một phong bì thì trả theo khúc 64 KiB (`G-63`) — một ảnh ≈ **16 khúc = 16 đơn vị trần ghi**. 12 khối ghim | |
 | D4 | So trước / sau một thao tác | — | **CHƯA CÓ** | Adapter tự làm: `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
@@ -100,8 +100,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 3 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 13 · ĐÃ BỎ 1.** Tổng 42 dòng.
-**Seed Coverage = 20 / 41** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
+**ĐÃ CHỨNG MINH 21 · MỘT PHẦN 2 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 13 · ĐÃ BỎ 1.** Tổng 42 dòng.
+**Seed Coverage = 21 / 41** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
 đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
 > ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
@@ -121,7 +121,7 @@ Chrome riêng (probe) → ☐ đạt trên trang thật. Bước 4 xong thì s�
 | Ưu tiên | Mã | Vì sao trước | Duyệt |
 |---|---|---|---|
 | ~~—~~ | ~~`S-22`~~ | **ĐÓNG 14/09 bằng lời khai trong `README`**, không bằng bản vá. Đừng mở lại điều tra | |
-| 1 | `T13` nối `lay-anh.mjs` sang `scout.grab` | Đóng W3, và cho `scout.grab` lượt chạy thật đầu tiên | |
+| ~~1~~ | ~~`T13` nối `lay-anh.mjs` sang `scout.grab`~~ | **XONG 14/09** — W3 ĐẠT, hai ảnh xuống đĩa | |
 | ~~2~~ | ~~O8 đọc chữ~~ | **XONG 14/09** — `scout.text` | |
 | 3 | I4 xoá ô nhập · I9 upload | Hai mục cuối của **danh sách đóng băng** §5.2 — phải xong TRƯỚC khi tách Udin | ✋ |
 | 4 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo. Bảo hiểm cho trang thứ hai | ✋ |
@@ -150,13 +150,13 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 |---|---|---|---|---|
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
-| W3 | Lấy ảnh kết quả về đĩa | O11 | **CHƯA — mã xong, chờ một lượt chạy thật** | `lay-anh.mjs` đã nối sang `scout.grab` (14/09), 21 khối ghim, 4 con đột biến tay giết được. **Chặn bởi:** `scout.grab` chưa nạp vào extension (Bridge khai 17 method) + cần công tắc ghi. Mỗi ảnh tiêu **1** đơn vị trần ghi |
+| W3 | Lấy ảnh kết quả về đĩa | O11 | **ĐẠT** 14/09 | `lay-anh.mjs` · trước: có ảnh mới của lượt này · thao tác: chọn selector duy nhất → grab từng khúc → `file.write` + `file.append` · thành công: **kích thước thật trên đĩa** khớp `bytes_total` · thất bại: selector không duy nhất · tệp đổi giữa chừng · đĩa nhận thiếu. Bằng chứng: hai ảnh 330.270 + 290.214 byte, `TRIALS` 14/09 |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **CHẶN** | |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **CHƯA** | `e2e.mjs`: mã + 5 khối ghim. Cố ý chưa chạy — chờ `T13` xong, không thì tốn credit rồi ngã ở chặng ba (`G-34`) |
+| **E2E** | Mở trang → W1 → W2 → W3 | | **ĐẠT một phần** 14/09 | Ba chặng chạy **một mạch, không sửa tay**: W1 vượt màn chắn → W2 sinh 4 ảnh → W3 lấy được **2/4** rồi dừng vì **hết trần 200 lượt ghi** — một cái trần, không phải một khuyết tật. Đủ 4 ảnh cần ~64 đơn vị; chữa gốc là `S-25` |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 

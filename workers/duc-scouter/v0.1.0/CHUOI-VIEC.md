@@ -34,13 +34,15 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **Udin hết chỗ** | mã xong, `T22` xong; chờ một lượt Udin rảnh để có ảnh **tươi** (URL hết hạn 900s) — **vòng chờ đang tự chạy** |
+| ~~T13~~ | Nối `lay-anh.mjs` sang `scout.grab` → đóng `W3` | — | **XONG 14/09** — **hai ảnh thật xuống đĩa** (330.270 + 290.214 byte). `O11` ĐÃ CHỨNG MINH |
 | ~~T22~~ | `gui-prompt` phân biệt *quá giờ* với *hỏng* | — | **XONG 14/09** — trần 900s (bằng hạn URL), `UdinDangChay` chở theo tập ảnh trước, `choXong()` nối lại được. 13 khối · 5 đột biến tay |
 | ~~H1~~ | Đức nạp lại extension + bật công tắc ghi | — | **XONG 14/09** — Bridge nay khai **18** method, `scout.grab` đã vào |
 | ~~Q1~~ | Chính sách che `de-xuat-chat-v1` | — | **CHỐT 14/09 đường ⒝** — [ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) |
-| **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 | chưa chạy lần nào |
+| ~~T15~~ | E2E Udin: mở trang → W1 → W2 → W3 một mạch | — | **ĐẠT một phần 14/09** — ba chặng một mạch, W3 lấy 2/4 ảnh rồi **hết trần 200 lượt ghi**. Đủ 4 ảnh cần ~64 đơn vị → `S-25` |
 | ~~T18~~ | `O8` đọc chữ trên trang | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`). 10 khối · 6 đột biến tay · 19 method |
-| **T19** | `I4` xoá ô nhập · `I9` tải file lên | — | **việc kế** — hai mục cuối của danh sách đóng băng |
+| **S-25** | ✋ **Bridge khai dối cỡ phong bì** — khai 1 MiB, rớt chập chờn quanh 65 KB | — | **việc kế, và là LỖI NỀN**: nó giết `scout.shot`, ép grab thành 16 khúc/ảnh. Đụng lõi dùng chung ba gói đóng băng → **câu của Đức** |
+| **T19** | `I9` tải file lên (`I4` xong 14/09) | ✋ Đức chốt hình dạng | mục cuối của danh sách đóng băng |
+| **O12** | ✋ Zoom cho layout artboard — Đức nêu 14/09 | một phép đo 10 giây | vào danh sách đóng băng; xem `G-65` |
 | **T20** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ✋ Đức, chốt gộp một lượt | bảo hiểm cho trang thứ hai |
 | **T17** | **Máy sinh bảng năng lực** thay cho gõ tay | — | nợ phát hiện 14/09: không dòng mã nào đọc `CAPABILITIES.md` |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị**, không bằng sự tồn tại | — | nợ do `G-48` để lại |

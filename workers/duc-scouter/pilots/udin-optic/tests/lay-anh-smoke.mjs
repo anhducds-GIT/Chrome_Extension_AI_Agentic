@@ -161,6 +161,13 @@ const grab = (nk) => nk.filter((g) => g.method === "scout.grab");
   t.goi = async (m, p) => { const r = await goc(m, p); return (m === "file.append" && p.content) ? { ...r, size: r.size - 1 } : r; };
   await assert.rejects(() => layAnh([A1], t), (e) => /KHÔNG tin file/.test(e.message)); }
 
+/* Ⓐ DỪNG GIỮA LOẠT KHÚC → phải GỌI TÊN tệp dở. Đo thật 14/09: lượt E2E hết trần ghi ở ảnh thứ
+ * ba, để lại một tệp dài đúng một khúc, mà lời báo chỉ nói tên THƯ MỤC. */
+{ const t = lam({ soKhuc: 4, danhSach: [A1] }); t.ngu = async () => {}; const goc = t.goi;
+  t.goi = async (m, p) => { if (m === "scout.grab" && p.part === 2) throw new Error("scout.grab hỏng: WRITE_BLOCKED — WRITE_CAP_REACHED"); return goc(m, p); };
+  await assert.rejects(() => layAnh([A1], t),
+    (e) => /WRITE_CAP_REACHED/.test(e.message) && /tệp DỞ nằm ở/.test(e.message) && e.message.includes("01-v1.webp")); }
+
 /* ⓩ ĐỨT DÂY CHẬP CHỜN (`G-64`) — thử lại, nhưng CHỈ với lỗi đứt dây, và có trần.
  *
  * Đếm ngay TẠI CHỖ NÉM, không đếm trong nhật ký: máy giả ném trước khi kịp ghi, nên đếm nhật ký
@@ -304,4 +311,4 @@ assert.equal(tenFile(`https://cdn.udin/a/v1.webp…`, 3), "03-v1.webp");
 assert.notEqual(tenFile("https://cdn.udin/a/v.webp", 1), tenFile("https://cdn.udin/b/v.webp", 2));
 assert.match(tenFile("https://cdn.udin/", 7), /^07-anh$/);
 
-console.log("  · udin lay-anh: 29 khối xanh");
+console.log("  · udin lay-anh: 30 khối xanh");

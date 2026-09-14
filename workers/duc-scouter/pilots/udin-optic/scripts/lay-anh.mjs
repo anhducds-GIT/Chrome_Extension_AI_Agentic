@@ -220,6 +220,11 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
        * và chỗ ghép là ở đây. Khúc 0 đi bằng `file.write` (đè, để chạy lại không nối vào đuôi
        * một tệp dở của lượt trước); các khúc sau đi bằng `file.append`. */
       const soKhuc = Number.isInteger(d.parts) && d.parts > 0 ? d.parts : 1;
+      /* Từ đây trở đi trên đĩa ĐÃ CÓ một tệp DỞ. Mọi lối ra phải gọi tên nó — kể cả lỗi ném từ
+       * dây (hết trần ghi, đứt kết nối), thứ không đi qua các nhánh kiểm bên dưới. Đo thật
+       * 14/09: lượt E2E hết trần ở ảnh thứ ba để lại `03-….webp` dài đúng một khúc, và lời báo
+       * lúc đó chỉ nói tên THƯ MỤC — người dọn phải tự đoán tệp nào dở. */
+      const ghepKhuc = async () => {
       for (let k = 1; k < soKhuc; k += 1) {
         const p = await xin(k);
         if (!p.ok) throw nga(`Ảnh ${i + 1} khúc ${k}: máy chủ trả ${p.status}. Tệp dở nằm ở '${ghi.path}'.`);
@@ -232,6 +237,12 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
           throw nga(`Ảnh ${i + 1} khúc ${k}: thân rỗng dù status ${p.status}. Tệp dở nằm ở '${ghi.path}'.`);
         }
         ghi = await goi("file.append", { path: ten, content: p.body_base64, encoding: "base64" }, tuyChon);
+      }
+      };
+      try { await ghepKhuc(); }
+      catch (loi) {
+        if (loi?.[DA_GHI_CHU]) throw loi;
+        throw nga(`Ảnh ${i + 1} dừng giữa chừng (${soKhuc} khúc): ${loi?.message || loi} — tệp DỞ nằm ở '${ten}', xoá nó đi.`, loi);
       }
 
       /* Trọng tài là KÍCH THƯỚC THẬT TRÊN ĐĨA (`size`), không phải tổng các con số ta tự cộng:
