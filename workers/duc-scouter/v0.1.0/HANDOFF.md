@@ -1279,6 +1279,12 @@ repo**: ba file Scouter mang CRLF **trên đĩa** (trong git vẫn LF), và `hum
 **động từ** sau `@Đức:` nên nó rơi khỏi bảng *"Đức cần làm"* im lặng. Cả hai đã sửa. Bài học cũ
 lặp lại: cổng `Test xanh` chỉ chạy suite của VÙNG mình.
 
+**Đã chạy thật một nửa, không cần nạp lại gì** (`G-71`): `S-25` nằm ở **máy chủ**, nên nó kiểm
+được với đúng mã extension đang chạy từ trước. `scout.shot png` lên bảng bên — phong bì
+**87.298 byte** — **15 lượt liền, 15 chạy / 0 đứt**. Đúng cỡ `85.336` mà lần chia đôi đầu tiên
+ghi là ĐỨT. Nửa còn lại (chặng ②) cần Đức nạp lại extension **và** tắt-bật công tắc ghi: trần
+200 lượt đã cạn từ lượt lấy ảnh hôm nay.
+
 **Số.** Suite gói 32/32 · `npm test` cả repo XANH · đột biến **141/141, 0 sống sót**.
 
 **Nợ nói thẳng:** sáu dòng năng lực đổi sang `CÓ` trong một lượt và **không dòng nào** sang
