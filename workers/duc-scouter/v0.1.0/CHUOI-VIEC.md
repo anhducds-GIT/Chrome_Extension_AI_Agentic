@@ -34,14 +34,15 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T24** | **`S-25` — ghép được tin WebSocket bị cắt mảnh** | — | **việc kế.** Gốc đã tìm ra và đã chứng minh (`G-67`): `websocket-core.mjs:76` ném ở mọi mảnh nối |
-| **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · thu phóng · cỡ tài liệu | — | **nền của cả nhóm.** Không đọc được thì không kiểm được một lượt cuộn hay thu phóng **bằng trang** |
-| **T26** | `scout.scroll` (`I5`) | T25 | uỷ quyền [ADR-0007] |
-| **T27** | `scout.zoom` (`O12`) | T25 | uỷ quyền · Đức nêu cho layout artboard |
-| **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`clickCount` (`I7`) | T25 | uỷ quyền |
-| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | uỷ quyền |
-| **T30** | `N5` lùi / tiến (`Page.navigateToHistoryEntry`) | — | mảnh còn thiếu của nhóm đi lại |
-| **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | `G-68` — 64 KiB đặt ra để né đúng `G-67`; quên nó thì mỗi ảnh vẫn tốn 16 đơn vị |
+| **T24** | **`S-25` — ghép được tin WebSocket bị cắt mảnh** | — | **XONG 14/09.** 9 khối ghim (có một tin **1 MiB cắt mảnh đi trọn qua socket thật**) · 4 đột biến. Khối ① so thẳng với bản gốc trong gói đóng băng: tin KHÔNG cắt mảnh cư xử y hệt |
+| **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · cỡ tài liệu · còn bao nhiêu để cuộn · thu phóng | — | **XONG 14/09** (mã + ghim). **Chưa chạy thật** — `G-70` |
+| **T26** | `scout.scroll` (`I5`) | T25 | **XONG 14/09** (mã + ghim). Chưa chạy thật |
+| **T27** | `O12` thu phóng | T25 | **NỬA ⑴ XONG 14/09**: `scout.shot` nhận `full_page` + `scale` — cả artboard trong một ảnh nhỏ. **Nửa ⑵ CHẶN bởi kiến trúc**, không bởi thiếu tham số: `observer-engine` tháo debugger sau mỗi lượt gọi, mà `Emulation` override sống theo phiên debugger → `G-69`, **câu của Đức** |
+| **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`click_count` (`I7`) | T25 | **XONG 14/09** (mã + ghim). Chưa chạy thật |
+| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | **việc kế** sau lượt kiểm thật của chặng ② |
+| **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG 14/09** (mã + ghim). Chưa chạy thật |
+| **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG 14/09**: 64 KiB → **512 KiB**. Chưa đo lại trên dây thật (`G-68` vẫn `CHƯA`) |
+| **T32** | **Chạy thật cả chặng ② trên Udin** | Đức nạp lại extension | **việc kế.** Sáu dòng năng lực đang ở `CÓ`, không dòng nào `ĐÃ CHỨNG MINH` — đó là NỢ, và đây là thứ trả nó |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | nợ do `G-48` để lại |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |

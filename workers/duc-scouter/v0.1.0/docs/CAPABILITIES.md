@@ -200,9 +200,9 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 | ~~**O8**~~ | ~~đọc chữ trên trang~~ | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`) |
 | **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
 | **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
-| **I5 I6 I7** | cuộn · rê chuột · bấm đúp/phải | chưa chặn `W` nào của Udin | Bảo hiểm cho **trang thứ hai**. Mở sau khi tách thì trả lại đúng sáu chỗ ở §5.1 |
-| **O12** | thu phóng trang | mọi trang **dạng artboard** (Vizcom, Figma-like) | Đức nêu 14/09. Vào danh sách vì đúng lý do của danh sách: trang thứ hai nhiều khả năng là một artboard, và mở nó **sau** khi tách là trả lại đúng sáu chỗ ở §5.1. Còn một phép đo 10 giây quyết định nó là năng lực thật hay chỉ là tiện (`G-65`) |
-| **S-25** | sửa chỗ tầng vận chuyển **khai dối cỡ phong bì** | `scout.shot` · `scout.grab` · mọi đường "nhìn toàn cảnh" | **Không phải một năng lực — là một LỖI.** Bridge khai 1 MiB, thực tế rớt chập chờn quanh 65 KB (`G-63`). Đụng `_shared/bridge-host` → **câu của Đức** |
+| ~~**I5 I6 I7**~~ | ~~cuộn · rê chuột · bấm đúp/phải~~ | — | **XONG 14/09** — `scout.scroll` · `scout.hover` · `scout.click` thêm `button`+`click_count`. **Chưa chạy thật** (`G-70`) |
+| **O12** | thu phóng trang | mọi trang **dạng artboard** (Vizcom, Figma-like) | **NỬA ⑴ XONG 14/09** — `scout.shot full_page + scale`. **Nửa ⑵ còn mở và nó là câu của Đức**: một lượt thu phóng THẬT (trang dựng lại, có thể vẽ thêm phần tử) đòi một `Emulation` override sống qua nhiều lượt gọi, mà `observer-engine` tháo debugger sau mỗi lượt — xem `G-69`. Nếu câu trả lời là *không đổi kiến trúc* thì dòng này **đóng ở nửa ⑴** và ra khỏi danh sách |
+| ~~**S-25**~~ | ~~tầng vận chuyển khai dối cỡ phong bì~~ | — | **XONG 14/09.** Gốc là **một dòng** (`G-67`): bộ giải khung ném ở mọi mảnh nối, mà Chrome cắt mảnh mọi tin vượt ~64 KiB. Một ca **chưa viết**, không phải một lớp bảo vệ — bản sửa thuần thêm vào. Và ba gói "đóng băng" **không dùng chung** file này: mỗi gói giữ một bản sao riêng, nên chúng KHÔNG bị chạm (và cũng vẫn mang con bệnh) |
 | ~~chính sách che~~ | ~~`de-xuat-chat-v1`~~ | — | **ĐÃ KÝ 14/09** — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md), đường ⒝: ký nguyên bản + cửa hẹp `scout.text`. `O8` hết chặn |
 
 **`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
@@ -213,8 +213,8 @@ thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp
 | Chặng | Việc | Xong khi | Chờ ai |
 |---|---|---|---|
 | ~~P0 P1a P1b P1c P2a~~ | mô hình đo · `T13` grab · `S-22` · E2E · `O8` | **XONG 12–14/09** | — |
-| **①** | **`T24` `S-25`** — ghép tin WebSocket bị cắt mảnh · rồi `T31` nâng lại trần khúc | tin 1 MiB đi trọn qua dây thật · `scout.shot` chạy lại · một ảnh 746 KB trong ≤ 2 khúc · **và** phép ghim chứng minh tin KHÔNG cắt mảnh cư xử y hệt | **không ai** |
-| **②** | **Nhìn & đi lại**: `T25` `scout.view` (ĐỌC, đi trước) → `T26` cuộn · `T27` thu phóng · `T28` rê chuột + bấm đúp/phải · `T30` lùi/tiến | mỗi lệnh có lượt chạy thật, và mỗi lệnh ghi **kiểm bằng `scout.view`** | **không ai** |
+| ~~**①**~~ | ~~`T24` `S-25` · `T31`~~ | **XONG 14/09** — tin 1 MiB cắt mảnh đi trọn qua socket thật; phép ghim so thẳng với bản gốc chứng minh tin KHÔNG cắt mảnh y hệt; trần khúc về 512 KiB. Còn nợ **một lượt đo trên dây thật** (`G-68`) | — |
+| **②** | **Nhìn & đi lại** — mã và phép ghim **XONG 14/09** (`T25` `T26` `T27`⑴ `T28` `T30`) | mỗi lệnh có **lượt chạy thật**, và mỗi lệnh ghi **kiểm bằng `scout.view`** → `T32` | **Đức nạp lại extension** |
 | **②b** | `T29` `scout.upload` (`I9`) | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở máy chủ | **không ai** |
 | **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` đóng gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ① + ② |
 | **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |

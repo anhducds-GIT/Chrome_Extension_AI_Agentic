@@ -278,8 +278,8 @@ BATCHES.push({
     {
       ma: "H2",
       ten: "Nới danh sách: cho Input.insertText (lệnh THỬ NGHIỆM) vào seed",
-      tim: '  "Target.getTargetInfo"' + NL + ']);',
-      thay: '  "Target.getTargetInfo",' + NL + '  "Input.insertText"' + NL + ']);',
+      tim: '  "Page.navigateToHistoryEntry"' + NL + ']);',
+      thay: '  "Page.navigateToHistoryEntry",' + NL + '  "Input.insertText"' + NL + ']);',
       soLan: 1
     },
     {
@@ -334,17 +334,17 @@ BATCHES.push({
     },
     {
       ma: "HN4",
-      ten: "`S-19` — để nguyên `undefined` làm danh tính cũ: lượt điều hướng nào cũng xong ngay nhịp đầu",
+      ten: "`S-19` — để nguyên `undefined` làm danh tính cũ: lượt đi nào cũng xong ngay nhịp đầu (cả `input.navigate` lẫn `input.history`)",
       tim: "    const taiLieuTruoc = (await danhTinhTaiLieu(send)) ?? null;",
       thay: "    const taiLieuTruoc = await danhTinhTaiLieu(send);",
-      soLan: 1
+      soLan: 2
     },
     {
       ma: "HB1",
-      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm: bấm thẳng, có lớp phủ cũng kệ (đúng bug S-17)",
+      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm ở CẢ bấm lẫn rê chuột: có lớp phủ cũng kệ (đúng bug S-17)",
       tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       thay: '    const hit = { relation: "self", hitNodeId: node.nodeId };',
-      soLan: 1
+      soLan: 2
     },
     {
       ma: "HB2",
@@ -363,8 +363,8 @@ BATCHES.push({
     {
       ma: "HB4",
       ten: "CHỐT ⑸ — hỏi SAU khi bắn: câu trả lời chỉ còn là lời phân trần",
-      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));" + NL + "    await clickAt(send, point);",
-      thay: "    await clickAt(send, point);" + NL + "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
+      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));" + NL + "    await clickAt(send, point, nut, soLan);",
+      thay: "    await clickAt(send, point, nut, soLan);" + NL + "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       soLan: 1
     },
     {

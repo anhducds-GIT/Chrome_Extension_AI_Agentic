@@ -82,9 +82,8 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 9. **Tra `docs/GIA-THUYET.md` TRƯỚC mỗi phép thử; ghi dòng `CHƯA` trước khi thử, sửa kết quả
    sau.** Dòng `SAI` thì đừng thử lại. Đức chốt 13/09 vì phiên đi vòng lại việc đã làm.
 
-
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T24 (S-25) — websocket-core.mjs nem loi o MOI tin WebSocket bi cat manh (G-67, da chung minh), ma Chrome tu cat manh khi tin vuot ~64 KiB. Mot ca CHUA VIET, khong phai mot lop bao ve. Sua o _shared/bridge-host (dung chung ba goi dong bang) nen phep ghim quan trong nhat: tin KHONG cat manh cu xu y het nhu truoc. Roi T31 nang lai tran khuc. Chang 2: T25 scout.view (DOC, di truoc) -> T26 cuon, T27 zoom, T28 hover + bam dup/phai, T30 lui/tien; roi T29 upload. Lo trinh day du o CHUOI-VIEC.md."
-- human_action: "@Duc:khong co viec nao bat buoc. Duc da uy quyen 14/09 cho S-25, I9, I5/I6/I7, O12 — bien uy quyen ghi trong ADR-0007. Mot viec NHO neu ranh: zoom ra roi zoom lai ma khong dung gi khac, de dong G-65."
+- next_step: "T32 — CHAY THAT ca chang ② tren Udin. Ma + phep ghim xong 14/09: T24 (ghep manh noi WebSocket = goc S-25) · T25 scout.view · T26 scout.scroll · T28 scout.hover + scout.click nhan button/click_count · T30 scout.history · T27 nua ⑴ (scout.shot full_page+scale) · T31 tran khuc 512 KiB. Sau dong nang luc doi sang CO, KHONG dong nao sang DA CHUNG MINH — do la NO, T32 tra no. Sau do: T29 upload, roi chang ③ dong bang seed."
+- human_action: "@Đức:bấm — NẠP LẠI extension ghế Dummy_Scout (mã extension vừa đổi). Bridge tôi đã tự khởi động lại. Nạp xong nói một tiếng là tôi chạy T32. Nếu rảnh 10 giây: zoom ra rồi zoom lại mà không đụng gì khác, để đóng G-65. Một câu cần Đức chốt, không gấp — G-69 ở docs/GIA-THUYET.md."

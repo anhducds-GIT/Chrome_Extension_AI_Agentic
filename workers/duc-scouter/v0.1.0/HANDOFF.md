@@ -1255,3 +1255,45 @@ là **"tin KHÔNG cắt mảnh cư xử y hệt như trước"**.
 **Lộ trình ba chặng** ở `CHUOI-VIEC.md`: ① sửa nền (`T24` `T31`) · ② nhìn & đi lại (`T25`→`T30`,
 `T29`) · ③ đóng băng rồi tách (`T8` `T9` `T21`). Mỗi chặng có câu *đóng khi*; chặng ④ chỉ đóng
 khi các `W` của Udin ĐẠT **từ gói mới mà không sửa một dòng Scouter nào**.
+
+## 2026-09-14 · `claude-scouter-udine` — một dòng, và cả nhóm "nhìn & đi lại"
+
+**Gốc của `S-25` là MỘT DÒNG, và nó không phải một lớp bảo vệ.**
+`_shared/bridge-host/websocket-core.mjs` ném ở **mọi mảnh nối** WebSocket (`if (!fin) throw`),
+mà **Chrome tự cắt mảnh mọi tin vượt ~64 KiB**. Nên dòng đó không chặn một ca hiếm — nó chặn
+đường đi bình thường của mọi câu trả lời hơi lớn. Khớp cả bốn triệu chứng: ngưỡng ~65 KB ·
+chập chờn · `scout.shot` chết · mọi lượt `grab` trả thân thật chết (`G-67`).
+
+Phân biệt phải giữ cho đúng: một lớp **bảo vệ** từ chối thứ không được phép; dòng kia từ chối
+thứ **được phép mà chưa ai viết**. Nên bản sửa thuần thêm vào, và phép ghim đắt nhất của nó
+không phải "ghép có đúng không" mà **"tin KHÔNG cắt mảnh có còn y hệt không"** — so thẳng với
+bản gốc thật trong gói đã đóng băng, không so với một bản chép tay của hành vi cũ.
+
+**Một điều tôi đã ghi SAI trong ADR-0007 và nay sửa lại:** ba gói đóng băng **không dùng chung**
+file ấy. Mỗi gói giữ một **bản sao riêng**, byte y hệt. Nghĩa là rủi ro của lượt sửa nhỏ hơn tôi
+đã nói với Đức — và cũng nghĩa là **ba bản sao kia vẫn mang con bệnh**. Chúng đang đóng băng và
+chưa ai bị cắn, nên để nguyên; ghi ra đây để lượt sau không phải tìm lại.
+
+**Rồi cả chặng ② trong một lượt** (Đức uỷ quyền, [ADR-0007]): `scout.view` (ĐỌC, đi trước) ·
+`scout.scroll` · `scout.hover` · `scout.click` nhận `button` + `click_count` · `scout.history`
+lùi/tiến · `scout.shot` nhận `full_page` + `scale`. Trần khúc `scout.grab` về 512 KiB (`T31`).
+
+**`O12` zoom: làm được nửa, và nửa kia là câu hỏi kiến trúc chứ không phải thiếu tham số.**
+Nhu cầu ⑴ của Đức — cả artboard trong một ảnh ít byte — xong bằng `clip.scale`, không cần
+`Emulation.*` nào. Nhu cầu ⑵ — *trang có vẽ thêm phần tử khi thu nhỏ không* — đòi một lượt thu
+phóng THẬT sống qua nhiều lượt gọi, mà `observer-engine.js` **gắn rồi tháo debugger quanh từng
+lượt gọi** (dòng 123 và 160) và `Emulation` override sống theo phiên debugger. Đổi vòng đời đó
+là giữ debugger cắm vào tab của Đức giữa các lượt — dải băng *đang gỡ lỗi* ở lại lâu hơn. Đó là
+câu của Đức, ghi thành `G-69`. Tôi **cố ý không** dựng `scout.zoom` để rồi nó nói dối.
+
+**Hai cái đỏ có sẵn ở HEAD mà không ai thấy**, tìm ra vì lần này tôi chạy `npm test` của **cả
+repo** chứ không chỉ suite của gói: ba file Scouter mang CRLF **trên đĩa** (trong git vẫn LF
+sạch), và `human_action` của Scouter thiếu **động từ** sau dấu `@Đức:` nên nó rơi khỏi bảng
+*"Đức cần làm"* một cách im lặng. Cả hai đã sửa. Bài học cũ lặp lại: cổng `Test xanh` chỉ chạy
+suite của VÙNG mình.
+
+**Số.** Suite gói 32/32 · `npm test` cả repo XANH · đột biến **141/141, 0 sống sót** (9 con mới).
+
+**Nợ nói thẳng:** sáu dòng bảng năng lực đổi sang `CÓ` trong một lượt và **không dòng nào**
+sang `ĐÃ CHỨNG MINH`. Đó là khoảng cách giữa *có mã* và *chạy được trên trang thật*, và nó chưa
+bao giờ rộng thế này trong gói. `T32` sinh ra để trả nó, và nó cần Đức nạp lại extension.
