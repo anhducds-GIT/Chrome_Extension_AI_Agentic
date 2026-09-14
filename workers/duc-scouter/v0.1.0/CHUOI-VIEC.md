@@ -30,17 +30,20 @@
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T11** | ~~`S-23`~~ **XONG 13/09** · `S-22` còn mở | — | Udin: đã vượt màn chờ (`pilots/udin-optic/`) |
-| **T12** | W3 lấy ảnh Udin về đĩa · E2E ba chặng — **chạy thật** | **`S-24`: Đức chốt đường đi** | **CHẶN 14/09** — chạy thật ra 403: URL ký sẵn, lõi đọc cắt query (`G-35`) |
-| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T11 | **③/④ chặng** — bàn đo đã dựng, chặng 4 dừng ở `S-22` |
-| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T11 (cùng một đường ghi) · tài khoản rảnh | chờ |
-| **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
-| **T10** | `S-21` — target thỉnh thoảng không trả lời câu hỏi hình học | — | chưa bắt đầu |
+| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | — | **việc kế, không chờ ai** |
+| **T14** | `S-22` — lượt bấm báo ĐẠT mà trang không nhận | một cú bấm của Đức **hoặc** `D3` | **9 giả thuyết đã chết**, còn đúng một biến (`G-49`) |
+| **D3** | Đức chốt: có thêm `scout.focus` (đưa tab lên trước) không | — | **câu hỏi mới, đọc mục D3 bên dưới** |
+| **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 · T14 | chưa chạy lần nào |
+| **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị**, không bằng sự tồn tại | — | nợ do `G-48` để lại |
+| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T14 | **③/④ chặng**, chặng 4 dừng ở `S-22` |
+| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T14 | chờ |
+| **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
+| **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T7 xong trước | chưa bắt đầu |
 | **T9** | Đóng gói v1 cho người ngoài dùng được | T7 | chưa bắt đầu |
-| ~~D1 · D1b~~ | Đức chốt hai method CDP | — | **XONG 12/09** |
-| **D2** | Đức gõ tên cho ghế THỨ HAI | — | **nửa chừng** — ghế 1 đã tên `Udin_Scout` |
-| ~~T1 T2 T3 T4~~ | `S-17` `S-18` `S-19` `S-16` | — | **XONG 12/09**, cả bốn đo ngoài đời |
+| ~~T12~~ | ~~W3 qua `scout.fetch`~~ | — | **CHẾT 14/09** — 403 vì URL ký sẵn (`S-24`); thay bằng T13 |
+| ~~D2~~ | Đặt tên ghế | — | **XONG 14/09** — ghế làm việc tên `Dummy_Scout`; ghế còn lại Đức không dùng |
+| ~~T1 T2 T3 T4 T11~~ | `S-16`…`S-19`, `S-23` | — | **XONG 12–13/09**, đo ngoài đời |
 
 **T11 chen lên đầu ngày 12/09, và đây là lý do:** lượt chạy T7 đo được rằng `scout.click` và
 `scout.type` **báo ĐẠT trong khi trang không nhận được gì**. Mọi việc còn lại trong chuỗi đều
@@ -54,33 +57,69 @@ làm mọi diff khó đọc.
 
 ---
 
-## T12 — W3 lấy ảnh về đĩa, rồi E2E · chạy thật
+## T13 — nối `lay-anh.mjs` sang `scout.grab` · việc kế, không chờ ai
 
-**Mã xong 14/09 và ĐÃ chạy thật cùng ngày** trên ghế `Udin_Scout`. Cần **Bridge bật** + **một tab
-đang mở `https://vinfast.udinbv.com/optic`** + công tắc *Cho phép bấm và gõ* BẬT.
+`scout.grab` đã có (14/09, Đức chốt `S-24` đường ⒜): đưa **selector**, extension tự đọc `src`
+đầy đủ bên trong rồi tải luôn, trả **byte** — URL ký sẵn không ra khỏi trình duyệt. Nhưng
+`pilots/udin-optic/scripts/lay-anh.mjs` **vẫn đang gọi `scout.fetch`**, tức là vẫn sẽ 403.
 
-**ĐÃ CHẠY THẬT 14/09, và nó dừng ở một cái chặn thật.** Kết quả ở `GIA-THUYET` G-31..G-36:
-`src` là URL https thật (**G-31 ĐÚNG**) · nhưng `scout.fetch` trả **403** vì ảnh là URL **ký sẵn** và
-lõi đọc **cắt query** theo chính sách che (**G-35**). Không phải chuyện cookie — **G-33 SAI, và
-đừng đi bật `with_credentials`**: cookie không cứu một URL thiếu chữ ký. Việc kế là **`S-24`**,
-Đức chốt một trong ba đường; mọi thứ dưới đây chỉ chạy lại được SAU khi có đường đó.
+Việc: đổi `lay-anh.mjs` sang `scout.grab`. Chỗ gợn duy nhất — grab nhận **một** selector khớp
+**đúng một** phần tử, mà trang có bốn ảnh, nên adapter phải đánh số: `img.batch-grid-image` thứ
+n gọi bằng `:nth-of-type` hoặc một selector riêng. **Đếm ảnh vẫn bằng `scout.query`** (masked
+src đủ để phân biệt ảnh mới/cũ), chỉ lượt TẢI mới qua grab.
 
-```bash
-# ⓵ chỉ lấy ảnh đang có sẵn trên trang — KHÔNG tiêu credit, chạy cái này TRƯỚC
-SCOUTER_GHE=Udin_Scout node workers/duc-scouter/pilots/udin-optic/scripts/lay-anh.mjs
-# ⓶ cả vòng: vượt màn chờ → gửi prompt MỚI → lấy ảnh của lượt đó về đĩa (tiêu credit)
-SCOUTER_GHE=Udin_Scout node workers/duc-scouter/pilots/udin-optic/scripts/e2e.mjs "<chữ chưa dùng bao giờ>"
-```
+Xong khi: `lay-anh.mjs` không còn chữ `scout.fetch`, ghim của nó xanh lại, và **chạy thật trên
+ghế `Dummy_Scout` lấy được ít nhất một ảnh xuống vùng ghi**. `scout.grab` CHƯA CHẠY THẬT lần nào.
 
-- **Công tắc "Cho phép bấm và gõ" phải BẬT**: `scout.fetch` tiêu ngân sách ghi, không chỉ `scout.click`.
-- **Mỗi lượt ⓶ một prompt mới** — luật repo, không có ngoại lệ. Script từ chối khi thiếu chữ.
-- Ảnh xuống **vùng ghi của máy chủ**, thư mục `udin-optic/<mốc-thời-gian>/`. **Không vào repo.**
-- Hai lệnh trên **chỉ chạy lại được sau `S-24`**. ⓵ nay dừng ở `403`; ⓶ sẽ tốn credit rồi ngã ở
-  chặng ba. Chạy được rồi thì sửa `G-32` `G-34`, đổi W3/E2E thành **ĐẠT** kèm bằng chứng
-  (ngày · số ảnh · số byte), rồi mới ghi `HANDOFF`.
-- ~~401/403 ở ⓵ nghĩa là CDN đòi cookie~~ — **SAI, đã đo 14/09**: 403 đến từ URL bị cắt chữ ký
-  (`G-35`), không từ cookie. Giữ dòng gạch này để phiên sau đừng đi lại: bật `with_credentials`
-  không chữa được gì, mà lại gửi cookie đăng nhập của Đức ra ngoài.
+## T14 — `S-22`, và chỗ nó đang đứng
+
+**Chín giả thuyết đã chết** (`G-02..G-07`, `G-40..G-46`). Đừng thử lại cái nào. Còn đúng một:
+`G-49` — **tab đang hoạt động thì bấm tới, tab nền thì không**, riêng Chrome của Đức (Chrome sạch
+do phép đo tự mở thì tab ẩn vẫn nhận đủ).
+
+Số đang có: **18/18 lượt tab ẩn → không tới** · **1 lượt tab hiện → tới**. Thiếu nhóm "tab hiện"
+cho đủ cặp. Máy đo ghép cặp: `scratchpad/do-cap-doi.mjs` (đọc **giá trị** bộ đếm, ghi trạng thái
+tab ngay tại lúc bấm).
+
+Hai đường khép nó, và đường thứ hai đáng giá hơn:
+⒜ Đức bấm vào tab trang thử rồi để yên một phút, tôi chạy máy đo — xong trong hai phút.
+⒝ **`D3`**: mở `scout.focus`, rồi phép đo tự bật/tắt được cả hai vế mà không cần tay ai.
+
+## D3 · Đức chốt — có thêm `scout.focus` không?
+
+**Vì sao hỏi.** Nếu `G-49` đúng thì mọi lượt chạy tự động của Scouter phụ thuộc vào **việc con
+người vừa nhìn tab nào** — tức là nó không tự chạy được, và đó là chệch hẳn khỏi mục đích của gói.
+
+**Xin gì.** Một method `scout.focus { target_id }` đưa tab lên trước trước khi ghi. Cần
+`chrome.tabs.update({ active: true })` — **không phải** method CDP mới, và extension đã có quyền
+`tabs`. Đây là một **thao tác ghi** (nó đổi thứ Đức đang nhìn), nên nó phải chui qua phanh và
+tính vào trần 200 như `scout.click`.
+
+**Giá phải trả, nói trước:** Scouter sẽ **giật tab** khi đang chạy — Đức đang xem gì đó thì màn
+hình nhảy. Đó là lý do nó phải là chữ của Đức chứ không phải quyết định của tôi.
+
+· **Đức nói CÓ** → T14 tự khép được, và mọi adapter về sau chạy được trên tab nền.
+· **Đức nói KHÔNG** → T14 khép bằng đường ⒜, và `README` phải ghi rõ: **lượt ghi chỉ chắc chắn
+  khi tab đang hiện** — một giới hạn thật, không phải một chú thích.
+
+## T16 — dấu chẩn đoán phải đọc được bằng GIÁ TRỊ (nợ của `G-48`)
+
+Trang thử ghi `data-chuot` / `data-bam` là **bộ đếm**, nhưng `scout.query` không trả giá trị
+`data-*`, nên mọi phép đo đang hỏi "có thuộc tính không". Câu đó chỉ đổi **một lần** (0→1), nên
+từ cú bấm thứ hai trở đi phép đo mù — và nó đã làm tôi kết luận ngược hẳn trong hai lượt ngày
+14/09. Cách chữa rẻ nhất: trang thử ghi thêm **một class theo số đếm** (`bam-0`, `bam-1`…) để
+selector đọc được, hoặc adapter dò `[data-bam="n"]` như `scratchpad/do-cap-doi.mjs` đang làm.
+
+## ~~T12~~ — CHẾT 14/09, giữ lại vì nó dạy một điều
+
+T12 là kế hoạch lấy ảnh bằng `scout.fetch`. Chạy thật ngày 14/09: **403**. Ảnh Udin nằm sau
+**URL ký sẵn**, chữ ký nằm trong query, mà lõi đọc cắt query khỏi mọi `src`/`href` theo chính
+sách che — cắt đúng chỗ cần. Đó là **bảo vệ làm đúng việc**, không phải bug, nên không được nới.
+Đức chốt đường ⒜ (`S-24`) và `scout.grab` ra đời. Việc kế nay là **T13**.
+
+Điều nó dạy, ghi để đừng lặp: **một đường lấy dữ liệu chưa chạy thật lần nào thì chưa phải một
+đường** — 20 khối ghim, 14 đột biến và ba vòng audit đều xanh trên một thiết kế mà lượt gọi thật
+đầu tiên bác bỏ trong 10 giây.
 
 ## ĐÃ XONG 12/09 — T1, T2, T3, T4
 

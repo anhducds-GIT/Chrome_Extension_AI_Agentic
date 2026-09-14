@@ -1033,3 +1033,30 @@ lái mọi phiên sau vào vết cũ. Nay nó kể tên tám giả thuyết đã
 **Việc kế, và nó cần đúng một cú bấm của Đức:** `G-47` — biến chưa thử là **tab đang hoạt động** so
 với **tab nền**, riêng Chrome của Đức (Chrome sạch không tái hiện). Khớp 6/7 quan sát. Máy chờ
 `scratchpad/cho-tab-hien.mjs` đang chạy: Đức bấm vào tab `127.0.0.1:8642` là nó tự bấm lại và đo.
+
+## 2026-09-14 · `claude-scouter-udine` — `scout.grab`: URL ký sẵn không ra khỏi trình duyệt
+
+**Đức chốt `S-24` đường ⒜.** Ảnh của trang thật nằm sau **URL ký sẵn**; lõi ĐỌC cắt query khỏi
+mọi `src`/`href` nên `scout.fetch` chỉ nhận nửa URL và ăn 403. Hai đường chữa tồi là nới lớp che
+(token vào nhật ký, vào đĩa) hoặc bỏ việc. Đường thứ ba: **URL đọc ở trong, dùng ở trong, chết ở
+trong.**
+
+`input.grabUrl` (lõi ghi) đọc `src`/`href` của **đúng một** phần tử, giải theo `baseURL`, chỉ
+http(s). **Không lệnh Bridge nào ánh xạ tới nó** — nó trả URL đầy đủ, nối ra dây là phát chữ ký ra
+ngoài (`GR9` canh). `scout.grab` (lõi seed) gọi nó trong máy, tải tệp, trả **byte**; khối trả về
+**không có trường `url`**, chỉ `source.masked` = gốc + đường dẫn (`GR7` canh). Một lượt = **một**
+đơn vị ngân sách ghi. Thêm `DOM.getAttributes` vào danh sách CDP đường ghi — chỉ đọc; `Runtime.*`
+vẫn đóng.
+
+**Ba danh sách ghim + README + số method đều ĐỎ cho tới khi sửa tay** — đúng thiết kế: thêm một
+method thì không có đường nào trôi qua im lặng. Con `P1` của bộ đột biến cũng ĐỎ vì số đường vào
+phanh 2→3; đó là một phép ĐẾM, không phải hằng số cho đẹp.
+
+**Đo:** ghim mới 11 khối · suite **26/26** · đột biến **128/128 giết được, 0 sống sót**.
+**CHƯA CHẠY THẬT** — và bài học của chính ngày hôm nay là đừng tin điều đó: `lay-anh.mjs` cũng
+từng xanh trọn rồi ngã ở lượt gọi thật đầu tiên. Việc kế `T13` nối adapter sang grab rồi chạy.
+
+**Lộ trình viết lại** (`docs/CAPABILITIES.md` §5) và `CHUOI-VIEC.md` dựng lại quanh việc còn lại:
+T13 (không chờ ai) · T14 `S-22` · **D3** — câu hỏi mới cho Đức: có mở `scout.focus` không. Nếu
+`G-49` đúng thì không có nó, Scouter **không tự chạy được**, vì mọi lượt ghi phụ thuộc vào việc
+con người vừa nhìn tab nào.

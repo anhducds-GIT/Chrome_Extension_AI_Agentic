@@ -80,8 +80,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 |---|---|---|---|---|---|
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
-| D3 | Lấy file / ảnh về đĩa | `scout.fetch` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: **CHẶN** 14/09 — URL ký sẵn, xem O11 và `S-24` | |
-| O11 | Lấy được **URL đầy đủ** của một tài nguyên (kể cả query) để tải nó về | — | **CHƯA CÓ** | Lõi đọc cắt query khỏi `src`/`href` (`stripQuery`) vì query là chỗ token hay nằm. Mọi trang dùng URL ký sẵn (S3, CDN có hạn giờ) đều chặn ở đây. Ba đường ở `S-24` | ✋ |
+| D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn). Đường đúng là `scout.grab` — xem O11 | |
+| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **CÓ** | Đức chốt `S-24` đường ⒜ 14/09. Đưa selector, extension đọc `src` đầy đủ **bên trong** rồi tải, trả byte; không có trường `url`. 11 khối ghim · đột biến 128/128. **CHƯA CHẠY THẬT** — `T13` | |
 | D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ ở seed** | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
@@ -99,8 +99,9 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 19 · MỘT PHẦN 2 · CÓ 4 · CHƯA CÓ / CHƯA ĐO 15 · ĐÃ BỎ 1.** Tổng 41 dòng.
-**Seed Coverage = 19 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09.
+**ĐÃ CHỨNG MINH 19 · MỘT PHẦN 2 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 14 · ĐÃ BỎ 1.** Tổng 41 dòng.
+**Seed Coverage = 19 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
+đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
 ## 3. Checklist bổ sung cho Seed — theo thứ tự việc thật cần
 
@@ -110,7 +111,7 @@ Chrome riêng (probe) → ☐ đạt trên trang thật. Bước 4 xong thì s�
 | Ưu tiên | Mã | Vì sao trước | Duyệt |
 |---|---|---|---|
 | 1 | `S-22` | Lệnh bấm báo ok mà trang không phản ứng. Mọi năng lực tay người đứng trên nó | |
-| 2 | `S-24` URL ký sẵn | Chặn W3 và mọi trang dùng CDN có chữ ký. Ba đường, Đức chọn | ✋ |
+| 2 | `T13` nối `lay-anh.mjs` sang `scout.grab` | Đóng W3, và cho `scout.grab` lượt chạy thật đầu tiên | |
 | 3 | O8 đọc chữ | Không đọc được kết quả bằng chữ thì không kiểm được phần lớn workflow | ✋ chốt chính sách che |
 | 4 | I4 xoá ô nhập | Gửi prompt lần hai trên cùng ô | ✋ |
 | 5 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo | ✋ |
@@ -139,28 +140,45 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 |---|---|---|---|---|
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
-| W3 | Lấy ảnh kết quả về đĩa | D3 + **O11** | **CHẶN** 14/09 | Chạy thật: `scout.fetch` trả **403**. Ảnh Udin là URL S3 **ký sẵn**, chữ ký nằm trong query — mà lõi đọc **cắt query khỏi mọi `src`/`href`** theo chính sách che `de-xuat-chat-v1`. 17/17 `src` bị cắt. Đây là **bảo vệ**, không phải bug (`G-35`). Chờ Đức chốt `S-24` |
+| W3 | Lấy ảnh kết quả về đĩa | O11 | **CHƯA** | Đường cũ (`scout.fetch`) chết 14/09: 403 vì URL ký sẵn (`G-35`). Đường mới `scout.grab` đã có; `lay-anh.mjs` **chưa nối sang** — việc `T13` |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **CHẶN** | |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **CHẶN** | `e2e.mjs` 14/09: mã + 5 khối ghim. **Cố ý chưa chạy**: W3 đang chặn, chạy chỉ tốn credit rồi ngã ở chặng ba (`G-34`) |
+| **E2E** | Mở trang → W1 → W2 → W3 | | **CHƯA** | `e2e.mjs`: mã + 5 khối ghim. Cố ý chưa chạy — chờ `T13` xong, không thì tốn credit rồi ngã ở chặng ba (`G-34`) |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
 Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **2 / 8 workflow ĐẠT · 4 CHẶN · E2E CHẶN**.
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
 
-## 5. Lộ trình triển khai
+## 5. Lộ trình triển khai — sửa 14/09 sau một ngày chạy thật
 
-| Chặng | Việc | Xong khi |
-|---|---|---|
-| **P0** · 13/09 | Chốt mô hình, viết file này | Đức duyệt bảng §2 và danh sách W của Udin |
-| **P1** | Đóng `S-22` · W3 lấy ảnh Udin về đĩa · E2E Udin lần đầu | E2E Udin ĐẠT trên ghế thật |
-| **P2** | Đức chốt các mục ✋ ưu tiên 3–5 → làm theo checklist §3 | O8 I4 I5 I6 I7 ĐÃ CHỨNG MINH |
-| **P3** | Tách Udin thành **gói adapter riêng**, điều khiển seed qua Bridge. **Không chép seed** (ADR-0006) | các W bắt buộc ĐẠT từ gói mới |
-| **P4** | Trang thứ hai **khác loại** (node editor / timeline / CRUD) | có W ĐẠT mà **không sửa seed riêng cho trang đó** |
-| **P5** | Lúc này mới xét: đóng Udin thành extension riêng · máy đếm mastery tự động · I8 I9 | Đức chọn |
+**Đọc trước khi làm gì:** hai thứ đã đổi hình so với bản 13/09. ⑴ `W3` không đi bằng `scout.fetch`
+được — ảnh nằm sau URL ký sẵn, và cách chữa là `scout.grab` (đã có, **chưa chạy thật**). ⑵ `S-22`
+nay còn đúng **một** giả thuyết sống, và nó quyết định Scouter có tự chạy được hay không.
+
+| Chặng | Việc | Xong khi | Chờ ai |
+|---|---|---|---|
+| ~~P0~~ | Chốt mô hình đo | **XONG 13/09** | — |
+| **P1a** | `T13` — `lay-anh.mjs` đi bằng `scout.grab`, chạy thật | một ảnh Udin nằm trên đĩa, và `scout.grab` có lượt chạy thật đầu tiên | **không ai** |
+| **P1b** | `T14` — đóng `S-22` | phép đo ghép cặp có đủ hai vế (tab hiện / tab ẩn) | Đức: một cú bấm **hoặc** chốt `D3` |
+| **P1c** | `T15` — E2E Udin | ba chặng chạy một mạch trên ghế thật | P1a + P1b |
+| **P2** | Các mục ✋: `O8` đọc chữ · `I4` xoá ô · `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | mỗi mục ĐÃ CHỨNG MINH trên trang thật | Đức chốt từng mục |
+| **P3** | Tách Udin thành **gói adapter riêng**, điều khiển seed qua Bridge (không chép seed) | các W bắt buộc ĐẠT từ gói mới | P1c |
+| **P4** | Trang thứ hai **khác loại** (node editor / timeline / CRUD) | có W ĐẠT mà **không sửa seed riêng cho trang đó** | P3 |
+| **P5** | Đóng Udin thành extension riêng · máy đếm mastery · `I8` `I9` | Đức chọn | P4 |
+
+**Rủi ro lớn nhất đang mở, nói thẳng:** nếu `G-49` đúng — lượt ghi chỉ tới khi tab đang hiện —
+thì **P3 trở đi đều đứng trên một nền không tự chạy được**, vì mọi adapter sẽ cần một con người
+vừa nhìn đúng tab. `D3` (`scout.focus`) là đường chữa; không có nó thì giới hạn đó phải được
+khai to trong `README`, không phải giấu trong một dòng nợ.
+
+**Nợ kỹ thuật mở trong ngày 14/09, đừng để rơi:**
+· `T16` — dấu chẩn đoán của trang thử đọc được bằng **giá trị** (hai kết luận ngược đã sinh ra từ
+  chỗ này) · `scout.grab` chưa có phép ghim đi **qua lõi seed** (mới ghim ở lõi hành động + kiểm
+  mã nguồn) · chính sách che `de-xuat-chat-v1` **vẫn chưa được Đức chốt**, mà nay `O8` và cả
+  `source.masked` của `scout.grab` đều đứng trên nó.
 
 **Nhiều URL:** chỉ làm **lần lượt, một tab một lúc** (N7). Chạy đồng thời phải có ADR mới.
