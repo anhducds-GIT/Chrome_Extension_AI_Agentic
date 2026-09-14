@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T8 T16 XONG. T7 doi trang dich sang UDIN va chang (2) DA CHAY 14/09 — do-trang.mjs nay chay tren trang khac khong sua mot dong nao, va khong dieu huong khi da co tab dung san. KET QUA DO: bao cao 219.730 byte, ca ba phep do khai hasMore:false, NHUNG thieu o prompt, anh ket qua, khoi chu agent (G-83) — mot XANH GIA. Viec ke: chang (2) dong khi bao cao tra loi duoc BA cau (go o dau, bam o dau, ket qua hien o dau), moi cau mot selector khop dung mot; hom nay tra loi duoc MOT. Dung nang tran de chua — tran khong phai nguyen nhan. Chi tiet o CHUOI-VIEC.md.",
+      "next_step": "T7 DA KHEP 14/09 — vong tu cai tien chay mot mach tren Udin: do trang (288 KB) -> pilots/t7-tu-sinh/ tu rut selector tu bao cao -> chay -> 4 anh moi trong 39 giay. Ba selector no tu rut trung ban lam tay udin-optic. Viec ke: T9 dong goi seed v1 — no tu khai chi lam sau T7, nay het chan. Truoc do nen chay T7 tren mot trang THU HAI (T21) de biet ba luat rut selector la chung hay vua khit Udin.",
       "human_action": "không",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "T7 nay la viec lon nhat, va no vua tra ve dung thu no sinh ra de tim: ba phep do (scout.page chi ke phan tu TUONG TAC, scout.a11y chi thay thu co vai tro tro nang, scout.tree sau toi da 10) KHONG thay o prompt, anh ket qua, khoi chu agent cua Udin — trong khi ca ba deu khai hasMore:false. Nen \"do xong\" va \"do DU de dung adapter\" la hai chuyen khac nhau, va chua co gi do chuyen thu hai. Selector that cua udin-optic ngay xua tim bang scout.query do tay, khong phai tu ba phep nay."
+      "open_item": "Lượt chạy nay lôi ra bốn cái xanh giả, ca bon deu la mot hinh dang: mot con so TU KHAI la du. (1) G-84 scout.tree khai truncated:false trong khi 45 nhanh cut theo DO SAU — truncated chi canh ngan sach nut. (2) G-87 khop trong bao cao la so SUY RA tu chu ky, do lai bang scout.query thi BUTTON.create-mode-btn gom 1 ma khop 2. (3) G-86 chu ky khong class la tap cha cua moi chu ky co class, nen img luon thang img.batch-grid-image. (4) G-85 dem mot tap vua them vua RUNG thi khong bao gio thay no lon len — 36 xuong 32 trong khi co 4 anh moi, adapter cho 590 giay roi bi giet. Ca bon deu da sua va deu co phep ghim + dot bien dung sau."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T8 T16 XONG. T7 doi trang dich sang UDIN va chang (2) DA CHAY 14/09 — do-trang.mjs nay chay tren trang khac khong sua mot dong nao, va khong dieu huong khi da co tab dung san. KET QUA DO: bao cao 219.730 byte, ca ba phep do khai hasMore:false, NHUNG thieu o prompt, anh ket qua, khoi chu agent (G-83) — mot XANH GIA. Viec ke: chang (2) dong khi bao cao tra loi duoc BA cau (go o dau, bam o dau, ket qua hien o dau), moi cau mot selector khop dung mot; hom nay tra loi duoc MOT. Dung nang tran de chua — tran khong phai nguyen nhan. Chi tiet o CHUOI-VIEC.md.",
+      "title": "T7 DA KHEP 14/09 — vong tu cai tien chay mot mach tren Udin: do trang (288 KB) -> pilots/t7-tu-sinh/ tu rut selector tu bao cao -> chay -> 4 anh moi trong 39 giay. Ba selector no tu rut trung ban lam tay udin-optic. Viec ke: T9 dong goi seed v1 — no tu khai chi lam sau T7, nay het chan. Truoc do nen chay T7 tren mot trang THU HAI (T21) de biet ba luat rut selector la chung hay vua khit Udin.",
       "rank": 4,
       "claim": null
     }
