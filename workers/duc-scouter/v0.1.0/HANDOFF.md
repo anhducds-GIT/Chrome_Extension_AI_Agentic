@@ -1437,3 +1437,30 @@ mặt** — một phép tìm chỉ trả lời đúng câu mình gõ.
   là chung hay vừa khít Udin — đó là `T21`.
 - Công tắc ghi **sống qua `scout.reload`** (`storage.local`), và `instance_id` cũng **không đổi**
   sau một lượt `scout.reload` — khác với lượt nạp lại thư mục unpacked. Đừng đi tìm ghế mới.
+
+## 2026-09-14 · Trang thứ hai (ChatGPT) — ba câu KHÔNG cùng một nguồn
+
+Chạy chặng ② trên một tab ChatGPT, **chỉ đọc**, không sửa dòng nào. Kết quả gọn trong một bảng:
+
+| câu | Udin | ChatGPT | phán |
+|---|---|---|---|
+| gõ ở đâu | `textarea.agent-textarea` | `#prompt-textarea` | ✅ chung, sau `G-88` |
+| bấm ở đâu | `button.agent-send-button` | *không có trong báo cáo* | ⚠️ đổi nguồn, `G-89` |
+| kết quả ở đâu | `img.batch-grid-image` | `li.list-none` — **sai** | ❌ `G-90`, chưa có lối |
+
+- **`G-88`** luật cũ gom chữ ký thuần `thẻ.class`; trên CSS tiện ích nó ra mười class dài và
+  sai. Trang đã tự khai (`role=textbox`, `type=file`, `tabindex=-1`, `type=submit`) và **luật
+  che không cắt những thứ đó** — danh sách CHO PHÉP 24 tên, `id` · `data-testid` · `role` ở
+  trong. Đừng lặp lại chỗ tôi đã đoán sai: **tôi tưởng che cắt hết `data-*`; nó không.**
+- **`G-89`** `#composer-submit-button` khớp **0** khi ô trống. Báo cáo chụp lúc chưa gõ **không
+  thể** chứa cái nút. Adapter nay so **chính trang** trước/sau lượt gõ.
+- **`G-90`** kết quả ChatGPT là chữ, đánh dấu bằng `data-message-author-role` — ngoài danh sách
+  cho phép. **Đừng nới danh sách cho tiện.**
+
+### Để lại
+
+- **Chờ Đức:** cho chạy thật adapter trên tab ChatGPT của anh (nó GÕ và GỬI một tin bỏ đi).
+  Chưa có thì nhánh *nút hiện ra sau khi gõ* mới chỉ có phép ghim, chưa có dây thật.
+- `G-90` còn ba lối, chưa chọn — chi tiết ở `GIA-THUYET`.
+- Sửa nhãn: lượt trước tôi gọi việc này là `T21`. **`T21` là tách Udin thành gói riêng**; chạy
+  vòng trên trang thứ hai là nợ của chính `T7`.
