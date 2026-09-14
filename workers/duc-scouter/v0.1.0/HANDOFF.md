@@ -1343,43 +1343,25 @@ chứ không đọc lại tài liệu. Một dòng `CHẶN` không tự biết c
 
 ## 2026-09-14d · `claude-scouter-udine` — ba việc đóng trong một lượt, vì ghế sống là thứ khan hiếm
 
-Đức nạp lại extension và để công tắc ghi mở. Thứ đắt nhất lúc ấy **không phải thời gian của tôi mà
-là cái ghế đang sống** — nên tôi làm hết phần cần dây thật trước, rồi mới ghi sổ một lượt.
+Đức nạp lại extension và để công tắc ghi mở. Thứ đắt nhất lúc ấy **không phải thời gian của tôi
+mà là cái ghế đang sống** — nên tôi làm hết phần cần dây thật trước, rồi mới ghi sổ một lượt.
+`T33` E2E **4/4 ảnh** (9 đơn vị trần ghi, lượt trước 16 cho MỘT) · `T34` `W4` đọc chữ · `T36`
+`W7` prompt lần hai. Số đo ở `TRIALS.md` hai dòng cuối; vì sao ở `G-76` `G-77` `G-78`.
 
-**`T33` E2E trọn vẹn — ĐẠT 4/4.** Không viết thêm một dòng adapter nào. Bốn ảnh xuống đĩa
-(764.000 · 686.422 · 787.096 · 603.660 byte), kích thước thật khớp từng byte, đầu tệp `RIFF…WEBP`
-hợp lệ. **9 đơn vị** trần ghi cho cả bốn — lượt 14/09 trước đó tốn **16 cho MỘT ảnh** và chết ở
-2/4. Đó là con số nói `T24` đáng giá bao nhiêu, và nó nói thêm một điều: **chỗ hỏng ngày trước
-chưa bao giờ nằm ở adapter.**
+**Ba chỗ tôi suýt làm sai** — chép ở đây vì chúng sẽ quay lại:
 
-**`T34` `W4` đọc chữ — ĐẠT.** `doc-tra-loi.mjs`, nay là chặng thứ tư của E2E. Nó ĐỌC nên đứng
-**sau** lượt tiêu tiền: một W4 đỏ không bao giờ làm mất ảnh đã nằm trên đĩa.
+⑴ **Selector nghe hợp lý nhất khớp 20.** `.markdown-content:last-of-type` *đọc như* "tin nhắn
+cuối"; nó khớp **20**, vì `:last-of-type` xét theo tên thẻ trong TỪNG cha. Tin cái tên thay vì
+hỏi lại trang thì `W4` đọc tin nhắn của **lượt khác** mà mọi phép ghim vẫn xanh.
 
-**`T36` `W7` prompt lần hai — ĐẠT.** Cờ `xoaOCu`; **mặc định vẫn từ chối như cũ**.
+⑵ **Đường dễ nhất cho `W7` là hạ một lớp bảo vệ.** Xoá ba dòng từ chối là xong ngay. Nhưng chữ
+trong ô có thể là chữ Đức đang gõ dở — nên lời từ chối ở lại làm **mặc định**, đường xoá là thứ
+người gọi phải XIN (`xoaOCu`), và có phép ghim canh đúng chỗ đó.
 
-### Ba chỗ tôi suýt làm sai, ghi lại vì chúng sẽ quay lại
-
-⑴ **Selector nghe hợp lý nhất khớp 20.** `.markdown-content:last-of-type` và
-`.chat-message.agent:last-of-type` đều *đọc như* "tin nhắn cuối" — cả hai khớp **20**, vì
-`:last-of-type` xét theo tên thẻ trong TỪNG cha. Nếu tôi tin cái tên thay vì hỏi lại trang, `W4`
-sẽ đọc tin nhắn của **lượt khác** và mọi phép ghim vẫn xanh. Đây là lần thứ hai cơ chế "hỏi lại
-trang từng ứng viên" cứu một chặng (`G-54` → `G-76`).
-
-⑵ **Đường dễ nhất cho `W7` là hạ một lớp bảo vệ.** `gui-prompt.mjs` từ chối khi ô prompt có chữ;
-xoá ba dòng đó là `W7` chạy ngay. Nhưng chữ trong ô có thể là chữ Đức đang gõ dở — nên lời từ chối
-ở lại làm **mặc định**, và đường xoá là thứ người gọi phải XIN (`xoaOCu`). Có phép ghim canh đúng
-chỗ đó, để lượt sau không lặng lẽ đổi mặc định.
-
-⑶ **Bằng chứng của `W7` không phải lời báo của lệnh xoá.** `scout.clear` trả `ok` chẳng chứng
-minh gì (`S-22`: *lệnh hoàn tất* ≠ *trang đã nhận*). Hai thứ chứng minh: nút Send **khoá lại**, và
+⑶ **Bằng chứng của `W7` không phải lời báo của lệnh xoá** (`S-22`). Là nút Send **khoá lại**, và
 câu agent viết ra nói về **đúng prompt mới**, không dính một mẩu nào của chữ cũ.
 
-### Chỗ để lại cho lượt sau
-
-**⓪ nay chỉ còn một chữ ký.** Danh sách đề xuất bắt buộc `W1 W2 W3 W4 W7` + E2E **đã ĐẠT trọn**.
-Nên việc kế không còn là `T35`/`T29` mà là chặng ③ **đóng băng seed** rồi ④ **tách Udin** — đúng
-theo đề xuất của chính mình: `W5` `W6` `W8` để ngoài, và cả ba vẫn làm được **sau** khi tách.
-
-Hai khoá `_code` và `workers/hnx-fetch` đã trả theo lệnh Đức. Lúc trả, `claim.mjs` cảnh báo `_code`
-còn **1 commit chưa đẩy** — đo lại thì `origin/main..main` **rỗng**, không có commit nào treo. Cảnh
-báo đó là một chỉ báo cũ chứ không phải một phép đo; đừng để lượt sau hốt hoảng vì nó.
+**Để lại:** ⓪ nay chỉ còn một chữ ký — danh sách bắt buộc đề xuất đã ĐẠT trọn, nên việc kế là ③
+đóng băng seed rồi ④ tách Udin. Hai khoá `_code` và `workers/hnx-fetch` đã trả theo lệnh Đức;
+lúc trả `claim.mjs` báo `_code` còn 1 commit chưa đẩy, nhưng `origin/main..main` **rỗng** — chỉ
+báo cũ, không phải phép đo.
