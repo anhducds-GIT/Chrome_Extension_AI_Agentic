@@ -48,7 +48,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
 | **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
 | **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
-| **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | nợ do `G-48` để lại |
+| **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | **XONG 14/09** — ô `#dau-chan` chép mọi dấu sang CHỮ, một lượt `scout.text` ra cả bảng (`G-80`). Bản đầu vẽ qua `setTimeout` và chết vì tab nền bóp nghẹt bộ đếm giờ — `G-81` |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |
 | **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình |

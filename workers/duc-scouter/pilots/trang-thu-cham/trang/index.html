@@ -108,6 +108,51 @@
       oKetQua.hidden = false;
     }, TRE_MS);
   });
+
+  // ─── T16 · DẤU CHẨN ĐOÁN ĐỌC ĐƯỢC BẰNG GIÁ TRỊ ────────────────────────────
+  // Mọi dấu ở trên là `data-*`, mà chính sách che `de-xuat-chat-v1` CẮT SẠCH
+  // `data-*` khỏi phần thuộc tính `scout.query` trả về — nên đọc giá trị của
+  // chúng LUÔN ra `null`, kể cả khi trang có ghi thật (`G-75`, đo 14/09).
+  // Đường duy nhất còn lại là đoán giá trị rồi đếm khớp: `body[data-chuot="1"]`,
+  // `="2"`, `="3"`… — không dùng được cho một bộ đếm.
+  //
+  // Nên chép cùng những con số ấy ra CHỮ, và chữ thì `scout.text` đọc được
+  // nguyên vẹn (cửa hẹp của ADR-0006). Một lượt đọc `#dau-chan` ra cả bảng.
+  //
+  // `position:fixed` để không nới vùng cuộn (`G-73` đo độ cuộn trên trang này),
+  // `opacity:0` để không che gì, và `pointer-events:none` vì nó nằm ở góc 0,0 —
+  // thiếu dòng đó là chính cái ô chẩn đoán nuốt mất lượt bấm cần đo.
+  var oDau = document.createElement("pre");
+  oDau.id = "dau-chan";
+  oDau.setAttribute("style", "position:fixed;top:0;left:0;margin:0;opacity:0;pointer-events:none");
+  document.body.appendChild(oDau);
+  function veDauChan() {
+    oDau.textContent = [
+      "chuot=" + (than.dataset.chuot || 0),
+      "phim=" + (than.dataset.phim || 0),
+      "chuotphai=" + (than.dataset.chuotphai || 0),
+      "bamdup=" + (than.dataset.bamdup || 0),
+      "banhxe=" + (than.dataset.banhxe || 0),
+      "cuon=" + (than.dataset.cuon || 0),
+      "bam=" + (oKetQua.dataset.bam || 0),
+      "hien=" + (than.dataset.hien || ""),
+      "focus=" + (than.dataset.focus || "")
+    ].join(" ");   // một dòng, ngăn bằng dấu cách: không escape gì thì không escape sai gì
+  }
+  // Một tay nghe DUY NHẤT vẽ lại bảng, ở pha SỦI nên nó chạy SAU mọi tay nghe
+  // ghi dấu ở pha bắt. Thêm một dấu mới thì chỉ phải thêm một dòng vào veDauChan.
+  //
+  // VẼ THẲNG, KHÔNG QUA `setTimeout`. Bản đầu 14/09 gói nó trong `setTimeout(…, 0)`
+  // cho chắc thứ tự — và bảng đứng im suốt lượt đo, vì **tab này chạy ẩn** (D3) và
+  // Chrome bóp nghẹt bộ đếm giờ của tab nền. Suýt kết luận "lệnh cuộn không cuộn",
+  // ngược hẳn `G-73` đã đo cuộn thật 0 → 1.972. Pha sủi vốn đã chạy sau pha bắt
+  // của cùng một sự kiện, nên `setTimeout` chẳng mua được gì mà bán mất phép đo.
+  // Bài học chung: DỤNG CỤ ĐO phải sống được dưới đúng điều kiện đang đo.
+  ["mousedown", "keydown", "contextmenu", "dblclick", "wheel", "scroll", "click",
+   "visibilitychange", "focus", "blur"].forEach(function (ten) {
+    window.addEventListener(ten, veDauChan, false);
+  });
+  veDauChan();
 })();
 </script>
 </body>
