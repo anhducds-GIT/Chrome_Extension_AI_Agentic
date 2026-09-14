@@ -52,7 +52,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |
 | **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình |
-| **T7** | Đóng vòng tự cải tiến MỘT lần | — | ③/④ chặng; chặng 4 nay chạy được |
+| **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
 | ~~T13 T15 T22 T18 T17~~ | grab · E2E · quá-giờ · `scout.text` · ghim bảng | — | **XONG 14/09** |
@@ -82,9 +82,12 @@ phải sửa**. Đó là phép kiểm duy nhất chứng minh việc tách đã 
 hay không là **xây trên một con số không kiểm được**. T11 rẻ: phép thử đầu tiên tốn của Đức 10
 giây (xem `S-22` giả thuyết ⒜).
 
-**T7 vẫn là mục đích của cả gói**, và ba chặng đầu của nó đã chạy trơn — bàn đo nằm sẵn ở
-`pilots/trang-thu-cham/`, chạy lại bằng một lệnh. T8 vẫn đứng cuối vì nó đổi tên hàng loạt và
-làm mọi diff khó đọc.
+**T7 đã KHÉP 14/09** trên Udin — dò → sinh adapter → chạy, một mạch, `4 ảnh mới trong 39 giây`
+(chi tiết ở mục `T7`). Lưu ý đừng đọc nhầm: `T7` khép được là nhờ **đổi trang đích sang Udin**,
+**không** phải nhờ `S-22` được chữa — `S-22` vẫn đóng theo quyết định ngừng điều tra của Đức, và
+trang thử vẫn không nhận sự kiện nhập. Hai câu khác nhau, đừng gộp.
+
+Thứ `T7` mở khoá: `T9` (đóng gói seed v1) tự khai *"chỉ làm sau T7"* — nay hết chặn.
 
 ---
 
@@ -431,7 +434,7 @@ sẵn cho một nhu cầu tưởng tượng là đúng thứ `ROADMAP` mục ④
 
 · **đóng khi:** chọn được một đường, và lý do ghi vào `BACKLOG.md` dưới `S-20`.
 
-## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ *mục đích của cả gói; đang ở chặng ④, chặn bởi T11*
+## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ ✅ **ĐÃ KHÉP 14/09**
 
 Scouter dò trang → AI ghi adapter xuống đĩa qua Bridge → `scout.reload` → adapter chạy.
 **Từng mảnh đã có và đã đo; cả vòng thì chưa ai khép một lần nào.** Cho tới khi nó khép, ta
@@ -480,23 +483,52 @@ giữa. Nên phần còn nợ của `T7` gọn lại đúng một câu: **chạy
 nó là **gian lận với chính phép đo**. Lượt chạy thật phải sinh ra adapter MỚI vào một thư mục
 khác, rồi so kết quả với `udin-optic/`. Giống nhau thì vòng khép; khác thì cái khác đó là kết quả.
 
-### Chặng ② đã chạy trên Udin 14/09 — và nó ĐỎ đúng chỗ cần đỏ
+### Vòng đã khép 14/09 — dò → sinh adapter → chạy, một mạch
 
-`do-trang.mjs` nay chạy được trên trang khác **không sửa một dòng nào** (`TRANG_THU` · `THU_MUC`
-· bốn trần đều là tham số), và **không điều hướng** khi đã có tab đứng sẵn — chặng ② chỉ ĐỌC,
-nó không có lý do gì đụng vào trạng thái trang.
+`do-trang.mjs` (chặng ②) chạy trên Udin **không sửa một dòng nào**, ghi báo cáo 288 KB. Adapter
+chặng ③ nằm ở **`pilots/t7-tu-sinh/`** — thư mục mới, và nó **không chứa một selector nào do
+người viết gõ ra**: mọi selector do mã tự rút khỏi báo cáo lúc chạy, theo ba luật không biết gì
+về Udin. Lý do phải làm thế thì thẳng thắn: người viết chặng ③ ở đây *đã biết* ba selector của
+Udin từ `udin-optic/`, nên gõ chúng ra rồi bảo *"tôi đọc từ báo cáo"* là một phép đo không ai
+kiểm được, kể cả chính mình.
 
-Báo cáo Udin: **219.730 byte**, cả ba phép dò khai `hasMore: false`. **Nhưng nó KHÔNG đủ để dựng
-adapter** — thiếu ô prompt, thiếu ảnh kết quả, thiếu khối chữ agent (`G-83`). Ba trong sáu thứ
-`udin-optic` thật sự dùng, và ba cái thiếu là ba cái quan trọng nhất.
+· **gõ ở đâu** — chữ ký đầu tiên khớp **đúng một**.
+· **bấm ở đâu** — KHÔNG đoán bằng chữ (`"Send"` là tiếng Anh của một trang cụ thể). **Hỏi trang
+  bằng một thí nghiệm**: gõ chữ vào ô, xem nút nào từ `disabled` chuyển sang mở. Đúng một nút
+  đổi thì đó là nó; nhiều hơn một thì **dừng** — luật gói số 7 không cho bấm khi chưa chắc.
+· **kết quả ở đâu** — nhóm đông nhất theo `gom`.
 
-· **chặng ② đóng khi:** báo cáo trả lời được **ba câu** — *gõ ở đâu · bấm ở đâu · kết quả hiện ở
-đâu* — mỗi câu bằng một selector khớp **đúng một**. Hôm nay trả lời được **một**. Đừng nâng trần
-để chữa: trần không phải nguyên nhân, `hasMore: false` đã nói thế. Nguyên nhân là **ba phép dò
-này không nhìn thấy thứ không-tương-tác và không-trợ-năng**, và `scout.tree` sâu tối đa 10.
+**Kết quả lượt chạy thật** (`"a chipped enamel teapot beside three walnuts"`): 9 ứng viên nút →
+thí nghiệm chỉ ra `button.agent-send-button` → **4 ảnh mới trong 39 giây**.
 
-· *Đừng làm sai:* đừng lấy selector từ `pilots/udin-optic/` nhét vào báo cáo cho nó xanh. Cả
-`T7` nằm ở chỗ báo cáo phải **tự** đủ.
+| | adapter tự sinh | `udin-optic/` làm tay |
+|---|---|---|
+| ô nhập | `textarea.agent-textarea` | `textarea.agent-textarea` |
+| nút | `button.agent-send-button` *(tìm bằng thí nghiệm)* | `button.agent-send-button:not(.stop-button)` |
+| kết quả | `img.batch-grid-image` | `img.batch-grid-image` |
+
+Khác đúng một chỗ, và chỗ khác ấy có lý: bản làm tay phải loại trạng thái `stop-button` bằng
+class vì nó nhận nút **bằng tên**; bản tự sinh nhận nút **bằng hành vi** nên không cần.
+
+### Hai lỗi thật do chính lượt chạy này lôi ra — cả hai đã sửa
+
+1. **`G-85`** — luật *"chờ số kết quả tăng"* hỏng câm trên trang có kết quả hết hạn: Udin sinh 4
+   ảnh trong lúc 8 ảnh cũ rụng, **36 → 32**, adapter chờ **590 giây** rồi bị giết dù lượt chạy
+   đã thành công. Sửa bằng cách hỏi *có **thành viên mới** không*, không hỏi *có đông hơn không*.
+2. **`G-87`** — `khop` trong báo cáo là con số **suy ra**, không phải đo: `BUTTON.create-mode-btn`
+   gom 1 mà khớp 2. Cả báo cáo đứng trên ba chữ *khớp đúng một*, nên chỗ nào suy ra nó là chỗ
+   ấy nói dối. Sửa: hỏi lại trang cho từng chữ ký — đọc không tốn gì.
+
+Và `G-84` chữa cái **xanh giả** gốc: `scout.tree` nay khai `cutByDepth` + `childrenDropped`.
+Báo cáo Udin giờ **ĐỎ đúng chỗ**: *45 nhánh cụt, 87 nút con rơi ra ngoài* — nâng `max_nodes`
+không chữa được, và nó nói thẳng điều đó ra.
+
+### Còn nợ lại của T7
+
+· Cả vòng chạy trên **một** trang. Chạy lại trên một trang thứ hai mới biết ba luật rút selector
+  là chung hay là vừa khít Udin — đó là `T21`, không phải `T7`.
+· Adapter tự sinh chưa lấy ảnh về đĩa và chưa đọc câu trả lời (`W3` · `W4` của `udin-optic`).
+  Cố ý: vòng khép cần **một** đường đi được, không cần đủ tính năng.
 
 ### Cái bẫy đã biết, đừng vấp lại
 

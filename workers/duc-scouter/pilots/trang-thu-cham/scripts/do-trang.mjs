@@ -102,22 +102,46 @@ async function main() {
      * DÙNG ĐƯỢC còn chữ ký khớp 21 là chữ ký vô dụng; với vùng kết quả thì ngược lại, nhiều
      * mới đúng. Đo 14/09: xếp thuần theo số đông chôn `BUTTON.agent-send-button` (1) xuống
      * dưới `BUTTON.message-copy-btn` (21) — báo cáo có câu trả lời mà giấu nó đi. */
-    const hang = duyNhatTruoc ? (x) => (x[1] === 1 ? 0 : 1) : () => 0;
-    return [...dem]
-      .sort((a, b) => hang(a) - hang(b) || b[1] - a[1])
-      .map(([selector, khop]) => ({ selector, khop }));
+    return { dem, duyNhatTruoc };
+  };
+  /* `khop` phải ĐO, không được SUY — và đây là chỗ bản đầu 14/09 nói dối.
+   * Chữ ký gom theo bộ class Y HỆT; CSS thì khớp theo TẬP CON. `BUTTON.create-mode-btn` gom
+   * đúng 1 phần tử (cái còn lại có thêm class `active`) nhưng đọc như một selector thì khớp 2.
+   * Cả báo cáo này đứng trên ba chữ *khớp đúng một*, nên một con số suy ra là một cái xanh giả
+   * nữa — và chặng ④ đã bỏ đúng cái nút cần vì nó. Hỏi lại trang thì hết đoán: đọc không tốn gì.
+   *
+   * `nodeName` của CDP viết HOA; CSS phân biệt hoa-thường ở phần class nhưng không ở tên thẻ,
+   * nên chỉ hạ đúng phần tên thẻ rồi phát ra selector DÙNG ĐƯỢC NGAY. */
+  const raCss = (chuKy) => {
+    const i = chuKy.indexOf(".");
+    return i < 0 ? chuKy.toLowerCase() : chuKy.slice(0, i).toLowerCase() + chuKy.slice(i);
+  };
+  const doKhop = async ({ dem, duyNhatTruoc }) => {
+    const ds = [];
+    for (const [chuKy, gom] of dem) {
+      const selector = raCss(chuKy);
+      const { matchCount } = (await goi("scout.query", { target_id: tab, selector, limit: 1 })).data;
+      ds.push({ selector, khop: matchCount, gom });
+    }
+    /* Đích thao tác xếp theo `khop` ĐO ĐƯỢC (khớp đúng một lên đầu — luật gói số 7).
+     * Vùng kết quả xếp theo `gom`, tức cỡ NHÓM có bộ class y hệt, chứ KHÔNG theo `khop`: một
+     * chữ ký không class là tập cha của mọi chữ ký có class cùng thẻ, nên `img` luôn khớp
+     * nhiều hơn `img.batch-grid-image` và luôn thắng — một chiến thắng không mang tin gì.
+     * Đo 14/09: `img` (39) đè `img.batch-grid-image` (32) đúng ở lượt dò này. */
+    const hang = duyNhatTruoc ? (x) => (x.khop === 1 ? 0 : 1) : () => 0;
+    return ds.sort((a, b) => hang(a) - hang(b) || (duyNhatTruoc ? b.khop - a.khop : b.gom - a.gom));
   };
   const nhapDuoc = new Set(["TEXTAREA", "INPUT"]);
   const baCau = {
-    go_o_dau: chuKy(trang.data.elements.items, {
+    go_o_dau: await doKhop(chuKy(trang.data.elements.items, {
       loc: (it) => nhapDuoc.has(it.nodeName) || it.attributes?.contenteditable === "true",
       duyNhatTruoc: true,
-    }),
-    bam_o_dau: chuKy(trang.data.elements.items, {
+    })),
+    bam_o_dau: await doKhop(chuKy(trang.data.elements.items, {
       loc: (it) => it.nodeName === "BUTTON" || it.nodeName === "A",
       duyNhatTruoc: true,
-    }),
-    ket_qua_o_dau: chuKy(noiDung.data.items),
+    })),
+    ket_qua_o_dau: await doKhop(chuKy(noiDung.data.items)),
   };
   for (const [cau, ds] of Object.entries(baCau)) {
     console.log(`${cau}: ${ds.length === 0 ? "KHÔNG CÓ ỨNG VIÊN NÀO" : ds.slice(0, 3).map((x) => `${x.selector} (${x.khop})`).join(" · ")}`);

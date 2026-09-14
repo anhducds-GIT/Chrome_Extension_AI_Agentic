@@ -177,6 +177,12 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
 Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **5 / 8 workflow ĐẠT · 1 CHẶN (`W8`) · E2E ĐẠT**.
+
+**Vòng tự cải tiến (`T7`) — KHÉP 14/09.** Đây là năng lực mà cả gói sinh ra để có, và nó không
+nằm trong bảng `W` vì nó không phải một workflow của một trang: nó là *dò một trang chưa biết →
+sinh adapter → chạy adapter*. Chạy thật trên Udin: báo cáo 288 KB ⟶ `pilots/t7-tu-sinh/` rút
+selector từ báo cáo bằng ba luật không biết gì về Udin ⟶ **4 ảnh mới trong 39 giây**. Ba selector
+nó tự rút ra trùng bản làm tay `udin-optic/`. `G-84` `G-85` `G-86` `G-87`.
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
 
 **Và đây là chỗ câu hỏi ⓪ của Đức đã tự trả gần hết.** Đề xuất bắt buộc là `W1 W2 W3 W4 W7` +
@@ -242,7 +248,7 @@ nhiêu, nên nó đứng trước mọi việc khác trong bảng dưới.
 | ~~P0…P2a · ① · ②~~ | mô hình đo · `T13` · `S-22` · `O8` · `T24` `S-25` · `T31` · nhìn & đi lại · `T32` chạy thật | **XONG 12–14/09** | — |
 | **⓪** | **Chốt `W` nào BẮT BUỘC** trước khi tách | có một danh sách `W` đóng, ghi vào §4 | **Đức** |
 | ~~**②c**~~ | ~~`T33` chạy lại **E2E trọn vẹn**~~ | **XONG 14/09** — 4/4 ảnh, 9 đơn vị trần ghi | — |
-| **②d** | ~~`T34` `W4` đọc chữ~~ **XONG** · ~~`T36` `W7` prompt lần hai~~ **XONG** · `T35` `W6` thêm ảnh vào canvas | mỗi `W` có hợp đồng ⟨trước · thao tác · thành công · thất bại⟩ và một lượt chạy thật | không ai |
+| **②d** | ~~`T34` `W4`~~ **XONG** · ~~`T36` `W7`~~ **XONG** · ~~`T7` vòng tự cải tiến~~ **KHÉP 14/09** · `T35` `W6` thêm ảnh vào canvas | mỗi `W` có hợp đồng ⟨trước · thao tác · thành công · thất bại⟩ và một lượt chạy thật | không ai |
 | **②e** | `T29` `scout.upload` (`I9`) → `W8` | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở **máy chủ** | không ai |
 | **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ⓪ ②c ②d ②e |
 | **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |

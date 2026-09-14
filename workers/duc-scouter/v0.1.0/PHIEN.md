@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T8 T16 XONG. T7 doi trang dich sang UDIN va chang (2) DA CHAY 14/09 — do-trang.mjs nay chay tren trang khac khong sua mot dong nao, va khong dieu huong khi da co tab dung san. KET QUA DO: bao cao 219.730 byte, ca ba phep do khai hasMore:false, NHUNG thieu o prompt, anh ket qua, khoi chu agent (G-83) — mot XANH GIA. Viec ke: chang (2) dong khi bao cao tra loi duoc BA cau (go o dau, bam o dau, ket qua hien o dau), moi cau mot selector khop dung mot; hom nay tra loi duoc MOT. Dung nang tran de chua — tran khong phai nguyen nhan. Chi tiet o CHUOI-VIEC.md."
+- next_step: "T7 DA KHEP 14/09 — vong tu cai tien chay mot mach tren Udin: do trang (288 KB) -> pilots/t7-tu-sinh/ tu rut selector tu bao cao -> chay -> 4 anh moi trong 39 giay. Ba selector no tu rut trung ban lam tay udin-optic. Viec ke: T9 dong goi seed v1 — no tu khai chi lam sau T7, nay het chan. Truoc do nen chay T7 tren mot trang THU HAI (T21) de biet ba luat rut selector la chung hay vua khit Udin."
 - human_action: "không"
