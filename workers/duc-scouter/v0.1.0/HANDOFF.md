@@ -1525,3 +1525,39 @@ Khuyên kiểu đầu; kiểu sau chỉ đáng khi Udin phải chạy mà **khô
 - **`pilots/` ở GỐC REPO là vùng chỉ-thêm; `workers/duc-scouter/pilots/` thì KHÔNG** (đo 14–15/09).
   Nhưng `session-check` tách rename thành *xoá + thêm*, nên chạy cổng ngay sau `git mv` file
   **đầu tiên**, đừng dời cả 10 file rồi mới biết.
+
+## 2026-09-15c · Đức chốt ⒝ — và một phép đo đổi hẳn cách làm ⒝
+
+**Chốt:** Udin thành **extension riêng, một bộ đầy đủ**. Lộ trình viết lại thành **sáu chặng**
+ở `CHUOI-VIEC.md` mục `T21`.
+
+Đức nhớ mang máng *"hình như trước đây ta làm theo kiểu gộp host"* — **nhớ đúng**:
+`_shared/bridge-host/bridge-host-core.mjs` (519 dòng) là lõi đã gộp, và vì thế host của
+`hnx-fetch` chỉ **194 dòng**. Host 500 dòng của `duc-auto-chatgpt` là bản **chưa gộp** còn sót
+lại — **đừng lấy nó làm mẫu**, dù đó là bản Scouter đang chạy nhờ.
+
+### Con số đáng nhớ nhất của lượt này
+
+So `hnx-fetch` với `duc-scouter`:
+
+| | khác nhau |
+|---|---|
+| `transport.mjs` (576 dòng) | **18 dòng — 97% là bản CHÉP** |
+| `bridge-core.mjs` (844 dòng) | 489 dòng — khác thật, từ vựng method mỗi gói một khác |
+
+Nên **⒝ không phải là "chép `hnx-fetch` lần nữa"**: làm thế là đẻ ra **bản sao thứ ba** của cùng
+một tầng transport. Đường đúng là **gộp transport trước** (chặng ①), y như host đã được gộp.
+Và nó làm cả việc *rẻ* đi chứ không đắt lên — sau khi gộp, phần thật sự mới chỉ còn từ vựng
+riêng + vỏ giao diện + 1.404 dòng logic đã có sẵn.
+
+### Đóng dấu `Scouter v1` — ĐỂ LẠI, có lý do
+
+Chặng ① của `T21` **sửa chính Scouter** (rút transport về `_shared`). Đóng dấu hôm nay rồi mai
+sửa là biến con dấu thành một câu không đúng. `T21` đóng khi `git status workers/duc-scouter`
+**sạch** sau lượt chạy thật từ extension mới — đúng lúc ấy con dấu mới có nghĩa, và nó được
+**chứng minh** chứ không được **tuyên bố**. Đức xem Scouter là việc đang tiếp diễn, và cách đọc
+này khớp với điều đó.
+
+### Để lại
+
+`human_action` nay là **"không"** — không còn gì chờ Đức. Bắt đầu ở chặng ①.

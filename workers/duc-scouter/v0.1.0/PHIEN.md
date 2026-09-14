@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T21 — tach Udin Optic ra khoi Scouter. LO TRINH DA VIET 15/09, doc o CHUOI-VIEC.md muc T21: nam chang deu dung duoc va kiem duoc, kem nam cai bay. Phep kiem dong chi co MOT cau: cac W cua Udin DAT TU GOI MOI va khong mot dong nao cua Scouter phai sua — nen chang (4) doi ca hai ve, DAT va `git status workers/duc-scouter` SACH. Bat dau o chang (1): doi goi-bridge.mjs ra cho dung chung, dung chep — ba pilot dang dung chung no. Truoc do can Duc chot (0)."
-- human_action: "@Đức:chốt hai việc. MỘT: T21 tách kiểu nào — gói ĐIỀU KHIỂN riêng (khuyên) hay EXTENSION riêng như hnx-fetch; đọc mục ⓪ ở CHUOI-VIEC. HAI: đóng dấu Scouter v1 hay chưa (T9 đã xong đường cài đặt)."
+- next_step: "T21 — Duc chot 15/09: tach Udin thanh EXTENSION RIENG, mot bo day du. Lo trinh SAU chang o CHUOI-VIEC.md muc T21. Bat dau o chang (1): GOP transport.mjs ve _shared — do duoc hai goi hien co chi khac 18/576 dong, tuc 97% la ban chep, nen dung goi thu ba theo kieu cu la de ra ban sao THU BA. Gop truoc thi phan that su moi cua Udin chi con tu vung rieng + vo giao dien + 1.404 dong logic da co. May chu Bridge thi DA gop tu truoc (_shared/bridge-host/bridge-host-core.mjs, 519 dong) nen host goi moi chi la vo ~194 dong theo mau hnx-fetch."
+- human_action: "không"

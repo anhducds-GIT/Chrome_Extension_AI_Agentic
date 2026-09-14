@@ -51,7 +51,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | **XONG 14/09** — ô `#dau-chan` chép mọi dấu sang CHỮ, một lượt `scout.text` ra cả bảng (`G-80`). Bản đầu vẽ qua `setTimeout` và chết vì tab nền bóp nghẹt bộ đếm giờ — `G-81` |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | — | đường cài đặt XONG 15/09; chờ Đức chốt phiên bản |
-| **T21** | **Tách Udin Optic ra khỏi Scouter** | — | **lộ trình đã viết 15/09**; chờ Đức chốt ⓪ |
+| **T21** | **Tách Udin thành EXTENSION riêng** | — | Đức chốt ⒝ 15/09; **bắt đầu ở chặng ①: gộp transport** |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
@@ -645,71 +645,89 @@ chính Scouter nên chưa có gì ép hai bên rời nhau. Tách ra là lúc đ�
 | phụ thuộc ra ngoài | đúng **một**: `../../trang-thu-cham/scripts/goi-bridge.mjs` |
 | tiền lệ tách gói | `workers/hnx-fetch/` — tách 08/09, và nó là một **extension đầy đủ** (manifest · background · bảng bên · máy chủ Bridge · transport · giao thức `hnx-fetch.bridge` riêng) |
 
-### ⓪ MỘT QUYẾT ĐỊNH CỦA ĐỨC TRƯỚC KHI GÕ DÒNG NÀO
+### ⓪ ĐỨC ĐÃ CHỐT 15/09: **⒝ — extension riêng, một bộ đầy đủ**
 
-Hai chữ *"tách"* đọc được hai kiểu, và hai kiểu chênh nhau hàng tuần công:
+Tức Udin có `manifest.json` · background · bảng bên · máy chủ Bridge · transport · giao thức
+riêng, đứng độc lập như `workers/hnx-fetch/`.
 
-· **⒜ Gói ĐIỀU KHIỂN riêng** — `workers/udin-optic/`: 10 file dời ra, có khoá · `STATUS` · suite
-  riêng, vẫn lái Scouter qua Bridge **y như hôm nay**. Scouter là bộ đồ nghề, Udin là người dùng.
-· **⒝ EXTENSION riêng** như `hnx-fetch`: thêm manifest · background · bảng bên · máy chủ Bridge ·
-  transport · giao thức riêng.
+**Và Đức nhớ đúng một chuyện quan trọng:** *"hình như trước đây ta làm theo kiểu gộp host"*.
+Có thật — `workers/_shared/bridge-host/bridge-host-core.mjs` (519 dòng) là lõi host **đã gộp**.
+Vì thế host của `hnx-fetch` chỉ **194 dòng**: nó *dùng* lõi chung. Host 500 dòng của
+`duc-auto-chatgpt` là bản **chưa gộp** còn sót lại — đừng lấy nó làm mẫu.
 
-**Khuyên ⒜.** Ba lý do, không phải một:
-① `AGENTS.md` gốc đã cảnh báo *"ba gói `duc-auto-*` là fork — một lỗi thường có **ba** bản sao"*.
-  ⒝ nhân bản tầng transport thêm lần nữa: bản sao **thứ tư**.
-② Phép kiểm đóng chặng ③ **không đòi** ⒝. Nó hỏi *"`W` của Udin có ĐẠT từ gói mới không"*, và ⒜
-  trả lời được câu đó — rẻ hơn nhiều.
-③ Udin hôm nay **không có một dòng mã extension nào**. Dựng vỏ extension quanh 5 script Node là
-  đi trước nhu cầu.
+### Đo trước khi chép — và con số này đổi hẳn cách làm ⒝
 
-**Khi nào ⒝ mới đáng:** khi Udin phải chạy mà **không ai gõ một lệnh Node** — tức lúc nó thành
-sản phẩm cho người khác, chứ không còn là đồ nghề của Đức. Chưa tới lúc đó thì ⒝ chỉ mua thêm
-một bản sao để đồng bộ.
+Chép nguyên kiểu `hnx-fetch` thì tốn ~3.100 dòng. Nhưng so hai gói đang có:
 
-### Năm chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+| so `hnx-fetch` với `duc-scouter` | khác nhau | nghĩa là |
+|---|---|---|
+| `transport.mjs` (576 dòng) | **18 dòng** | **97% là bản CHÉP** |
+| `bridge-core.mjs` (844 dòng) | 489 dòng | khác thật — từ vựng method mỗi gói một khác |
+| máy chủ Bridge | — | **đã gộp rồi** ở `_shared`, host gói chỉ là vỏ ~194 dòng |
 
-**① Dời `goi-bridge.mjs` ra chỗ dùng chung — LÀM TRƯỚC, đừng chép.**
+**Nên ⒝ KHÔNG phải là "chép `hnx-fetch` lần nữa".** Làm thế là đẻ ra **bản sao thứ ba** của
+cùng một tầng transport, đúng bệnh mà `AGENTS.md` gốc đã cảnh báo. Đường đúng: **gộp transport
+trước, rồi dựng gói mới trên bản gộp** — y như host đã được gộp trước đây.
+
+Cái đó cũng làm lộ trình *rẻ hơn* chứ không đắt hơn: sau khi gộp, phần THẬT SỰ mới của Udin chỉ
+còn từ vựng riêng + vỏ giao diện + 1.404 dòng logic đã có sẵn.
+
+### Sáu chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+
+**① Gộp `transport.mjs` về `_shared` — LÀM TRƯỚC MỌI THỨ.**
+558/576 dòng đã giống nhau; 18 dòng khác là phần riêng của gói (tên giao thức, nhãn). Tách phần
+riêng thành tham số, đưa phần chung xuống `workers/_shared/`.
+*Đóng khi:* `duc-scouter` và `hnx-fetch` **cùng** chạy trên bản gộp · suite **cả hai gói** xanh ·
+bộ đột biến của cả hai xanh · và **không còn hai bản transport trong repo**.
+*Vì sao đây là chặng ①:* dựng gói thứ ba trước rồi mới gộp là phải sửa ba chỗ thay vì hai.
+
+**② Dời `goi-bridge.mjs` ra chỗ dùng chung.**
 Ba pilot đang dùng chung nó (`trang-thu-cham` · `t7-tu-sinh` · `udin-optic`). Udin đi mà chép
-theo một bản là gieo đúng cái bệnh ⓪ vừa từ chối.
-*Đóng khi:* nó nằm ở một chỗ cả hai gói với tới được · **không tồn tại hai bản** · `npm run
-test:scouter` xanh.
+theo một bản là gieo lại đúng cái bệnh chặng ① vừa chữa.
+*Đóng khi:* không tồn tại hai bản · `npm run test:scouter` xanh.
 
-**② Dựng nhà cho gói mới.**
-`workers/udin-optic/` · khoá vùng mới trong `.agents/claims.json` · khai steward · bốn file
-(`AGENTS.md` · `STATUS.md` · `HANDOFF.md` · `design_brief`).
-*Đóng khi:* `claim.mjs --take workers/udin-optic` nhận được · `session-check` xanh (nó canh bất
-biến *khoá ↔ steward*) · `rule-compile --sinh` đẻ ra `PHIEN.md` cho gói mới.
+**③ Dựng nhà + vỏ extension cho gói mới.**
+`workers/udin-optic/v0.1.0/` · khoá vùng trong `.agents/claims.json` · khai steward · bốn file ·
+`manifest.json` · background · bảng bên · host (**vỏ ~194 dòng trên lõi `_shared`**, theo mẫu
+`hnx-fetch/v0.1.0/bridge/`) · `bridge-core` **riêng** với từ vựng của Udin · giao thức riêng
+(`udin-optic.bridge` — **không** được trùng `duc-scouter.bridge`).
+*Đóng khi:* `claim.mjs --take workers/udin-optic` nhận được · `session-check` xanh · `rule-compile
+--sinh` đẻ ra `PHIEN.md` cho gói mới · extension **nạp được vào Chrome** và bảng bên mở ra.
 
-**③ Dời 10 file bằng `git mv`, KHÔNG sửa một dòng logic.**
-Chỉ được đổi đường `import`. Thấy mình đang "tiện tay sửa luôn" là dừng — một lượt dời lẫn một
-lượt sửa thì hỏng ở đâu cũng không biết là do dời hay do sửa.
-*Đóng khi:* suite riêng của gói mới xanh **cả 5 phép ghim** · suite Scouter xanh **mà không còn
-Udin trong đó** · `git diff` trên các file logic **chỉ** đổi dòng `import`.
+**④ Dời 10 file logic bằng `git mv`, KHÔNG sửa một dòng logic.**
+Chỉ được đổi đường `import`. Thấy mình đang *"tiện tay sửa luôn"* là dừng.
+*Đóng khi:* 5 phép ghim chạy xanh **từ gói mới** · suite Scouter xanh **mà không còn Udin** ·
+`git diff` trên file logic **chỉ** đổi dòng `import`.
 
-**④ PHÉP KIỂM THẬT — lượt chạy live TỪ GÓI MỚI.**
-Chạy E2E thật trên Udin, prompt **mới** (luật repo: mỗi lượt chạy thật một prompt chưa dùng).
-*Đóng khi:* 4 chặng ĐẠT **và `git status workers/duc-scouter` SẠCH**. Hai vế, và vế sau mới là
-vế chứng minh — ĐẠT mà phải sửa Scouter một dòng thì việc tách **chưa thành**.
+**⑤ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI.**
+Ghép cặp bằng **tệp riêng, cổng riêng** (`tao-tep-ghep-cap.mjs --goi udin-optic`), nạp extension
+mới, chạy E2E thật trên Udin với prompt **chưa dùng bao giờ**.
+*Đóng khi:* 4 chặng ĐẠT **và `git status workers/duc-scouter` SẠCH**. Hai vế, và vế sau mới là vế
+chứng minh — ĐẠT mà phải sửa Scouter một dòng thì việc tách **chưa thành**.
 
-**⑤ Dọn sổ.**
-`CAPABILITIES.md` · bảng theo dõi ở đầu file này · `DASHBOARD` · `HANDOFF` **hai bên** · và
-`npm test` ở gốc phải chạy suite của gói mới (`hnx-fetch` làm đúng thế).
+**⑥ Dọn sổ.**
+`CAPABILITIES.md` · bảng theo dõi đầu file này · `DASHBOARD` · `HANDOFF` **hai bên** · `npm test`
+gốc chạy suite gói mới · `README` gói mới có đường cài đặt riêng (mẫu: `T9` vừa làm cho Scouter).
 
-### Năm cái bẫy — bốn cái đã có ai đó trả giá
+### Bảy cái bẫy — năm cái đã có người trả giá
 
-1. **Đừng fork tầng transport.** Bệnh ba-bản-sao của `duc-auto-*` là bệnh có thật trong repo này.
-2. **Chuyển HẾT rồi mới xoá thư mục cũ.** `hnx-fetch` đã ghi lại bằng chữ của chính nó: *"xoá
-   trước rồi chuyển sau là mất một tấm lưới an toàn để dọn cho gọn — đắt hơn nhiều so với chỗ nó
-   chiếm."* Phép ghim và mỏ neo đột biến cũng phải đi theo, **không chỉ mã**.
-3. **`pilots/` ở GỐC REPO là vùng chỉ-thêm; `workers/duc-scouter/pilots/` thì KHÔNG.** Đã đo
-   14–15/09 (sửa file trong đó cả ngày, cổng vẫn xanh). Nhưng `session-check` tách rename thành
-   *xoá + thêm*, nên **chạy cổng ngay sau `git mv` file ĐẦU TIÊN**, đừng dời cả 10 file rồi mới biết.
-4. **`t7-tu-sinh/` Ở LẠI Scouter.** Nó là bằng chứng của `T7` và nó **không biết gì về Udin** —
-   selector rút từ báo cáo lúc chạy. Dời nó theo là dời mất phép đo. `trang-thu-cham/` cũng ở lại:
-   đó là bàn đo của seed.
-5. **`udin-optic` chưa có bộ đột biến riêng** (chỉ có 5 phép ghim). `hnx-fetch` lúc tách phải đổi
-   mã mutant `N*` → `W*` vì gói đích đã có chủ mã trùng. Gói mới dựng bộ đột biến thì **đặt mã
-   riêng ngay từ đầu**, đừng chép dải mã của Scouter.
+1. **Đừng chép transport lần thứ ba.** Đó là lý do chặng ① đứng trước. Con số 18/576 là bằng
+   chứng, không phải ý kiến.
+2. **Giao thức phải KHÁC.** `hnx-fetch` đã mất một buổi vì máy chủ nói `duc-scouter.bridge` còn
+   extension nói `hnx-fetch.bridge` — cùng cổng, cùng token, vẫn không nối được. Triệu chứng
+   *"im lặng"*, nguyên nhân ở một chuỗi.
+3. **Tệp ghép cặp RIÊNG, cổng RIÊNG.** Hai extension dùng chung một tệp thì mọi lượt gọi trả
+   `TARGET_AMBIGUOUS` — đúng chuyện đã xảy ra 08/09 và là lý do `tao-tep-ghep-cap.mjs` ra đời.
+4. **Chuyển HẾT rồi mới xoá thư mục cũ.** Chữ của chính `hnx-fetch`: *"xoá trước rồi chuyển sau
+   là mất một tấm lưới an toàn để dọn cho gọn."* Phép ghim và mỏ neo đột biến đi theo, **không
+   chỉ mã**.
+5. **`pilots/` ở GỐC REPO là vùng chỉ-thêm; `workers/duc-scouter/pilots/` thì KHÔNG** (đo
+   14–15/09). Nhưng `session-check` tách rename thành *xoá + thêm*, nên **chạy cổng ngay sau
+   `git mv` file ĐẦU TIÊN**, đừng dời cả 10 file rồi mới biết.
+6. **`t7-tu-sinh/` và `trang-thu-cham/` Ở LẠI Scouter.** Cái đầu là bằng chứng của `T7` và không
+   biết gì về Udin; cái sau là bàn đo của seed.
+7. **Bộ đột biến của gói mới đặt mã riêng ngay từ đầu.** `hnx-fetch` lúc tách phải đổi `N*` → `W*`
+   vì gói đích đã có chủ mã trùng, và bộ đo CHẶN mã trùng.
 
 ### Thứ KHÔNG làm trong T21
 
