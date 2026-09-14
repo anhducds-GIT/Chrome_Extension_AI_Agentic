@@ -1402,3 +1402,38 @@ bằng chứng mới về `S-22`** — nó đúng là thứ `S-22` đã khai.
 Chặng ③ chặn ở `T9` → `T7` → `S-22`. **Lối ra không cần Đức: đổi trang đích của `T7` từ trang
 thử sang Udin** — Udin nhận cú bấm thật, và đủ cả bốn điều kiện chặng ①. Cái bẫy đi kèm ghi ở
 `CHUOI-VIEC.md`: **không được dùng lại `pilots/udin-optic/`**, phải sinh adapter mới rồi so.
+
+## 2026-09-14 · `T7` KHÉP — vòng tự cải tiến chạy trọn một lần
+
+Dò trang → sinh adapter → chạy, một mạch trên Udin: báo cáo 288 KB → `pilots/t7-tu-sinh/` →
+**4 ảnh mới trong 39 giây**. Ba selector adapter tự rút ra trùng bản làm tay `udin-optic/`.
+
+Adapter **không chứa selector nào do tôi gõ** — mã tự rút khỏi báo cáo lúc chạy. Bắt buộc phải
+thế: tôi *đã biết* ba selector của Udin, nên gõ ra rồi bảo *"đọc từ báo cáo"* là phép đo không
+ai kiểm được. Cái nút tìm bằng **thí nghiệm** (gõ chữ → nút nào `disabled` → mở), không bằng
+chữ `"Send"`.
+
+### Bốn cái XANH GIẢ, cùng một hình dạng: một con số TỰ KHAI là đủ
+
+- `G-84` `scout.tree` khai `truncated:false` trong khi **45 nhánh cụt theo ĐỘ SÂU** — `truncated`
+  chỉ canh ngân sách nút. Đây là nguyên nhân gốc của `G-83`.
+- `G-87` `khop` trong báo cáo là số **suy ra**: `BUTTON.create-mode-btn` gom 1 mà khớp 2.
+- `G-86` chữ ký không class là **tập cha** của mọi chữ ký có class → `img` (39) luôn đè
+  `img.batch-grid-image` (32).
+- `G-85` đếm một tập vừa thêm vừa **rụng** thì không bao giờ thấy nó lớn lên: 36 → 32 trong khi
+  có 4 ảnh mới; adapter chờ **590 giây** rồi bị giết dù lượt chạy **đã thành công**.
+
+### Một lỗi của tôi, sửa tại chỗ trong `G-83`
+
+Tôi khai `agent-prompt` vắng khỏi báo cáo. **`agent-prompt` không phải tên class nào cả** — ô
+prompt là `agent-textarea`, và nó CÓ ngay từ lượt dò đầu. Tôi grep một chuỗi tự nghĩ ra rồi đọc
+*không thấy* thành *trang không có*. Cùng họ `G-82`: **kiểm tên trước khi kết luận về sự vắng
+mặt** — một phép tìm chỉ trả lời đúng câu mình gõ.
+
+### Để lại
+
+- `T9` (gói seed `v1`) tự khai *"chỉ làm sau T7"* — **nay hết chặn**.
+- Cả vòng mới chạy trên **một** trang. Chạy lại trên trang thứ hai mới biết ba luật rút selector
+  là chung hay vừa khít Udin — đó là `T21`.
+- Công tắc ghi **sống qua `scout.reload`** (`storage.local`), và `instance_id` cũng **không đổi**
+  sau một lượt `scout.reload` — khác với lượt nạp lại thư mục unpacked. Đừng đi tìm ghế mới.
