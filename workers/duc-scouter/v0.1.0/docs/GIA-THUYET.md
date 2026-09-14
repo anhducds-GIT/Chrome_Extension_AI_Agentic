@@ -10,6 +10,7 @@
 
 ## Kết luận hiện tại (14/09)
 
+- **`S-22` CHẬP CHỜN** — 1 trong 7 lượt trên tab đó chạy được, không lặp lại được (`G-45`). Đừng tin một lượt xanh.
 - **`S-22` vẫn MỞ, nhưng nay gọn lại còn một câu đo được:** trên tab đang hỏng, lệnh **DOM chạy**
   (hỏi-điểm trả `relation:"descendant"` đúng phần tử) mà lệnh **Input biến mất** — không một
   `mousedown` nào tới tầng cửa sổ. Hỏng **theo TAB, không theo ghế** (`G-43`).
@@ -96,6 +97,10 @@
 | G-42 | 14/09 | S-22 | Tab **mở nền và CHƯA TỪNG được hiện lần nào** (chưa vẽ) thì lượt bấm không tới | cùng phép đo, `chrome.tabs.create({active:false})` rồi bấm ngay, sau đó cho hiện lên bấm lại | **SAI** | chưa từng hiện vẫn `themCuBam: 1` |
 | G-43 | 14/09 | S-22 | Hỏng theo GHẾ (cả ghế mất đường ghi) hay theo TAB | cùng ghế `Dummy_Scout`, cùng phút: bấm ô nhập trên Udin, rồi bấm nút trên trang thử | **Theo TAB** | Udin: `:focus` 0 → 1, `relation:"self"`. Trang thử: `relation:"descendant"` mà `data-chuot` vẫn 0. Ghế vẫn ghi được; riêng tab đó thì Input biến mất |
 | G-44 | 14/09 | S-22 | Trang thử đang bị che / có hộp thoại / vẽ sai nên lượt bấm rơi chỗ khác | `scout.shot` + `scout.page` chính tab đang hỏng | **SAI** | ảnh đúng trang, không lớp che, 2 phần tử tương tác. Và tay nghe đặt ở **tầng cửa sổ, pha bắt** — sai toạ độ thì vẫn phải thấy `mousedown`, mà `data-chuot` = 0: **không một sự kiện chuột nào tới trang** |
+
+| G-45 | 14/09 | S-22 | Phiên gỡ lỗi gắn vào tab hỏng NỬA (DOM còn, Input mất); `scout.reload` gắn lại là chữa được | trên ghế Đức: reload → bấm → đo `data-chuot` | **SAI** | **Lần đầu ĐÚNG** (0→1, `data-bam` 0→1) nên tôi tưởng đã tìm ra. Chạy lại 4 lượt hai chiều: **KHÔNG TỚI cả 4**, kể cả hai lượt ngay sau khi gắn lại. Một lần chạy được **không lặp lại** thì không phải bằng chứng — nó chỉ nói rằng lỗi **CHẬP CHỜN**, đúng như mô tả gốc 12/09 (*"có chạy lúc 16:41 rồi thôi chạy từ ~16:44"*) |
+| G-46 | 14/09 | S-22 | Điều hướng sau khi đã gắn gỡ lỗi làm hỏng đường Input | Chrome sạch: `chrome.tabs.update` đổi URL rồi bấm, không gắn lại | **SAI** | vẫn `themCuBam: 1`. Trên ghế Đức thì lượt sau điều hướng hay hỏng, nhưng G-45 cho thấy lượt KHÔNG điều hướng cũng hỏng → điều hướng không phải biến quyết định |
+| G-47 | 14/09 | S-22 | Biến còn lại: tab **đang hoạt động** (active) của cửa sổ thì bấm tới, tab nền thì không — **riêng Chrome của Đức**, vì Chrome sạch không tái hiện | máy chờ `scratchpad/cho-tab-hien.mjs`: Đức bấm cho tab hiện, script tự bấm lại và đo | **CHƯA** | Khớp 6/7 quan sát trên ghế Đức: Udin (tab active) bấm được mọi lượt · trang thử (tab nền) hỏng 6/7. Lượt thứ 7 chạy được vẫn chưa giải thích được (G-45) |
 
 ## Phép đo dùng lại được — đừng dựng lại
 
