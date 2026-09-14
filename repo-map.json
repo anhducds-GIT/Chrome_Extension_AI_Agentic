@@ -127,7 +127,7 @@
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
       "next_step": "T32 — CHAY THAT ca chang ② tren Udin. Ma + phep ghim xong 14/09: T24 (ghep manh noi WebSocket = goc S-25) · T25 scout.view · T26 scout.scroll · T28 scout.hover + scout.click nhan button/click_count · T30 scout.history · T27 nua ⑴ (scout.shot full_page+scale) · T31 tran khuc 512 KiB. Sau dong nang luc doi sang CO, KHONG dong nao sang DA CHUNG MINH — do la NO, T32 tra no. Sau do: T29 upload, roi chang ③ dong bang seed.",
-      "human_action": "@Đức:bấm — NẠP LẠI extension ghế Dummy_Scout (mã extension vừa đổi). Bridge tôi đã tự khởi động lại. Nạp xong nói một tiếng là tôi chạy T32. Nếu rảnh 10 giây: zoom ra rồi zoom lại mà không đụng gì khác, để đóng G-65. Một câu cần Đức chốt, không gấp — G-69 ở docs/GIA-THUYET.md.",
+      "human_action": "@Đức:bấm — HAI việc ở ghế Dummy_Scout: ⑴ NẠP LẠI extension (mã vừa đổi) ⑵ TẮT rồi BẬT lại công tắc Cho phép bấm và gõ — trần 200 lượt đã cạn. Bridge tôi đã tự khởi động lại. Xong nói một tiếng là tôi chạy T32. Nếu rảnh 10 giây: zoom ra rồi zoom lại mà không đụng gì khác, để đóng G-65. Một câu cần chốt, không gấp: G-69.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
