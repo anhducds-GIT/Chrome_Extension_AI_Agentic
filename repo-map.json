@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "S-25 — Bridge khai max_envelope_bytes 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Day la loi nen: no giet scout.shot, giet moi luot scout.grab tra than that, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host, loi dung chung voi ba goi dong bang -> CAU CUA DUC. Sau do: T19 (I9 upload), T20 (I5 I6 I7), O12 (zoom).",
-      "human_action": "@Duc:bon cau. (1) S-25: cho sua tran phong bi o loi dung chung khong? (2) I9 tai file len: duong (a) chi nhan duong dan TUONG DOI, may chu ghep vao vung ghi — can method CDP moi DOM.setFileInputFiles. (3) I5 I6 I7 cuon/re chuot/bam dup: khong can CDP moi, gat mot luot cho ca ba? (4) O12 zoom: mot phep do 10 giay — zoom ra roi zoom lai ma khong dung gi khac, de biet no la nang luc that hay chi tien cho anh chup.",
+      "next_step": "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom.",
+      "human_action": "@Duc:bon cau, chi tiet o CHUOI-VIEC.md. (1) S-25 sua tran phong bi o loi dung chung? (2) I9 upload di duong duong-dan-tuong-doi? (3) I5/I6/I7 gat mot luot cho ca ba? (4) O12 zoom: mot phep do 10 giay, zoom ra roi zoom lai ma khong dung gi khac.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Hoàn thiện SEED dùng chung — Scouter là ĐÍCH, trang Udin (vinfast.udinbv.com/optic) chỉ là CA THỬ để ép seed lộ chỗ nó còn hẹp. Ngày 12/09 ca thử đó ép lộ năm khuyết tật của SEED (S-16 tới S-20) và BỐN cái đã vá xong trong ngày, cả bốn đo ngoài đời chứ không chỉ trước máy giả. S-17: scout.click hỏi Chrome điểm sắp bấm thuộc về ai TRUOC khi bắn, có lớp che thì từ chối CLICK_OBSCURED. S-18: scout.wait nhận thêm state usable, phân biệt có mặt với dùng được, và nói ra VÌ SAO chưa dùng được. S-19: scout.navigate nạp lại được cùng một URL — 15 giây báo sai nguyên nhân xuống 254ms báo đúng. S-16: ba hạn chờ xuống dưới ngưỡng 35 giây của máy chủ, và ngưỡng đó nay có tên để phép ghim đọc thẳng thay vì gõ lại. Còn mở: S-20 (nghe mạng trong lúc bấm) và S-21 (target thỉnh thoảng không trả lời được câu hỏi hình học, chưa biết vì sao). Tên ghế đã nghiệm thu ngoài đời: Đức gõ Udin_Scout và định tuyến theo tên chạy đúng. Không thêm method Bridge nào trong lượt T4 — số method hiện ở cột Method Bridge [ĐO] trên DASHBOARD.md, đừng ghi tay vào đây."
+      "open_item": "Hoan thien SEED dung chung roi moi tach Udin ra goi rieng — Duc dat lai 14/09. Thuoc do khong con la phan tram, ma la DANH SACH DONG BANG o docs/CAPABILITIES.md muc 5.2: tap nang luc phai xong TRUOC khi tach, vi them mot lenh Bridge sau khi tach phai sua tay sau cho trong Scouter. Udin la CA THU, khong phai dich. Ngay 14/09 dong duoc: scout.grab (O11, hai anh that xuong dia), scout.text (O8), scout.clear (I4), va ghim bang nang luc vao su that (T17). Con lai trong danh sach: I9 upload, I5/I6/I7, O12 zoom. Chan lon nhat khong phai mot nang luc ma la mot LOI: S-25."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "S-25 — Bridge khai max_envelope_bytes 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Day la loi nen: no giet scout.shot, giet moi luot scout.grab tra than that, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host, loi dung chung voi ba goi dong bang -> CAU CUA DUC. Sau do: T19 (I9 upload), T20 (I5 I6 I7), O12 (zoom).",
+      "title": "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom.",
       "rank": 4,
       "claim": null
     }
