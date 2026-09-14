@@ -1010,9 +1010,8 @@ trên ghế `Dummy_Scout` (tên mới Đức đặt cho ghế cũ `Udin_Scout`):
 `LUOT_BAM_KHONG_TOI_NOI`. Hai lỗi khác nhau; `S-23` vẫn đóng.
 
 **Dựng được bàn đo A/B trên Chrome SẠCH** — bản chép `scouter-action-reality-probe.mjs` tự mở tab,
-đổi trạng thái cửa sổ, gắn/thả gỡ lỗi. Nhờ nó **năm giả thuyết chết trong một buổi**: tab ẩn
-(`G-40`) · cửa sổ thu nhỏ (`G-41`, cũng là giả thuyết ⒜ của `S-21`) · tab chưa từng hiện (`G-42`) ·
-lớp che / vẽ sai (`G-44`) · điều hướng sau khi gắn (`G-46`). Cả năm: cú bấm vẫn tới đủ.
+đổi trạng thái cửa sổ, gắn/thả gỡ lỗi. Nhờ nó **năm giả thuyết chết trong một buổi** (`G-40..G-46`,
+trong đó `G-41` loại luôn giả thuyết ⒜ của `S-21`): cả năm ca, cú bấm vẫn tới đủ.
 
 **Giả thuyết của CHÍNH TÔI sáng nay cũng chết.** `G-38` (*"tab ẩn thì bấm không tới"*) là mối tương
 quan tôi thấy trên ghế Đức — `G-40` đo hai chiều và nó SAI. Tức là `G-07` ngày 13/09 đúng, và Đức
@@ -1026,6 +1025,10 @@ lệnh **DOM chạy** (hỏi-điểm trả đúng phần tử) mà lệnh **Inpu
 (`data-chuot` 0→1). Tôi định kết luận *"phiên gỡ lỗi hỏng nửa, gắn lại là chữa"*. Chạy lại bốn lượt
 hai chiều: **không tới cả bốn**, kể cả ngay sau khi gắn lại. **Một lượt xanh không lặp lại được
 thì không phải bằng chứng** — nó chỉ nói lỗi **CHẬP CHỜN** (1/7), đúng mô tả gốc 12/09. `G-45`.
+
+**Sửa một chỗ dễ bỏ qua:** câu gợi ý in ra lúc lỗi vẫn hỏi *"cửa sổ Chrome có đang hiện không?"* —
+đúng cái giả thuyết `G-41` vừa đo và bác. Câu đó nằm ngay chỗ người ta đọc khi đang bí, nên nó sẽ
+lái mọi phiên sau vào vết cũ. Nay nó kể tên tám giả thuyết đã chết và trỏ thẳng sang sổ.
 
 **Việc kế, và nó cần đúng một cú bấm của Đức:** `G-47` — biến chưa thử là **tab đang hoạt động** so
 với **tab nền**, riêng Chrome của Đức (Chrome sạch không tái hiện). Khớp 6/7 quan sát. Máy chờ
