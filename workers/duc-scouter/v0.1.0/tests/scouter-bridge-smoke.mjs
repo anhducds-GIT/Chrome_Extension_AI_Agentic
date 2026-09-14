@@ -36,6 +36,7 @@ const EXPECTED_METHODS = [
   "scout.type",
   "scout.key",
   "scout.fetch",
+  "scout.grab",
   "scout.navigate",
   "scout.reload"
 ];
@@ -48,7 +49,7 @@ const EXPECTED_METHODS = [
  * gói) thì một lượt gọi mạng chạm được mọi trang đang đăng nhập, nên nó phải trả đúng cái giá
  * mà `scout.click` trả. Đổi dòng này thành `read_only: true` là mở cho nó chạy tự do đúng lúc
  * nó nguy hiểm nhất. */
-const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.fetch", "scout.navigate"]);
+const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.fetch", "scout.grab", "scout.navigate"]);
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key", "input.navigate"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */

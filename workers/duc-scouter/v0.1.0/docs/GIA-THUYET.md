@@ -10,7 +10,7 @@
 
 ## Kết luận hiện tại (14/09)
 
-- **`S-22` CHẬP CHỜN** — 1 trong 7 lượt trên tab đó chạy được, không lặp lại được (`G-45`). Đừng tin một lượt xanh.
+- ⚠️ **`G-45` ("chập chờn 1/7") ĐO BẰNG MỘT DỤNG CỤ HỎNG** — xem `G-48`. Đừng trích con số 1/7.
 - **`S-22` vẫn MỞ, nhưng nay gọn lại còn một câu đo được:** trên tab đang hỏng, lệnh **DOM chạy**
   (hỏi-điểm trả `relation:"descendant"` đúng phần tử) mà lệnh **Input biến mất** — không một
   `mousedown` nào tới tầng cửa sổ. Hỏng **theo TAB, không theo ghế** (`G-43`).
@@ -101,6 +101,9 @@
 | G-45 | 14/09 | S-22 | Phiên gỡ lỗi gắn vào tab hỏng NỬA (DOM còn, Input mất); `scout.reload` gắn lại là chữa được | trên ghế Đức: reload → bấm → đo `data-chuot` | **SAI** | **Lần đầu ĐÚNG** (0→1, `data-bam` 0→1) nên tôi tưởng đã tìm ra. Chạy lại 4 lượt hai chiều: **KHÔNG TỚI cả 4**, kể cả hai lượt ngay sau khi gắn lại. Một lần chạy được **không lặp lại** thì không phải bằng chứng — nó chỉ nói rằng lỗi **CHẬP CHỜN**, đúng như mô tả gốc 12/09 (*"có chạy lúc 16:41 rồi thôi chạy từ ~16:44"*) |
 | G-46 | 14/09 | S-22 | Điều hướng sau khi đã gắn gỡ lỗi làm hỏng đường Input | Chrome sạch: `chrome.tabs.update` đổi URL rồi bấm, không gắn lại | **SAI** | vẫn `themCuBam: 1`. Trên ghế Đức thì lượt sau điều hướng hay hỏng, nhưng G-45 cho thấy lượt KHÔNG điều hướng cũng hỏng → điều hướng không phải biến quyết định |
 | G-47 | 14/09 | S-22 | Biến còn lại: tab **đang hoạt động** (active) của cửa sổ thì bấm tới, tab nền thì không — **riêng Chrome của Đức**, vì Chrome sạch không tái hiện | máy chờ `scratchpad/cho-tab-hien.mjs`: Đức bấm cho tab hiện, script tự bấm lại và đo | **CHƯA** | Khớp 6/7 quan sát trên ghế Đức: Udin (tab active) bấm được mọi lượt · trang thử (tab nền) hỏng 6/7. Lượt thứ 7 chạy được vẫn chưa giải thích được (G-45) |
+
+| G-48 | 14/09 | S-22 | ⚠️ **PHÉP ĐO HỎNG, không phải giả thuyết** — mọi lượt đọc `body[data-chuot]` / `#ket-qua[data-bam]` bằng **sự tồn tại** của thuộc tính chỉ thấy được lượt bấm ĐẦU TIÊN | dò `[data-bam="n"]` để lấy **giá trị**, không hỏi "có thuộc tính không" | **ĐÚNG (là lỗi của tôi)** | Đo lại bằng giá trị: `data-chuot` **6 → 7** trên chính tab mà mười phút trước tôi khai "không tới". Bộ đếm đã chạy tới 6 trong khi phép đo của tôi vẫn in "1 → 1". **Mọi dòng ĐỎ đo bằng cách cũ đều phải đọc lại** — gồm cả bốn lượt của `G-45` |
+| G-49 | 14/09 | S-22 | Tab **đang hiện** thì lượt bấm tới, tab **ẩn** thì không — đo GHÉP CẶP, trạng thái tab đọc ngay tại lúc bấm | `scratchpad/do-cap-doi.mjs`: 18 lượt, mỗi lượt ghi `data-hien` trước + sau và **giá trị** `data-bam` | **CHƯA** | Hai số rời đã có, cùng tài liệu, cách nhau vài phút: tab hiện → tới (6→7) · tab ẩn → 3 lượt liền không tới. Nhưng chưa lượt nào ghi trạng thái **tại lúc bấm**, nên chưa được tính |
 
 ## Phép đo dùng lại được — đừng dựng lại
 

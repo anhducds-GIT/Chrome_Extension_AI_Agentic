@@ -462,6 +462,72 @@ export function createSeedHandlers(deps = {}) {
       };
     },
 
+    /* `scout.grab` — lấy TỆP mà một phần tử trỏ tới, **không bao giờ phát URL của nó ra dây**.
+     *
+     * Vì sao có method này (`S-24`, Đức chốt 14/09 đường ⒜). Đo ngày 14/09: ảnh kết quả của
+     * một trang thật nằm sau **URL ký sẵn** — chữ ký và hạn giờ nằm trong query. Lõi ĐỌC cắt
+     * query khỏi mọi `src`/`href` theo chính sách che, nên `scout.fetch` chỉ nhận được nửa URL
+     * và máy chủ trả 403. Hai đường chữa tồi: nới lớp che (token đi vào nhật ký, vào đĩa) hoặc
+     * bỏ việc. Đường này là đường thứ ba: **URL được đọc ở trong, dùng ở trong, và chết ở trong.**
+     *
+     * Người gọi đưa SELECTOR, không đưa URL — cùng khuôn với `scout.click` (luật gói 7). Nhận
+     * URL từ ngoài dây thì method này thành `scout.fetch` thứ hai, và cái cửa 512 KiB kèm phanh
+     * ghi chỉ còn là trang trí.
+     *
+     * Một lượt gọi = **một** đơn vị ngân sách ghi, dù nó làm hai việc (đọc DOM + gọi mạng):
+     * tiêu hai đơn vị cho một việc người dùng hiểu là một việc thì trần 200 nói dối. */
+    async "scout.grab"(params) {
+      const target = await resolveTarget(params.target_id);
+      const budget = await spendWriteBudget();
+
+      const found = await engine.runAction(target, "input.grabUrl", {
+        selector: params.selector,
+        attribute: params.attribute
+      });
+      if (!found || found.ok !== true) {
+        throw new BridgeProtocolError("ACTION_FAILED", found?.detail || "Không đọc được địa chỉ của phần tử đã khớp.", {
+          action: "grab", action_code: found?.code || "ACTION_FAILED"
+        });
+      }
+      /* `url` CHỈ sống trong hàm này. Mọi lời báo lỗi dưới đây dùng `masked` (gốc + đường dẫn),
+       * không dùng `url` — một thông báo lỗi chở chữ ký cũng là rò rỉ. */
+      const { url, masked, attribute, selector, matchCount } = found.data;
+
+      let response;
+      try {
+        response = await doFetch(url, { method: "GET", credentials: "omit", redirect: "follow" });
+      } catch (error) {
+        throw new BridgeProtocolError(
+          "ACTION_FAILED",
+          `Không tải được tệp của '${masked}': ${String(error?.message || error)}`,
+          { action: "grab", action_code: "FETCH_FAILED", source: masked }
+        );
+      }
+
+      const buffer = new Uint8Array(await response.arrayBuffer());
+      const base64 = base64Tu(buffer);
+      if (base64.length > FETCH_MAX_BODY_BYTES) {
+        throw new BridgeProtocolError(
+          "ACTION_FAILED",
+          `Tệp ${buffer.length} byte (${base64.length} sau mã hoá) quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`,
+          { action: "grab", action_code: "FETCH_BODY_TOO_LARGE", bytes: base64.length, max_bytes: FETCH_MAX_BODY_BYTES, source: masked }
+        );
+      }
+
+      return {
+        action: "grab",
+        status: response.status,
+        ok: response.ok,
+        content_type: response.headers.get("content-type"),
+        bytes: buffer.length,
+        body_base64: base64,
+        /* KHÔNG có trường `url`. `source` là gốc + đường dẫn — đúng bằng thứ lõi đọc vẫn cho
+         * phép thấy, nên nó không mở thêm gì; con `GR7` canh để không ai thêm `url` vào đây. */
+        source: { selector, attribute, masked, matchCount },
+        write_budget: budget
+      };
+    },
+
     async "scout.reload"() {
       const at = now().getTime();
       const previous = await lastReloadAt();

@@ -510,10 +510,13 @@ BATCHES.push({
        * phanh khỏi CẢ hai, đúng thứ cần ghim. Để `soLan: 1` thì bộ đo ĐỎ (nó đã đỏ thật ở lượt
        * chạy 07/09), và đó là lý do trường này tồn tại. */
       ma: "P1",
-      ten: "Gỡ hẳn cái phanh khỏi CẢ HAI đường vào: bấm và gọi mạng thẳng, không hỏi công tắc",
+      ten: "Gỡ hẳn cái phanh khỏi CẢ BA đường vào: bấm, gọi mạng và lấy tệp thẳng tay",
       tim: "    const budget = await spendWriteBudget();",
       thay: "    const budget = { used: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK };",
-      soLan: 2
+      /* 2 → 3 ngày 14/09: `scout.grab` là đường vào thứ BA (`S-24`). Con số này là một phép
+       * đếm, không phải một hằng số cho đẹp: thêm một đường ghi mà quên cộng vào đây thì bộ đo
+       * ĐỎ ngay — đúng như nó vừa làm. */
+      soLan: 3
     },
     {
       ma: "P2",

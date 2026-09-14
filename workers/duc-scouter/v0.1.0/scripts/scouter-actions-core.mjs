@@ -48,7 +48,12 @@ export const ACTION_NAMES = Object.freeze([
   "input.click",
   "input.type",
   "input.key",
-  "input.navigate"
+  "input.navigate",
+  /* MỞ 14/09 — Đức chốt `S-24` đường ⒜. KHÔNG có lệnh Bridge nào ánh xạ thẳng tới nó:
+   * nó trả về URL ĐẦY ĐỦ (kể cả chữ ký trong query), nên nó chỉ được gọi TỪ TRONG máy,
+   * bởi `scout.grab` — thứ tải file rồi trả BYTE, không trả URL. Ánh xạ nó ra dây là mở
+   * đúng cái lỗ mà `S-24` sinh ra để bịt. Con `GR9` canh chỗ đó. */
+  "input.grabUrl"
 ]);
 
 /* Method CDP được phép ở đường GHI. Ba lệnh `DOM.*` đầu chỉ để TÌM và ĐƯA VÀO TẦM NHÌN đúng
@@ -63,6 +68,12 @@ export const WRITE_CDP_METHODS = Object.freeze([
   "DOM.querySelectorAll",
   "DOM.scrollIntoViewIfNeeded",
   "DOM.getBoxModel",
+  /* MỞ 14/09 — Đức chốt `S-24` đường ⒜. Method này CHỈ ĐỌC: nó trả về danh sách thuộc
+   * tính của đúng một phần tử đã khớp, không đổi gì trên trang. Nó ở danh sách đường GHI
+   * (không mượn của đường đọc) vì luật gói số 6: mỗi lõi khai lấy thứ nó dùng. Và nó cần
+   * ở đây chứ không ở lõi đọc vì lõi đọc CỐ Ý cắt query khỏi `src`/`href` — cắt đúng chỗ
+   * chữ ký của một URL ký sẵn nằm. */
+  "DOM.getAttributes",
   /* MỞ 12/09 — Đức chốt D1 (`CHUOI-VIEC.md`). Method này KHÔNG sửa gì: nó hỏi Chrome
    * *"điểm (x, y) này là phần tử nào"*. Nó ở trong danh sách của đường GHI vì chỗ cần nó là
    * ngay TRƯỚC lượt bắn chuột, và luật gói số 6 cấm đường ghi mượn method của đường đọc —
@@ -312,6 +323,59 @@ const ACTIONS = {
     await send("Input.dispatchKeyEvent", down);
     await send("Input.dispatchKeyEvent", { type: "keyUp", key: keyName, code: descriptor.code, windowsVirtualKeyCode: descriptor.vk });
     return { selector, matchCount: node.matchCount, key: keyName, method: "Input.dispatchKeyEvent" };
+  },
+
+  /* ⑤ input.grabUrl — đọc URL ĐẦY ĐỦ của đúng một phần tử, cho `scout.grab` dùng TRONG MÁY.
+   *
+   * Vì sao nó tồn tại (`S-24`, Đức chốt 14/09 đường ⒜): ảnh của một trang thật thường nằm sau
+   * một **URL ký sẵn** — chữ ký và hạn giờ nằm trong query. Lõi ĐỌC cắt query khỏi mọi
+   * `src`/`href`, và cắt đúng như thế là ĐÚNG: query là chỗ token hay nằm. Nên đường lấy file
+   * không phải nới lõi đọc, mà là: **đọc URL ở trong, dùng ở trong, không bao giờ phát ra dây.**
+   * Cùng khuôn với chốt ⑶ của file này — toạ độ cũng được tính ở trong và không nhận từ ngoài.
+   *
+   * HAI CHỖ ĐỪNG ĐẢO LẠI:
+   *   · **Không lệnh Bridge nào ánh xạ tới hành động này.** Nó trả `url` đầy đủ; ai nối nó ra
+   *     dây là phát chữ ký ra ngoài. `scout.grab` gọi nó, tải file, rồi trả BYTE.
+   *   · **Lời báo lỗi không được chở lại giá trị thuộc tính.** Một `URL_INVALID` in kèm chuỗi
+   *     gốc là đúng cái rò rỉ đó, chỉ mặc áo thông báo lỗi. */
+  async "input.grabUrl"(send, params) {
+    const selector = readSelector(params.selector);
+    const attribute = readAttrName(params.attribute);
+    const node = await locateOne(send, selector);
+
+    const got = await send("DOM.getAttributes", { nodeId: node.nodeId });
+    /* CDP trả mảng phẳng [tên, giá_trị, tên, giá_trị, …]. */
+    const flat = Array.isArray(got?.attributes) ? got.attributes : [];
+    let raw = null;
+    for (let i = 0; i + 1 < flat.length; i += 2) {
+      if (String(flat[i]) === attribute) { raw = String(flat[i + 1] ?? ""); break; }
+    }
+    if (raw === null || raw.trim() === "") {
+      throw new ActionError("ATTRIBUTE_MISSING",
+        `Phần tử khớp selector không có thuộc tính '${attribute}' hoặc thuộc tính rỗng.`);
+    }
+
+    let url;
+    try { url = new URL(raw, node.baseURL || undefined); }
+    catch {
+      throw new ActionError("URL_INVALID",
+        `Thuộc tính '${attribute}' không phải một URL đọc được (${raw.length} ký tự).`);
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      /* `blob:` và `data:` thuộc về TAB, máy phục vụ nền không với tới; `file:` là đĩa của Đức. */
+      throw new ActionError("URL_INVALID",
+        `Thuộc tính '${attribute}' trỏ tới '${url.protocol}', chỉ lấy được http hoặc https.`);
+    }
+
+    /* `masked` là thứ DUY NHẤT của URL được phép đi ra dây: gốc + đường dẫn, không query,
+     * không fragment — đúng bằng thứ lõi đọc vẫn cho phép, nên nó không mở thêm gì. */
+    return {
+      url: url.href,
+      masked: `${url.origin}${url.pathname}`,
+      attribute,
+      selector,
+      matchCount: node.matchCount
+    };
   }
 };
 
@@ -434,7 +498,27 @@ async function locateOne(send, selector) {
       `Selector khớp ${nodeIds.length} phần tử. Hành động chỉ chạy khi khớp đúng một — ` +
       "bấm vào 'cái đầu tiên' là chỗ tự động hoá phá hỏng đồ thật.");
   }
-  return { nodeId: nodeIds[0], matchCount: nodeIds.length, rootNodeId: root.nodeId };
+  /* `baseURL` để `input.grabUrl` giải được một `src` tương đối. Trường THÊM, không đổi thứ
+   * ba hành động cũ đang đọc. */
+  return {
+    nodeId: nodeIds[0],
+    matchCount: nodeIds.length,
+    rootNodeId: root.nodeId,
+    baseURL: typeof root.baseURL === "string" ? root.baseURL : (typeof root.documentURL === "string" ? root.documentURL : null)
+  };
+}
+
+/* Chỉ HAI thuộc tính lấy được, và cả hai đều là thuộc tính URL mà lõi đọc đang cắt query.
+ * Danh sách TRẮNG, không phải danh sách đen: mở theo nhu cầu thật, không mở trước. */
+export const GRAB_ATTRIBUTES = Object.freeze(["src", "href"]);
+
+function readAttrName(value) {
+  if (value === undefined || value === null) return "src";
+  if (typeof value !== "string" || !GRAB_ATTRIBUTES.includes(value)) {
+    throw new ActionError("ATTRIBUTE_NOT_ALLOWED",
+      `Chỉ lấy được thuộc tính ${GRAB_ATTRIBUTES.join(" hoặc ")}. Nhận được: ${JSON.stringify(value)}.`);
+  }
+  return value;
 }
 
 /* Chốt ⑶ sống ở đây: toạ độ suy từ hộp của chính phần tử, không từ tham số nào. */

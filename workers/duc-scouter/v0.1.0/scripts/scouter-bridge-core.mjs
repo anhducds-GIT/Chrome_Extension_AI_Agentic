@@ -497,6 +497,38 @@ const METHOD_ENTRIES = [
       };
     }
   }),
+  /* `scout.grab` — MỞ 14/09, Đức chốt `S-24` đường ⒜.
+   *
+   * Nó nhận **selector**, không nhận url, và đó là cả lý do nó tồn tại: ảnh của một trang thật
+   * hay nằm sau URL **ký sẵn**, mà lõi đọc cắt query khỏi `src`/`href` (chính sách che), nên
+   * `scout.fetch` chỉ nhận được nửa URL. Ở đây URL được đọc ở trong extension, dùng để tải, rồi
+   * **không đi ra dây** — trả về byte và một `source.masked` gốc+đường dẫn.
+   *
+   * `deadline_ms` 34000 bằng `scout.fetch`: nó cũng là một lượt gọi mạng, và con `B9` so từng
+   * method với ngưỡng đọc thẳng từ lõi máy chủ. */
+  registryEntry({
+    name: "scout.grab", read_only: false, deadline_ms: 34000,
+    description: "Download the file one element points to (its src or href), using the URL read inside the browser. The URL itself is never returned: signed URLs keep their signature out of logs and off disk. Takes a selector, never a URL, and refuses unless it matches exactly one element.",
+    params_schema: { target_id: "string", selector: "string", attribute: "src|href?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "attribute"]);
+      /* Danh sách TRẮNG hai tên, kiểm ở đây CHỨ KHÔNG chỉ ở lõi hành động: cửa từ vựng là chỗ
+       * người gọi nhận được câu trả lời rõ ràng, và là chỗ duy nhất một tên lạ bị chặn trước
+       * khi nó chạm tới trang. */
+      let attribute = null;
+      if (params.attribute !== undefined && params.attribute !== null) {
+        if (params.attribute !== "src" && params.attribute !== "href") {
+          invalidParams("params.attribute", String.fromCharCode(39) + "src" + String.fromCharCode(39) + " or " + String.fromCharCode(39) + "href" + String.fromCharCode(39));
+        }
+        attribute = params.attribute;
+      }
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        attribute
+      };
+    }
+  }),
   registryEntry({
     /* ĐI SANG TRANG KHÁC. `read_only: false` không phải hình thức: đổi trang là điều khiển
      * trang, nên nó chui qua phanh và trả giá hạn mức y như `scout.click`. */
