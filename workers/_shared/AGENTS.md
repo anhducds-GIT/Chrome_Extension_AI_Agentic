@@ -36,6 +36,7 @@ Gói nào có ngoại lệ thì ghi ngoại lệ **tại gói đó**, đừng s�
 | Thư mục | Là gì |
 |---|---|
 | `bridge-host/` | **Lõi máy chủ Bridge**: khung WebSocket + cửa HTTP + bắt tay hai chiều + định tuyến nhiều hồ sơ. Mỗi extension dựng một host MỎNG gọi vào đây, khai tên giao thức của mình |
+| `goi-bridge/` | **Bên GỌI Bridge từ dòng lệnh** (Node, không phải mã extension). Một cái xưởng `taoGoiBridge({goi})`; mỗi gói dựng cái vỏ năm dòng khai danh tính của mình. Dọn về đây 15/09 — `T21` chặng ① |
 
 ## `bridge-host/` — vì sao nó tồn tại, đo ngày 07/09
 
@@ -81,6 +82,7 @@ cho một người dùng tưởng tượng, nhưng cũng đừng quên chuyển 
 | `bridge-host/tests/tuong-duong-voi-ban-goc.mjs` | **Tách lõi có làm rơi hành vi nào không** — hỏi cả bản gốc lẫn bản mới cùng một câu, 29 ca, rồi so đáp án |
 | `bridge-host/tests/bat-tay-hai-chieu.mjs` | Cái bắt tay, bằng một lượt **nối thật qua socket**. Sinh ra vì bộ đo đột biến chỉ ra rằng chốt đáng giá nhất của lõi chưa ai canh |
 | `bridge-host/tao-tep-ghep-cap.mjs` | **Sinh một tệp ghép cặp** cho một máy chủ Bridge (H-06), và **giữ quy ước NHÀ CHUNG** (xem dưới bảng). Tự kiểm bằng chính `validatePairing()`. Ba chốt: không ghi vào kho mã · không ghi đè tệp đã có · `--goi <tên>` tự đặt đúng chỗ |
+| `goi-bridge/tests/goi-bridge-smoke.mjs` | **Tên gói không được quay lại làm hằng số ở đây** — khối ⓐ đọc chính mã của lớp dùng chung và đỏ khi thấy một tên gói. Cùng cái lưới `G9` đã bắt ở `transport.mjs` 12/09, đặt TRƯỚC khi có bản chép thứ hai. Cộng: hai gói ⇒ hai tên giao thức · biến môi trường là của riêng từng gói · **token không lọt vào lời báo lỗi** |
 | `bridge-host/tests/tao-tep-ghep-cap-smoke.mjs` | Ghim bộ sinh trên. Chạy THẬT và thử **đường dẫn có dấu cách** — chốt "không ghi vào repo" đã hỏng CÂM đúng ở đó ngày 08/09 |
 
 ## NHÀ CHUNG CỦA BRIDGE — luật đường dẫn, Đức chốt 08/09

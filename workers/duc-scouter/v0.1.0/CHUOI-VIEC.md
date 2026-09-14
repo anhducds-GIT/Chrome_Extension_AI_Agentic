@@ -655,64 +655,79 @@ Có thật — `workers/_shared/bridge-host/bridge-host-core.mjs` (519 dòng) l�
 Vì thế host của `hnx-fetch` chỉ **194 dòng**: nó *dùng* lõi chung. Host 500 dòng của
 `duc-auto-chatgpt` là bản **chưa gộp** còn sót lại — đừng lấy nó làm mẫu.
 
-### Đo trước khi chép — và con số này đổi hẳn cách làm ⒝
+### Đo trước khi chép — và một chặng ĐÃ CHẾT vì lượt đo này
 
-Chép nguyên kiểu `hnx-fetch` thì tốn ~3.100 dòng. Nhưng so hai gói đang có:
+Bản lộ trình viết 15/09 mở đầu bằng *"gộp `transport.mjs` về `_shared` — làm trước mọi thứ"*.
+**Chặng đó không làm được**, và đây là lượt đo giết nó (`G-92`):
 
-| so `hnx-fetch` với `duc-scouter` | khác nhau | nghĩa là |
+| | gộp được không | vì sao |
 |---|---|---|
-| `transport.mjs` (576 dòng) | **18 dòng** | **97% là bản CHÉP** |
-| `bridge-core.mjs` (844 dòng) | 489 dòng | khác thật — từ vựng method mỗi gói một khác |
-| máy chủ Bridge | — | **đã gộp rồi** ở `_shared`, host gói chỉ là vỏ ~194 dòng |
+| lõi máy chủ Bridge | **ĐÃ GỘP** ở `_shared/bridge-host/` | nó là tiến trình **Node** — `../../../_shared/` là đường dẫn đĩa bình thường |
+| `transport.mjs` | **KHÔNG** | nó chạy **bên trong extension** (`background.js` service worker · `sidepanel.js`) |
 
-**Nên ⒝ KHÔNG phải là "chép `hnx-fetch` lần nữa".** Làm thế là đẻ ra **bản sao thứ ba** của
-cùng một tầng transport, đúng bệnh mà `AGENTS.md` gốc đã cảnh báo. Đường đúng: **gộp transport
-trước, rồi dựng gói mới trên bản gộp** — y như host đã được gộp trước đây.
+Chrome nạp thư mục `v0.1.0/` làm **gốc gói**. Mọi `import` trong service worker phân giải thành
+URL `chrome-extension://<id>/…`, và `..` **bị kẹp lại ở gốc** — nên `../../../_shared/x.mjs` ra
+`chrome-extension://<id>/_shared/x.mjs`, không tồn tại, service worker không đăng ký được.
 
-Cái đó cũng làm lộ trình *rẻ hơn* chứ không đắt hơn: sau khi gộp, phần THẬT SỰ mới của Udin chỉ
-còn từ vựng riêng + vỏ giao diện + 1.404 dòng logic đã có sẵn.
+**Thứ quyết định gộp được hay không là ranh giới Node ↔ Chrome, không phải số dòng giống nhau.**
 
-### Sáu chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+Hai chuyện nữa lượt đo này lôi ra:
 
-**① Gộp `transport.mjs` về `_shared` — LÀM TRƯỚC MỌI THỨ.**
-558/576 dòng đã giống nhau; 18 dòng khác là phần riêng của gói (tên giao thức, nhãn). Tách phần
-riêng thành tham số, đưa phần chung xuống `workers/_shared/`.
-*Đóng khi:* `duc-scouter` và `hnx-fetch` **cùng** chạy trên bản gộp · suite **cả hai gói** xanh ·
-bộ đột biến của cả hai xanh · và **không còn hai bản transport trong repo**.
-*Vì sao đây là chặng ①:* dựng gói thứ ba trước rồi mới gộp là phải sửa ba chỗ thay vì hai.
+· Con số *"khác 18 dòng"* tôi khai 15/09 là **đo sai**. Hai bản hôm nay giống nhau **TỪNG BYTE**
+  (cksum `3518328594`, 30.113 byte) — bản chép đã được đồng bộ 12/09.
+· [ADR-0021](../../../docs/adr/0021-goi-extension.md) ⑵ **đã chốt sẵn** đường đi cho đúng file
+  này: chép nguyên văn + **phép ghim so từng byte**. Tôi viết chặng ① mà không tra cái ADR đang
+  cai quản chính nó.
 
-**② Dời `goi-bridge.mjs` ra chỗ dùng chung.**
-Ba pilot đang dùng chung nó (`trang-thu-cham` · `t7-tu-sinh` · `udin-optic`). Udin đi mà chép
-theo một bản là gieo lại đúng cái bệnh chặng ① vừa chữa.
-*Đóng khi:* không tồn tại hai bản · `npm run test:scouter` xanh.
+**Nên bản chép KHÔNG phải nợ — nó là quyết định có chữ ký, và nó CÓ NGƯỜI CANH.** Khối ⑷ của
+`hnx-fetch/v0.1.0/tests/be-mat-hep-smoke.mjs` băm hai bản và **đỏ khi lệch**; nó bắt được một lỗi
+thật 12/09 (tên gói bị gõ cứng vào transport). Gói thứ ba chỉ thêm ba dòng vào bảng `CẶP` của
+chính nó — làm ở chặng ②, lúc gói đó có thật.
 
-**③ Dựng nhà + vỏ extension cho gói mới.**
+### Năm chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+
+**① `goi-bridge.mjs` ra chỗ dùng chung — VÀ bỏ tên gói gõ cứng.**
+77 dòng, **một bản duy nhất**, 10 chỗ gọi — **5 trong đó là Udin**, gọi qua
+`../../trang-thu-cham/`. Udin dọn đi là đường đó đứt. Nhưng *dời* thôi chưa đủ: file đang gõ cứng
+**bốn thứ riêng của Scouter** — `protocol: "duc-scouter.bridge"` · đường tệp ghép cặp mặc định ·
+`SCOUTER_GHEP` · `SCOUTER_GHE` (và `client_id`). Chép y nguyên sang Udin thì Udin **tự khai sai
+tên mình trên dây** — đúng cái bẫy `G9` đã bắt ở transport 12/09, chỉ đổi tầng.
+*Đóng khi:* một bản duy nhất · bốn thứ trên thành **tham số** chứ không hằng số · `npm run
+test:scouter` xanh · và có **một phép ghim đỏ** nếu tên giao thức quay lại làm hằng số.
+*Vì sao đây là chặng ①:* nó là sợi dây DUY NHẤT còn buộc Udin vào Scouter. Cắt nó trước thì chặng
+③ chỉ còn là `git mv`.
+
+**② Dựng nhà + vỏ extension cho gói mới.**
 `workers/udin-optic/v0.1.0/` · khoá vùng trong `.agents/claims.json` · khai steward · bốn file ·
 `manifest.json` · background · bảng bên · host (**vỏ ~194 dòng trên lõi `_shared`**, theo mẫu
 `hnx-fetch/v0.1.0/bridge/`) · `bridge-core` **riêng** với từ vựng của Udin · giao thức riêng
-(`udin-optic.bridge` — **không** được trùng `duc-scouter.bridge`).
+(`udin-optic.bridge` — **không** được trùng `duc-scouter.bridge`) · `transport.mjs` **chép nguyên
+văn** từ Scouter, kèm ba dòng thêm vào bảng `CẶP` của phép ghim gói mới.
 *Đóng khi:* `claim.mjs --take workers/udin-optic` nhận được · `session-check` xanh · `rule-compile
---sinh` đẻ ra `PHIEN.md` cho gói mới · extension **nạp được vào Chrome** và bảng bên mở ra.
+--sinh` đẻ ra `PHIEN.md` cho gói mới · phép ghim so-từng-byte của gói mới xanh · extension **nạp
+được vào Chrome** và bảng bên mở ra.
 
-**④ Dời 10 file logic bằng `git mv`, KHÔNG sửa một dòng logic.**
+**③ Dời 10 file logic bằng `git mv`, KHÔNG sửa một dòng logic.**
 Chỉ được đổi đường `import`. Thấy mình đang *"tiện tay sửa luôn"* là dừng.
 *Đóng khi:* 5 phép ghim chạy xanh **từ gói mới** · suite Scouter xanh **mà không còn Udin** ·
 `git diff` trên file logic **chỉ** đổi dòng `import`.
 
-**⑤ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI.**
+**④ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI.**
 Ghép cặp bằng **tệp riêng, cổng riêng** (`tao-tep-ghep-cap.mjs --goi udin-optic`), nạp extension
 mới, chạy E2E thật trên Udin với prompt **chưa dùng bao giờ**.
 *Đóng khi:* 4 chặng ĐẠT **và `git status workers/duc-scouter` SẠCH**. Hai vế, và vế sau mới là vế
 chứng minh — ĐẠT mà phải sửa Scouter một dòng thì việc tách **chưa thành**.
 
-**⑥ Dọn sổ.**
+**⑤ Dọn sổ.**
 `CAPABILITIES.md` · bảng theo dõi đầu file này · `DASHBOARD` · `HANDOFF` **hai bên** · `npm test`
 gốc chạy suite gói mới · `README` gói mới có đường cài đặt riêng (mẫu: `T9` vừa làm cho Scouter).
 
 ### Bảy cái bẫy — năm cái đã có người trả giá
 
-1. **Đừng chép transport lần thứ ba.** Đó là lý do chặng ① đứng trước. Con số 18/576 là bằng
-   chứng, không phải ý kiến.
+1. **Transport thì CHÉP, và chép xong phải ghim.** Ngược hẳn bản lộ trình đầu (`G-92`): gộp
+   không được vì file chạy trong Chrome. Cái sai thật sự không phải bản chép — là **bản chép
+   không ai canh**. Chép xong mà quên thêm cặp vào bảng `CẶP` là đẻ ra đúng bệnh ba gói
+   `duc-auto-*`.
 2. **Giao thức phải KHÁC.** `hnx-fetch` đã mất một buổi vì máy chủ nói `duc-scouter.bridge` còn
    extension nói `hnx-fetch.bridge` — cùng cổng, cùng token, vẫn không nối được. Triệu chứng
    *"im lặng"*, nguyên nhân ở một chuỗi.
