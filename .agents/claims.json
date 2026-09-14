@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T02:50:49.751Z",
-      "task": "dong phien: ghi Log + claims",
+      "claimed_at": "2026-09-14T04:51:55.329Z",
+      "task": "dong phien: bang",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -77,8 +77,8 @@
     "workers/duc-scouter": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T02:49:24.655Z",
-      "task": "ghi G-37",
+      "claimed_at": "2026-09-14T04:34:01.269Z",
+      "task": "S-24 duong (a): them scout.grab",
       "released_at": null
     },
     "workers/_shared": {
@@ -96,5 +96,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "05403b7ea15d2a65"
+  "_fingerprint": "030ff4f0503374ed"
 }
