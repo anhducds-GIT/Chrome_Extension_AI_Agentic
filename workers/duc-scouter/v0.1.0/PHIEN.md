@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T13 — noi lay-anh.mjs sang scout.grab roi chay that (dong W3, va la luot chay that DAU TIEN cua scout.grab). Khong cho ai. Sau do T15 (E2E Udin). Lo trinh doi 14/09: tach Udin lui xuong SAU khi seed dong bang — xem CAPABILITIES.md muc 5.2 DANH SACH DONG BANG. S-22 va D3 da dong."
-- human_action: "@Duc:mot cau chot Q1 — phe duyet chinh sach che du lieu de-xuat-chat-v1. No chan O8 (doc chu tren trang), muc dat nhat cua danh sach dong bang, va scout.grab da dung tren no roi ma chua ai ky. Day la cau chan duy nhat con lai. Chi tiet o CHUOI-VIEC.md muc Q1."
+- next_step: "T18 — lam O8 (doc chu tren trang) bang scout.text, theo ADR-0006 vua ky 14/09: chu cua MOT phan tu khop selector, khong ca trang, khong outerHTML, co tran ky tu. Day la muc dat nhat cua DANH SACH DONG BANG (CAPABILITIES.md 5.2) — tap nang luc phai xong TRUOC khi tach Udin. T13 da xong ma, chi con cho H1."
+- human_action: "@Duc:mot luot bam H1 — nap lai extension o ghe Dummy_Scout (bang ben: dong roi mo lai) VA bat cong tac Cho phep bam va go. Bridge dang khai 17 method, chua co scout.grab, nen T13 khong chay that duoc. Mot luot nay mo duoc ca T13 lan T15 (E2E). Moi anh tieu 1 don vi trong tran 200."

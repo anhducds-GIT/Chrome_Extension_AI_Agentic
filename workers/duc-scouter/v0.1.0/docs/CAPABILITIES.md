@@ -42,7 +42,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | O5 | Chụp màn hình phần đang thấy | `scout.shot` | **ĐÃ CHỨNG MINH** | Udin 12/09. Chụp cả trang dài: CHƯA CÓ | |
 | O6 | Chờ có / hết / **bấm được thật** | `scout.wait` | **ĐÃ CHỨNG MINH** | Udin 13/09, `G-28` `G-30` | |
 | O7 | Đọc thuộc tính trạng thái (`disabled`, `aria-*`…) | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29`: nút Send mất `disabled` sau khi gõ | |
-| O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | — | **CHƯA CÓ** | Chính sách che dữ liệu `de-xuat-chat-v1` cấm trả chữ, và **Đức chưa chốt** chính sách đó. Chặn mọi workflow cần đọc kết quả bằng chữ | ✋ |
+| O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | `scout.text` | **CHƯA CÓ — đã duyệt** | **Đức chốt 14/09** ([ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)): ký `de-xuat-chat-v1`, kèm **cửa hẹp** — chữ của **MỘT** phần tử khớp selector, không cả trang, không `outerHTML`, có trần ký tự. Việc `T18` | ✅ |
 | O9 | Phần tử trong iframe / shadow DOM | — | **CHƯA ĐO** | Chưa trang nào cần | |
 | O10 | Chụp DOM + bố cục một lượt | ~~`scout.snapshot`~~ | **ĐÃ BỎ 08/09** | Làm chết service worker trên 2/3 trang lớn. Đừng mở lại nếu chưa có cách khác | |
 
@@ -81,7 +81,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
 | D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn). Đường đúng là `scout.grab` — xem O11 | |
-| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **CÓ** | Đức chốt `S-24` đường ⒜ 14/09. Đưa selector, extension đọc `src` đầy đủ **bên trong** rồi tải, trả byte; không có trường `url`. 11 khối ghim · đột biến 128/128. **CHƯA CHẠY THẬT** — `T13` | |
+| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **CÓ** | Đức chốt `S-24` đường ⒜ 14/09. Đưa selector, extension đọc `src` đầy đủ **bên trong** rồi tải, trả byte; không có trường `url`. 11 khối ghim · đột biến 128/128. **CHƯA CHẠY THẬT** — và chưa nạp vào extension: `system.capabilities` trên ghế `Dummy_Scout` khai **17** method, chưa có `scout.grab`. Cần Đức nạp lại (`T13`) | |
 | D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ** (adapter tự làm) | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
@@ -149,7 +149,7 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 |---|---|---|---|---|
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
-| W3 | Lấy ảnh kết quả về đĩa | O11 | **CHƯA** | Đường cũ (`scout.fetch`) chết 14/09: 403 vì URL ký sẵn (`G-35`). Đường mới `scout.grab` đã có; `lay-anh.mjs` **chưa nối sang** — việc `T13` |
+| W3 | Lấy ảnh kết quả về đĩa | O11 | **CHƯA — mã xong, chờ một lượt chạy thật** | `lay-anh.mjs` đã nối sang `scout.grab` (14/09), 21 khối ghim, 4 con đột biến tay giết được. **Chặn bởi:** `scout.grab` chưa nạp vào extension (Bridge khai 17 method) + cần công tắc ghi. Mỗi ảnh tiêu **1** đơn vị trần ghi |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
@@ -195,7 +195,7 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 | **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
 | **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
 | **I5 I6 I7** | cuộn · rê chuột · bấm đúp/phải | chưa chặn `W` nào của Udin | Bảo hiểm cho **trang thứ hai**. Mở sau khi tách thì trả lại đúng sáu chỗ ở §5.1 |
-| **chính sách che** | `de-xuat-chat-v1` | `O8` **và** `source.masked` của `scout.grab` | **Chưa ai chốt.** `O8` không viết được trước nó, và `scout.grab` đang đứng trên một chính sách chưa ký |
+| ~~chính sách che~~ | ~~`de-xuat-chat-v1`~~ | — | **ĐÃ KÝ 14/09** — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md), đường ⒝: ký nguyên bản + cửa hẹp `scout.text`. `O8` hết chặn |
 
 **`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
 thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp nhận mở lại Scouter một lần.
@@ -208,7 +208,7 @@ thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp
 | ~~P1b~~ | ~~`T14` đóng `S-22` bằng chẩn đoán~~ | **ĐÓNG 14/09 bằng LỜI KHAI**, không bằng bản vá — `README` khai `scout.click` không hứa *"trang đã nhận"*. Lý do dừng: năm lượt điều tra cùng một giả thuyết | — |
 | **P1a** | `T13` — `lay-anh.mjs` đi bằng `scout.grab`, chạy thật | một ảnh Udin nằm trên đĩa, và `scout.grab` có lượt chạy thật đầu tiên | **không ai** |
 | **P1c** | `T15` — E2E Udin (`W1→W2→W3`) | ba chặng chạy một mạch trên ghế thật | P1a |
-| **P2a** | **`O8` đọc chữ** — sau khi Đức chốt chính sách che | `W4` ĐẠT trên trang thật | ✋ **Đức chốt `de-xuat-chat-v1`** |
+| **P2a** | **`O8` đọc chữ** qua `scout.text` — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) | `W4` ĐẠT trên trang thật | **không ai** — đã duyệt 14/09 |
 | **P2b** | `I4` xoá ô · `I9` upload | `W7` `W8` ĐẠT trên trang thật | ✋ Đức chốt từng mục |
 | **P2c** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ĐÃ CHỨNG MINH trên Chrome riêng | ✋ Đức chốt gộp một lượt |
 | **P2d** | `T17` — **máy sinh bảng §2**, thay cho gõ tay | một ô khai `ĐÃ CHỨNG MINH` không có dòng `TRIALS` thì cổng ĐỎ | không ai |
@@ -222,8 +222,9 @@ tách. Đó đúng là thứ Đức bảo tránh.
 
 ### 5.4 Rủi ro và nợ đang mở
 
-**Câu hỏi chặn lớn nhất, và nay chỉ còn MỘT:** Đức chốt chính sách che `de-xuat-chat-v1`. Nó chặn
-`O8` — mục đắt nhất của danh sách đóng băng — và `scout.grab` đã **chạy trên** nó rồi mà chưa ai ký.
+**Không còn câu hỏi chính sách nào treo.** `de-xuat-chat-v1` đã ký 14/09 ([ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)),
+`D3` trả lời KHÔNG, `S-24` chốt đường ⒜. Thứ duy nhất còn cần tay Đức là **`H1`** — nạp lại
+extension ghế `Dummy_Scout` và bật công tắc ghi, để `T13` có lượt chạy thật đầu tiên.
 
 **`D3` (`scout.focus`) — Đức trả lời 14/09: KHÔNG.** Cửa sổ extension chạy **ẩn bên dưới**, chỉ
 vài ca ngoại lệ mới lên trên. Không mở `scout.focus` làm đường mặc định. Kéo theo: mọi adapter

@@ -34,8 +34,9 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | — | **việc kế, không chờ ai** |
-| **Q1** | ✋ **Đức chốt chính sách che `de-xuat-chat-v1`** | — | **câu hỏi chặn duy nhất còn lại** — nó chặn `O8`, mục đắt nhất của danh sách đóng băng |
+| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **H1** | **MÃ XONG 14/09** · 21 khối ghim · 4 đột biến tay giết được · còn **một lượt chạy thật** |
+| **H1** | ✋ **Đức: nạp lại extension ghế `Dummy_Scout` + bật công tắc ghi** | — | Bridge đang khai **17** method — chưa có `scout.grab`. Một lượt bấm, mở được cả `T13` lẫn `T15` |
+| **Q1** | ✋ **Đức chốt chính sách che `de-xuat-chat-v1`** | — | **Đức đã chốt đường ⒝ 14/09** — ký, kèm cửa hẹp `scout.text`. Còn phải ghi vào `decisions.md` rồi mở `T18` |
 | **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 | chưa chạy lần nào |
 | **T18** | `O8` đọc chữ trên trang | Q1 | **trong danh sách đóng băng** |
 | **T19** | `I4` xoá ô nhập · `I9` tải file lên | ✋ Đức | **trong danh sách đóng băng** |
@@ -104,8 +105,24 @@ Việc: đổi `lay-anh.mjs` sang `scout.grab`. Chỗ gợn duy nhất — grab 
 n gọi bằng `:nth-of-type` hoặc một selector riêng. **Đếm ảnh vẫn bằng `scout.query`** (masked
 src đủ để phân biệt ảnh mới/cũ), chỉ lượt TẢI mới qua grab.
 
-Xong khi: `lay-anh.mjs` không còn chữ `scout.fetch`, ghim của nó xanh lại, và **chạy thật trên
-ghế `Dummy_Scout` lấy được ít nhất một ảnh xuống vùng ghi**. `scout.grab` CHƯA CHẠY THẬT lần nào.
+**MÃ XONG 14/09.** `lay-anh.mjs` không còn lượt gọi `scout.fetch` nào (bốn lần còn lại trong file
+đều là chú thích *vì sao* bỏ nó — đừng dùng `grep -c` làm phép kiểm, nó khớp cả văn của chính mình).
+
+**Chỗ gợn giải thế nào, ghi ra vì nó không hiển nhiên:** grab đòi selector khớp **đúng một** phần
+tử, mà trang ra **8 nút cho 4 ảnh**. Adapter **không đoán** `:nth-of-type`. Nó dựng bốn ứng viên
+theo độ bền giảm dần — `#id` › `[data-testid]` › `[alt]` › `[src^=]` — rồi **hỏi lại trang từng
+cái** bằng `scout.query` (đọc, không tiêu trần ghi), lấy cái đầu tiên khớp đúng một. Không cái nào
+duy nhất thì **ĐỎ và kể ra đã thử gì**. Giá trị thuộc tính có `"` hoặc `\` thì **bỏ ứng viên đó**
+thay vì đi thoát chuỗi cho khéo: một selector thoát sai không báo lỗi, nó lặng lẽ tải nhầm ảnh.
+
+**Đã kiểm phép ghim có phân biệt được không** (bộ đột biến của repo không chạm tới adapter, nên
+làm tay): bốn con — tin ứng viên đầu tiên không hỏi lại · nhận `>= 1` thay vì `=== 1` · bỏ phép
+lọc dấu nháy · ảnh biến mất thì bỏ qua thay vì ĐỎ — **cả bốn giết được**.
+
+**Còn lại đúng một việc: chạy thật.** Chặn bởi `H1` — `system.capabilities` trên ghế `Dummy_Scout`
+khai **17** method, chưa có `scout.grab`; và grab là đường ghi nên cần công tắc. Mỗi ảnh tiêu
+**một** đơn vị trần ghi. `scout.grab` CHƯA CHẠY THẬT lần nào — và bài học `T12` nói thẳng rằng
+tới lúc đó nó vẫn chưa phải một đường.
 
 ## ~~T14~~ — `S-22` ĐÓNG 14/09, và đây là bài học đắt nhất của cả chuỗi
 
