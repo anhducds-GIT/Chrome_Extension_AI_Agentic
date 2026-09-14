@@ -161,6 +161,38 @@ const grab = (nk) => nk.filter((g) => g.method === "scout.grab");
   t.goi = async (m, p) => { const r = await goc(m, p); return (m === "file.append" && p.content) ? { ...r, size: r.size - 1 } : r; };
   await assert.rejects(() => layAnh([A1], t), (e) => /KHÔNG tin file/.test(e.message)); }
 
+/* ⓩ ĐỨT DÂY CHẬP CHỜN (`G-64`) — thử lại, nhưng CHỈ với lỗi đứt dây, và có trần.
+ *
+ * Đếm ngay TẠI CHỖ NÉM, không đếm trong nhật ký: máy giả ném trước khi kịp ghi, nên đếm nhật ký
+ * chỉ thấy lượt THÀNH CÔNG — một phép ghim như thế xanh dù có thử lại hay không. */
+{ let goi1 = 0; const t = lam({ soKhuc: 2, danhSach: [A1] }); t.ngu = async () => {}; const goc = t.goi;
+  t.goi = async (m, p) => {
+    if (m === "scout.grab" && p.part === 1) { goi1 += 1; if (goi1 <= 2) throw new Error("scout.grab hỏng: TRANSPORT_DISCONNECTED — ..."); }
+    return goc(m, p);
+  };
+  const k = await layAnh([A1], t);
+  assert.equal(k.daLay.length, 1, "một lượt rớt lẻ không được giết cả ảnh");
+  assert.equal(goi1, 3, "hai lượt rớt + một lượt được = ba lượt hỏi cho khúc 1"); }
+
+/* Lỗi KHÁC thì ném thẳng — thử lại một lỗi thật là biến phép thử lại thành cái thảm giấu bụi,
+ * và tiêu ba lần trần ghi cho một việc chắc chắn hỏng. */
+{ let goi1 = 0; const t = lam({ soKhuc: 2, danhSach: [A1] }); t.ngu = async () => {}; const goc = t.goi;
+  t.goi = async (m, p) => {
+    if (m === "scout.grab" && p.part === 1) { goi1 += 1; throw new Error("scout.grab hỏng: SELECTOR_AMBIGUOUS — ..."); }
+    return goc(m, p);
+  };
+  await assert.rejects(() => layAnh([A1], t), /SELECTOR_AMBIGUOUS/);
+  assert.equal(goi1, 1, "lỗi thật thì hỏi ĐÚNG MỘT lần"); }
+
+/* Rớt quá trần → vẫn ĐỎ, không im lặng bỏ khúc. */
+{ let goi1 = 0; const t = lam({ soKhuc: 2, danhSach: [A1] }); t.ngu = async () => {}; const goc = t.goi;
+  t.goi = async (m, p) => {
+    if (m === "scout.grab" && p.part === 1) { goi1 += 1; throw new Error("scout.grab hỏng: TRANSPORT_DISCONNECTED — ..."); }
+    return goc(m, p);
+  };
+  await assert.rejects(() => layAnh([A1], t), /TRANSPORT_DISCONNECTED/);
+  assert.equal(goi1, 3, "trần ba lượt, không thử mãi"); }
+
 // ⓟ THỨ TỰ ứng viên: có `id` thì dùng id và KHÔNG hỏi tới alt/src
 { const t = lam({ trenTrang: [{ src: A1, alt: "Variation 1", id: "anh-1" }] });
   const k = await layAnh([A1], t);
@@ -272,4 +304,4 @@ assert.equal(tenFile(`https://cdn.udin/a/v1.webp…`, 3), "03-v1.webp");
 assert.notEqual(tenFile("https://cdn.udin/a/v.webp", 1), tenFile("https://cdn.udin/b/v.webp", 2));
 assert.match(tenFile("https://cdn.udin/", 7), /^07-anh$/);
 
-console.log("  · udin lay-anh: 26 khối xanh");
+console.log("  · udin lay-anh: 29 khối xanh");

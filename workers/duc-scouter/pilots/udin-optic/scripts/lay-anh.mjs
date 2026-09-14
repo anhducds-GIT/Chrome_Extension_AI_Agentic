@@ -179,7 +179,29 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
        * nhau trên cùng một sợi dây. Đo ngoài đời 14/09: bản đầu của file này đọc `.data` và ngã
        * ngay lượt gọi thật, trong khi 15 khối ghim vẫn xanh vì máy giả chép đúng cái hiểu sai
        * của tôi. Hình dạng dưới đây đọc thẳng từ `scouter-seed-core.mjs`, không đọc từ trí nhớ. */
-      const xin = async (part) => goi("scout.grab", { target_id: tab, selector, attribute: "src", part }, tuyChon);
+      /* THỬ LẠI KHI ĐỨT DÂY — và chỉ khi đứt dây. Đo 14/09 (`G-63` `G-64`): tầng vận chuyển
+       * rớt **chập chờn** với phong bì lớn (cùng một cỡ, lượt chạy lượt đứt), và `TRANSPORT_
+       * DISCONNECTED` tự khai là *retryable*. Một ảnh là 16 khúc, nên một lượt rớt lẻ giết cả
+       * ảnh nếu không thử lại.
+       *
+       * Đây là VẬT CHE, không phải bản vá: chỗ hỏng thật ở tầng vận chuyển, ghi thành `S-25`.
+       * Hai chốt để nó không thành cái thảm giấu bụi — ⑴ chỉ bắt đúng hai mã lỗi đứt dây, mọi
+       * lỗi khác ném thẳng; ⑵ trần 3 lượt, và **mỗi lượt tiêu thêm một đơn vị trần ghi**. */
+      const DUT = /TRANSPORT_DISCONNECTED|EXTENSION_OFFLINE/;
+      const xin = async (part) => {
+        let cuoi;
+        for (let lan = 0; lan < 3; lan += 1) {
+          try {
+            return await goi("scout.grab", { target_id: tab, selector, attribute: "src", part }, tuyChon);
+          } catch (loi) {
+            if (!DUT.test(String(loi?.message || ""))) throw loi;
+            cuoi = loi;
+            /* Đợi extension tự nối lại (đo: ~1 giây) trước khi hỏi lại. */
+            await (tuyChon.ngu || ((ms) => new Promise((r) => setTimeout(r, ms))))(1500);
+          }
+        }
+        throw cuoi;
+      };
       const d = await xin(0);
       if (!d.ok) throw nga(`Ảnh ${i + 1}: máy chủ trả ${d.status}.`);
       if (!d.content_type || !/^image\//i.test(d.content_type)) {

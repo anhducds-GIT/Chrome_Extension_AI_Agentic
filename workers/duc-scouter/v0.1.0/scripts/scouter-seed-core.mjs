@@ -117,19 +117,24 @@ const WRITE_CAP_PER_UNLOCK = 200;
 /* Trần thân trả về của `scout.fetch`. Đặt ở 512 KiB chứ không phải 1 MiB của phong bì: phần vỏ
  * (JSON escape, các trường khác) phình thêm được đáng kể, và chạm trần phong bì thì cả lượt
  * chết ở tầng vận chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
-const FETCH_MAX_BODY_BYTES = 512 * 1024;
+/* HẠ 512 KiB → 64 KiB ngày 14/09, sau một phép đo — VÀ SAU MỘT KẾT LUẬN SAI, ghi cả hai ra.
+ *
+ * Bridge khai `max_envelope_bytes: 1.048.576` ra ngoài dây. Thực tế: phong bì lớn làm **đứt kết
+ * nối** (`TRANSPORT_DISCONNECTED`), không thành một lỗi có tên. Đó là `G-56` (`scout.shot` chết
+ * hôm nay dù 13/09 còn chạy) và mọi lượt `scout.grab` trả thân thật.
+ *
+ * Lần đo đầu trông như một NGƯỠNG sạch (74.668 base64 chạy · 85.336 đứt) và tôi đã viết kết luận
+ * đó. Đo lại cùng một cỡ nhiều lượt thì nó **chập chờn**: 65.536 chạy · 65.536 đứt · 65.536 chạy
+ * (`G-63`). Mỗi cỡ thử một lần thì một lỗi chập chờn luôn trông như một ngưỡng.
+ *
+ * Nên 64 KiB KHÔNG phải "dưới ngưỡng an toàn" — không có ngưỡng nào cả. Nó chỉ là **ít rủi ro
+ * hơn**, và người gọi vẫn phải thử lại. Đây là **hạ**, hướng an toàn hơn; không nới gì. Giá phải
+ * trả: một ảnh 746 KB thành **16 khúc** = 16 đơn vị trần ghi và 16 lượt tải. Chữa gốc là `S-25`
+ * (`_shared/bridge-host`, lõi dùng chung với ba gói đóng băng) → câu của Đức. */
+const FETCH_MAX_BODY_BYTES = 64 * 1024;
 /* Bao nhiêu byte THÔ nhét vừa trần trên, sau khi base64 phồng 4/3. Con số này là thứ chia tệp
  * thành khúc — suy ra từ trần, không gõ riêng, để hai số không bao giờ lệch nhau. */
 const FETCH_MAX_RAW_BYTES = Math.floor(FETCH_MAX_BODY_BYTES / 4) * 3;
-
-/* `Content-Range: bytes 0-393215/746722` → 746722. Trả `null` khi không đọc được, và người gọi
- * phải coi `null` là "máy chủ không nhận Range" chứ không phải "tệp dài 0". */
-function docTongTu(chu) {
-  const khop = /\/(\d+)\s*$/.exec(String(chu || ""));
-  if (!khop) return null;
-  const so = Number(khop[1]);
-  return Number.isInteger(so) && so >= 0 ? so : null;
-}
 
 /* Số thứ tự khúc. Không trần trên: tệp dài bao nhiêu thì `parts` nói, và xin quá thì máy chủ
  * trả `416`. Nhưng phải là số nguyên không âm — một `part` âm thành `Range: bytes=-524288`,
@@ -534,23 +539,26 @@ export function createSeedHandlers(deps = {}) {
        * không dùng `url` — một thông báo lỗi chở chữ ký cũng là rò rỉ. */
       const { url, masked, attribute, selector, matchCount } = found.data;
 
-      /* LẤY THEO KHÚC. Đo 14/09 (`G-59`): một ảnh Udin là 746.722 byte → base64 995.632, vượt
-       * trần thân 524.288. Và trần ấy không tuỳ tiện — phong bì Bridge chặn ở 1 MiB, mà con số
-       * đó nằm ở `_shared/bridge-host`, **lõi dùng chung với ba gói đóng băng**. Nên đường đúng
-       * KHÔNG phải nới trần, mà là xin từng khúc bằng `Range`.
+      /* TRẢ VỀ THEO KHÚC. Đo 14/09 (`G-59`): một ảnh Udin là 746.722 byte → base64 995.632, vượt
+       * trần thân. Và trần ấy không tuỳ tiện — phong bì Bridge chặn ở 1 MiB, mà con số đó nằm ở
+       * `_shared/bridge-host`, **lõi dùng chung với ba gói đóng băng**. Nên đường đúng không phải
+       * nới trần, mà là chia nhỏ thứ ĐI RA.
        *
-       * Mỗi khúc là một lượt gọi ĐỘC LẬP: không giữ thân file giữa hai lượt, nên service worker
-       * không phải ôm một MB, và không có cái kho tạm nào để rò rỉ. Giá phải trả, nói trước:
-       * mỗi khúc tiêu **một** đơn vị trần ghi, và URL phải còn hạn suốt cả loạt. */
+       * KHÔNG DÙNG HEADER `Range`, dù đó là cách hiển nhiên. Đo 14/09 (`G-62`): một lượt `fetch`
+       * mang `Range` **giết service worker** — socket đứt, người gọi nhận `TRANSPORT_DISCONNECTED`,
+       * rồi extension tự nối lại. Chia đôi để tìm ra: bỏ đúng header đó thì grab chạy bình thường.
+       *
+       * Nên: tải CẢ tệp (đã đo được là service worker chịu nổi — lượt đầu tiên mã hoá trọn
+       * 746.722 byte rồi trả về một lỗi sạch), nhưng chỉ **mã hoá và trả về đúng khúc này**.
+       * Không giữ trạng thái nào giữa hai lượt: mỗi khúc tự tải lại, nên service worker bị Chrome
+       * giết giữa chừng cũng không làm hỏng loạt. Giá phải trả, nói trước: một tệp N khúc là N
+       * lượt tải và N đơn vị trần ghi. */
       const khuc = readPhanKhuc(params.part);
-      const dau = khuc * FETCH_MAX_RAW_BYTES;
-      const cuoi = dau + FETCH_MAX_RAW_BYTES - 1;
 
       let response;
       try {
         response = await doFetch(url, {
-          method: "GET", credentials: "omit", redirect: "follow",
-          headers: { Range: `bytes=${dau}-${cuoi}` }
+          method: "GET", credentials: "omit", redirect: "follow"
         });
       } catch (error) {
         throw new BridgeProtocolError(
@@ -560,44 +568,33 @@ export function createSeedHandlers(deps = {}) {
         );
       }
 
-      /* `206 Partial Content` = máy chủ CÓ nhận `Range`. `200` = nó lờ đi và trả cả file —
-       * phải ĐỎ ngay, vì khúc 0 lúc đó là cả file (có thể vượt trần) và khúc 1 sẽ là một bản
-       * sao thứ hai của cùng nội dung, ghép lại ra một tệp hỏng mà không ai thấy. */
       const buffer = new Uint8Array(await response.arrayBuffer());
-      const dai = docTongTu(response.headers.get("content-range"));
-      if (response.status !== 206 || dai === null) {
+      const dai = buffer.length;
+      const soKhuc = Math.max(1, Math.ceil(dai / FETCH_MAX_RAW_BYTES));
+      if (khuc >= soKhuc) {
         throw new BridgeProtocolError(
           "ACTION_FAILED",
-          `Máy chủ của '${masked}' không nhận 'Range' (trả ${response.status}` +
-          `${response.headers.get("content-range") ? "" : ", không có Content-Range"}). ` +
-          `Tệp ${buffer.length} byte, mà một phong bì chỉ chở được ${FETCH_MAX_RAW_BYTES} byte thô. ` +
-          "Không ghép được thì không tải — ghép mù ra một tệp hỏng mà không ai thấy.",
-          { action: "grab", action_code: "RANGE_NOT_SUPPORTED", status: response.status, bytes: buffer.length, source: masked }
+          `Xin khúc ${khuc} mà tệp '${masked}' chỉ có ${soKhuc} khúc (${dai} byte). Đọc \`parts\` ở khúc 0.`,
+          { action: "grab", action_code: "PART_OUT_OF_RANGE", part: khuc, parts: soKhuc, bytes_total: dai, source: masked }
         );
       }
 
-      const base64 = base64Tu(buffer);
-      if (base64.length > FETCH_MAX_BODY_BYTES) {
-        throw new BridgeProtocolError(
-          "ACTION_FAILED",
-          `Khúc ${khuc} dài ${buffer.length} byte (${base64.length} sau mã hoá) quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`,
-          { action: "grab", action_code: "FETCH_BODY_TOO_LARGE", bytes: base64.length, max_bytes: FETCH_MAX_BODY_BYTES, source: masked }
-        );
-      }
+      const lat = buffer.subarray(khuc * FETCH_MAX_RAW_BYTES, (khuc + 1) * FETCH_MAX_RAW_BYTES);
+      const base64 = base64Tu(lat);
 
       return {
         action: "grab",
         status: response.status,
         ok: response.ok,
         content_type: response.headers.get("content-type"),
-        bytes: buffer.length,
+        bytes: lat.length,
         body_base64: base64,
         /* Người gọi cần BA con số để ghép đúng và biết lúc nào xong. `bytes` là của khúc này;
          * `bytes_total` là của cả tệp; `parts` là số khúc phải xin. Thiếu `bytes_total` thì
          * không có cách nào kiểm tệp ghép xong có đủ không — và "đủ chưa" là câu duy nhất
          * đáng hỏi sau một lượt ghép. */
         part: khuc,
-        parts: Math.max(1, Math.ceil(dai / FETCH_MAX_RAW_BYTES)),
+        parts: soKhuc,
         bytes_total: dai,
         /* KHÔNG có trường `url`. `source` là gốc + đường dẫn — đúng bằng thứ lõi đọc vẫn cho
          * phép thấy, nên nó không mở thêm gì; con `GR7` canh để không ai thêm `url` vào đây. */
