@@ -1002,3 +1002,31 @@ cuộn) và **không tái hiện** trên ghế `Udin_Scout` hôm nay. Chưa ph�
 chối (đúng thiết kế), còn tab của Đức thì không mượn.
 
 **Số:** suite gói 25/25 · ghim 20 khối · đột biến tay 14/14. Ghế thứ hai vẫn chưa có tên (`D2`).
+
+## 2026-09-14 · `claude-scouter-udine` — `S-22`: tám giả thuyết chết, và một lần tôi tưởng đã xong
+
+**`G-26` có câu trả lời: SAI.** Bản vá `S-23` hôm qua **không** chữa `S-22`. Chạy thật `vong.mjs`
+trên ghế `Dummy_Scout` (tên mới Đức đặt cho ghế cũ `Udin_Scout`): nạp lại 255ms ĐẠT rồi
+`LUOT_BAM_KHONG_TOI_NOI`. Hai lỗi khác nhau; `S-23` vẫn đóng.
+
+**Dựng được bàn đo A/B trên Chrome SẠCH** — bản chép `scouter-action-reality-probe.mjs` tự mở tab,
+đổi trạng thái cửa sổ, gắn/thả gỡ lỗi. Nhờ nó **năm giả thuyết chết trong một buổi**: tab ẩn
+(`G-40`) · cửa sổ thu nhỏ (`G-41`, cũng là giả thuyết ⒜ của `S-21`) · tab chưa từng hiện (`G-42`) ·
+lớp che / vẽ sai (`G-44`) · điều hướng sau khi gắn (`G-46`). Cả năm: cú bấm vẫn tới đủ.
+
+**Giả thuyết của CHÍNH TÔI sáng nay cũng chết.** `G-38` (*"tab ẩn thì bấm không tới"*) là mối tương
+quan tôi thấy trên ghế Đức — `G-40` đo hai chiều và nó SAI. Tức là `G-07` ngày 13/09 đúng, và Đức
+đúng. Đã gạch tại chỗ, không sửa lịch sử.
+
+**Thu hẹp được một bậc thật (`G-43`):** hỏng **theo TAB, không theo ghế**. Cùng ghế, cùng phút:
+bấm ô nhập trên Udin → `:focus` 0→1; bấm nút trên trang thử → `data-chuot` vẫn 0. Trên tab hỏng,
+lệnh **DOM chạy** (hỏi-điểm trả đúng phần tử) mà lệnh **Input biến mất**.
+
+**Và một lần tôi tưởng đã xong, ghi ra vì nó đắt.** Sau `scout.reload`, chính cú bấm đó chạy được
+(`data-chuot` 0→1). Tôi định kết luận *"phiên gỡ lỗi hỏng nửa, gắn lại là chữa"*. Chạy lại bốn lượt
+hai chiều: **không tới cả bốn**, kể cả ngay sau khi gắn lại. **Một lượt xanh không lặp lại được
+thì không phải bằng chứng** — nó chỉ nói lỗi **CHẬP CHỜN** (1/7), đúng mô tả gốc 12/09. `G-45`.
+
+**Việc kế, và nó cần đúng một cú bấm của Đức:** `G-47` — biến chưa thử là **tab đang hoạt động** so
+với **tab nền**, riêng Chrome của Đức (Chrome sạch không tái hiện). Khớp 6/7 quan sát. Máy chờ
+`scratchpad/cho-tab-hien.mjs` đang chạy: Đức bấm vào tab `127.0.0.1:8642` là nó tự bấm lại và đo.
