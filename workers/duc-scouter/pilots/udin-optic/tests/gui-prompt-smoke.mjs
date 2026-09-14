@@ -2,11 +2,13 @@
  * Trang giả giữ TRẠNG THÁI (chữ trong ô, đang chạy, tập ảnh) và trả theo đúng selector + state,
  * để bấm nhầm Stop hay chờ sai state là lộ ra. */
 import assert from "node:assert/strict";
-import { guiPrompt, SEL } from "../scripts/gui-prompt.mjs";
+import { guiPrompt, choXong, UdinDangChay, HAN_URL_MS, SEL } from "../scripts/gui-prompt.mjs";
 
 function lam({ chuSan = "", dangChaySan = false, goToi = true, nhan = true, vongChay = 2, anhMoi = 4, nutLap = 1, anhCu = 2, tranMs = 300000 } = {}) {
   const nk = [];
-  const trang = { chu: chuSan, chay: dangChaySan, vong: dangChaySan ? vongChay : 0, anh: Array.from({ length: anhCu }, (_, i) => `s3/cu-${i}.webp`) };
+  /* `guiDi` = "lượt đang chạy này sẽ đẻ ra ảnh khi xong". Đúng cho cả lượt MÌNH gửi lẫn lượt
+   * đã chạy sẵn từ trước — và vế thứ hai là đúng cảnh `--noi-lai` phải xử lý. */
+  const trang = { chu: chuSan, chay: dangChaySan, vong: dangChaySan ? vongChay : 0, guiDi: dangChaySan, anh: Array.from({ length: anhCu }, (_, i) => `s3/cu-${i}.webp`) };
   const q = (n, items = [], hasMore = false) => ({ data: { matchCount: n, items, hasMore } });
   const goi = async (method, p) => {
     nk.push({ method, p });
@@ -60,12 +62,39 @@ const bam = (nk) => nk.filter((g) => g.method === "scout.click").length;
 { const t = lam({ nhan: false }); await assert.rejects(() => guiPrompt("x", t), /không chạy/); }
 // ⓕ chạy xong mà không có ảnh mới → không báo đạt
 { const t = lam({ anhMoi: 0, nutLap: 3 }); await assert.rejects(() => guiPrompt("x", t), /không có ảnh mới/); }
-// ⓖ chạy mãi không xong → dừng ở trần
-{ const t = lam({ vongChay: 1e9, tranMs: -1 }); await assert.rejects(() => guiPrompt("x", t), /chưa xong/); }
+/* ⓖ `T22` — HẾT TRẦN KHÔNG PHẢI HỎNG. Đo 14/09 (`G-55`): adapter bỏ cuộc ở 300s trong khi Udin
+ * chạy tiếp >17 phút; credit đã tiêu mà cả lượt vứt đi vì *quá giờ* bị gộp vào *hỏng*. */
+{ const t = lam({ vongChay: 1e9, tranMs: -1 });
+  await assert.rejects(() => guiPrompt("x", t), (e) => {
+    assert.ok(e instanceof UdinDangChay, `phải là UdinDangChay, không phải Error trơn — thấy ${e.name}`);
+    assert.equal(e.dangChay, true, "người gọi phân biệt hai ca bằng cờ này");
+    assert.match(e.message, /VẪN ĐANG CHẠY/);
+    assert.match(e.message, /Credit đã tiêu/, "lời báo phải nói ra cái giá, không thì nó bị đọc như một lỗi vặt");
+    assert.ok(Array.isArray(e.truoc), "phải chở theo tập ảnh TRƯỚC lúc gửi — không có nó thì không nối lại được");
+    assert.deepEqual(e.truoc, ["s3/cu-0.webp", "s3/cu-1.webp"]);
+    return true;
+  }); }
+
+// ⓚ `T22` — trần mặc định bằng đúng hạn của URL ký sẵn, không phải một con số gõ tay
+{ assert.equal(HAN_URL_MS, 900000, "900s = X-Amz-Expires của ảnh Udin (G-51)");
+  const t = lam({ dangChaySan: true, vongChay: 1e9 });
+  delete t.tranMs; /* bỏ trần của máy giả để hàm dùng MẶC ĐỊNH — đó mới là thứ khối này ghim */
+  const t0 = Date.now() - HAN_URL_MS - 1; /* giả vờ đã chờ quá hạn */
+  await assert.rejects(() => choXong(["s3/cu-0.webp"], { ...t, t0 }), UdinDangChay); }
+
+// ⓛ `T22` — NỐI LẠI một lượt đang dở: không gõ, không bấm, vẫn lấy được ảnh mới
+{ const t = lam({ dangChaySan: true, vongChay: 2, anhMoi: 4 });
+  t.nk.length = 0;
+  /* trang đang chạy sẵn và sẽ đẻ ảnh khi xong — đúng cảnh một lượt đã tiêu credit rồi bị bỏ rơi */
+  const k = await choXong(["s3/cu-0.webp", "s3/cu-1.webp"], t);
+  assert.equal(k.anhMoi, 4, "phải vớt được đủ bốn ảnh của lượt mình KHÔNG gửi");
+  assert.ok(k.src.every((s) => s.startsWith("s3/moi-")), `chỉ ảnh mới, thấy ${k.src.join(" ")}`);
+  assert.equal(bam(t.nk), 0, "nối lại KHÔNG được bấm — bấm lúc này là bấm Stop, giết lượt đang chạy");
+  assert.ok(!t.nk.some((g) => g.method === "scout.type"), "nối lại KHÔNG được gõ — gõ là tiêu thêm credit"); }
 // ⓘ lịch sử dài hơn một trang query (250 ảnh cũ) → vẫn không đếm ảnh cũ là mới
 { const t = lam({ anhCu: 250 }); assert.equal((await guiPrompt("x", t)).anhMoi, 4); }
 // ⓙ selector Send phải loại nút Stop (cùng một phần tử đổi class)
 assert.match(SEL.nutSend, /:not\(\.stop-button\)/);
 // ⓗ prompt rỗng → không đụng trang
 { const t = lam(); await assert.rejects(() => guiPrompt("  ", t), /Thiếu prompt/); assert.equal(t.nk.length, 0); }
-console.log("  · udin gui-prompt: 10 khối xanh");
+console.log("  · udin gui-prompt: 13 khối xanh");

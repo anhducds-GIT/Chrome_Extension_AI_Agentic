@@ -23,12 +23,70 @@ export const SEL = Object.freeze({
 
 const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* URL ký sẵn của ảnh kết quả khai `X-Amz-Expires=900` (`G-51`). Quá 900 giây kể từ lúc ảnh sinh
+ * ra thì có lấy cũng 403 — nên đó là trần TỰ NHIÊN của một lượt chờ, không phải một con số đẹp. */
+export const HAN_URL_MS = 900000;
+
+/**
+ * Udin **vẫn đang chạy** khi hết trần chờ. Đây KHÔNG phải "hỏng": credit đã tiêu, ảnh sắp có, và
+ * lượt chạy còn nối lại được. Đo 14/09 (`G-55`): adapter bỏ cuộc ở 300s trong khi Udin chạy tiếp
+ * hơn 17 phút — cả lượt tốn tiền đó mất trắng vì *quá giờ* bị gộp vào *hỏng*.
+ */
+export class UdinDangChay extends Error {
+  constructor(giay, truoc) {
+    super(
+      `Udin VẪN ĐANG CHẠY sau ${giay}s — chưa hỏng, chỉ là chưa xong. Credit đã tiêu. ` +
+      `Nối lại bằng: choXong(truoc) với ${truoc.length} ảnh đã có trước lúc gửi. ` +
+      "Ảnh hết hạn 900 giây sau khi hiện ra, nên đừng để lâu.",
+    );
+    this.name = "UdinDangChay";
+    this.dangChay = true;
+    this.giay = giay;
+    this.truoc = truoc;
+  }
+}
+
+/**
+ * Chờ Udin chạy xong rồi trả về ảnh MỚI so với `truoc`. Tách rời `guiPrompt` để **nối lại được
+ * một lượt đang dở** mà không gửi thêm prompt nào (và không tiêu thêm credit).
+ * @param {string[]} truoc tập `src` ảnh có trước lúc gửi
+ */
+export async function choXong(truoc, tuyChon = {}) {
+  const goi = tuyChon.goi || goiThat;
+  const nghi = tuyChon.ngu || ngu;
+  const buoc = tuyChon.buocMs ?? 3000;
+  const tran = tuyChon.tranMs ?? HAN_URL_MS;
+  const t0 = tuyChon.t0 ?? Date.now();
+  const tab = await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon);
+  const cu = new Set(truoc);
+
+  const dem = async (selector) => (await goi("scout.query", { target_id: tab, selector, limit: 1 }, tuyChon)).data;
+  const tapAnh = async () => {
+    const tap = new Set();
+    for (let offset = 0; ; offset += 200) {
+      const d = (await goi("scout.query", { target_id: tab, selector: SEL.anhKetQua, offset, limit: 200 }, tuyChon)).data;
+      for (const it of d.items) if (it.attributes?.src) tap.add(it.attributes.src);
+      if (!d.hasMore) return tap;
+    }
+  };
+
+  while ((await dem(SEL.dangChay)).matchCount > 0) {
+    /* Hết trần thì NÓI LÀ ĐANG CHẠY, đừng nói là hỏng — hai câu dẫn tới hai việc khác nhau. */
+    if (Date.now() - t0 > tran) throw new UdinDangChay(Math.round((Date.now() - t0) / 1000), [...cu]);
+    await nghi(buoc);
+  }
+
+  const moi = [...(await tapAnh())].filter((src) => !cu.has(src));
+  if (moi.length === 0) throw new Error(`Udin chạy xong nhưng không có ảnh mới (trước có ${cu.size}).`);
+  /* Trả cả `src` chứ không chỉ số đếm: chặng sau (W3) lấy đúng những ảnh của LƯỢT NÀY về đĩa,
+   * không lấy cả lịch sử của phiên. */
+  return { anhMoi: moi.length, giay: Math.round((Date.now() - t0) / 1000), src: moi };
+}
+
 export async function guiPrompt(prompt, tuyChon = {}) {
   if (typeof prompt !== "string" || !prompt.trim()) throw new Error("Thiếu prompt.");
   const goi = tuyChon.goi || goiThat;
   const nghi = tuyChon.ngu || ngu;
-  const buoc = tuyChon.buocMs ?? 3000;
-  const tran = tuyChon.tranMs ?? 300000;
 
   await quaManCho({ ...tuyChon, goi });
   const tab = await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon);
@@ -70,18 +128,28 @@ export async function guiPrompt(prompt, tuyChon = {}) {
   const nhan = await goi("scout.wait", { target_id: tab, selector: SEL.dangChay, state: "present", timeout_ms: 10000 }, tuyChon);
   if (!nhan.data.satisfied) throw new Error("Đã bấm Send mà Udin không chạy — prompt chưa được nhận.");
 
-  while ((await dem(SEL.dangChay)).matchCount > 0) {
-    if (Date.now() - t0 > tran) throw new Error(`Udin chạy quá ${Math.round(tran / 1000)}s chưa xong.`);
-    await nghi(buoc);
-  }
-
-  const moi = [...(await tapAnh())].filter((src) => !truoc.has(src));
-  if (moi.length === 0) throw new Error(`Udin chạy xong nhưng không có ảnh mới (trước có ${truoc.size}).`);
-  /* Trả cả `src` chứ không chỉ số đếm: chặng sau (W3) lấy đúng những ảnh của LƯỢT NÀY về đĩa,
-   * không lấy cả lịch sử của phiên. */
-  return { anhMoi: moi.length, giay: Math.round((Date.now() - t0) / 1000), src: moi };
+  /* Từ đây trở đi CREDIT ĐÃ TIÊU. Mọi đường ra khỏi hàm phải nói được *"lượt chạy đang ở đâu"*,
+   * không được chỉ nói "hỏng" — đó là chỗ lượt 14/09 mất trắng (`G-55`). */
+  return choXong([...truoc], { ...tuyChon, t0 });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  guiPrompt(process.argv[2]).then((k) => console.log(JSON.stringify(k))).catch((e) => { console.error(e.message); process.exitCode = 1; });
+  const doi = process.argv.slice(2);
+  /* `--noi-lai`: bám vào một lượt ĐANG chạy mà không gửi thêm prompt nào. Lấy tập ảnh hiện tại
+   * làm mốc `truoc` — hợp lệ **trong lúc còn đang chạy**, vì Udin chỉ đăng ảnh khi xong. Nếu nó
+   * đăng dần từng ảnh thì cách này bỏ sót ảnh đã đăng; chưa thấy ca đó, ghi ra để đừng quên. */
+  const viec = doi.includes("--noi-lai")
+    ? (async () => {
+        const tab = await timTabThat(URL_UDIN, {});
+        const tap = new Set();
+        for (let offset = 0; ; offset += 200) {
+          const d = (await goiThat("scout.query", { target_id: tab, selector: SEL.anhKetQua, offset, limit: 200 })).data;
+          for (const it of d.items) if (it.attributes?.src) tap.add(it.attributes.src);
+          if (!d.hasMore) break;
+        }
+        console.error(`nối lại: ${tap.size} ảnh đang có, chờ lượt hiện tại xong…`);
+        return choXong([...tap]);
+      })()
+    : guiPrompt(doi.find((a) => !a.startsWith("--")));
+  viec.then((k) => console.log(JSON.stringify(k))).catch((e) => { console.error(e.message); process.exitCode = 1; });
 }

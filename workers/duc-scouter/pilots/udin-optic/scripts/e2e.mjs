@@ -38,5 +38,16 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   const doi = process.argv.slice(2);
   e2e(doi.find((a) => !a.startsWith("--")), { napLai: doi.includes("--nap-lai") })
     .then((k) => console.log(JSON.stringify(k, null, 2)))
-    .catch((e) => { console.error(e.message); process.exitCode = 1; });
+    .catch((e) => {
+      console.error(e.message);
+      /* *Vẫn đang chạy* ≠ *hỏng*. Credit đã tiêu, ảnh sắp có, và còn đúng 900 giây để lấy chúng
+       * — nên lối ra này phải đưa luôn lệnh nối lại, đừng bắt người đọc tự nghĩ ra (`G-55`). */
+      if (e?.dangChay) {
+        console.error("");
+        console.error("CREDIT ĐÃ TIÊU — lượt chạy vẫn sống. Nối lại ngay (ảnh hết hạn sau 900s):");
+        console.error("  node workers/duc-scouter/pilots/udin-optic/scripts/gui-prompt.mjs --noi-lai");
+        console.error("  node workers/duc-scouter/pilots/udin-optic/scripts/lay-anh.mjs <src…>");
+      }
+      process.exitCode = 1;
+    });
 }
