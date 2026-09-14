@@ -1309,13 +1309,9 @@ BATCHES.push({
     },
     {
       ma: "V7",
-      ten: "Rê chuột bỏ hỏi-điểm — rê lên thứ đang bị che vẫn báo thành công (`S-17`, khác loại sự kiện)",
-      tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
-    await send(\"Input.dispatchMouseEvent\", {
-      type: \"mouseMoved\"",
-      thay: "    const hit = { relation: \"self\", hitNodeId: node.nodeId };
-    await send(\"Input.dispatchMouseEvent\", {
-      type: \"mouseMoved\"",
+      ten: "Rê chuột lỡ NHẤN luôn — một lượt bấm mà không ai gọi",
+      tim: "      type: \"mouseMoved\", x: point.x, y: point.y, button: \"none\", buttons: 0",
+      thay: "      type: \"mousePressed\", x: point.x, y: point.y, button: \"left\", buttons: 1, clickCount: 1",
       soLan: 1
     },
     {
