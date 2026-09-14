@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T8 va T16 XONG 14/09. Chang (3) chan o T9 -> T7 -> S-22, va S-22 vua doi hinh dang. G-82: cung ghe, cung cua so, cach nhau chua toi mot gio — lenh nhap TOI DUOC tab Udin (type mo khoa nut Send, click khoi dong mot luot sinh anh) nhung KHONG toi tab trang thu (phim=0 chuot=0 bam=0), trong khi focus va scrollY van doi. Udin la tab DANG HIEN, trang thu la tab NEN. Phep thu 5 giay o human_action go chan ca T7 T9 T21.",
-      "human_action": "@Đức:bấm — bam sang tab http://127.0.0.1:8642 trong cua so Dummy_Scout cho no thanh tab DANG HIEN roi nhan mot cau; toi do lai trong 30 giay. So nhay = S-22 la \"tab nen\" chu khong phai \"ghe hong\", va go chan T7 T9 T21. May chu: node workers/duc-scouter/pilots/trang-thu-cham/phuc-vu.mjs",
+      "next_step": "T8 T16 XONG 14/09. Chang (3) chan o T9 -> T7, va T7 chang (4) chan o S-22: adapter phai BAM mot nut tren trang thu, ma tab trang thu khong nhan su kien nhap — S-22 dung nhu README da khai, Duc chot NGUNG DIEU TRA. LOI RA KHONG CAN DUC: doi trang dich cua T7 tu trang thu sang UDIN. Udin nhan bam that (do lai 14/09: type -> nut Send KHOA->MO; click -> khoi dong mot luot sinh anh), va no du bon dieu kien chang (1): o nhap, mot nut, ket qua sau mot khoang tre 177s. Con thieu dung mot thu: chay LIEN MOT MACH do -> viet adapter -> scout.reload -> chay adapter, khong sua tay giua chung. Chi tiet o CHUOI-VIEC.md.",
+      "human_action": "không",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "CHANG (3): T8 xong, T16 xong — trang thu tu ke trang thai bang CHU, doc mot luot bang scout.text, het phai doan gia tri data-*. Hai bai hoc dat: bo dot bien phep do da TOI tu 12/09 vi chi chay sau mot co khong ai truyen (nay gop vao scouter:mutation), va DUNG CU DO phai song duoc duoi dung dieu kien dang do (G-81). Cho chan that su cua (3) la S-22."
+      "open_item": "CHANG (3): T8 xong, T16 xong. Bai hoc dat nhat cua luot nay la mot LOI CUA TOI: toi dung G-82 de mo lai S-22 lan thu SAU, trong khi ve dau da nam san o README (\"hong theo tung tab\") va ve sau chinh la G-07 da chet va da kiem lai hai lan. Thu toi goi la so lieu moi chi la mot tuong quan dem lai. G-82 nay la cai chan: ba so chuot=0 phim=0 bam=0 tren trang thu KHONG phai bang chung moi ve S-22."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T8 va T16 XONG 14/09. Chang (3) chan o T9 -> T7 -> S-22, va S-22 vua doi hinh dang. G-82: cung ghe, cung cua so, cach nhau chua toi mot gio — lenh nhap TOI DUOC tab Udin (type mo khoa nut Send, click khoi dong mot luot sinh anh) nhung KHONG toi tab trang thu (phim=0 chuot=0 bam=0), trong khi focus va scrollY van doi. Udin la tab DANG HIEN, trang thu la tab NEN. Phep thu 5 giay o human_action go chan ca T7 T9 T21.",
+      "title": "T8 T16 XONG 14/09. Chang (3) chan o T9 -> T7, va T7 chang (4) chan o S-22: adapter phai BAM mot nut tren trang thu, ma tab trang thu khong nhan su kien nhap — S-22 dung nhu README da khai, Duc chot NGUNG DIEU TRA. LOI RA KHONG CAN DUC: doi trang dich cua T7 tu trang thu sang UDIN. Udin nhan bam that (do lai 14/09: type -> nut Send KHOA->MO; click -> khoi dong mot luot sinh anh), va no du bon dieu kien chang (1): o nhap, mot nut, ket qua sau mot khoang tre 177s. Con thieu dung mot thu: chay LIEN MOT MACH do -> viet adapter -> scout.reload -> chay adapter, khong sua tay giua chung. Chi tiet o CHUOI-VIEC.md.",
       "rank": 4,
       "claim": null
     }
