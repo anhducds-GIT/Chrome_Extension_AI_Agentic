@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-14",
+  "generated_at": "2026-09-15",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T7 khep 14/09, va 14/09 da chay them TRANG THU HAI (ChatGPT, chi doc) de biet ba luat rut selector la chung hay vua khit Udin. Ket qua: go o dau CHUNG sau khi sua G-88 (hoi HTML/ARIA truoc, hoi class sau) — ca hai trang deu ra dung o nhap dau danh sach. Bam o dau phai DOI NGUON (G-89): ChatGPT khong ve nut gui khi o trong nen bao cao khong the chua no; adapter nay so CHINH TRANG truoc/sau luot go. Ket qua o dau CHUA TONG QUAT (G-90) — chua co loi ra, va loi re nhat la noi danh sach che, tuc noi mot lop bao ve: phai hoi Duc. Viec ke: T9 dong goi seed v1.",
-      "human_action": "@Đức:chốt cho chạy thử adapter tự sinh trên tab ChatGPT của anh — nó sẽ GÕ và GỬI một tin bỏ đi. Chưa được thì nhánh nút-hiện-ra-sau-khi-gõ chỉ có phép ghim, chưa có lượt chạy thật.",
+      "next_step": "T9 — duong cai dat XONG 15/09: README co BA LENH chay duoc (sinh tep ghep cap, bat may chu Bridge, kiem ban cai) thay cho cau bat may chu Bridge truoc day khong noi bat bang gi; va scripts/kiem-cai-dat.mjs (npm run scouter:kiem-cai-dat) — sau buoc, dung o buoc dau tien hong, moi buoc hong noi luon phai lam gi. Ca ba lenh da chay thu that. Con lai cua T9 la TUYEN BO phien ban, mot quyet dinh phat hanh chu khong phai mot phep do — cho Duc chot. Sau do la T21 tach Udin thanh goi rieng.",
+      "human_action": "@Đức:chốt — đọc mục Cài và chạy trong README gói, thấy đủ để người ngoài dùng được thì đóng dấu Scouter v1. Chú ý: SEED v1 (23 mục năng lực) là chuyện KHÁC và vẫn đóng.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Trang thu hai bao ba cau KHONG cung mot nguon. O nhap: bao cao tra loi duoc, vi no luon co mat va HTML/ARIA khai ro. Cai nut: chinh TRANG tra loi, vi no co the chua ton tai luc do. Vung ket qua: chua ai tra loi duoc — ket qua la khai niem ngu nghia ma HTML khong danh dau, tren Udin no tinh co la mot bay img cung class. Bon mutant cua adapter deu chet, 34 phep ghim xanh, va luot chay that tren Udin sau khi doi thiet ke van khep: 4 anh moi trong 59 giay."
+      "open_item": "Bo kiem cai dat co hai chot dung dao. Mot: cong tac ghi DONG khong phai hong — do la mac dinh va la mot lop bao ve (luat goi so 8); khai no thanh hong la day nguoc luat. Hai: buoc dau phai hoi bridge.sessions chu khong system.ping — ping di toi extension nen tren may co hai ghe no tra TARGET_AMBIGUOUS, tuc buoc chan doan chet vi dung cai no di tim (G-91, cung ho G-81). 35 phep ghim xanh, 5 mutant cua bo kiem deu chet."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T7 khep 14/09, va 14/09 da chay them TRANG THU HAI (ChatGPT, chi doc) de biet ba luat rut selector la chung hay vua khit Udin. Ket qua: go o dau CHUNG sau khi sua G-88 (hoi HTML/ARIA truoc, hoi class sau) — ca hai trang deu ra dung o nhap dau danh sach. Bam o dau phai DOI NGUON (G-89): ChatGPT khong ve nut gui khi o trong nen bao cao khong the chua no; adapter nay so CHINH TRANG truoc/sau luot go. Ket qua o dau CHUA TONG QUAT (G-90) — chua co loi ra, va loi re nhat la noi danh sach che, tuc noi mot lop bao ve: phai hoi Duc. Viec ke: T9 dong goi seed v1.",
+      "title": "T9 — duong cai dat XONG 15/09: README co BA LENH chay duoc (sinh tep ghep cap, bat may chu Bridge, kiem ban cai) thay cho cau bat may chu Bridge truoc day khong noi bat bang gi; va scripts/kiem-cai-dat.mjs (npm run scouter:kiem-cai-dat) — sau buoc, dung o buoc dau tien hong, moi buoc hong noi luon phai lam gi. Ca ba lenh da chay thu that. Con lai cua T9 la TUYEN BO phien ban, mot quyet dinh phat hanh chu khong phai mot phep do — cho Duc chot. Sau do la T21 tach Udin thanh goi rieng.",
       "rank": 4,
       "claim": null
     }

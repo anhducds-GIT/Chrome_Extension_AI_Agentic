@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh ngày 2026-09-14.
+Trang được sinh ngày 2026-09-15.
 
 ## Việc ưu tiên #1
 
@@ -24,7 +24,7 @@ Trang được sinh ngày 2026-09-14.
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
-- [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Trang thu hai bao ba cau KHONG cung mot nguon
+- [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Bo kiem cai dat co hai chot dung dao
 - [HNX Fetch](workers/hnx-fetch/v0.1.0/STATUS.md): active — Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh…
 
 ## Luật bắt buộc trước khi sửa gì
