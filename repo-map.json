@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom.",
-      "human_action": "@Duc:bon cau, chi tiet o CHUOI-VIEC.md. (1) S-25 sua tran phong bi o loi dung chung? (2) I9 upload di duong duong-dan-tuong-doi? (3) I5/I6/I7 gat mot luot cho ca ba? (4) O12 zoom: mot phep do 10 giay, zoom ra roi zoom lai ma khong dung gi khac.",
+      "next_step": "T24 (S-25) — websocket-core.mjs nem loi o MOI tin WebSocket bi cat manh (G-67, da chung minh), ma Chrome tu cat manh khi tin vuot ~64 KiB. Mot ca CHUA VIET, khong phai mot lop bao ve. Sua o _shared/bridge-host (dung chung ba goi dong bang) nen phep ghim quan trong nhat: tin KHONG cat manh cu xu y het nhu truoc. Roi T31 nang lai tran khuc. Chang 2: T25 scout.view (DOC, di truoc) -> T26 cuon, T27 zoom, T28 hover + bam dup/phai, T30 lui/tien; roi T29 upload. Lo trinh day du o CHUOI-VIEC.md.",
+      "human_action": "@Duc:khong co viec nao bat buoc. Duc da uy quyen 14/09 cho S-25, I9, I5/I6/I7, O12 — bien uy quyen ghi trong ADR-0007. Mot viec NHO neu ranh: zoom ra roi zoom lai ma khong dung gi khac, de dong G-65.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom.",
+      "title": "T24 (S-25) — websocket-core.mjs nem loi o MOI tin WebSocket bi cat manh (G-67, da chung minh), ma Chrome tu cat manh khi tin vuot ~64 KiB. Mot ca CHUA VIET, khong phai mot lop bao ve. Sua o _shared/bridge-host (dung chung ba goi dong bang) nen phep ghim quan trong nhat: tin KHONG cat manh cu xu y het nhu truoc. Roi T31 nang lai tran khuc. Chang 2: T25 scout.view (DOC, di truoc) -> T26 cuon, T27 zoom, T28 hover + bam dup/phai, T30 lui/tien; roi T29 upload. Lo trinh day du o CHUOI-VIEC.md.",
       "rank": 4,
       "claim": null
     }
