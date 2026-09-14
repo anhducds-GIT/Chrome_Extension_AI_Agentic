@@ -12,8 +12,16 @@ import assert from "node:assert/strict";
 import { layAnh, tenFile, selectorDuyNhat, THU_MUC } from "../scripts/lay-anh.mjs";
 
 const ANH = "img.batch-grid-image";
-const A1 = "https://cdn.udin/a/v1.webp";
-const A2 = "https://cdn.udin/b/v2.webp";
+/* `G…` = đường dẫn gốc. `A…` = thứ `scout.query` THẬT SỰ trả ra tay adapter: query đã bị cắt và
+ * lõi đọc gắn thêm một dấu `…` để BÁO rằng có phần bị cắt. Dấu đó không có thật trong `src` trên
+ * trang — và lượt chạy thật 14/09 ngã đúng vì tôi quên nó, trong khi 21 khối ghim vẫn xanh. */
+const G1 = "https://cdn.udin/a/v1.webp";
+const G2 = "https://cdn.udin/b/v2.webp";
+const A1 = `${G1}…`;
+const A2 = `${G2}…`;
+/* `src` THẬT trên trang: còn nguyên query ký sẵn. Trình duyệt so `[src^=]` với thứ NÀY. */
+const that = (masked) => `${String(masked).replace(/…+$/, "")}?X-Amz-Signature=BIMAT&X-Amz-Expires=900`;
+const nut = (a) => ({ ...a, that: a.that ?? that(a.src) });
 
 /* Bộ khớp selector của máy giả — hiểu đúng bốn dạng adapter dựng, và KHÔNG hiểu dạng nào khác. */
 function khop(ds, sel) {
@@ -25,7 +33,9 @@ function khop(ds, sel) {
   }
   if ((m = sel.match(/^img\.batch-grid-image\[data-testid="(.*)"\]$/))) return ds.filter((a) => a["data-testid"] === m[1]);
   if ((m = sel.match(/^img\.batch-grid-image\[alt="(.*)"\]$/))) return ds.filter((a) => a.alt === m[1]);
-  if ((m = sel.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/))) return ds.filter((a) => (a.src || "").startsWith(m[1]));
+  /* So với `src` THẬT, đúng như trình duyệt làm — không so với bản đã che. Đây là chỗ phân biệt
+   * được bản sửa với bản hỏng: bản hỏng gửi tiền tố còn dính `…`, và `…` không có trong src thật. */
+  if ((m = sel.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/))) return ds.filter((a) => (a.that || a.src || "").startsWith(m[1]));
   return []; /* dạng lạ = không khớp gì, chứ không phải "khớp hết" */
 }
 
@@ -33,7 +43,7 @@ function khop(ds, sel) {
 function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiBytes = null, trenTrang = null, danhSach = [A1, A2] } = {}) {
   const nk = [];
   /* Mặc định: mỗi src một nút, có `alt` phân biệt — ca đơn giản nhất. */
-  const ds = trenTrang || danhSach.map((src, i) => ({ src, alt: `Variation ${i + 1}` }));
+  const ds = (trenTrang || danhSach.map((src, i) => ({ src, alt: `Variation ${i + 1}` }))).map(nut);
   const goi = async (method, p) => {
     nk.push({ method, p });
     if (method === "scout.query") {
@@ -49,7 +59,9 @@ function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiB
       return {
         action: "grab", status, ok: status >= 200 && status < 300, content_type: kieu,
         bytes, body_base64: than,
-        source: { selector: p.selector, attribute: p.attribute, masked: hop[0].src, matchCount: 1 },
+        /* `masked` của grab thật dựng TRONG extension từ URL đầy đủ (`origin + pathname`) — nên
+         * nó KHÔNG mang dấu `…`. Khác với `src` mà `scout.query` trả ra; hai đường, hai hình dạng. */
+        source: { selector: p.selector, attribute: p.attribute, masked: String(hop[0].src).replace(/…+$/, ""), matchCount: 1 },
         write_budget: { remaining: 199 },
       };
     }
@@ -92,6 +104,24 @@ const grab = (nk) => nk.filter((g) => g.method === "scout.grab");
   assert.ok(grab(t.nk).every((g) => g.p.selector.includes("[alt=")),
     `phải đi bằng alt vì src^= khớp hai nút; thật ra đi bằng: ${grab(t.nk).map((g) => g.p.selector).join(" · ")}`);
   assert.equal(k.daLay[0].selector, `${ANH}[alt="Variation 1"]`); }
+
+/* ⓥ HÌNH DẠNG THẬT CỦA TRANG, đo trên dây 14/09 trước lượt grab đầu tiên: **16 nút, 16 `src`
+ * khác nhau, nhưng `alt` TRÙNG bốn lần** — "Variation 1" có ở cả bốn lượt sinh ảnh. Nên ứng viên
+ * `alt` phải bị LOẠI và lượt lấy phải rơi xuống `[src^=]`.
+ *
+ * Khối này là khối duy nhất ép đi tới ứng viên `src` rồi THÀNH CÔNG, nên nó là khối duy nhất
+ * bắt được con đột biến "quên bỏ dấu `…`". Thiếu nó thì 21 khối kia vẫn xanh trên một bản mã
+ * không bao giờ tải được ảnh nào — và đó đúng là chuyện đã xảy ra. */
+{ const trenTrang = [];
+  for (let luot = 1; luot <= 4; luot += 1)
+    for (let i = 1; i <= 4; i += 1) trenTrang.push({ src: `https://cdn.udin/batch-${luot}-${i}.webp…`, alt: `Variation ${i}` });
+  const t = lam({ trenTrang });
+  const muon = trenTrang[5].src; /* lượt 2, ảnh 2 — alt "Variation 2", trùng với ba nút khác */
+  const k = await layAnh([muon], t);
+  assert.equal(k.daLay.length, 1, "phải lấy được ảnh, dù alt trùng bốn lần");
+  assert.ok(k.daLay[0].selector.includes("[src^="), `phải rơi xuống src^= vì alt trùng; thật ra: ${k.daLay[0].selector}`);
+  assert.ok(!k.daLay[0].selector.includes("…"), "tiền tố còn dính dấu `…` thì không khớp gì trên trang thật");
+  assert.equal(ghi(t.nk)[0].p.path, `${THU_MUC}/2026-09-14T00-00-00-000Z/01-batch-2-2.webp`); }
 
 // ⓟ THỨ TỰ ứng viên: có `id` thì dùng id và KHÔNG hỏi tới alt/src
 { const t = lam({ trenTrang: [{ src: A1, alt: "Variation 1", id: "anh-1" }] });
@@ -199,7 +229,9 @@ const grab = (nk) => nk.filter((g) => g.method === "scout.grab");
 
 // ⓙ tên file: cắt ký tự lạ, giữ thứ tự, hai ảnh trùng tên gốc vẫn ra hai tên khác nhau
 assert.equal(tenFile("https://cdn.udin/a b/v 1.webp?x=1", 1), "01-v-1.webp");
+/* dấu `…` mà lõi đọc gắn vào không được chui vào tên file */
+assert.equal(tenFile(`https://cdn.udin/a/v1.webp…`, 3), "03-v1.webp");
 assert.notEqual(tenFile("https://cdn.udin/a/v.webp", 1), tenFile("https://cdn.udin/b/v.webp", 2));
 assert.match(tenFile("https://cdn.udin/", 7), /^07-anh$/);
 
-console.log("  · udin lay-anh: 21 khối xanh");
+console.log("  · udin lay-anh: 23 khối xanh");

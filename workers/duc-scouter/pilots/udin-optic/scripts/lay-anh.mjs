@@ -43,7 +43,9 @@ const DA_GHI_CHU = Symbol("da-ghi-chu");
 export function tenFile(src, thuTu) {
   const duoiCung = (() => {
     try {
-      const cuoi = new URL(src, URL_UDIN).pathname.split("/").filter(Boolean).pop() || "";
+      /* Bỏ dấu `…` mà lõi đọc gắn vào để báo "có phần đã bị cắt" — nó là chú thích cho người
+       * đọc, không phải một phần của tên tệp. Để nguyên thì nó hoá thành `-` trong tên file. */
+      const cuoi = new URL(String(src).replace(/…+$/, ""), URL_UDIN).pathname.split("/").filter(Boolean).pop() || "";
       /* Giải mã %20 trước khi lọc: không giải thì một dấu cách hoá thành "-20" trong tên file. */
       try { return decodeURIComponent(cuoi); } catch { return cuoi; }
     } catch { return ""; }
@@ -90,8 +92,15 @@ export async function selectorDuyNhat(tab, anh, tuyChon = {}) {
   if (nhetDuoc(anh.testid)) ungVien.push(`${SEL.anhKetQua}[data-testid="${anh.testid}"]`);
   if (nhetDuoc(anh.alt)) ungVien.push(`${SEL.anhKetQua}[alt="${anh.alt}"]`);
   /* `src` trên trang còn nguyên query ký sẵn, còn thứ tới được tay ta đã bị cắt query — nên so
-   * bằng TIỀN TỐ (`^=`), không bằng `=`. Đây cũng là ứng viên duy nhất chắc chắn dựng được. */
-  if (nhetDuoc(anh.src)) ungVien.push(`${SEL.anhKetQua}[src^="${anh.src}"]`);
+   * bằng TIỀN TỐ (`^=`), không bằng `=`. Đây cũng là ứng viên duy nhất chắc chắn dựng được.
+   *
+   * PHẢI BỎ DẤU `…` Ở CUỐI TRƯỚC ĐÃ. Lõi đọc gắn nó vào để BÁO rằng có phần đã bị cắt
+   * (`stripQuery` cắt query, `cap` cắt chuỗi quá 200 ký tự — cả hai gắn `…`). Nó là chú thích
+   * cho người đọc, không phải ký tự có thật trong `src`. Để nguyên thì tiền tố không bao giờ
+   * khớp — và lượt chạy thật đầu tiên 14/09 ngã đúng ở đây, trong khi 21 khối ghim vẫn xanh,
+   * vì máy giả của tôi trả `src` sạch còn dây thật trả `src` có dấu. */
+  const tienTo = typeof anh.src === "string" ? anh.src.replace(/…+$/, "") : anh.src;
+  if (nhetDuoc(tienTo)) ungVien.push(`${SEL.anhKetQua}[src^="${tienTo}"]`);
 
   for (const sel of ungVien) {
     const d = (await goi("scout.query", { target_id: tab, selector: sel, limit: 1 }, tuyChon)).data;
