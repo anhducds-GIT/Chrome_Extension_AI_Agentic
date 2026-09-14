@@ -1092,3 +1092,33 @@ năm · `O11` mang mã nhóm **A** mà nằm trong nhóm **D**.
 
 **Câu chặn duy nhất còn lại đổi thành `Q1`:** Đức chốt chính sách che `de-xuat-chat-v1`. Nó chặn
 `O8` — mục đắt nhất của danh sách đóng băng — và `scout.grab` đã chạy **trên** nó rồi mà chưa ai ký.
+
+## 2026-09-14 · `scouter-review` — `ADR-0006` ký chính sách che, và `T13` đi bằng `scout.grab`
+
+**Đức chốt `Q1` đường ⒝ → [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md).** Chính sách
+che `de-xuat-chat-v1` — chạy trong mã suốt bảy ngày mà **chưa ai ký** — nay được phê duyệt
+nguyên bản, kèm **một cửa hẹp**: `scout.text` trả chữ của **MỘT** phần tử khớp selector, không
+cả trang, không `outerHTML`, có trần ký tự, và selector khớp nhiều phần tử thì từ chối.
+Điều khoản *"không trả chữ"* nay đọc là **"không trả chữ hàng loạt"** — thứ được bảo vệ là
+**khối lượng**: đọc chữ một nút vừa chỉ đích danh là đủ để tự kiểm việc mình vừa làm; đọc
+`innerText` của `body` là hút cả trang, gồm cả tab khác cùng hồ sơ. Kéo theo: `O8` hết chặn
+(mở `T18`), và `scout.grab` thôi đứng trên một luật chưa ký.
+
+**`T13` — mã xong, còn đúng một lượt chạy thật.** `lay-anh.mjs` không còn lượt gọi `scout.fetch`
+nào. Chỗ gợn thật không nằm ở chỗ đổi tên method: grab đòi selector khớp **đúng một** phần tử,
+mà trang ra **8 nút DOM cho 4 ảnh**. Adapter **không đoán** `:nth-of-type` — nó dựng bốn ứng
+viên theo độ bền giảm dần (`#id` › `[data-testid]` › `[alt]` › `[src^=]`), **hỏi lại trang từng
+cái** bằng `scout.query` (đọc, không tiêu trần ghi), lấy cái đầu tiên khớp đúng một, và không
+cái nào duy nhất thì **ĐỎ kèm danh sách đã thử**. Giá trị thuộc tính có `"` hay `\` thì **bỏ ứng
+viên đó** thay vì thoát chuỗi cho khéo: một selector thoát sai không báo lỗi, nó lặng lẽ tải
+nhầm ảnh.
+
+**Đo:** ghim `15 → 21` khối · suite **26/26** · đột biến **128/128, 0 sống sót**. Bộ đột biến của
+repo **không chạm tới adapter**, nên bốn con làm tay: tin ứng viên đầu tiên không hỏi lại · nhận
+`>= 1` thay vì `=== 1` · bỏ phép lọc dấu nháy · ảnh biến mất thì bỏ qua thay vì ĐỎ — **cả bốn
+giết được**. Máy giả của `lay-anh-smoke` nay **có bộ khớp selector thật** (bốn dạng ứng viên),
+không gật đầu với mọi chuỗi — đó là chỗ vá lại bài học `fake-encodes-my-belief` của hôm qua.
+
+**Chặn bởi `H1`, một lượt bấm của Đức:** `system.capabilities` trên ghế `Dummy_Scout` khai **17**
+method — extension chưa nạp `scout.grab`. Cộng công tắc ghi (grab là đường ghi, mỗi ảnh tiêu
+**một** đơn vị trần 200). Một lượt này mở được cả `T13` lẫn `T15`.
