@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T29 scout.upload (I9) — muc CUOI cua danh sach dong bang o docs/CAPABILITIES.md 5.2. Duong dan TUONG DOI, may chu tu ghep vao vung ghi; can DOM.setFileInputFiles. Xong T29 la sang chang ③ dong bang seed (T8 doi ten, T9 goi v1) roi T21 tach Udin. Da xong 14/09: T24 (goc S-25) · T25 scout.view · T26 scout.scroll · T27 nua ⑴ · T28 · T30 · T31 · T32 chay that.",
-      "human_action": "@Đức:chốt — không có việc nào BẮT BUỘC. Một câu cần chốt, không gấp: G-69 — thu phóng THẬT (trang dựng lại) đòi giữ debugger cắm vào tab giữa các lượt gọi, tức là dải băng đang gỡ lỗi ở lại lâu hơn trên màn hình của Đức; có đổi kiến trúc đó không, hay O12 đóng ở nửa ⑴? Nếu rảnh 10 giây: zoom ra rồi zoom lại mà không đụng gì khác, để đóng G-65.",
+      "next_step": "T33 — chay lai E2E TRON VEN tren Udin, khong viet them dong nao. Luot 14/09 dung o 2/4 anh vi het tran ghi (16 khuc/anh); nay tran khuc 512 KiB nen moi anh ton 2 don vi. Dong khi: mot mach khong sua tay W1→W2→W3, du anh xuong dia, kich thuoc that khop bytes_total, khong cham tran ghi. Roi T34 (W4) · T36 (W7) · T35 (W6, dinh S-22) · T29 (upload → W8). Xong het la chang ③ dong bang seed roi T21 tach Udin. Chi tiet o CHUOI-VIEC.md.",
+      "human_action": "@Đức:chốt — MỘT câu định cỡ phần còn lại: `W` nào BẮT BUỘC phải ĐẠT trước khi tách Udin? Đề xuất để Đức chỉ gật hoặc sửa: W1 W2 W3 W4 W7 + E2E trọn vẹn; để W5 W6 W8 ngoài — hai cái đầu dính S-22, cái sau cần T29, cả ba vẫn làm được SAU khi tách. Câu hai, không gấp: G-69.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Hoan thien SEED dung chung roi moi tach Udin ra goi rieng — Duc dat lai 14/09. Thuoc do khong phai phan tram ma la DANH SACH DONG BANG o docs/CAPABILITIES.md muc 5.2: tap nang luc phai xong TRUOC khi tach, vi them mot lenh Bridge sau khi tach phai sua tay sau cho trong Scouter. Udin la CA THU, khong phai dich. Ngay 14/09 danh sach do gan het: O8 O11 I4 xong va da chay that; S-25 (loi nen) xong; I5 I6 I7 O12(nua ⑴) va N5 xong ma CHUA CHAY THAT. Con lai: I9 upload, va mot cau kien truc cho Duc chot (G-69). Cho rui ro lon nhat bay gio KHONG phai thieu nang luc — la khoang cach giua CO va DA CHUNG MINH: sau dong bang moi doi sang CO trong mot luot."
+      "open_item": "HINH DANG PHAN CON LAI DA DOI 14/09. Sang hom do, thu chan viec tach Udin la NANG LUC CUA SEED; toi cung ngay gan ca danh sach ay da dong — Seed Coverage 24/42, danh sach dong bang (CAPABILITIES 5.2) chi con MOT dong that: I9 upload. Thu chan bay gio la WORKFLOW CUA ADAPTER: W4 W5 W6 W7 het chan ma chua ai lam. Cau dan duong khong con la Scouter con thieu gi, ma la W nao BAT BUOC truoc khi tach. S-22 che khuat W5 va W6 — ca hai la mot cu bam, ma tren ghe nay khong luot bam nao toi trang."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T29 scout.upload (I9) — muc CUOI cua danh sach dong bang o docs/CAPABILITIES.md 5.2. Duong dan TUONG DOI, may chu tu ghep vao vung ghi; can DOM.setFileInputFiles. Xong T29 la sang chang ③ dong bang seed (T8 doi ten, T9 goi v1) roi T21 tach Udin. Da xong 14/09: T24 (goc S-25) · T25 scout.view · T26 scout.scroll · T27 nua ⑴ · T28 · T30 · T31 · T32 chay that.",
+      "title": "T33 — chay lai E2E TRON VEN tren Udin, khong viet them dong nao. Luot 14/09 dung o 2/4 anh vi het tran ghi (16 khuc/anh); nay tran khuc 512 KiB nen moi anh ton 2 don vi. Dong khi: mot mach khong sua tay W1→W2→W3, du anh xuong dia, kich thuoc that khop bytes_total, khong cham tran ghi. Roi T34 (W4) · T36 (W7) · T35 (W6, dinh S-22) · T29 (upload → W8). Xong het la chang ③ dong bang seed roi T21 tach Udin. Chi tiet o CHUOI-VIEC.md.",
       "rank": 4,
       "claim": null
     }
