@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T18 — lam O8 (doc chu tren trang) bang scout.text, theo ADR-0006 vua ky 14/09: chu cua MOT phan tu khop selector, khong ca trang, khong outerHTML, co tran ky tu. Day la muc dat nhat cua DANH SACH DONG BANG (CAPABILITIES.md 5.2) — tap nang luc phai xong TRUOC khi tach Udin. T13 da xong ma, chi con cho H1."
-- human_action: "@Duc:mot luot bam H1 — nap lai extension o ghe Dummy_Scout (bang ben: dong roi mo lai) VA bat cong tac Cho phep bam va go. Bridge dang khai 17 method, chua co scout.grab, nen T13 khong chay that duoc. Mot luot nay mo duoc ca T13 lan T15 (E2E). Moi anh tieu 1 don vi trong tran 200."
+- next_step: "T22 — gui-prompt phai phan biet QUA GIO voi HONG, va nang tran len 900s (bang han cua URL ky san). Luot chay that 14/09 bo cuoc o 300s trong khi Udin chay tiep hon 17 phut: credit tieu roi ma luot chay vut di, W3 khong bao gio chay. Chay lai nguyen trang se nga dung cho cu. Sau T22 moi chay lai T13+T15. Song song duoc: T18 (O8 qua scout.text, ADR-0006 da ky, khong cho ai)."
+- human_action: "@Duc:khong co viec nao cho Duc luc nay. Ghi de biet: luot 14/09 da tieu credit cho mot lan sinh anh ma khong lay duoc anh nao — vi URL ky san het han sau 900 giay va adapter bo cuoc o 300s. Da ghi thanh T22; se khong chay lai luot ton tien nao cho toi khi T22 xong."

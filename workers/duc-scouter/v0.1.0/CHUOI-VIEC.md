@@ -34,8 +34,9 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **H1** | **MÃ XONG 14/09** · 21 khối ghim · 4 đột biến tay giết được · còn **một lượt chạy thật** |
-| **H1** | ✋ **Đức: nạp lại extension ghế `Dummy_Scout` + bật công tắc ghi** | — | Bridge đang khai **17** method — chưa có `scout.grab`. Một lượt bấm, mở được cả `T13` lẫn `T15` |
+| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **T22** | **CHẠY THẬT 14/09, W3 CHƯA ĐẠT** · 23 khối · 6 đột biến tay · chọn selector ĐẠT trên trang thật · grab trả **403 vì URL hết hạn** (`G-51`) |
+| **T22** | `gui-prompt` phân biệt *quá giờ* với *hỏng*, và nâng trần | — | **nợ mới, chặn T13 + T15** — lượt 14/09 bỏ cuộc ở 300s trong khi Udin chạy tiếp >17 phút: credit tiêu rồi mà lượt chạy vứt đi (`G-55`) |
+| ~~H1~~ | Đức nạp lại extension + bật công tắc ghi | — | **XONG 14/09** — Bridge nay khai **18** method, `scout.grab` đã vào |
 | **Q1** | ✋ **Đức chốt chính sách che `de-xuat-chat-v1`** | — | **Đức đã chốt đường ⒝ 14/09** — ký, kèm cửa hẹp `scout.text`. Còn phải ghi vào `decisions.md` rồi mở `T18` |
 | **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 | chưa chạy lần nào |
 | **T18** | `O8` đọc chữ trên trang | Q1 | **trong danh sách đóng băng** |
@@ -119,10 +120,35 @@ thay vì đi thoát chuỗi cho khéo: một selector thoát sai không báo l�
 làm tay): bốn con — tin ứng viên đầu tiên không hỏi lại · nhận `>= 1` thay vì `=== 1` · bỏ phép
 lọc dấu nháy · ảnh biến mất thì bỏ qua thay vì ĐỎ — **cả bốn giết được**.
 
-**Còn lại đúng một việc: chạy thật.** Chặn bởi `H1` — `system.capabilities` trên ghế `Dummy_Scout`
-khai **17** method, chưa có `scout.grab`; và grab là đường ghi nên cần công tắc. Mỗi ảnh tiêu
-**một** đơn vị trần ghi. `scout.grab` CHƯA CHẠY THẬT lần nào — và bài học `T12` nói thẳng rằng
-tới lúc đó nó vẫn chưa phải một đường.
+### Lượt chạy thật 14/09 — ĐẠT ba chặng, ngã ở chặng tư, và nó dạy bốn điều
+
+**ĐẠT:** `scout.grab` vào extension (18 method) · phép chọn selector chạy đúng trên trang thật —
+`alt` **trùng 4 lần** nên bị loại, rơi xuống `[src^=]`, khớp **1** · grab tới được mạng · và
+`scout.type` + `scout.click` gửi được prompt mới (Udin bắt đầu chạy).
+
+**KHÔNG ĐẠT — `W3` vẫn CHƯA:** chưa ảnh nào xuống đĩa.
+
+| | Đo được | Ghi ở |
+|---|---|---|
+| ⑴ | **URL ký sẵn hết hạn sau 900 giây.** Mọi ảnh trên trang là của 13/09 → grab trả **403**, đúng chứ không sai. Trình duyệt vẫn hiện chúng vì **cache** | `G-51` |
+| ⑵ | **`src` của `scout.query` KHÔNG phải tiền tố của `src` trên trang** — lõi đọc gắn thêm dấu `…` báo đã cắt query. **23 khối ghim vẫn xanh** trên bản mã hỏng, vì máy giả của tôi trả `src` sạch | `G-53` |
+| ⑶ | **`alt` khớp 4 phần tử**, không phải 1. Kế hoạch ban đầu định dùng `:nth-of-type` — nó sẽ **tải nhầm ảnh mà không ai biết**. Phép "hỏi lại trang từng ứng viên" là thứ cứu chỗ này | `G-54` |
+| ⑷ | **Trần 300s vứt mất một lượt đã tiêu tiền:** adapter bỏ cuộc, Udin chạy tiếp **>17 phút**. *Quá giờ* và *hỏng* là hai câu khác nhau | `G-55` |
+
+**Việc kế cho `W3` là `T22`, không phải chạy lại.** Chạy lại nguyên trạng sẽ tiêu thêm credit rồi
+ngã đúng chỗ cũ. Và ⑴ đặt một ràng buộc cứng lên mọi thiết kế sau này: **`W3` phải chạy ngay sau
+`W2`** — không có chuyện "thu kết quả sau".
+
+## T22 — `gui-prompt` phải phân biệt *quá giờ* với *hỏng*  ⟵ *chặn `T13` và `T15`*
+
+Lượt 14/09: `guiPrompt` hết trần 300s rồi ném *"Udin chạy quá 300s chưa xong"*, `e2e` bỏ cuộc, và
+**W3 không bao giờ chạy** — trong khi Udin vẫn đang sinh ảnh và **credit đã tiêu**. Bốn ảnh sinh
+ra xong rồi hết hạn sau 900 giây mà không ai lấy.
+
+· **đóng khi:** ⑴ trần nâng lên (đề xuất 900s, bằng đúng hạn của URL — quá hạn đó thì ảnh có lấy
+cũng 403) · ⑵ hết giờ trả một **mã riêng** kèm *"vẫn đang chạy"*, khác hẳn *"không chạy"* · ⑶ có
+đường **nối lại một lượt đang dở**: đưa vào tập `src` trước lúc gửi, chờ ảnh mới, rồi `layAnh` —
+để một lượt đã tiêu tiền không bị vứt vì tay người bấm Ctrl+C. Kèm phép ghim cho cả ba.
 
 ## ~~T14~~ — `S-22` ĐÓNG 14/09, và đây là bài học đắt nhất của cả chuỗi
 

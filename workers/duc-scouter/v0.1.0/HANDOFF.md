@@ -1122,3 +1122,41 @@ không gật đầu với mọi chuỗi — đó là chỗ vá lại bài học 
 **Chặn bởi `H1`, một lượt bấm của Đức:** `system.capabilities` trên ghế `Dummy_Scout` khai **17**
 method — extension chưa nạp `scout.grab`. Cộng công tắc ghi (grab là đường ghi, mỗi ảnh tiêu
 **một** đơn vị trần 200). Một lượt này mở được cả `T13` lẫn `T15`.
+
+## 2026-09-14 · `scouter-review` — `scout.grab` chạy thật lần đầu: ba chặng ĐẠT, `W3` vẫn CHƯA
+
+Đức nạp lại extension + bật công tắc ghi (`H1` xong; Bridge nay khai **18** method).
+
+**ĐẠT trên trang thật:** phép chọn selector của adapter — `alt` **trùng 4 lần** trên trang nên bị
+loại đúng, rơi xuống `[src^=]`, khớp **1** · grab tới được mạng · `scout.type` + `scout.click`
+gửi được prompt mới (Udin bắt đầu chạy). **KHÔNG ĐẠT:** chưa ảnh nào xuống đĩa.
+
+**Bốn thứ đo được, ghi thành `G-51`..`G-56`:**
+
+⑴ **URL ký sẵn hết hạn sau 900 giây** (`G-51`). Mọi ảnh trên trang là của 13/09, cách lượt đo
+~100.800 giây → grab trả **403**, và đó là câu trả lời ĐÚNG. Trình duyệt vẫn hiện chúng vì
+**cache**, nên nhìn màn hình thì tưởng còn sống. Ràng buộc cứng: **`W3` phải chạy ngay sau `W2`**,
+không có chuyện "thu kết quả sau".
+
+⑵ **Lượt chạy thật bắt một lỗi mà 23 khối ghim không bắt được** (`G-53`) — lần thứ hai trong hai
+ngày. `scout.query` trả `src` kèm dấu `…` mà lõi đọc gắn vào để BÁO đã cắt query, nên nó **không
+phải tiền tố** của `src` trên trang: `[src^="…"]` khớp **0**. Máy giả của tôi trả `src` sạch nên
+mọi khối xanh trên một bản mã không bao giờ tải được ảnh. Đã vá hai chỗ (tiền tố selector +
+`tenFile`) và thêm khối ⓥ mang **đúng hình dạng thật của trang** — khối duy nhất ép đi tới ứng
+viên `src` rồi thành công, nên là khối duy nhất giết được con đột biến đó.
+
+⑶ **`alt` khớp 4 phần tử, không phải 1** (`G-54`). Kế hoạch ban đầu ở `CHUOI-VIEC` định dùng
+`:nth-of-type` — nó sẽ **tải nhầm ảnh mà không ai biết**. Thứ cứu chỗ này là phép *hỏi lại trang
+từng ứng viên* chứ không phải một selector khéo hơn.
+
+⑷ **Trần 300s của `gui-prompt` vứt mất một lượt đã tiêu tiền** (`G-55`): adapter bỏ cuộc, Udin
+chạy tiếp **>17 phút**, `W3` không bao giờ chạy. *Quá giờ* và *hỏng* là hai câu khác nhau — gộp
+chúng thì mỗi lượt chậm là một lượt mất trắng. Thành **`T22`**, và nó **chặn `T13` + `T15`**:
+chạy lại nguyên trạng chỉ tiêu thêm credit rồi ngã đúng chỗ cũ.
+
+Thêm: `scout.shot` trên trang này trả `TRANSPORT_DISCONNECTED` hai lần liền trong khi `scout.query`
+cùng lúc vẫn chạy (`G-56`, chưa đào). Và **không đọc được chữ trên trang nên không biết Udin đang
+báo gì** — một lý do rất cụ thể cho `O8` / `T18`.
+
+**Đo:** ghim W3 `15 → 23` khối · suite **26/26** · đột biến repo **128/128** · sáu con đột biến
+làm tay trên adapter, **cả sáu giết được**.
