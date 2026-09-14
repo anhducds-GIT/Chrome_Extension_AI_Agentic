@@ -51,7 +51,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | **XONG 14/09** — ô `#dau-chan` chép mọi dấu sang CHỮ, một lượt `scout.text` ra cả bảng (`G-80`). Bản đầu vẽ qua `setTimeout` và chết vì tab nền bóp nghẹt bộ đếm giờ — `G-81` |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | — | đường cài đặt XONG 15/09; chờ Đức chốt phiên bản |
-| **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình |
+| **T21** | **Tách Udin Optic ra khỏi Scouter** | — | **lộ trình đã viết 15/09**; chờ Đức chốt ⓪ |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
@@ -627,6 +627,97 @@ audit sau đó đều phải lội qua nó. Làm khi **không có việc nào đ
 
 · **đóng khi:** đổi bằng `git mv` (không copy-rồi-xoá), mọi mỏ neo đột biến khớp lại đủ, và
 `npm run scouter:mutation` vẫn **0 con sống sót**. Mỏ neo lệch là dấu hiệu đã sót một chỗ.
+
+## T21 · Tách Udin Optic ra khỏi Scouter  ⟵ *đích của cả lộ trình*
+
+**Phép kiểm đóng chặng ③, và nó chỉ có một câu:** các `W` bắt buộc của Udin ĐẠT **từ gói mới**,
+và **không một dòng nào của Scouter phải sửa**. Mọi chặng dưới đây chỉ để tới được câu đó.
+
+Hôm nay câu *"Scouter là bộ đồ nghề chung"* vẫn là **lời khai**: Udin sống trong `pilots/` của
+chính Scouter nên chưa có gì ép hai bên rời nhau. Tách ra là lúc đầu tiên nó bị bắt chứng minh.
+
+### Đang có gì — đếm trước khi bàn
+
+| | |
+|---|---|
+| `pilots/udin-optic/` | **5 script + 5 phép ghim, 1.404 dòng.** `qua-man-cho` · `gui-prompt` · `lay-anh` · `doc-tra-loi` · `e2e` |
+| mã extension trong đó | **KHÔNG CÓ MỘT DÒNG NÀO.** Toàn bộ là script Node gọi Bridge từ dòng lệnh |
+| phụ thuộc ra ngoài | đúng **một**: `../../trang-thu-cham/scripts/goi-bridge.mjs` |
+| tiền lệ tách gói | `workers/hnx-fetch/` — tách 08/09, và nó là một **extension đầy đủ** (manifest · background · bảng bên · máy chủ Bridge · transport · giao thức `hnx-fetch.bridge` riêng) |
+
+### ⓪ MỘT QUYẾT ĐỊNH CỦA ĐỨC TRƯỚC KHI GÕ DÒNG NÀO
+
+Hai chữ *"tách"* đọc được hai kiểu, và hai kiểu chênh nhau hàng tuần công:
+
+· **⒜ Gói ĐIỀU KHIỂN riêng** — `workers/udin-optic/`: 10 file dời ra, có khoá · `STATUS` · suite
+  riêng, vẫn lái Scouter qua Bridge **y như hôm nay**. Scouter là bộ đồ nghề, Udin là người dùng.
+· **⒝ EXTENSION riêng** như `hnx-fetch`: thêm manifest · background · bảng bên · máy chủ Bridge ·
+  transport · giao thức riêng.
+
+**Khuyên ⒜.** Ba lý do, không phải một:
+① `AGENTS.md` gốc đã cảnh báo *"ba gói `duc-auto-*` là fork — một lỗi thường có **ba** bản sao"*.
+  ⒝ nhân bản tầng transport thêm lần nữa: bản sao **thứ tư**.
+② Phép kiểm đóng chặng ③ **không đòi** ⒝. Nó hỏi *"`W` của Udin có ĐẠT từ gói mới không"*, và ⒜
+  trả lời được câu đó — rẻ hơn nhiều.
+③ Udin hôm nay **không có một dòng mã extension nào**. Dựng vỏ extension quanh 5 script Node là
+  đi trước nhu cầu.
+
+**Khi nào ⒝ mới đáng:** khi Udin phải chạy mà **không ai gõ một lệnh Node** — tức lúc nó thành
+sản phẩm cho người khác, chứ không còn là đồ nghề của Đức. Chưa tới lúc đó thì ⒝ chỉ mua thêm
+một bản sao để đồng bộ.
+
+### Năm chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+
+**① Dời `goi-bridge.mjs` ra chỗ dùng chung — LÀM TRƯỚC, đừng chép.**
+Ba pilot đang dùng chung nó (`trang-thu-cham` · `t7-tu-sinh` · `udin-optic`). Udin đi mà chép
+theo một bản là gieo đúng cái bệnh ⓪ vừa từ chối.
+*Đóng khi:* nó nằm ở một chỗ cả hai gói với tới được · **không tồn tại hai bản** · `npm run
+test:scouter` xanh.
+
+**② Dựng nhà cho gói mới.**
+`workers/udin-optic/` · khoá vùng mới trong `.agents/claims.json` · khai steward · bốn file
+(`AGENTS.md` · `STATUS.md` · `HANDOFF.md` · `design_brief`).
+*Đóng khi:* `claim.mjs --take workers/udin-optic` nhận được · `session-check` xanh (nó canh bất
+biến *khoá ↔ steward*) · `rule-compile --sinh` đẻ ra `PHIEN.md` cho gói mới.
+
+**③ Dời 10 file bằng `git mv`, KHÔNG sửa một dòng logic.**
+Chỉ được đổi đường `import`. Thấy mình đang "tiện tay sửa luôn" là dừng — một lượt dời lẫn một
+lượt sửa thì hỏng ở đâu cũng không biết là do dời hay do sửa.
+*Đóng khi:* suite riêng của gói mới xanh **cả 5 phép ghim** · suite Scouter xanh **mà không còn
+Udin trong đó** · `git diff` trên các file logic **chỉ** đổi dòng `import`.
+
+**④ PHÉP KIỂM THẬT — lượt chạy live TỪ GÓI MỚI.**
+Chạy E2E thật trên Udin, prompt **mới** (luật repo: mỗi lượt chạy thật một prompt chưa dùng).
+*Đóng khi:* 4 chặng ĐẠT **và `git status workers/duc-scouter` SẠCH**. Hai vế, và vế sau mới là
+vế chứng minh — ĐẠT mà phải sửa Scouter một dòng thì việc tách **chưa thành**.
+
+**⑤ Dọn sổ.**
+`CAPABILITIES.md` · bảng theo dõi ở đầu file này · `DASHBOARD` · `HANDOFF` **hai bên** · và
+`npm test` ở gốc phải chạy suite của gói mới (`hnx-fetch` làm đúng thế).
+
+### Năm cái bẫy — bốn cái đã có ai đó trả giá
+
+1. **Đừng fork tầng transport.** Bệnh ba-bản-sao của `duc-auto-*` là bệnh có thật trong repo này.
+2. **Chuyển HẾT rồi mới xoá thư mục cũ.** `hnx-fetch` đã ghi lại bằng chữ của chính nó: *"xoá
+   trước rồi chuyển sau là mất một tấm lưới an toàn để dọn cho gọn — đắt hơn nhiều so với chỗ nó
+   chiếm."* Phép ghim và mỏ neo đột biến cũng phải đi theo, **không chỉ mã**.
+3. **`pilots/` ở GỐC REPO là vùng chỉ-thêm; `workers/duc-scouter/pilots/` thì KHÔNG.** Đã đo
+   14–15/09 (sửa file trong đó cả ngày, cổng vẫn xanh). Nhưng `session-check` tách rename thành
+   *xoá + thêm*, nên **chạy cổng ngay sau `git mv` file ĐẦU TIÊN**, đừng dời cả 10 file rồi mới biết.
+4. **`t7-tu-sinh/` Ở LẠI Scouter.** Nó là bằng chứng của `T7` và nó **không biết gì về Udin** —
+   selector rút từ báo cáo lúc chạy. Dời nó theo là dời mất phép đo. `trang-thu-cham/` cũng ở lại:
+   đó là bàn đo của seed.
+5. **`udin-optic` chưa có bộ đột biến riêng** (chỉ có 5 phép ghim). `hnx-fetch` lúc tách phải đổi
+   mã mutant `N*` → `W*` vì gói đích đã có chủ mã trùng. Gói mới dựng bộ đột biến thì **đặt mã
+   riêng ngay từ đầu**, đừng chép dải mã của Scouter.
+
+### Thứ KHÔNG làm trong T21
+
+Đừng nhân tiện mở `SEED v1`. Thứ tự đã chốt 15/09: **tách trước, rồi mới mở đúng những mục mà
+việc tách CHỈ RA là thiếu** — không mở theo danh sách 23 mục. `T21` chính là phép đo sinh ra
+danh sách thật.
+
+---
 
 ## T9 · Đóng gói v1  ⟵ *đường cài đặt XONG 15/09; tuyên bố phiên bản là việc của Đức*
 

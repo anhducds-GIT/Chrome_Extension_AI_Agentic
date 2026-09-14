@@ -1493,3 +1493,35 @@ Nấc `v1` khai *"seed đủ để người ngoài lấy về dùng được"*. 
 - Việc kế theo bảng: `T21` — tách Udin Optic thành gói riêng.
 - **Bẫy công cụ:** Python ghi lại tệp bằng xuống dòng Windows và làm đỏ `eol-lf-smoke`. Ghi bằng
   `newline=""` thì không dịch gì.
+
+## 2026-09-15b · Lộ trình `T21` — viết ra trước khi làm, và một chỗ phải chốt
+
+Đức hỏi làm `SEED v1` (23 mục) hay `T21` trước. **Khuyên `T21`**, vì `ADR-0007` đã đặt luật:
+*"mỗi nấc mở bằng một **VIỆC THẬT** chứ không bằng một danh sách."* `SEED v1` là danh sách;
+`T21` là phép kiểm duy nhất chứng minh seed thật sự dùng chung được. Và ~11 trong 23 mục ấy
+(checkpoint · tiếp tục lần chạy dở · hàng đợi duyệt · bền hoá phê duyệt · nơi lưu file) là đồ
+của **gói sản phẩm**, không phải của bộ đồ nghề — làm vào seed trước khi tách là nhét tính năng
+sản phẩm vào toolkit, đúng cái ranh giới luật gói số 1 và số 2 dựng ra để giữ.
+
+Lộ trình đầy đủ ở `CHUOI-VIEC.md` mục `T21`: năm chặng dừng-được, năm cái bẫy.
+
+### Số liệu đáng nhớ (đếm 15/09, đừng đếm lại)
+
+`pilots/udin-optic/` = **5 script + 5 phép ghim, 1.404 dòng**, **KHÔNG một dòng mã extension**,
+phụ thuộc ra ngoài **đúng một**: `../../trang-thu-cham/scripts/goi-bridge.mjs` — mà ba pilot
+đang dùng chung file đó.
+
+### Chỗ phải chốt, và vì sao nó không tự quyết được
+
+*"Tách"* đọc được hai kiểu: **gói điều khiển riêng** (dời 10 file, vẫn lái Scouter qua Bridge)
+hay **extension riêng** như `hnx-fetch` (thêm manifest · background · bảng bên · máy chủ Bridge ·
+transport · giao thức riêng). Chênh nhau hàng tuần công, nên đó là ngân sách — việc của Đức.
+Khuyên kiểu đầu; kiểu sau chỉ đáng khi Udin phải chạy mà **không ai gõ một lệnh Node**.
+
+### Hai cái bẫy đã có người trả giá, chép lại kẻo quên
+
+- **Chuyển HẾT rồi mới xoá thư mục cũ** — chữ của chính `hnx-fetch`: *"xoá trước rồi chuyển sau
+  là mất một tấm lưới an toàn để dọn cho gọn."* Phép ghim và mỏ neo đột biến cũng phải đi theo.
+- **`pilots/` ở GỐC REPO là vùng chỉ-thêm; `workers/duc-scouter/pilots/` thì KHÔNG** (đo 14–15/09).
+  Nhưng `session-check` tách rename thành *xoá + thêm*, nên chạy cổng ngay sau `git mv` file
+  **đầu tiên**, đừng dời cả 10 file rồi mới biết.

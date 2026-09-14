@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T9 — duong cai dat XONG 15/09: README co BA LENH chay duoc (sinh tep ghep cap, bat may chu Bridge, kiem ban cai) thay cho cau bat may chu Bridge truoc day khong noi bat bang gi; va scripts/kiem-cai-dat.mjs (npm run scouter:kiem-cai-dat) — sau buoc, dung o buoc dau tien hong, moi buoc hong noi luon phai lam gi. Ca ba lenh da chay thu that. Con lai cua T9 la TUYEN BO phien ban, mot quyet dinh phat hanh chu khong phai mot phep do — cho Duc chot. Sau do la T21 tach Udin thanh goi rieng."
-- human_action: "@Đức:chốt — đọc mục Cài và chạy trong README gói, thấy đủ để người ngoài dùng được thì đóng dấu Scouter v1. Chú ý: SEED v1 (23 mục năng lực) là chuyện KHÁC và vẫn đóng."
+- next_step: "T21 — tach Udin Optic ra khoi Scouter. LO TRINH DA VIET 15/09, doc o CHUOI-VIEC.md muc T21: nam chang deu dung duoc va kiem duoc, kem nam cai bay. Phep kiem dong chi co MOT cau: cac W cua Udin DAT TU GOI MOI va khong mot dong nao cua Scouter phai sua — nen chang (4) doi ca hai ve, DAT va `git status workers/duc-scouter` SACH. Bat dau o chang (1): doi goi-bridge.mjs ra cho dung chung, dung chep — ba pilot dang dung chung no. Truoc do can Duc chot (0)."
+- human_action: "@Đức:chốt hai việc. MỘT: T21 tách kiểu nào — gói ĐIỀU KHIỂN riêng (khuyên) hay EXTENSION riêng như hnx-fetch; đọc mục ⓪ ở CHUOI-VIEC. HAI: đóng dấu Scouter v1 hay chưa (T9 đã xong đường cài đặt)."
