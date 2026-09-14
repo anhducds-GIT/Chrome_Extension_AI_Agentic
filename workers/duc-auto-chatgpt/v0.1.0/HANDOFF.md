@@ -778,3 +778,35 @@ trước**: câu đã lưu KHÔNG có nguy cơ bị cắt. Readiness chỉ nói 
 **CHỜ ĐỨC:** chọn cách chạy tiếp. Đây là luật an toàn (attribution/exact-once) nên không tự đổi.
 
 Suite **139/139**.
+
+## 2026-09-14 (lượt 2) · `claude-gpt-chay-het-job` — Đức chốt: halt SAU KHI ĐÃ LƯU thì chạy tiếp được, không gửi lại
+
+Tiếp lượt 1 (chẩn đoán đã ghi ở đó). Đức chọn **tự nhận, chạy tiếp ngay**.
+
+`resume-core.js` `classify()` thêm một nhánh: job `INTERRUPTED` mang `failure_type`
+`READINESS_TIMEOUT_AFTER_SAVE` **và** qua được `validSavedAttribution` → **`SAFE_COMPLETE`**.
+Continue Run chạy thẳng, bỏ qua job đó, **không gửi lại prompt**, Đức không phải setup lại gì.
+
+**Đây KHÔNG phải nới exact-once, nó SIẾT.** `SAFE_COMPLETE` nghĩa là **BỎ QUA**. Luật cũ chặn
+hẳn Continue Run, nên lối ra duy nhất còn lại là **Recreate** — mà Recreate **gửi lại prompt**.
+Tức luật cũ đang **đẩy Đức về phía gửi lại** một câu trả lời đã nằm trên đĩa.
+
+**BA chốt chặn, thiếu một là vẫn dừng để soát** — mỗi cái đã đột biến riêng:
+⑴ `status === "interrupted"` — **CỐ Ý HẸP**: job đang chờ THỬ LẠI (đường ảnh) mang status
+`PENDING`, nên đường ảnh giữ nguyên hành vi cũ, đúng như bảng Halt mô tả.
+⑵ `validSavedAttribution` — phải có bằng chứng đã ghi VÀ đã xác minh.
+⑶ Nhánh **đặt DƯỚI** cửa `hashVerdict === false`, nên ô câu trả lời **bị sửa tay** vẫn rớt vào
+`RESUME_RESPONSE_HASH_MISMATCH`. Đột biến `M5` (dời nhánh lên trên cửa băm) bị bắt.
+
+**Vì sao an toàn:** `content.js` chỉ chốt chữ khi **không thấy nút Dừng · tab không bị che · chữ
+đứng yên ≥ `TEXT_SETTLE_MS` · không `looksTruncated`**. Lúc readiness hết giờ thì việc sinh chữ
+**đã xong xuôi từ trước** — câu đã lưu không có nguy cơ bị cắt. Readiness chỉ nói về job **KẾ
+TIẾP**, không nói gì về job này.
+
+**Bảng Halt sửa theo hành vi mới.** Lời mời cũ *"say so and this can be special-cased"* nay đã
+được Đức trả lời; để nguyên là **nói dối người đọc** — Đức đọc banner đó để quyết định bấm gì.
+Ghim ⑷ canh đúng chỗ ấy (`M7`, `M8`).
+
+Suite **140/140**. Đột biến **18/18 bắt được**: 8 cho nhánh chạy-tiếp, 10 cho trần timeout —
+trong đó `N7` canh riêng ca **nới trần người mà kéo theo phanh máy** (ADR-0015), và `N10` canh ca
+**nới luôn nắp `chat.say`**.
