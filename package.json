@@ -38,6 +38,7 @@
     "test:bang": "node tests/bang-ba-cua-smoke.mjs",
     "scouter:mutation": "node workers/duc-scouter/v0.1.0/scripts/scouter-mutation-check.mjs && node workers/duc-scouter/v0.1.0/scripts/scouter-probes-mutation-check.mjs",
     "scouter:bridge-live": "node workers/duc-scouter/v0.1.0/scripts/scouter-bridge-live-check.mjs",
+    "scouter:kiem-cai-dat": "node workers/duc-scouter/v0.1.0/scripts/kiem-cai-dat.mjs",
     "test:hnx": "node workers/hnx-fetch/v0.1.0/tests/run-all.mjs",
     "test:song-song": "node scripts/chay-test.mjs",
     "gate": "node scripts/session-check.mjs",

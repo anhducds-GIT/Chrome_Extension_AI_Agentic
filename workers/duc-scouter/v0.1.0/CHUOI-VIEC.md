@@ -50,7 +50,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | **XONG 14/09** — ô `#dau-chan` chép mọi dấu sang CHỮ, một lượt `scout.text` ra cả bảng (`G-80`). Bản đầu vẽ qua `setTimeout` và chết vì tab nền bóp nghẹt bộ đếm giờ — `G-81` |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
-| **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |
+| **T9** | Đóng gói `v1` | — | đường cài đặt XONG 15/09; chờ Đức chốt phiên bản |
 | **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
@@ -628,13 +628,34 @@ audit sau đó đều phải lội qua nó. Làm khi **không có việc nào đ
 · **đóng khi:** đổi bằng `git mv` (không copy-rồi-xoá), mọi mỏ neo đột biến khớp lại đủ, và
 `npm run scouter:mutation` vẫn **0 con sống sót**. Mỏ neo lệch là dấu hiệu đã sót một chỗ.
 
-## T9 · Đóng gói v1
+## T9 · Đóng gói v1  ⟵ *đường cài đặt XONG 15/09; tuyên bố phiên bản là việc của Đức*
 
-Nấc `v1` khai *"seed đủ dùng để người ngoài lấy về dùng được"*. Còn thiếu một đường cài đặt cho
-người chưa từng đọc repo này.
+Nấc `v1` khai *"seed đủ dùng để người ngoài lấy về dùng được"*. Thứ còn thiếu là **một đường cài
+đặt cho người chưa từng đọc kho mã này** — và giờ nó có.
 
-**Chỉ làm sau T7.** Đóng gói một seed mà vòng tự cải tiến chưa khép lần nào là đóng gói một lời
-hứa.
+**Đừng đọc nhầm hai chữ `v1`** — [ADR-0007](../../../docs/adr/0007-scouter.md) mục ⑹ tách rõ:
+
+| chữ | nghĩa | trạng thái |
+|---|---|---|
+| `SEED v1` | **23 mục năng lực còn lại** | **vẫn ĐÓNG** — mở phải có ADR riêng |
+| **Scouter v1** | **bản đóng gói phát hành được** của seed đang có | đây mới là `T9` |
+
+### Làm được gì 15/09
+
+· README có **ba lệnh chạy được** — sinh tệp ghép cặp · bật máy chủ Bridge · kiểm bản cài — thay
+  cho câu *"bật máy chủ Bridge"* trước đây, không nói bật bằng gì.
+· **`scripts/kiem-cai-dat.mjs`** (`npm run scouter:kiem-cai-dat`) — sáu bước, dừng ở bước đầu
+  tiên hỏng, **mỗi bước hỏng nói luôn phải làm gì**. Nó gõ cửa đúng Bridge đang chạy và đúng
+  extension đã nạp; khác hẳn `scouter:bridge-live`, lệnh đó dựng máy chủ riêng để đo **mã**.
+· Hai chốt trong đó đừng đảo: **công tắc ghi ĐÓNG không phải hỏng** (đó là mặc định, luật gói
+  số 8), và bước ① phải hỏi `bridge.sessions` chứ không `system.ping` (`G-91`).
+· Cả ba lệnh đã **chạy thử thật**: bước ① sinh tệp vào thư mục nháp, bước ② máy chủ lên đúng
+  cổng 32152, bước ⑤ sáu bước xanh trên bản cài đang chạy.
+
+### Còn lại, và nó là việc của Đức
+
+Tuyên bố *"đây là Scouter v1"* là một quyết định phát hành, không phải một phép đo — nên tôi
+không tự đóng dấu. Bằng chứng đã bày ra ở trên; **@Đức:chốt** khi anh thấy đủ.
 
 ---
 

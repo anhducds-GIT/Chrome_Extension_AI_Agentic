@@ -10,14 +10,50 @@ chưa có một ADR mới.
 
 ## Cài và chạy
 
-1. Chrome → `chrome://extensions` → bật **Developer mode** → **Load unpacked** → chọn thư mục
-   `workers/duc-scouter/v0.1.0`.
-   *Nếu trước đây đã nạp bản ở gốc repo thì gỡ bản đó đi — nó không còn nữa (ADR-0013).*
-2. Bật máy chủ Bridge (bản trong `workers/duc-auto-chatgpt/v0.1.0/duc-auto-chatgpt-loopback-bridge-host-v1/`).
-3. Bấm biểu tượng extension → **bảng bên mở ra ở cạnh phải** → mục **Cửa Bridge** → chọn tệp
-   ghép cặp do bộ cài Bridge tạo. Dòng trạng thái đổi thành *Đã nối Bridge.*
-4. **Muốn Scouter bấm và gõ thì bật *Chế độ phát triển* trong bảng bên.** Tắt thì nó chỉ nhìn
-   được. Mỗi lần bật cho 200 lượt; hết thì tắt rồi bật lại.
+Ba lệnh, ba lượt bấm. Làm xong thì **chạy bước ⑤ để biết mình đã làm đúng chưa** —
+đừng đoán, cũng đừng thử một việc thật rồi suy ngược từ chỗ nó hỏng.
+
+**① Sinh tệp ghép cặp.** Nó chứa TOKEN nên **phải nằm ngoài kho mã** — kho này công khai.
+`--goi` tự đặt nó đúng nhà chung và tự chọn một cổng còn trống:
+
+```bash
+node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi duc-scouter
+```
+
+**② Bật máy chủ Bridge** với đúng tệp vừa sinh, và **để cửa sổ đó chạy**:
+
+```bash
+node workers/duc-auto-chatgpt/v0.1.0/duc-auto-chatgpt-loopback-bridge-host-v1/bridge-host.mjs --pairing "C:/WORKING ZONE/Chrome Extension Bridge/duc-scouter/duc-scouter-bridge-pairing-v1.json"
+```
+
+*(Máy chủ nằm trong thư mục của gói `duc-auto-chatgpt` vì lý do lịch sử — nó là máy chủ dùng
+chung, không riêng gói nào. Vì thế nó in ra `Duc Auto ChatGPT bridge listening on …` **kể cả khi
+bạn đang cài Scouter**: dòng đó đúng, chỉ là tên cũ. Đường dẫn tệp ghép cặp ở trên là chỗ bước ①
+đặt nó; bước ① tự in ra đường dẫn thật nếu khác.)*
+
+**③ Nạp extension.** Chrome → `chrome://extensions` → bật **Developer mode** → **Load unpacked**
+→ chọn thư mục `workers/duc-scouter/v0.1.0`.
+*Nếu trước đây đã nạp bản ở gốc kho mã thì gỡ bản đó đi — nó không còn nữa (ADR-0013).*
+
+**④ Nối dây.** Bấm biểu tượng extension → **bảng bên mở ra ở cạnh phải** → mục **Cửa Bridge** →
+chọn tệp ghép cặp ở bước ①. Dòng trạng thái đổi thành *Đã nối Bridge.*
+
+**⑤ Kiểm bản cài — đừng bỏ bước này:**
+
+```bash
+node workers/duc-scouter/v0.1.0/scripts/kiem-cai-dat.mjs
+```
+
+Sáu bước, dừng ở bước đầu tiên hỏng, và **mỗi bước hỏng nói luôn phải làm gì**. Nó gõ cửa đúng
+cái Bridge bạn đang chạy và đúng extension bạn vừa nạp — khác hẳn `npm run scouter:bridge-live`,
+lệnh đó dựng một máy chủ riêng để đo **mã**, không đo **bản cài của bạn**.
+
+Bước ⑥ của nó tiêu **một** lượt trong trần ghi để biết công tắc đang mở hay đóng; không muốn thì
+thêm `--khong-thu-ghi`. **Công tắc ĐÓNG không phải hỏng** — đó là mặc định.
+
+**⑥ Muốn Scouter bấm và gõ thì bật *Chế độ phát triển* trong bảng bên.** Tắt thì nó chỉ nhìn
+được. Mỗi lần bật cho 200 lượt; hết thì tắt rồi bật lại. Phanh khẩn: **Ctrl+Shift+X** — chỉ tắt
+được, không bật được.
 
 Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở tab nào Scouter cắm vào. Không giấu
 được, và không nên giấu.
