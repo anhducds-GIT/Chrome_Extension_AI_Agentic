@@ -1365,3 +1365,40 @@ câu agent viết ra nói về **đúng prompt mới**, không dính một mẩu
 đóng băng seed rồi ④ tách Udin. Hai khoá `_code` và `workers/hnx-fetch` đã trả theo lệnh Đức;
 lúc trả `claim.mjs` báo `_code` còn 1 commit chưa đẩy, nhưng `origin/main..main` **rỗng** — chỉ
 báo cũ, không phải phép đo.
+
+## 2026-09-14e · `claude-scouter-udine` — chặng ③ nửa đường, và tôi mở lại một dòng đã chết
+
+`T8` đổi tên xong (`git mv`, `ObserverEngine` → `ScouterEngine`, kiểm trên dây thật sau khi Đức
+nạp lại). `T16` xong: trang thử tự kể trạng thái **bằng chữ** ở `#dau-chan`, một lượt `scout.text`
+ra cả bảng — hết phải đoán giá trị `data-*`. Số đo ở `TRIALS.md`, vì sao ở `G-80` `G-81`.
+
+**Hai thứ tối, cùng một hình dạng: một phép kiểm không ai chạy.**
+
+⑴ `scouter-probes-mutation-check.mjs` chỉ chạy sau cờ `--with-mutation`, mà không cổng nào truyền
+cờ đó. Trong lúc tối, **bốn mỏ neo mục** — `W1` gãy từ 12/09. Đo lại trên HEAD: cả bốn gãy **từ
+trước** lượt đổi tên. Đã neo lại và gộp cả hai bộ vào `npm run scouter:mutation`.
+
+⑵ Bảng chẩn đoán bản đầu vẽ qua `setTimeout`, mà tab chạy ẩn nên Chrome bóp nghẹt bộ đếm giờ —
+bảng đứng im và tôi suýt kết luận *"lệnh cuộn không cuộn"*, ngược hẳn `G-73`. **Dụng cụ đo phải
+sống được dưới đúng điều kiện đang đo.**
+
+### Lỗi của tôi, và nó đáng ghi hơn cả hai việc trên
+
+Tôi dựng `G-82` để mở lại `S-22`, tin rằng mình có số liệu mới. Không có.
+
+- Vế đầu — *"`S-22` là của tab chứ không của ghế"* — **`README.md` đã khai sẵn từ trước**. Tôi
+  tưởng mình phát hiện, thật ra đọc sót một lời khai có thẩm quyền.
+- Vế sau — *"khác biệt là tab đang hiện / tab nền"* — **chính là `G-07`**, đã `SAI`, đã kiểm lại
+  14/09 bằng phép đo hai chiều, và Đức tự debug 13/09 xác nhận.
+- Thứ tôi gọi là số liệu mới chỉ là một **tương quan đếm lại**. Mở lại một dòng `SAI` đòi **dữ
+  liệu mới**, không phải một tương quan đếm lại — và tôi suýt tiêu 5 giây của Đức cho lần mở lại
+  **thứ sáu** của cùng một giả thuyết.
+
+`G-82` giữ lại, gạch đi, làm cái chặn: **ba số `chuot=0 phim=0 bam=0` trên trang thử KHÔNG phải
+bằng chứng mới về `S-22`** — nó đúng là thứ `S-22` đã khai.
+
+### Để lại
+
+Chặng ③ chặn ở `T9` → `T7` → `S-22`. **Lối ra không cần Đức: đổi trang đích của `T7` từ trang
+thử sang Udin** — Udin nhận cú bấm thật, và đủ cả bốn điều kiện chặng ①. Cái bẫy đi kèm ghi ở
+`CHUOI-VIEC.md`: **không được dùng lại `pilots/udin-optic/`**, phải sinh adapter mới rồi so.

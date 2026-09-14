@@ -462,6 +462,24 @@ ba chặng — xem khối *Chạy 12/09* ở cuối mục này trước khi bắ
    lên seed và ghi lại là đã đẩy — đó là cách seed lớn lên, và là luật gói số 2.
 4. **`scout.reload`, rồi chạy adapter, rồi so kết quả với thứ làm tay.**
 
+### Đổi trang đích 14/09 — vì sao, và cái bẫy đi kèm
+
+Chặng ④ dừng ở `S-22`: adapter phải **bấm một nút** trên trang thử, mà tab trang thử không nhận
+sự kiện nhập. `S-22` Đức đã chốt **ngừng điều tra vì chi phí**, nên chờ nó được sửa là chờ mãi.
+
+**Lối ra không cần ai: đổi trang đích sang Udin.** Đo lại 14/09 trên đúng ghế ấy: `scout.type`
+làm nút Send `KHOÁ → MỞ` (React nhận được sự kiện nhập thật), `scout.click` khởi động một lượt
+sinh ảnh. Và Udin đủ cả bốn điều kiện chặng ①: một ô nhập, một nút, một kết quả **sau 177 giây**
+— độ trễ ấy còn ép dùng `scout.wait` mạnh hơn 1.200ms của trang thử.
+
+Ba chặng đầu thật ra **đã chạy trên Udin rồi**, chỉ là rải ra nhiều ngày và có tay người xen vào
+giữa. Nên phần còn nợ của `T7` gọn lại đúng một câu: **chạy liền một mạch** dò → viết adapter →
+`scout.reload` → chạy adapter, **không sửa tay giữa chừng**.
+
+*Cái bẫy:* chặng ③ đòi adapter dựng **chỉ từ báo cáo**. `pilots/udin-optic/` đã có sẵn — dùng lại
+nó là **gian lận với chính phép đo**. Lượt chạy thật phải sinh ra adapter MỚI vào một thư mục
+khác, rồi so kết quả với `udin-optic/`. Giống nhau thì vòng khép; khác thì cái khác đó là kết quả.
+
 ### Cái bẫy đã biết, đừng vấp lại
 
 - **Hai ghế là hai HỒ SƠ Chrome.** `scout.reload` một ghế KHÔNG nạp lại ghế kia. Sửa mã xong
