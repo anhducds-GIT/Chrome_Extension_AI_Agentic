@@ -5,8 +5,8 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "T22 — gui-prompt phai phan biet QUA GIO voi HONG, va nang tran len 900s (bang han cua URL ky san). Luot chay that 14/09 bo cuoc o 300s trong khi Udin chay tiep hon 17 phut: credit tieu roi ma luot chay vut di, W3 khong bao gio chay. Chay lai nguyen trang se nga dung cho cu. Sau T22 moi chay lai T13+T15. Song song duoc: T18 (O8 qua scout.text, ADR-0006 da ky, khong cho ai)."
-human_action: "@Duc:khong co viec nao cho Duc luc nay. Ghi de biet: luot 14/09 da tieu credit cho mot lan sinh anh ma khong lay duoc anh nao — vi URL ky san het han sau 900 giay va adapter bo cuoc o 300s. Da ghi thanh T22; se khong chay lai luot ton tien nao cho toi khi T22 xong."
+next_step: "T19 — I4 (xoa chu trong o) va I9 (tai file len), hai muc cuoi cua DANH SACH DONG BANG (CAPABILITIES.md 5.2) truoc khi tach Udin. T18 xong 14/09: scout.text chay that tren Udin. T13+T15 cho mot luot Udin ranh cho — man chan User Limit Reached, co vong cho tu chay."
+human_action: "@Duc:khong co viec nao cho Duc luc nay. Udin dang bao User Limit Reached nen T13/T15 dung cho — vong cho tu chay, khong can ai bam."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Hoàn thiện SEED dùng chung — Scouter là ĐÍCH, trang Udin (vinfast.udinbv.com/optic) chỉ là CA THỬ để ép seed lộ chỗ nó còn hẹp. Ngày 12/09 ca thử đó ép lộ năm khuyết tật của SEED (S-16 tới S-20) và BỐN cái đã vá xong trong ngày, cả bốn đo ngoài đời chứ không chỉ trước máy giả. S-17: scout.click hỏi Chrome điểm sắp bấm thuộc về ai TRUOC khi bắn, có lớp che thì từ chối CLICK_OBSCURED. S-18: scout.wait nhận thêm state usable, phân biệt có mặt với dùng được, và nói ra VÌ SAO chưa dùng được. S-19: scout.navigate nạp lại được cùng một URL — 15 giây báo sai nguyên nhân xuống 254ms báo đúng. S-16: ba hạn chờ xuống dưới ngưỡng 35 giây của máy chủ, và ngưỡng đó nay có tên để phép ghim đọc thẳng thay vì gõ lại. Còn mở: S-20 (nghe mạng trong lúc bấm) và S-21 (target thỉnh thoảng không trả lời được câu hỏi hình học, chưa biết vì sao). Tên ghế đã nghiệm thu ngoài đời: Đức gõ Udin_Scout và định tuyến theo tên chạy đúng. Không thêm method Bridge nào trong lượt T4 — số method hiện ở cột Method Bridge [ĐO] trên DASHBOARD.md, đừng ghi tay vào đây."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
@@ -51,12 +51,11 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 ## Câu còn treo, chỉ Đức chốt được
 
-**Đang treo một câu: `Q1` — chính sách che dữ liệu `de-xuat-chat-v1` chưa ai ký.** Nó chặn `O8`
-(đọc chữ trên trang) — mục đắt nhất của **danh sách đóng băng** (`docs/CAPABILITIES.md` §5.2),
-tức là thứ phải xong **trước** khi tách Udin ra gói riêng. Và `scout.grab` đã chạy **trên** chính
-sách đó rồi (`source.masked` cắt query theo nó) mà chưa có chữ ký nào phía sau.
+**Không còn câu nào treo.** `Q1` — chính sách che `de-xuat-chat-v1` — Đức chốt 14/09 đường ⒝:
+ký nguyên bản, kèm **một cửa hẹp** `scout.text` ([ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)).
+`O8` đóng cùng ngày và **đã chạy thật** trên Udin (`G-57`).
 
-**Ba câu đã chốt ngày 14/09.** `S-24` URL ký sẵn → đường ⒜, `scout.grab` ra đời. `D3` `scout.focus`
+**Bốn câu đã chốt ngày 14/09.** `S-24` URL ký sẵn → đường ⒜, `scout.grab` ra đời. `D3` `scout.focus`
 → **KHÔNG**: cửa sổ extension chạy ẩn bên dưới, adapter phải chạy được trên tab nền. `S-22` →
 đóng bằng **lời khai** trong `README` (`scout.click` không hứa *"trang đã nhận"*), không bằng bản vá.
 

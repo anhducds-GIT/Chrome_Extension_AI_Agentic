@@ -34,13 +34,13 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
-| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **T22** | **CHẠY THẬT 14/09, W3 CHƯA ĐẠT** · 23 khối · 6 đột biến tay · chọn selector ĐẠT trên trang thật · grab trả **403 vì URL hết hạn** (`G-51`) |
-| **T22** | `gui-prompt` phân biệt *quá giờ* với *hỏng*, và nâng trần | — | **nợ mới, chặn T13 + T15** — lượt 14/09 bỏ cuộc ở 300s trong khi Udin chạy tiếp >17 phút: credit tiêu rồi mà lượt chạy vứt đi (`G-55`) |
+| **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | **Udin hết chỗ** | mã xong, `T22` xong; chờ một lượt Udin rảnh để có ảnh **tươi** (URL hết hạn 900s) — **vòng chờ đang tự chạy** |
+| ~~T22~~ | `gui-prompt` phân biệt *quá giờ* với *hỏng* | — | **XONG 14/09** — trần 900s (bằng hạn URL), `UdinDangChay` chở theo tập ảnh trước, `choXong()` nối lại được. 13 khối · 5 đột biến tay |
 | ~~H1~~ | Đức nạp lại extension + bật công tắc ghi | — | **XONG 14/09** — Bridge nay khai **18** method, `scout.grab` đã vào |
-| **Q1** | ✋ **Đức chốt chính sách che `de-xuat-chat-v1`** | — | **Đức đã chốt đường ⒝ 14/09** — ký, kèm cửa hẹp `scout.text`. Còn phải ghi vào `decisions.md` rồi mở `T18` |
+| ~~Q1~~ | Chính sách che `de-xuat-chat-v1` | — | **CHỐT 14/09 đường ⒝** — [ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) |
 | **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 | chưa chạy lần nào |
-| **T18** | `O8` đọc chữ trên trang | Q1 | **trong danh sách đóng băng** |
-| **T19** | `I4` xoá ô nhập · `I9` tải file lên | ✋ Đức | **trong danh sách đóng băng** |
+| ~~T18~~ | `O8` đọc chữ trên trang | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`). 10 khối · 6 đột biến tay · 19 method |
+| **T19** | `I4` xoá ô nhập · `I9` tải file lên | — | **việc kế** — hai mục cuối của danh sách đóng băng |
 | **T20** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ✋ Đức, chốt gộp một lượt | bảo hiểm cho trang thứ hai |
 | **T17** | **Máy sinh bảng năng lực** thay cho gõ tay | — | nợ phát hiện 14/09: không dòng mã nào đọc `CAPABILITIES.md` |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị**, không bằng sự tồn tại | — | nợ do `G-48` để lại |
@@ -69,31 +69,15 @@ làm mọi diff khó đọc.
 
 ---
 
-## Q1 · Đức chốt — chính sách che dữ liệu `de-xuat-chat-v1`  ⟵ *câu chặn duy nhất còn lại*
+## ~~Q1~~ · Chính sách che `de-xuat-chat-v1` — Đức chốt 14/09: **đường ⒝**
 
-**Xin gì.** Một chữ *được* hoặc *không* cho chính sách đang nằm ở `BACKLOG.md` (`de-xuat-chat-v1`):
-lõi đọc chỉ trả **danh sách trắng** thuộc tính, **cắt query + fragment** khỏi mọi `src`/`href`,
-**không trả chữ trong trang**, không trả `outerHTML`.
+Ký chính sách **nguyên bản**, kèm **một cửa hẹp**: `scout.text` trả chữ của **MỘT** phần tử khớp
+selector — không cả trang, không `outerHTML`, trần 5.000 ký tự, khớp 0 hay 2+ thì từ chối.
+Điều khoản *"không trả chữ"* nay đọc là **"không trả chữ hàng loạt"**: cái được bảo vệ là
+**khối lượng**. Lý do đầy đủ ở [ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md).
 
-**Vì sao nó chặn nhiều thứ đến thế:**
-
-1. **`O8` đọc chữ trên trang** không viết được trước khi chính sách này có chữ ký — vì `O8` chính
-   là việc **nới** điều khoản *"không trả chữ"*, và nới một chính sách chưa ai ký thì không có gì
-   để nới từ đó.
-2. `O8` là mục **đắt nhất** của danh sách đóng băng (`docs/CAPABILITIES.md` §5.2): không đọc được
-   chữ thì adapter chỉ kiểm được *"có phần tử không"*, không kiểm được *"nó nói gì"*.
-3. **`scout.grab` đã đứng trên chính sách này rồi** — `source.masked` cắt query đúng theo nó.
-   Tức là gói đang chạy trên một luật chưa ai ký.
-
-**Ba đường, và tôi đề xuất đường giữa:**
-
-| | Đường | Giá |
-|---|---|---|
-| ⒜ | Ký nguyên bản `de-xuat-chat-v1`, giữ *"không trả chữ"* | `O8` chết hẳn, và cùng nó là `W4` + mọi dấu kiểm bằng chữ. **Không khuyên** |
-| ⒝ | Ký, kèm **một cửa hẹp cho chữ**: `scout.text` trả chữ của **một** phần tử khớp selector, không trả cả trang, không trả `outerHTML` | Đọc được câu trả lời và thông báo lỗi, mà vẫn không có đường hút cả trang ra ngoài. **Khuyên đường này** |
-| ⒞ | Hoãn tiếp | Mọi mục của danh sách đóng băng đứng yên, và mốc tách Udin lùi theo |
-
-· **đóng khi:** Đức chọn ⒜ ⒝ hay ⒞, và lý do ghi vào `decisions.md` — không phải chỉ vào đây.
+Kéo theo: `O8` hết chặn, làm xong cùng ngày (`T18`), và `scout.grab` thôi đứng trên một luật
+chưa ai ký. **Không còn câu chính sách nào treo.**
 
 ## T13 — nối `lay-anh.mjs` sang `scout.grab` · việc kế, không chờ ai
 

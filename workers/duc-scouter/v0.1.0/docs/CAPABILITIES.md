@@ -42,7 +42,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | O5 | Chụp màn hình phần đang thấy | `scout.shot` | **ĐÃ CHỨNG MINH** | Udin 12/09. Chụp cả trang dài: CHƯA CÓ | |
 | O6 | Chờ có / hết / **bấm được thật** | `scout.wait` | **ĐÃ CHỨNG MINH** | Udin 13/09, `G-28` `G-30` | |
 | O7 | Đọc thuộc tính trạng thái (`disabled`, `aria-*`…) | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29`: nút Send mất `disabled` sau khi gõ | |
-| O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | `scout.text` | **CHƯA CÓ — đã duyệt** | **Đức chốt 14/09** ([ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)): ký `de-xuat-chat-v1`, kèm **cửa hẹp** — chữ của **MỘT** phần tử khớp selector, không cả trang, không `outerHTML`, có trần ký tự. Việc `T18` | ✅ |
+| O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | `scout.text` | **ĐÃ CHỨNG MINH** | [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) · Udin 14/09 (`G-57`): đọc màn chắn ra *"User Limit Reached…"*, `div` khớp 146 thì **từ chối**. 10 khối ghim · 6 đột biến tay. Trần 5.000 ký tự **không** chặn được việc đọc cả trang nhỏ (`G-58`) — giới hạn đã khai trong ADR | |
 | O9 | Phần tử trong iframe / shadow DOM | — | **CHƯA ĐO** | Chưa trang nào cần | |
 | O10 | Chụp DOM + bố cục một lượt | ~~`scout.snapshot`~~ | **ĐÃ BỎ 08/09** | Làm chết service worker trên 2/3 trang lớn. Đừng mở lại nếu chưa có cách khác | |
 
@@ -81,7 +81,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
 | D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn). Đường đúng là `scout.grab` — xem O11 | |
-| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **CÓ** | Đức chốt `S-24` đường ⒜ 14/09. Đưa selector, extension đọc `src` đầy đủ **bên trong** rồi tải, trả byte; không có trường `url`. 11 khối ghim · đột biến 128/128. **CHƯA CHẠY THẬT** — và chưa nạp vào extension: `system.capabilities` trên ghế `Dummy_Scout` khai **17** method, chưa có `scout.grab`. Cần Đức nạp lại (`T13`) | |
+| O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **MỘT PHẦN** | Đức chốt `S-24` đường ⒜ 14/09. Đã nạp vào extension và **đã gọi thật** trên Udin: đọc `src` đầy đủ bên trong, gọi mạng, trả mã trạng thái (`G-52`). **Chưa có lượt 200 → byte → đĩa**, vì mọi ảnh trên trang đã quá hạn 900s (`G-51`). Chờ một lượt Udin rảnh chỗ. 11 khối ghim · đột biến 128/128 | |
 | D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ** (adapter tự làm) | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
@@ -99,8 +99,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 19 · MỘT PHẦN 2 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 14 · ĐÃ BỎ 1.** Tổng 41 dòng.
-**Seed Coverage = 19 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
+**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 2 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 13 · ĐÃ BỎ 1.** Tổng 41 dòng.
+**Seed Coverage = 20 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
 đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
 > ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
@@ -121,7 +121,7 @@ Chrome riêng (probe) → ☐ đạt trên trang thật. Bước 4 xong thì s�
 |---|---|---|---|
 | ~~—~~ | ~~`S-22`~~ | **ĐÓNG 14/09 bằng lời khai trong `README`**, không bằng bản vá. Đừng mở lại điều tra | |
 | 1 | `T13` nối `lay-anh.mjs` sang `scout.grab` | Đóng W3, và cho `scout.grab` lượt chạy thật đầu tiên | |
-| 2 | O8 đọc chữ | Không đọc được kết quả bằng chữ thì không kiểm được phần lớn workflow | ✋ chốt chính sách che |
+| ~~2~~ | ~~O8 đọc chữ~~ | **XONG 14/09** — `scout.text` | |
 | 3 | I4 xoá ô nhập · I9 upload | Hai mục cuối của **danh sách đóng băng** §5.2 — phải xong TRƯỚC khi tách Udin | ✋ |
 | 4 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo. Bảo hiểm cho trang thứ hai | ✋ |
 | 5 | I8 kéo thả | **Ngoài** danh sách đóng băng: Udin không cần. Chỉ khi có trang timeline thật | ✋ |
@@ -191,7 +191,7 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 
 | | Năng lực | Chặn workflow nào | Vì sao không hoãn được |
 |---|---|---|---|
-| **O8** | đọc chữ trên trang | `W4`, và **mọi** dấu kiểm bằng chữ | Không đọc được chữ thì adapter chỉ kiểm được *"có phần tử không"*. Đây là cái đắt nhất trong danh sách |
+| ~~**O8**~~ | ~~đọc chữ trên trang~~ | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`) |
 | **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
 | **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
 | **I5 I6 I7** | cuộn · rê chuột · bấm đúp/phải | chưa chặn `W` nào của Udin | Bảo hiểm cho **trang thứ hai**. Mở sau khi tách thì trả lại đúng sáu chỗ ở §5.1 |
@@ -208,7 +208,7 @@ thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp
 | ~~P1b~~ | ~~`T14` đóng `S-22` bằng chẩn đoán~~ | **ĐÓNG 14/09 bằng LỜI KHAI**, không bằng bản vá — `README` khai `scout.click` không hứa *"trang đã nhận"*. Lý do dừng: năm lượt điều tra cùng một giả thuyết | — |
 | **P1a** | `T13` — `lay-anh.mjs` đi bằng `scout.grab`, chạy thật | một ảnh Udin nằm trên đĩa, và `scout.grab` có lượt chạy thật đầu tiên | **không ai** |
 | **P1c** | `T15` — E2E Udin (`W1→W2→W3`) | ba chặng chạy một mạch trên ghế thật | P1a |
-| **P2a** | **`O8` đọc chữ** qua `scout.text` — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) | `W4` ĐẠT trên trang thật | **không ai** — đã duyệt 14/09 |
+| ~~P2a~~ | ~~`O8` đọc chữ qua `scout.text`~~ | **XONG 14/09** — method chạy thật trên Udin (`G-57`). Còn `W4` (đọc câu trả lời của agent) chờ một lượt Udin rảnh chỗ | — |
 | **P2b** | `I4` xoá ô · `I9` upload | `W7` `W8` ĐẠT trên trang thật | ✋ Đức chốt từng mục |
 | **P2c** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ĐÃ CHỨNG MINH trên Chrome riêng | ✋ Đức chốt gộp một lượt |
 | **P2d** | `T17` — **máy sinh bảng §2**, thay cho gõ tay | một ô khai `ĐÃ CHỨNG MINH` không có dòng `TRIALS` thì cổng ĐỎ | không ai |

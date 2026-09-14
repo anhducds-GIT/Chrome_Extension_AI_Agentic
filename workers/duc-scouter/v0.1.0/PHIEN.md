@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T22 — gui-prompt phai phan biet QUA GIO voi HONG, va nang tran len 900s (bang han cua URL ky san). Luot chay that 14/09 bo cuoc o 300s trong khi Udin chay tiep hon 17 phut: credit tieu roi ma luot chay vut di, W3 khong bao gio chay. Chay lai nguyen trang se nga dung cho cu. Sau T22 moi chay lai T13+T15. Song song duoc: T18 (O8 qua scout.text, ADR-0006 da ky, khong cho ai)."
-- human_action: "@Duc:khong co viec nao cho Duc luc nay. Ghi de biet: luot 14/09 da tieu credit cho mot lan sinh anh ma khong lay duoc anh nao — vi URL ky san het han sau 900 giay va adapter bo cuoc o 300s. Da ghi thanh T22; se khong chay lai luot ton tien nao cho toi khi T22 xong."
+- next_step: "T19 — I4 (xoa chu trong o) va I9 (tai file len), hai muc cuoi cua DANH SACH DONG BANG (CAPABILITIES.md 5.2) truoc khi tach Udin. T18 xong 14/09: scout.text chay that tren Udin. T13+T15 cho mot luot Udin ranh cho — man chan User Limit Reached, co vong cho tu chay."
+- human_action: "@Duc:khong co viec nao cho Duc luc nay. Udin dang bao User Limit Reached nen T13/T15 dung cho — vong cho tu chay, khong can ai bam."
