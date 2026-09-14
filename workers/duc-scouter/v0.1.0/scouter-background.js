@@ -11,7 +11,7 @@
  * của extension là ba khả năng nối vào đây.
  */
 
-import { ObserverEngine } from "./observer-engine.js";
+import { ScouterEngine } from "./scouter-engine.js";
 import {
   BridgeProtocolError,
   MAX_ENVELOPE_BYTES,
@@ -24,7 +24,7 @@ import { createSeedHandlers, setWriteGate } from "./scripts/scouter-seed-core.mj
 import { createTransport } from "./scripts/scouter-transport-loopback.mjs";
 
 const handlers = createSeedHandlers({
-  engine: new ObserverEngine(),
+  engine: new ScouterEngine(),
   chromeApi: chrome,
   BridgeProtocolError,
   negotiateVersion,

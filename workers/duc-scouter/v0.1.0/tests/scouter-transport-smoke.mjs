@@ -6,7 +6,7 @@
  * Vì sao phải có mẻ riêng: lõi chỉ bảo vệ được thứ ĐI QUA lõi. Một lớp dây tự trả lời khung
  * `rpc` mà không gọi lõi, hoặc đưa token ra trước khi máy chủ chứng minh nó biết token, sẽ đi
  * vòng qua toàn bộ phép ghim của lõi mà lõi vẫn xanh. Bài học này đã trả giá ở
- * `scripts/observer-mutation-check.mjs` (mẻ NỐI DÂY, bốn con W1..W4).
+ * `scripts/scouter-probes-mutation-check.mjs` (mẻ NỐI DÂY, bốn con W1..W4).
  *
  * Máy chủ giả ở đây tính HMAC THẬT bằng WebCrypto, đúng công thức `hostProof()` của
  * `bridge-host.mjs:76` — nên một bản transport bỏ qua bước kiểm bằng chứng sẽ ĐỎ, không phải

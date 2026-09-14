@@ -1,4 +1,4 @@
-/* observer-probes.mjs — BỐN PHÉP DÒ READ-ONLY của Observer V0.
+/* scouter-probes.mjs — BỐN PHÉP DÒ READ-ONLY của Observer V0.
  *
  * Đề bài: docs/briefs/BRIEF-OBSERVER-V1.md mục 3a. Quyết định: docs/adr/0007-*.md.
  *
@@ -9,7 +9,7 @@
  *   ⑴ Tên phép dò phải nằm trong `PROBE_NAMES`. Tên lạ → ném, không đoán.
  *   ⑵ Method CDP phải nằm trong `READ_ONLY_CDP_METHODS`. Danh sách này CỐ Ý KHÔNG CÓ
  *      `Runtime.*` — nghĩa là trong file này KHÔNG TỒN TẠI đường nào chạy JS trên trang.
- *      Đây là chỗ khác căn bản với `observer-engine.js` hôm nay: bản đó read-only vì
+ *      Đây là chỗ khác căn bản với `scouter-engine.js` hôm nay: bản đó read-only vì
  *      *đúng một chuỗi được gõ cứng*, còn bản này read-only vì *kênh chạy mã không có mặt*.
  *   ⑶ Không tham số CDP nào được mang khoá chở-mã (`expression`, `functionDeclaration`,
  *      `text`, `value`, …). Chốt thừa so với ⑵ hôm nay — cố ý giữ, vì ⑵ là một DANH SÁCH
@@ -35,10 +35,10 @@
  * ─── THUẦN LOGIC ────────────────────────────────────────────────────────────
  * File này KHÔNG biết `chrome` là gì. Nó nhận vào một bộ "người gửi lệnh CDP" (`deps`)
  * và trả ra kết quả — nên phép ghim chạy được mà không cần Chrome, và lớp nối dây vào
- * `observer-engine.js` chỉ còn là vài dòng bơm `chrome.debugger.sendCommand` vào đây.
+ * `scouter-engine.js` chỉ còn là vài dòng bơm `chrome.debugger.sendCommand` vào đây.
  */
 
-import { ObserverEngine } from "../observer-engine.js";
+import { ScouterEngine } from "../scouter-engine.js";
 
 /* ---- Từ vựng cố định ---------------------------------------------------- */
 
@@ -367,14 +367,14 @@ function fail(probe, code, detail, cdp) {
 
 const PROBES = {
   /* ① targets.list — quét + phân loại, y như scanTargets() hôm nay.
-   * Dùng lại `describeTarget` của ObserverEngine (hàm đó thuần, không đụng `chrome`) thay vì
+   * Dùng lại `describeTarget` của ScouterEngine (hàm đó thuần, không đụng `chrome`) thay vì
    * chép luật phân loại sang đây — hai bản của một luật thì sớm muộn lệch nhau. */
   async "targets.list"(ctx) {
     if (typeof ctx.listTargets !== "function") {
       throw new ProbeError("DEPS_MISSING", "targets.list cần deps.listTargets.");
     }
     const raw = await ctx.listTargets();
-    const engine = new ObserverEngine();
+    const engine = new ScouterEngine();
     const targets = (raw || []).map((target) => engine.describeTarget(target));
     return { count: targets.length, targets };
   },
@@ -725,7 +725,7 @@ const PROBES = {
     /* ---- `full_page` + `scale` MỞ 14/09 — đây là `O12` "nhìn toàn cảnh", [ADR-0007] ----
      * Đức nêu nhu cầu bằng chữ "zoom", cho layout dạng artboard (Udin, Vizcom). Đường hiển
      * nhiên là `Emulation.setDeviceMetricsOverride`, và đường đó KHÔNG đi được ở kiến trúc này:
-     * `observer-engine.js` GẮN RỒI THÁO debugger quanh **từng lượt gọi một**, mà một override
+     * `scouter-engine.js` GẮN RỒI THÁO debugger quanh **từng lượt gọi một**, mà một override
      * của `Emulation` sống theo phiên debugger. Lượt gọi kết thúc là override đi theo — nên một
      * `scout.zoom` đứng riêng sẽ trả về "đã thu phóng" rồi không còn gì thu phóng nữa.
      *

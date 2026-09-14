@@ -7,9 +7,9 @@
  * File này bỏ hết đồ giả ở phía máy chủ: nó khởi động `bridge-host.mjs` THẬT trong tiến trình,
  * trên một cổng trống, rồi bắn RPC thật qua cửa HTTP của nó.
  *
- * Cái CÒN giả: `ObserverEngine`. Bốn phép dò cần `chrome.debugger`, không có trong Node. Phần
- * đó đã được ghim ở `tests/observer-probes-smoke.mjs` và bốn con W1..W4 của
- * `scripts/observer-mutation-check.mjs`. Cái đo ở đây là DÂY và TỪ VỰNG, nói rõ để không ai
+ * Cái CÒN giả: `ScouterEngine`. Bốn phép dò cần `chrome.debugger`, không có trong Node. Phần
+ * đó đã được ghim ở `tests/scouter-probes-smoke.mjs` và bốn con W1..W4 của
+ * `scripts/scouter-probes-mutation-check.mjs`. Cái đo ở đây là DÂY và TỪ VỰNG, nói rõ để không ai
  * đọc kết quả này thành "phép dò đã chạy trên trang thật".
  *
  * KHÔNG nằm trong suite mặc định, cố ý: nó mở một cổng nghe và đọc file của gói worker khác.

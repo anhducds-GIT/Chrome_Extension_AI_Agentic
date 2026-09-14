@@ -523,7 +523,7 @@ quan, và 12/09 nó suýt dẫn cả lượt gỡ lỗi đi sai hướng.
 
 ## T8 · `S-03` — đổi tên `observer` → `scouter`
 
-`observer-engine.js` · `scripts/observer-probes.mjs` · `scripts/observer-mutation-check.mjs` ·
+`scouter-engine.js` · `scripts/scouter-probes.mjs` · `scripts/scouter-probes-mutation-check.mjs` ·
 `tests/observer-*-smoke.mjs` còn mang tên cũ; ADR-0009 đổi tên gói từ 06/09.
 
 **Để gần cuối, có lý do:** nó làm mọi diff khó đọc, và chen vào giữa lúc đang xây thì mọi lượt

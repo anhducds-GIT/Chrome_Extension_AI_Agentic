@@ -3,7 +3,7 @@
  * Đề bài: `S-01` trong `BACKLOG.md` của gói — năng lực xếp hạng **số một** của bảng kiểm kê.
  * Quyết định: ADR-0009 (Scouter là kẻ hành động, không còn là người quan sát).
  *
- * ─── VÌ SAO ĐÂY LÀ FILE RIÊNG, KHÔNG PHẢI THÊM VÀO `observer-probes.mjs` ────
+ * ─── VÌ SAO ĐÂY LÀ FILE RIÊNG, KHÔNG PHẢI THÊM VÀO `scouter-probes.mjs` ────
  * Lõi phép dò read-only thi hành bất biến của ADR-0007 bằng BA chốt, và hai trong ba là
  * DANH SÁCH: `READ_ONLY_CDP_METHODS` cố ý không có `Input.*`, và `CODE_BEARING_PARAM_KEYS`
  * cấm đúng những khoá mà gõ phím cần (`text`, `key`, `value`). Thêm `Input.*` vào đó là
@@ -11,7 +11,7 @@
  * `M2` sẽ ĐỎ đúng lúc đó, cố ý.
  *
  * Nên đường ghi ở đây là một lõi RIÊNG, với danh sách RIÊNG. Kết quả: sau lượt này,
- * `observer-probes.mjs` vẫn chứng minh được là read-only — không phải vì ai đó hứa, mà vì
+ * `scouter-probes.mjs` vẫn chứng minh được là read-only — không phải vì ai đó hứa, mà vì
  * kênh ghi **không có mặt trong file đó**. Ai muốn biết Scouter ghi được gì thì đọc đúng
  * một file: file này.
  *
@@ -103,7 +103,7 @@ export const WRITE_CDP_METHODS = Object.freeze([
    *
    * Nó KHÔNG được coi là đọc: `scout.navigate` là method GHI, chui qua phanh và trả giá hạn
    * mức y như `scout.click`. Đổi trang là điều khiển trang, và mở nó ở đây không nới rộng
-   * đường đọc — danh sách của `observer-probes.mjs` vẫn không có `Page.navigate`.
+   * đường đọc — danh sách của `scouter-probes.mjs` vẫn không có `Page.navigate`.
    *
    * `Target.getTargetInfo` vào cùng vì đường điều hướng phải ĐỌC LẠI url sau khi đi, và một
    * lượt đi không kiểm được đích đến thì không nói được nó đã tới đâu. */

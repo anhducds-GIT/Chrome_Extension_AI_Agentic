@@ -36,7 +36,7 @@ lại** và nó **vẫn đóng**; **Scouter v1** ở bảng trên là **bản đ
 | Định tuyến lệnh Bridge | `createDispatcher` | Live check ĐẠT 8/8 |
 | Bấm và gõ như tay người (`Input`) | `scouter-actions-core.mjs` | **Trang thật, ĐẠT 11/11** (phép đo ②, 07/09) |
 | Chế độ phát triển + trần chạy thử | công tắc **bảng bên** + trần 50 | 12 con đột biến · **phanh đã chặn thật 08/09 giữa lượt tải, dừng sạch** |
-| *(quan sát — 4 phép dò)* | `observer-probes.mjs` | Trang **giả** |
+| *(quan sát — 4 phép dò)* | `scouter-probes.mjs` | Trang **giả** |
 
 **Còn 18 dòng.** Nhưng 18 dòng đó không cùng loại, và đây là chỗ dễ lạc nhất:
 

@@ -109,9 +109,9 @@ function requiredSelector(value) {
   if (typeof value !== "string" || value.trim() === "") invalidParams("params.selector", "expected a non-empty string");
   if (value.length > 1024) invalidParams("params.selector", "expected at most 1024 characters");
   /* Không kiểm cú pháp CSS ở đây: engine CSS của Chrome là trọng tài duy nhất đúng, và
-   * `observer-probes.mjs` đã trả `SELECTOR_INVALID` cho selector sai. Selector đi làm THAM SỐ
+   * `scouter-probes.mjs` đã trả `SELECTOR_INVALID` cho selector sai. Selector đi làm THAM SỐ
    * giao thức, không bao giờ đi qua một parser JavaScript nào — xem khối "SELECTOR ĐI ĐƯỜNG
-   * NÀO" ở đầu `scripts/observer-probes.mjs`. */
+   * NÀO" ở đầu `scripts/scouter-probes.mjs`. */
   return value;
 }
 
@@ -248,7 +248,7 @@ function registryEntry(values) {
  * động được", nhưng KHÔNG thay bất biến "từ vựng cố định" — và ở lượt SEED v0.1 việc ② này,
  * đúng MỘT method không read_only, và nó không chạm trang nào: nó nạp lại chính extension.
  *
- * Bốn `scout.*` là bốn phép dò của `scripts/observer-probes.mjs`, khai TƯỜNG MINH từng cái
+ * Bốn `scout.*` là bốn phép dò của `scripts/scouter-probes.mjs`, khai TƯỜNG MINH từng cái
  * thay vì một method `scout.probe {name}` chung. Lý do: khai tường minh thì `system.capabilities`
  * nói thẳng cho AI ở đầu dây biết gọi được gì, và cờ `read_only` trở thành thứ CƯỠNG CHẾ ĐƯỢC
  * theo từng method — với một method chung thì cờ đó là lời hứa suông. */

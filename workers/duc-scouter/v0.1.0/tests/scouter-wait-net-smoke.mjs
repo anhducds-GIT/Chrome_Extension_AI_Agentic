@@ -14,12 +14,12 @@
  * gói dài thêm vài phút, và cái gì chạy lâu thì sẽ có người bỏ chạy nó.
  *
  * Mẻ này KHÔNG ghim: lượt gắn debugger thật, lượt lọc sự kiện theo tab (nằm ở
- * `observer-engine.js`, và nó là lớp nối dây nên `A1..A4` canh ở biên `chrome`), và hành vi
+ * `scouter-engine.js`, và nó là lớp nối dây nên `A1..A4` canh ở biên `chrome`), và hành vi
  * trên trang thật.
  */
 
 import assert from "node:assert/strict";
-import { runProbe, READ_ONLY_CDP_METHODS, PROBE_NAMES } from "../scripts/observer-probes.mjs";
+import { runProbe, READ_ONLY_CDP_METHODS, PROBE_NAMES } from "../scripts/scouter-probes.mjs";
 
 const ket = [];
 async function ghim(ten, chay) {

@@ -51,8 +51,8 @@ globalThis.chrome = {
   }
 };
 
-const { ObserverEngine } = await import("../observer-engine.js");
-const engine = new ObserverEngine();
+const { ScouterEngine } = await import("../scouter-engine.js");
+const engine = new ScouterEngine();
 const targets = await engine.scanTargets();
 
 assert.equal(targets[0].classification.kind, "extension_page");
@@ -76,7 +76,7 @@ assert.deepEqual(calls, ["attach"]);
 /* ---- Nối dây: lõi bốn phép dò đi qua chrome.debugger ---------------------
  *
  * Vì sao phần này quan sát ở BIÊN `chrome` chứ không ở biên lõi:
- * ba chốt read-only nằm TRONG scripts/observer-probes.mjs, nên chúng chỉ bảo vệ được
+ * ba chốt read-only nằm TRONG scripts/scouter-probes.mjs, nên chúng chỉ bảo vệ được
  * những gì đi QUA lõi. Một lớp nối dây gọi thẳng `chrome.debugger.sendCommand` sẽ đi vòng
  * qua cả ba, mà mọi phép ghim của lõi vẫn xanh — bài học "mutation-test the WIRING, not just
  * the rule". Nên ở đây ta không hỏi lõi trả về gì; ta hỏi `chrome` ĐÃ BỊ GỌI NHỮNG GÌ.
@@ -209,6 +209,6 @@ assert.deepEqual(calls, []);
 
 console.log("scouter-actions wiring pins: PASS");
 
-console.log("observer-engine wiring pins: PASS");
+console.log("scouter-engine wiring pins: PASS");
 
-console.log("observer-engine smoke tests: PASS");
+console.log("scouter-engine smoke tests: PASS");

@@ -3,7 +3,7 @@
  * Đề bài: docs/briefs/BRIEF-SCOUTER-SEED-01.md mục 2. ADR-0009 mục ⑸ định nghĩa seed là bộ
  * nhỏ nhất biết ba việc:
  *
- *   ① quan sát        → bốn phép dò của `scripts/observer-probes.mjs`, đi qua `ObserverEngine`
+ *   ① quan sát        → bốn phép dò của `scripts/scouter-probes.mjs`, đi qua `ScouterEngine`
  *   ② báo cáo qua Bridge → từ vựng method ở `scripts/scouter-bridge-core.mjs`
  *   ③ tự nạp lại mình  → `scout.reload`
  *
@@ -11,9 +11,9 @@
  * duyệt đều tiêm vào. Nhờ thế phép ghim chạy được mà không cần Chrome, và
  * `scouter-background.js` ở gốc repo chỉ còn là vài dòng bơm đồ thật vào đây.
  *
- * ─── VÌ SAO GỌI LẠI `ObserverEngine` THAY VÌ TỰ GẮN DEBUGGER ────────────────
- * `observer-engine.js` đã có sẵn phần gắn/tháo debugger và phần từ chối tên phép dò lạ TRƯỚC
- * khi gắn, và bốn con đột biến W1..W4 trong `scripts/observer-mutation-check.mjs` đang canh
+ * ─── VÌ SAO GỌI LẠI `ScouterEngine` THAY VÌ TỰ GẮN DEBUGGER ────────────────
+ * `scouter-engine.js` đã có sẵn phần gắn/tháo debugger và phần từ chối tên phép dò lạ TRƯỚC
+ * khi gắn, và bốn con đột biến W1..W4 trong `scripts/scouter-probes-mutation-check.mjs` đang canh
  * đúng đoạn đó. Tự gắn debugger ở đây là dựng đường thứ hai tới cùng một chỗ, mà đường thứ
  * hai thì không con đột biến nào canh.
  */
@@ -189,7 +189,7 @@ const RELOAD_DELAY_MS = 250;
 
 /**
  * @param {object} deps
- *   engine     — ObserverEngine (cần `scanTargets()` và `runProbe(target, name, params)`)
+ *   engine     — ScouterEngine (cần `scanTargets()` và `runProbe(target, name, params)`)
  *   chromeApi  — { runtime: { id, reload() }, storage: { local: { get, set } } }
  *   timers     — { setTimeout } (tiêm để phép ghim không phải chờ thật)
  *   now        — () => Date
@@ -219,7 +219,7 @@ export function createSeedHandlers(deps = {}) {
         probe_code: "TARGET_NOT_FOUND", target_id: targetId
       });
     }
-    /* `ObserverEngine.runProbe` đọc `target.id ?? target.targetId` và `target.attached`.
+    /* `ScouterEngine.runProbe` đọc `target.id ?? target.targetId` và `target.attached`.
      * `scanTargets()` trả về dạng đã mô tả (`targetId`), nên dựng lại đúng hai trường đó. */
     return { id: found.targetId, targetId: found.targetId, attached: Boolean(found.attached) };
   }
@@ -461,7 +461,7 @@ export function createSeedHandlers(deps = {}) {
     },
 
     /* ---- LỆNH GỌI MẠNG (S-10) ------------------------------------------
-     * KHÔNG đi qua `runAction()`: chỗ đó bơm việc cho `ObserverEngine`, mà lượt gọi này không
+     * KHÔNG đi qua `runAction()`: chỗ đó bơm việc cho `ScouterEngine`, mà lượt gọi này không
      * chạm một tab nào. Nhưng nó PHẢI trả đúng cái giá kia — nên nó gọi thẳng
      * `spendWriteBudget()`, tức vẫn là cái phanh đó, chỉ khác đường vào.
      *

@@ -56,9 +56,9 @@ const EXPECTED_METHODS = [
  * mà `scout.click` trả. Đổi dòng này thành `read_only: true` là mở cho nó chạy tự do đúng lúc
  * nó nguy hiểm nhất. */
 const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.hover", "scout.scroll", "scout.history", "scout.type", "scout.key", "scout.clear", "scout.fetch", "scout.grab", "scout.navigate"]);
-/* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
+/* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ScouterEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.hover", "input.scroll", "input.history", "input.type", "input.key", "input.clear", "input.navigate"]);
-/* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
+/* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ScouterEngine.runProbe`. */
 const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.text", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch", "page.view"]);
 
 const POISON = "'); doSomething(); ('";

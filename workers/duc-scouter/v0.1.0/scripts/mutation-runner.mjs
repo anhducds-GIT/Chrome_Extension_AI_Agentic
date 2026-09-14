@@ -18,7 +18,7 @@
  *   · Khôi phục bằng `git checkout` sẽ xoá luôn việc chưa commit. → Khôi phục bằng ghi lại
  *     ĐÚNG BYTES GỐC đã đọc vào bộ nhớ trước khi sửa, trong `finally`.
  *
- * Tách khỏi `observer-mutation-check.mjs` ngày 06/09 khi có bộ mục tiêu thứ hai (Scouter seed).
+ * Tách khỏi `scouter-probes-mutation-check.mjs` ngày 06/09 khi có bộ mục tiêu thứ hai (Scouter seed).
  * Hai bản sao của bộ máy này là hai bản sao của ba cái bẫy trên, và bản thứ hai sẽ không học
  * lại được chúng.
  */

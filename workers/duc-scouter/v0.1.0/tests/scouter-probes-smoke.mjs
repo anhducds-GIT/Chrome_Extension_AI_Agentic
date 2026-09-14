@@ -1,4 +1,4 @@
-/* Phép ghim cho BỐN phép dò read-only của Observer (scripts/observer-probes.mjs).
+/* Phép ghim cho BỐN phép dò read-only của Observer (scripts/scouter-probes.mjs).
  *
  * Luật ghim của repo (MULTIFLOW.md mục 5): ghim HÀNH VI, không ghim chuỗi nguồn; và ghim
  * CẢ HAI CHIỀU — "chặn đúng thứ cần chặn" lẫn "KHÔNG chặn thứ hợp lệ". Một bản "luôn từ
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const { runProbe, createReadOnlySender, ProbeError, PROBE_NAMES } =
-  await import("../scripts/observer-probes.mjs");
+  await import("../scripts/scouter-probes.mjs");
 
 /* Bản khai ĐỘC LẬP của test. Đừng đồng bộ nó với module — lệch nhau là tín hiệu, không phải lỗi. */
 const READ_ONLY_EXPECTED = new Set([
@@ -391,11 +391,11 @@ const FAKE_TARGETS = [
 
 if (process.argv.includes("--with-mutation")) {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  execFileSync(process.execPath, [path.join(here, "..", "scripts", "observer-mutation-check.mjs")], { stdio: "inherit" });
+  execFileSync(process.execPath, [path.join(here, "..", "scripts", "scouter-probes-mutation-check.mjs")], { stdio: "inherit" });
 }
 
 /* Dòng PASS phải là dòng CUỐI CÙNG chạy được.
  * Trước 08/09 nó nằm ở giữa file, và bốn khối kiểm chạy SAU nó — nên một phép ghim đỏ vẫn in
  * ra chữ PASS rồi mới nổ. run-all.mjs đọc mã thoát nên nó không bị lừa, nhưng người đọc thì
  * có. Một dòng nói "đạt" trước khi đo xong là một dòng nói dối, dù máy không tin nó. */
-console.log("observer-probes smoke tests: PASS");
+console.log("scouter-probes smoke tests: PASS");

@@ -12,7 +12,7 @@
  *   · LUẬT     — từ vựng method và phong bì (`scouter-bridge-core.mjs`)
  *   · BA KHẢ NĂNG — quan sát · nạp lại (`scouter-seed-core.mjs`)
  *   · HÀNH ĐỘNG — bốn chốt của đường GHI (`scouter-actions-core.mjs`), S-01
- *   · NỐI DÂY GHI — đường ghi đi qua `chrome.debugger` (`observer-engine.js`), S-01
+ *   · NỐI DÂY GHI — đường ghi đi qua `chrome.debugger` (`scouter-engine.js`), S-01
  *   · DÂY      — bắt tay và khung trên socket (`scouter-transport-loopback.mjs`).
  *     Hai mẻ đầu chỉ bảo vệ thứ ĐI QUA lõi. Một lớp dây đưa token ra trước khi máy chủ chứng
  *     minh nó biết token — đúng cách hai bản worker cũ đang làm — đi vòng qua cả hai mà chúng
@@ -29,7 +29,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PIN_BRIDGE = path.join(ROOT, "tests", "scouter-bridge-smoke.mjs");
 const PIN_TRANSPORT = path.join(ROOT, "tests", "scouter-transport-smoke.mjs");
 const PIN_ACTIONS = path.join(ROOT, "tests", "scouter-actions-smoke.mjs");
-const PIN_WIRING = path.join(ROOT, "tests", "observer-engine-smoke.mjs");
+const PIN_WIRING = path.join(ROOT, "tests", "scouter-engine-smoke.mjs");
 
 const BATCHES = [
   {
@@ -456,8 +456,8 @@ BATCHES.push({
 });
 
 BATCHES.push({
-  ten: "NỐI DÂY GHI — observer-engine.js",
-  target: path.join(ROOT, "observer-engine.js"),
+  ten: "NỐI DÂY GHI — scouter-engine.js",
+  target: path.join(ROOT, "scouter-engine.js"),
   pin: PIN_WIRING,
   mutants: [
     {
@@ -710,7 +710,7 @@ BATCHES.push({
 
 const BS = String.fromCharCode(92);   // dau gach nguoc, viet bang ma de khong phai thoat ba tang
 const Q = String.fromCharCode(34);    // dau nhay kep
-const PIN_PROBES = path.join(ROOT, "tests", "observer-probes-smoke.mjs");
+const PIN_PROBES = path.join(ROOT, "tests", "scouter-probes-smoke.mjs");
 const PIN_FILE = path.join(ROOT, "tests", "scouter-file-core-smoke.mjs");
 const PIN_HOST = path.join(ROOT, "tests", "scouter-bridge-host-smoke.mjs");
 
@@ -818,7 +818,7 @@ BATCHES.push({
 });
 BATCHES.push({
   ten: "NHÌN RÕ HƠN — ba phép dò quan sát",
-  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  target: path.join(ROOT, "scripts", "scouter-probes.mjs"),
   pin: PIN_PROBES,
   mutants: [
     {
@@ -1101,7 +1101,7 @@ BATCHES.push({
  * chết nếu phép ghim soi TOÀN BỘ chuỗi kết quả để tìm bí mật. */
 BATCHES.push({
   ten: "CHỜ và NGHE MẠNG — hai năng lực mở 12/09",
-  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  target: path.join(ROOT, "scripts", "scouter-probes.mjs"),
   pin: path.join(ROOT, "tests", "scouter-wait-net-smoke.mjs"),
   mutants: [
     {
@@ -1254,7 +1254,7 @@ BATCHES.push({
  * *lượt bấm cũ có đổi hành vi không*. */
 BATCHES.push({
   ten: "NHÌN — `page.view` và lượt chụp toàn cảnh",
-  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  target: path.join(ROOT, "scripts", "scouter-probes.mjs"),
   pin: path.join(ROOT, "tests", "scouter-view-smoke.mjs"),
   mutants: [
     {

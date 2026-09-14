@@ -16,13 +16,13 @@
  *   · Chữ Đức nhìn thấy: tiếng Việt. Mã lỗi (CODE): tiếng Anh.
  */
 
-import { ObserverEngine } from "./observer-engine.js";
+import { ScouterEngine } from "./scouter-engine.js";
 import { capabilities } from "./scripts/scouter-bridge-core.mjs";
 import { JOURNAL_CONSTANTS, nanSo, tenMien, tinhTienDo } from "./scripts/scouter-journal-core.mjs";
 import { validatePairing, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
 
-const engine = new ObserverEngine();
+const engine = new ScouterEngine();
 const $ = (chon) => document.querySelector(chon);
 
 /* Đổi tab. `hidden` chứ không `style.display`, để phím Tab không lạc vào khối đang ẩn. */

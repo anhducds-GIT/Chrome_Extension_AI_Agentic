@@ -27,12 +27,18 @@
   · **đóng khi:** Đức chốt cho thêm quyền `alarms`, manifest khai, và bộ hẹn giờ nối lại đi qua
   `chrome.alarms` — hoặc Đức chốt là KHÔNG thêm, và mục này đóng bằng một dòng ghi lý do.
 
-- **S-03** · Tên file còn mang chữ `observer`: `observer-engine.js` · `scripts/observer-probes.mjs`
-  · `scripts/observer-mutation-check.mjs` · `tests/observer-*-smoke.mjs`. ADR-0009 đã đổi tên
-  Observer thành Scouter từ 06/09. Không đổi trong lượt này vì nó làm hỏng 14 mỏ neo đột biến và
-  làm mọi diff của lượt xây khó đọc — đúng lý do ADR-0013 nêu khi bàn chuyện chuyển chỗ.
-  · **đóng khi:** đổi bằng `git mv` (không copy-rồi-xoá), 14 mỏ neo của
-  `observer-mutation-check.mjs` khớp lại đủ, và `npm run scouter:mutation` vẫn 0 con sống sót.
+- ~~**S-03**~~ · **ĐÓNG 14/09 (`T8`).** Năm tệp đổi tên bằng `git mv`: `scouter-engine.js` ·
+  `scripts/scouter-probes.mjs` · `scripts/scouter-probes-mutation-check.mjs` ·
+  `tests/scouter-engine-smoke.mjs` · `tests/scouter-probes-smoke.mjs`. Lớp `ObserverEngine` thành
+  `ScouterEngine` — để nguyên tên lớp thì lượt đổi tên chỉ là trang trí. Mỏ neo: **14/14** và
+  **143/143**, cả hai bộ 0 con sống sót. **Để yên có chủ ý**: `README-OBSERVER-V0.md` (bản ghi
+  POC-1, tự khai "giữ nguyên văn"), `HANDOFF.md`, `docs/GIA-THUYET.md`, brief và audit — viết lại
+  ghi chép có ngày tháng là sửa lịch sử. Bản đồ file ở `AGENTS.md` có dòng chỉ tên cũ sang tên mới.
+
+- **S-26** · Con đột biến `M5` của `scouter-probes-mutation-check.mjs` nay giết **ba** chỗ cùng
+  lúc (`dom.query` · `dom.text` · `dom.wait` dùng chung một đường đã có chốt). Nghĩa là một phép
+  ghim chỉ phủ `dom.query` vẫn đủ làm nó đỏ, và hai phép dò kia **chưa chắc có chốt riêng**.
+  · **đóng khi:** tách `M5` làm ba con, mỗi con một chỗ, và cả ba vẫn bị giết.
 
 - **S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**, chứ không
   chờ xác nhận khung đã rời socket. Muốn chắc thì transport phải có móc "đã gửi xong".
@@ -52,7 +58,7 @@ suite gói **6/6** · nối thật với máy chủ Bridge **ĐẠT 7/7**.
 
 **Hình dạng đã chốt, đừng quyết lại:** đường ghi là một **lõi riêng**
 (`scripts/scouter-actions-core.mjs`) với danh sách method CDP riêng, KHÔNG phải thêm `Input.*`
-vào lõi đọc. Nhờ thế `observer-probes.mjs` vẫn chứng minh được là read-only — vì kênh ghi không
+vào lõi đọc. Nhờ thế `scouter-probes.mjs` vẫn chứng minh được là read-only — vì kênh ghi không
 có mặt trong file đó, không phải vì ai hứa.
 
 ## MỞ · S-05 (2026-09-07, `claude-scouter-s01`) — chưa có phanh nào cho đường ghi
@@ -691,7 +697,7 @@ Fail-closed nên không bấm nhầm — nhưng mọi nút dưới màn hình kh
 **Đo, không đoán.** Chạy thật trên ghế `Udin_Scout` 14/09: `scout.fetch` trả **403** cho mọi ảnh
 kết quả. Nguyên nhân ở `docs/GIA-THUYET.md` **G-35**: ảnh Udin nằm trên S3 với **URL ký sẵn**
 (chữ ký + hạn giờ nằm trong query string), còn lõi ĐỌC **cắt query khỏi mọi `href`/`src`**
-(`stripQuery` trong `scripts/observer-probes.mjs`) theo chính sách che `de-xuat-chat-v1`. Đo được:
+(`stripQuery` trong `scripts/scouter-probes.mjs`) theo chính sách che `de-xuat-chat-v1`. Đo được:
 **17/17 `src` khác nhau trên trang đều kết thúc bằng `…`**, và chính `scout.query` tự khai chính
 sách đó trong phần trả về.
 

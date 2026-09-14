@@ -10,7 +10,7 @@
  * rò rỉ là ĐỎ chứ không phải "trông cũng ổn".
  */
 import assert from "node:assert/strict";
-import { runProbe, PROBE_NAMES } from "../scripts/observer-probes.mjs";
+import { runProbe, PROBE_NAMES } from "../scripts/scouter-probes.mjs";
 
 const MA_BI_MAT = "KHONG_DUOC_LOT_RA_NGOAI_9F3A";
 
@@ -132,7 +132,7 @@ const chay = (trang, params) => runProbe("dom.text", { sendRaw: trang.sendRaw },
 
 // ⓘ lõi ĐỌC vẫn không có cửa chạy mã — `dom.text` không mở thêm method CDP nào
 {
-  const { READ_ONLY_CDP_METHODS } = await import("../scripts/observer-probes.mjs");
+  const { READ_ONLY_CDP_METHODS } = await import("../scripts/scouter-probes.mjs");
   assert.ok(!READ_ONLY_CDP_METHODS.some((m) => m.startsWith("Runtime.")), "cửa chạy mã vẫn phải đóng");
   assert.ok(!READ_ONLY_CDP_METHODS.includes("DOM.getOuterHTML"),
     "getOuterHTML là đường vòng để lấy cả HTML — ADR-0006 cấm outerHTML, nên cửa đó phải ở ngoài");

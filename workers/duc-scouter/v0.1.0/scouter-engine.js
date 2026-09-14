@@ -1,4 +1,4 @@
-import { runProbe as runProbeCore, PROBE_NAMES } from "./scripts/observer-probes.mjs";
+import { runProbe as runProbeCore, PROBE_NAMES } from "./scripts/scouter-probes.mjs";
 import { runAction as runActionCore, ACTION_NAMES } from "./scripts/scouter-actions-core.mjs";
 
 const PROTOCOL_VERSION = "1.3";
@@ -9,7 +9,7 @@ const MAX_ELEMENTS = 100;
  * A deliberately read-only wrapper around chrome.debugger.
  * It never sends input, dispatches events, changes DOM/storage, or messages pages.
  */
-export class ObserverEngine {
+export class ScouterEngine {
   async scanTargets() {
     const targets = await chrome.debugger.getTargets();
     return targets.map((target) => this.describeTarget(target));
@@ -69,7 +69,7 @@ export class ObserverEngine {
     return finalize(report);
   }
 
-  /* ---- Nối dây: bốn phép dò read-only (scripts/observer-probes.mjs) -------
+  /* ---- Nối dây: bốn phép dò read-only (scripts/scouter-probes.mjs) -------
    * ĐƯỜNG THÊM VÀO, không thay `observe()`. `observe()` giữ nguyên hành vi cũ.
    *
    * Lớp này CỐ Ý mỏng: nó chỉ bơm `chrome.debugger.sendCommand` và `chrome.debugger.getTargets`
@@ -79,7 +79,7 @@ export class ObserverEngine {
    * tham số) chỉ bảo vệ được những gì ĐI QUA lõi. Một lớp nối dây tự gọi thẳng `sendCommand`
    * sẽ đi vòng qua cả ba, mà mọi phép ghim CỦA LÕI vẫn xanh — nên phép ghim của lớp này quan
    * sát ở BIÊN `chrome`, không ở biên lõi. Xem mục "nối dây" trong
-   * tests/observer-engine-smoke.mjs, và bốn con W1..W4 trong scripts/observer-mutation-check.mjs.
+   * tests/scouter-engine-smoke.mjs, và bốn con W1..W4 trong scripts/scouter-probes-mutation-check.mjs.
    */
   /* ---- KÊNH SỰ KIỆN CDP (12/09) — một chiều, VÀO --------------------------
    * `net.watch` cần nghe được sự kiện, mà `sendCommand` chỉ hỏi-đáp. Đây là kênh đó, và nó

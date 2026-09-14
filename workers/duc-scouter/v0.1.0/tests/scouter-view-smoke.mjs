@@ -22,7 +22,7 @@
 import assert from "node:assert/strict";
 
 const { runProbe, createReadOnlySender, ProbeError, PROBE_NAMES, READ_ONLY_CDP_METHODS, CDP_HAN_MS } =
-  await import("../scripts/observer-probes.mjs");
+  await import("../scripts/scouter-probes.mjs");
 
 /* Trang giả: trả về số đo bố cục, và GHI LẠI mọi lệnh — test đọc được cả "gửi gì" lẫn "gửi mấy
  * lần". Hai bộ số cố ý LỆCH NHAU (css = một nửa thiết bị) để phân biệt được lấy nhầm bộ. */

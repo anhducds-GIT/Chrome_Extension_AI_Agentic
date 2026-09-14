@@ -16,7 +16,7 @@ import assert from "node:assert/strict";
 
 const { runAction, createWriteSender, ActionError, ACTION_NAMES, NAMED_KEY_NAMES } =
   await import("../scripts/scouter-actions-core.mjs");
-const readOnly = await import("../scripts/observer-probes.mjs");
+const readOnly = await import("../scripts/scouter-probes.mjs");
 
 /* Bản khai ĐỘC LẬP của test. Đừng đồng bộ nó với module — lệch nhau là tín hiệu, không phải lỗi. */
 const WRITE_EXPECTED = new Set([
@@ -407,7 +407,7 @@ function makeFakePage(options = {}) {
 
 /* ---- ⑩ LÕI ĐỌC VẪN LÀ LÕI ĐỌC — đây là vế quan trọng nhất của cả lượt ----
  * S-01 mở một đường ghi. Cái phải KHÔNG đổi là bất biến của lõi đọc: sau lượt này
- * `observer-probes.mjs` vẫn không có một lệnh ghi nào trong danh sách của nó. Ghim ở đây,
+ * `scouter-probes.mjs` vẫn không có một lệnh ghi nào trong danh sách của nó. Ghim ở đây,
  * trong file của đường ghi, để ai mở đường ghi rộng thêm sẽ đọc thấy ngay vế này. */
 {
   /* Danh sách này từng có `DOM.getBoxModel`, và ngày 12/09 nó RỜI ĐI — Đức chốt, để lõi đọc

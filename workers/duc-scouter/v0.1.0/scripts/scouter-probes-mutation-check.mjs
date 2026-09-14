@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-/* observer-mutation-check.mjs — ĐỘT BIẾN KIỂM cho bốn phép dò read-only của Observer.
+/* scouter-probes-mutation-check.mjs — ĐỘT BIẾN KIỂM cho bốn phép dò read-only của Observer.
  *
  * Bộ máy (kèm ba cái bẫy đã trả giá: regex · SKIP đọc như PASS · khôi phục bằng git checkout)
  * nằm ở `scripts/mutation-runner.mjs`. File này chỉ còn DANH SÁCH CON — mỗi con là một đường
  * GHI hoặc một chốt bị gỡ, và phép ghim phải ĐỎ vì nó.
  *
- * Chạy: node scripts/observer-mutation-check.mjs
+ * Chạy: node scripts/scouter-probes-mutation-check.mjs
  */
 
 import path from "node:path";
@@ -13,8 +13,8 @@ import { fileURLToPath } from "node:url";
 import { chayDotBien } from "./mutation-runner.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const TARGET = path.join(ROOT, "scripts", "observer-probes.mjs");
-const PIN = path.join(ROOT, "tests", "observer-probes-smoke.mjs");
+const TARGET = path.join(ROOT, "scripts", "scouter-probes.mjs");
+const PIN = path.join(ROOT, "tests", "scouter-probes-smoke.mjs");
 
 /* Mỗi con đột biến = một đường GHI hoặc một chốt bị gỡ. `tim` phải xuất hiện đúng `soLan` lần,
  * nếu không thì mỏ neo đã mục theo code — đó là lỗi của bộ đo, không phải kết quả. */
@@ -50,11 +50,15 @@ const MUTANTS = [
   {
     ma: "M5",
     ten: "NỐI CHUỖI: dựng biểu thức Runtime.evaluate từ selector của người gọi",
+    /* BA chỗ, không phải một: `dom.text` (08/09) và `dom.wait` (12/09) ra đời bằng cách DÙNG
+     * LẠI đúng đường đã có chốt của `dom.query`, nên mỏ neo khớp thêm mỗi lần một phép dò mới
+     * mượn đường. Đó là tin TỐT — nó nghĩa là cả ba đi chung một cửa. Con này giết cả ba cùng
+     * lúc; muốn từng chỗ một chốt riêng thì phải tách làm ba con, ghi ở BACKLOG `S-26`. */
     tim: '      found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });',
     thay:
       '      const expr = "document.querySelectorAll(\'" + selector + "\').length";\n' +
       '      found = { nodeIds: [], evaluated: await send("Runtime.evaluate", { expression: expr }) };',
-    soLan: 1
+    soLan: 3
   },
   {
     ma: "M6",
@@ -104,30 +108,36 @@ const MUTANTS = [
 const BATCHES = [
   { ten: "LUẬT — bốn phép dò", target: TARGET, pin: PIN, mutants: MUTANTS },
   {
-    ten: "NỐI DÂY — observer-engine.js",
-    target: path.join(ROOT, "observer-engine.js"),
-    pin: path.join(ROOT, "tests", "observer-engine-smoke.mjs"),
+    ten: "NỐI DÂY — scouter-engine.js",
+    target: path.join(ROOT, "scouter-engine.js"),
+    pin: path.join(ROOT, "tests", "scouter-engine-smoke.mjs"),
     mutants: [
       {
         ma: "W1",
         ten: "Đi vòng qua lõi: lớp nối dây gọi thẳng chrome.debugger.sendCommand",
-        tim: "      return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw }, params);",
+        /* Dòng này mọc thêm `subscribe:` ngày 12/09 khi `scout.network` ra đời. Mỏ neo cũ khớp
+         * 0 kể từ đó, và KHÔNG AI BIẾT — vì bộ đột biến này chỉ chạy sau cờ `--with-mutation`. */
+        tim: "      return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw, subscribe: dangKySuKien(debuggee) }, params);",
         thay: '      return { ok: true, probe: name, cdp: [], data: await chrome.debugger.sendCommand(debuggee, "Runtime.evaluate", { expression: "document.title" }) };',
         soLan: 1
       },
       {
         ma: "W2",
         ten: "sendRaw không còn CHỈ chuyển tiếp: tự thêm một lệnh CDP của riêng nó",
+        /* HAI chỗ: đường ĐỌC và đường GHI dựng `sendRaw` y hệt nhau (luật gói mục 6 — hai lõi
+         * tách rời, nhưng lớp nối dây thì cùng một hình dạng). Đột biến cả hai, và phép ghim
+         * của đường đọc vẫn phải đỏ. */
         tim: "      const sendRaw = (method, cdpParams) => chrome.debugger.sendCommand(debuggee, method, cdpParams);",
         thay: '      const sendRaw = async (method, cdpParams) => { await chrome.debugger.sendCommand(debuggee, "Runtime.enable", {}); return chrome.debugger.sendCommand(debuggee, method, cdpParams); };',
-        soLan: 1
+        soLan: 2
       },
       {
         ma: "W3",
         ten: "Không tháo debugger nữa (dải băng cảnh báo ở lại, phiên debug bị giữ)",
+        /* HAI chỗ, cùng lý do như W2: đường đọc và đường ghi đều gắn-rồi-tháo. */
         tim: "      if (attachedHere) await detachQuietly(debuggee);",
         thay: "      if (false && attachedHere) await detachQuietly(debuggee);",
-        soLan: 1
+        soLan: 2
       },
       {
         ma: "W4",

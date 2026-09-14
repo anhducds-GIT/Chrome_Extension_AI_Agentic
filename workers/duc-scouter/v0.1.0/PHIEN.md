@@ -66,7 +66,7 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
    · [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Khai trong
    `manifest.json` **đúng thứ đang dùng**, đừng khai trước; **`downloads` thì KHÔNG** — file đi qua
    Bridge. Xin ra ngoài danh sách đã duyệt thì **hỏi Đức**. Con `Q1` `Q2` canh dòng đó.
-6. **Đọc và GHI đi qua hai lõi khác nhau, và đừng gộp chúng.** `scripts/observer-probes.mjs`
+6. **Đọc và GHI đi qua hai lõi khác nhau, và đừng gộp chúng.** `scripts/scouter-probes.mjs`
    chứng minh được là read-only vì kênh ghi **không có mặt trong file đó** — không phải vì ai
    hứa. Muốn Scouter làm được một việc mới có tính GHI thì thêm vào `scouter-actions-core.mjs`
    với danh sách method riêng của nó. Thêm `Input.*` vào lõi đọc là làm yếu một lớp bảo vệ
@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T33 T34 T36 XONG 14/09 — danh sach W de xuat BAT BUOC (W1 W2 W3 W4 W7 + E2E) nay DAT TRON. Nen viec ke la chang (3) DONG BANG SEED: T8 doi ten observer->scouter, T9 goi v1. Roi (4) T21 tach Udin. T35 (W6, dinh S-22) va T29 (upload -> W8) de LAI SAU khi tach — dung de xuat cua chinh minh. Duc them W nao vao danh sach bat buoc thi chung quay lai truoc. Chi tiet o CHUOI-VIEC.md."
-- human_action: "@Đức:ký — ⓪ nay chỉ còn một chữ ký: danh sách đề xuất `W1 W2 W3 W4 W7` + E2E đã ĐẠT trọn 14/09. Gật là đủ điều kiện tách Udin; muốn thêm `W5` `W6` `W8` thì nói, `T35`/`T29` quay lại trước. Hai câu treo cũ đã TỰ ĐÓNG 14/09 bằng phép đo: `G-65` **SAI** (zoom không vẽ thêm phần tử nào), nên `G-69` hết là câu chặn — `G-79` có đường rẻ hơn, không đổi kiến trúc."
+- next_step: "T8 XONG 14/09 — nam tep doi ten bang git mv, ObserverEngine -> ScouterEngine, hai bo dot bien 143/143 + 14/14 va 0 con song sot. Chang (3) con T9 goi v1, NHUNG T9 tu khai "chi lam sau T7" ma T7 (dong vong tu cai tien MOT lan) chua dong — do moi la cho chan. Hai duong: (a) lam T7 truoc; (b) Duc noi T21 khong can T9, vi dieu kien tach la "W bat buoc DAT tu goi moi, khong mot dong Scouter nao phai sua" — khong nhac v1. De xuat (a). Chi tiet o CHUOI-VIEC.md."
+- human_action: "@Đức:bấm — NẠP LẠI tiện ích ở chrome://extensions. Nam tep vua doi ten (T8) nen ban dang chay trong bo nho la ban cu; moi lenh van chay, nhung tep tren dia da khac. Cong tac ghi mo lai neu muon chay that. (⓪ Duc da gat 14/09 — danh sach W bat buoc chot o W1 W2 W3 W4 W7 + E2E.)"
