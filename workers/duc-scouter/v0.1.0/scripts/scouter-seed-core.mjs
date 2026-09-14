@@ -25,6 +25,7 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.targets": "targets.list",
   "scout.page": "page.snapshot",
   "scout.query": "dom.query",
+  "scout.text": "dom.text",
   "scout.tree": "dom.tree",
   "scout.a11y": "a11y.tree",
   "scout.shot": "page.shot",
@@ -318,6 +319,14 @@ export function createSeedHandlers(deps = {}) {
       return await runProbe("scout.query", target, {
         selector: params.selector, offset: params.offset, limit: params.limit
       });
+    },
+
+    /* `scout.text` — ĐỌC, nên nó đi qua lõi đọc và KHÔNG tiêu trần ghi. Chỉ nhận `selector`:
+     * không có tham số nào nới được trần ký tự hay bỏ được phép kiểm "khớp đúng một", vì cả hai
+     * là điều kiện của [ADR-0006] chứ không phải tuỳ chọn của người gọi. */
+    async "scout.text"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runProbe("scout.text", target, { selector: params.selector });
     },
 
     async "scout.tree"(params) {

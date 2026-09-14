@@ -24,7 +24,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Mười tám** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Mười chín** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -33,6 +33,7 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.targets` | không | liệt kê và phân loại các target debug của Chrome |
 | `scout.page` | không | metadata trang + kiểm kê phần tử tương tác, có phân trang |
 | `scout.query` | không | một selector khớp mấy phần tử, và chúng là gì |
+| `scout.text` | không | **chữ của ĐÚNG MỘT phần tử** khớp selector. Khớp 0 hay 2+ thì từ chối; trần 5.000 ký tự; không bao giờ trả `outerHTML` ([ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md)) |
 | `scout.tree` | không | cây DOM tới độ sâu N, thuộc tính đã che |
 | `scout.a11y` | không | cây trợ năng — cái mà trình đọc màn hình thấy, không phải cái mắt thấy |
 | `scout.shot` | không | ảnh chụp trang, trả về base64 |

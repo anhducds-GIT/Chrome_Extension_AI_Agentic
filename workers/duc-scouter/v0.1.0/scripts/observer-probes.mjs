@@ -62,7 +62,22 @@ export const PROBE_NAMES = Object.freeze([
    *
    * Cả hai `read_only`, và cả hai KHÔNG chạy mã của người gọi. */
   "dom.wait",
-  "network.watch"
+  "network.watch",
+  /* ---- `dom.text` MỞ 14/09 — Đức chốt, [ADR-0006] ------------------------
+   * Chính sách che `de-xuat-chat-v1` cấm trả chữ trong trang. `ADR-0006` ký chính sách đó và
+   * mở **đúng một cửa hẹp**: chữ của **MỘT** phần tử đã chỉ đích danh bằng selector.
+   *
+   * Thứ được bảo vệ là **KHỐI LƯỢNG**, không phải bản thân chữ. Đọc chữ của một nút mình vừa
+   * chỉ đích danh là đủ để tự kiểm việc mình vừa làm; đọc `innerText` của `body` là hút cả
+   * trang, gồm cả tab khác cùng hồ sơ. Nên ba cái khoá, và cả ba đều phải còn:
+   *   ⑴ selector khớp **không phải một** thì TỪ CHỐI — không lấy "cái đầu tiên";
+   *   ⑵ trần ký tự (`MAX_TEXT_LENGTH`), và nói thật khi đã cắt;
+   *   ⑶ KHÔNG trả `outerHTML`, không trả thuộc tính, không trả cấu trúc — chỉ chữ.
+   *
+   * Không mở cửa CDP nào: nó dùng lại `DOM.getDocument` + `DOM.querySelectorAll` +
+   * `DOM.describeNode` mà `dom.query` và `dom.tree` đã dùng. Chữ lấy từ `nodeValue` của các
+   * nút `#text` con cháu — không có `Runtime.*`, nên không có đường nào chạy mã để lấy nó. */
+  "dom.text"
 ]);
 
 /* Method CDP được phép. CỐ Ý không có `Runtime.*`, không có `Input.*`, không có
@@ -206,6 +221,10 @@ const DEFAULT_AX_NODES = 400;
 const MAX_SHOT_BYTES = 700 * 1024;
 const DEFAULT_SHOT_QUALITY = 60;
 const MAX_ATTR_LENGTH = 200;
+/* Trần chữ cho `dom.text` ([ADR-0006]). Đủ cho một câu trả lời, một thông báo lỗi, một nhãn —
+ * tức là đúng những thứ adapter cần để tự kiểm. KHÔNG đủ để chở một trang về, và đó là mục đích:
+ * cái được bảo vệ là khối lượng. Đổi số này là nới một chính sách đã ký — hỏi Đức. */
+const MAX_TEXT_LENGTH = 5000;
 
 /* ---- Chính sách che dữ liệu — ĐỀ XUẤT, CHƯA ĐƯỢC ĐỨC CHỐT ---------------
  * BRIEF mục 3c hỏi chính sách che. Mặc định ở đây là hướng CHẶT: chỉ trả về thuộc tính
@@ -355,6 +374,59 @@ const PROBES = {
   /* ③ dom.query — "selector này khớp mấy phần tử, và chúng là gì".
    * Đây là câu trả lời cho luật vàng số 1. Selector là DỮ LIỆU: nó đi làm tham số
    * `selector` của `DOM.querySelectorAll`, không có bước nối chuỗi nào ở bất kỳ đâu. */
+  /* dom.text — chữ của ĐÚNG MỘT phần tử. Xem khối giải trình ở `PROBE_NAMES` ([ADR-0006]).
+   * Ba cái khoá của nó nằm ngay dưới đây, cạnh nhau, để ai bỏ một cái là thấy ngay. */
+  async "dom.text"(ctx, params) {
+    const send = requireSend(ctx);
+    const selector = params.selector;
+    if (typeof selector !== "string" || selector.trim() === "") {
+      throw new ProbeError("SELECTOR_REQUIRED", "dom.text cần tham số `selector` là chuỗi không rỗng.");
+    }
+    if (selector.length > MAX_SELECTOR_LENGTH) {
+      throw new ProbeError("SELECTOR_TOO_LONG", `Selector dài quá ${MAX_SELECTOR_LENGTH} ký tự.`);
+    }
+
+    await send("DOM.enable", {});
+    const doc = await send("DOM.getDocument", { depth: 0, pierce: false });
+    const root = doc?.root;
+    if (!root?.nodeId) throw new ProbeError("NO_DOCUMENT", "Target không trả về document nào.");
+
+    let found;
+    try {
+      found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });
+    } catch (error) {
+      if (error instanceof ProbeError) throw error;
+      throw new ProbeError("SELECTOR_INVALID", `Chrome từ chối selector: ${error?.message || String(error)}`);
+    }
+
+    /* KHOÁ ⑴ — khớp không phải MỘT thì từ chối. "Cái đầu tiên" là đoán, và đoán ở đây nghĩa là
+     * trả về chữ của một phần tử khác phần tử người gọi tưởng. Cùng luật với `scout.grab`. */
+    const nodeIds = found?.nodeIds || [];
+    if (nodeIds.length === 0) {
+      throw new ProbeError("SELECTOR_NO_MATCH", `Không phần tử nào khớp '${selector}'.`);
+    }
+    if (nodeIds.length > 1) {
+      throw new ProbeError("SELECTOR_AMBIGUOUS", `'${selector}' khớp ${nodeIds.length} phần tử — cần đúng một. Thu hẹp selector.`);
+    }
+
+    const described = await send("DOM.describeNode", { nodeId: nodeIds[0], depth: -1, pierce: false });
+    /* KHOÁ ⑵ — trần ký tự, và nói thật khi đã cắt. */
+    const thu = { chu: [], soKyTu: 0, cat: false };
+    gomChu(described?.node, thu);
+    const text = thu.chu.join("").replace(/\s+/g, " ").trim().slice(0, MAX_TEXT_LENGTH);
+
+    /* KHOÁ ⑶ — chỉ chữ đi ra. Không `outerHTML`, không thuộc tính, không cấu trúc cây. */
+    return {
+      selector,
+      matchCount: 1,
+      text,
+      chars: text.length,
+      truncated: thu.cat || thu.soKyTu > MAX_TEXT_LENGTH,
+      maxChars: MAX_TEXT_LENGTH,
+      redaction: redactionNote()
+    };
+  },
+
   async "dom.query"(ctx, params) {
     const send = requireSend(ctx);
     const selector = params.selector;
@@ -838,6 +910,28 @@ async function dungDuoc(send, nodeId, goc) {
   return (con?.nodeIds || []).includes(trungDiem) ? "yes" : "covered";
 }
 
+/* Gom `nodeValue` của mọi nút `#text` con cháu. Dừng khi đủ trần — dừng SỚM chứ không gom hết
+ * rồi cắt, vì một cây lớn gom hết là đúng thứ trần sinh ra để ngăn.
+ *
+ * Bỏ hẳn `<script>` và `<style>`: chữ trong đó là MÃ, không phải thứ người đọc thấy trên trang.
+ * Trả về mã nguồn của trang dưới danh nghĩa "chữ" là lách chính sách bằng một cái tên khác. */
+const THE_KHONG_PHAI_CHU = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE"]);
+function gomChu(node, thu) {
+  if (!node || thu.cat) return;
+  if (node.nodeType === 3) {
+    const chu = typeof node.nodeValue === "string" ? node.nodeValue : "";
+    thu.soKyTu += chu.length;
+    if (thu.soKyTu > MAX_TEXT_LENGTH) thu.cat = true;
+    thu.chu.push(chu);
+    return;
+  }
+  if (THE_KHONG_PHAI_CHU.has(String(node.nodeName || "").toUpperCase())) return;
+  for (const con of node.children || []) {
+    gomChu(con, thu);
+    if (thu.cat) return;
+  }
+}
+
 async function describe(send, nodeId) {
   const described = await send("DOM.describeNode", { nodeId, depth: 0, pierce: false });
   return shapeNode(described?.node ?? { nodeId }, { left: 1, truncated: false }, true);
@@ -904,8 +998,12 @@ function stripQuery(value) {
 function redactionNote() {
   return {
     policy: "de-xuat-chat-v1",
-    status: "ĐỀ XUẤT — Đức chưa chốt (BRIEF-OBSERVER-V1 mục 3c)",
+    /* ĐỔI 14/09: chính sách này chạy trong mã bảy ngày mà chưa ai ký, và lời khai ở đây vẫn đi ra
+     * ngoài dây với chữ "chưa chốt". Nay [ADR-0006] đã ký nó, và cùng lúc mở một cửa hẹp cho chữ
+     * — nên vế "không trả text node" cũng không còn đúng. Một lời khai sai là sai ở MỌI lượt đọc. */
+    status: "ĐÃ CHỐT 14/09 — ADR-0006 của gói",
     rule: "Chỉ trả giá trị của thuộc tính trong danh sách trắng; thuộc tính khác chỉ hiện tên. " +
-      "href/src bị cắt query và fragment. Không trả text node, không trả outerHTML, không trả giá trị ô nhập."
+      "href/src bị cắt query và fragment. Không trả outerHTML, không trả giá trị ô nhập. " +
+      "Chữ trong trang chỉ ra qua scout.text: MỘT phần tử khớp selector, trần 5000 ký tự — không có đường lấy chữ hàng loạt."
   };
 }

@@ -27,6 +27,7 @@ const EXPECTED_METHODS = [
   "scout.targets",
   "scout.page",
   "scout.query",
+  "scout.text",
   "scout.tree",
   "scout.a11y",
   "scout.wait",
@@ -53,7 +54,7 @@ const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.ty
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key", "input.navigate"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
-const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch"]);
+const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.text", "dom.tree", "a11y.tree", "page.shot", "dom.wait", "network.watch"]);
 
 const POISON = "'); doSomething(); ('";
 const TARGET_ID = "TARGET-1";
@@ -398,10 +399,14 @@ function request(method, params) {
  * luôn xanh dù có ai lặng lẽ thêm một ánh xạ. Con số gõ tay ở đây chính là cái chốt.
  *
  * SÁU → TÁM ngày 12/09: Đức chốt thêm `scout.wait` (chờ ngay trong trình duyệt) và
- * `scout.network` (nghe trang nói chuyện với máy chủ). Cả hai `read_only`. */
+ * `scout.network` (nghe trang nói chuyện với máy chủ). Cả hai `read_only`.
+ *
+ * TÁM → CHÍN ngày 14/09: `scout.text` — chữ của ĐÚNG MỘT phần tử, [ADR-0006]. Nó nới một điều
+ * khoản của chính sách che đã ký, nên con số này phải đổi bằng TAY: không ai được thêm một
+ * đường đọc chữ mà cổng vẫn xanh. */
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
-  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 8);
+  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 9);
 }
 
 /* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------

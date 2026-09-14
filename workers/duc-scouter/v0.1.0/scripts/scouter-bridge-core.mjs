@@ -289,6 +289,20 @@ const METHOD_ENTRIES = [
     }
   }),
   registryEntry({
+    name: "scout.text", read_only: true, deadline_ms: 30000,
+    description: "Read the visible text of the ONE element a selector matches. Refuses 0 or 2+ matches; caps at 5000 characters; never returns outerHTML (ADR-0006).",
+    params_schema: { selector: "string", target_id: "string" },
+    params_validator: (raw) => {
+      /* CỐ Ý không có tham số nới trần hay bỏ phép kiểm khớp-đúng-một: cả hai là điều kiện
+       * của [ADR-0006], không phải tuỳ chọn. Trường lạ bị `objectParams` từ chối ở cửa. */
+      const params = objectParams(raw, ["selector", "target_id"]);
+      return {
+        selector: requiredSelector(params.selector),
+        target_id: requiredTargetId(params.target_id)
+      };
+    }
+  }),
+  registryEntry({
     name: "scout.tree", read_only: true, deadline_ms: 30000,
     description: "DOM structure to depth N with masked attributes.",
     params_schema: { target_id: "string", depth: "integer:1..10?", max_nodes: "integer:1..500?" },
