@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T19 — I4 (xoa chu trong o) va I9 (tai file len), hai muc cuoi cua DANH SACH DONG BANG (CAPABILITIES.md 5.2) truoc khi tach Udin. T18 xong 14/09: scout.text chay that tren Udin. T13+T15 cho mot luot Udin ranh cho — man chan User Limit Reached, co vong cho tu chay."
-- human_action: "@Duc:khong co viec nao cho Duc luc nay. Udin dang bao User Limit Reached nen T13/T15 dung cho — vong cho tu chay, khong can ai bam."
+- next_step: "S-25 — Bridge khai phong bi 1 MiB nhung tang van chuyen rot CHAP CHON quanh 65 KB (G-63). Loi nen: giet scout.shot, va bien mot anh 746 KB thanh 16 khuc = 16 don vi tran ghi. Chua goc dung _shared/bridge-host (dung chung ba goi dong bang) -> cau cua Duc. Sau do: I9, I5/I6/I7, O12 zoom."
+- human_action: "@Duc:bon cau, chi tiet o CHUOI-VIEC.md. (1) S-25 sua tran phong bi o loi dung chung? (2) I9 upload di duong duong-dan-tuong-doi? (3) I5/I6/I7 gat mot luot cho ca ba? (4) O12 zoom: mot phep do 10 giay, zoom ra roi zoom lai ma khong dung gi khac."
