@@ -17,7 +17,7 @@
  */
 import assert from "node:assert/strict";
 
-const { runAction, ACTION_NAMES, MOUSE_BUTTON_NAMES, SCROLL_DIRECTION_NAMES } =
+const { runAction, createWriteSender, ActionError, ACTION_NAMES, MOUSE_BUTTON_NAMES, CDP_HAN_MS } =
   await import("../scripts/scouter-actions-core.mjs");
 
 const BTN = "#btn";
@@ -75,7 +75,6 @@ const chay = (ten, page, params) => runAction(ten, { sendRaw: page.sendRaw, ...c
   /* Bảng đóng, không phải gợi ý. Nhận một chuỗi bất kỳ rồi chuyển thẳng xuống CDP là mở lại
    * đúng cái cửa mà chốt ⑴ của lõi ghi đóng. */
   assert.deepEqual([...MOUSE_BUTTON_NAMES], ["left", "right", "middle"]);
-  assert.deepEqual([...SCROLL_DIRECTION_NAMES].sort(), ["down", "left", "right", "up"]);
 }
 
 /* ---- ② LƯỢT BẤM CŨ KHÔNG ĐỔI — phép ghim đắt nhất của file ------------- */
@@ -161,53 +160,61 @@ const chay = (ten, page, params) => runAction(ten, { sendRaw: page.sendRaw, ...c
   assert.deepEqual(page.goi("Input.dispatchMouseEvent"), [], "bị che thì không được bắn gì");
 }
 
-/* ---- ⑦ CUỘN: bốn hướng có tên, và toạ độ suy từ phần tử đã khớp ------- */
+/* ---- ⑦ CUỘN: đưa phần tử vào tầm nhìn, KHÔNG bấm, KHÔNG bánh xe --------
+ * Bản đầu bắn `Input.dispatchMouseEvent` kiểu `mouseWheel`. Nó **treo trên trang thật** và lượt
+ * treo đó **giữ debugger cắm vào tab**, khoá mọi lệnh sau — đo được, kẹt 120 giây (`G-72`).
+ * Khối này ghim cái thay thế, và ghim luôn điều quan trọng hơn: **không một sự kiện chuột nào
+ * được bắn ra**. Một lượt cuộn lỡ bắn chuột là một lượt bấm không ai gọi. */
 {
   const page = trangGia();
-  const k = await chay("input.scroll", page, { selector: "body", direction: "down" });
+  const k = await chay("input.scroll", page, { selector: "#danh-sach" });
   assert.equal(k.ok, true, JSON.stringify(k));
-  assert.deepEqual(page.goi("Input.dispatchMouseEvent").map((e) => e.params), [
-    { type: "mouseWheel", x: 60, y: 40, button: "none", buttons: 0, deltaX: 0, deltaY: 600 }
-  ]);
-  assert.equal(k.data.amount, 600, "không khai `amount` thì dùng mặc định, và NÓI RA nó là bao nhiêu");
+  assert.equal(k.data.method, "DOM.scrollIntoViewIfNeeded");
+  assert.equal(page.goi("DOM.scrollIntoViewIfNeeded").length, 1);
+  assert.deepEqual(page.goi("Input.dispatchMouseEvent"), [],
+    "cuộn KHÔNG được bắn một sự kiện chuột nào — bánh xe là đường đã bỏ, không phải đường tắt");
+  assert.deepEqual(page.goi("DOM.getBoxModel"), [],
+    "cuộn không cần toạ độ, nên không được đi đo hộp — đo hộp là bước đầu của một lượt bấm");
 }
 {
+  /* Selector khớp không phải MỘT thì từ chối, y như mọi hành động khác: cuộn tới "cái đầu tiên"
+   * là cuộn tới chỗ người gọi không yêu cầu. */
+  const page = trangGia({ nutTrungDiem: null });
+  const k = await chay("input.scroll", page, {});
+  assert.equal(k.ok, false);
+  assert.equal(k.code, "SELECTOR_REQUIRED");
+}
+{
+  /* `direction` và `amount` KHÔNG còn là tham số. Ghim để lượt sau không lặng lẽ dựng lại đường
+   * bánh xe: lõi lờ chúng đi, và cổng phong bì của Bridge thì từ chối thẳng. */
   const page = trangGia();
-  await chay("input.scroll", page, { selector: "body", direction: "up", amount: 150 });
-  assert.deepEqual(page.goi("Input.dispatchMouseEvent")[0].params.deltaY, -150);
-  const p2 = trangGia();
-  await chay("input.scroll", p2, { selector: "body", direction: "right", amount: 80 });
-  assert.deepEqual(
-    [p2.goi("Input.dispatchMouseEvent")[0].params.deltaX, p2.goi("Input.dispatchMouseEvent")[0].params.deltaY],
-    [80, 0], "cuộn ngang không được động tới trục dọc");
+  const k = await chay("input.scroll", page, { selector: "#danh-sach", direction: "down", amount: 600 });
+  assert.equal(k.ok, true, "trường lạ đi qua lõi thì bị LỜ");
+  assert.deepEqual(page.goi("Input.dispatchMouseEvent"), []);
 }
+
+/* ---- ⑦b HẠN CHO MỖI LỆNH CDP — cái gốc mà `G-72` lộ ra ------------------
+ * Không phải "chữa `mouseWheel`". Chữa cái LỚP bệnh: một lệnh CDP không trả lời thì giữ debugger
+ * cắm vào tab, `finally { detach }` không chạy, và mọi lệnh sau trên tab đó bị khoá. Hạn này bắt
+ * lượt gọi BỎ CUỘC, để cái `finally` chạy được. */
 {
-  /* CỐ Ý không hỏi-điểm: cuộn thứ đang nằm trên cùng tại điểm đó là ĐÚNG Ý — một lớp phủ cuộn
-   * được thì cuộn nó mới là việc người gọi cần. Ghim để lượt sau không "sửa" nó thành giống
-   * `input.click` vì trông có vẻ nhất quán hơn. */
-  const page = trangGia({ nutTrungDiem: 777 });
-  const k = await chay("input.scroll", page, { selector: "body", direction: "down" });
-  assert.equal(k.ok, true, "cuộn KHÔNG hỏi-điểm — thứ nằm trên cùng chính là thứ cần cuộn");
-  assert.deepEqual(page.goi("DOM.getNodeForLocation"), []);
-}
-{
-  for (const xau of ["Down", "downward", "", "up down", 1]) {
-    const page = trangGia();
-    const k = await chay("input.scroll", page, { selector: "body", direction: xau });
-    assert.equal(k.ok, false, `hướng ${JSON.stringify(xau)} phải bị từ chối`);
-    assert.equal(k.code, "DIRECTION_NOT_ALLOWED");
-  }
-  for (const xau of [0, 5001, -100, 1.5, "600"]) {
-    const page = trangGia();
-    const k = await chay("input.scroll", page, { selector: "body", direction: "down", amount: xau });
-    assert.equal(k.ok, false, `amount ${JSON.stringify(xau)} phải bị từ chối`);
-    assert.equal(k.code, "SCROLL_AMOUNT_INVALID");
-  }
-  /* Hai đầu khoảng phải QUA — một cái trần chặn cả đường đúng sẽ bị gỡ. */
-  for (const tot of [1, 5000]) {
-    const page = trangGia();
-    assert.equal((await chay("input.scroll", page, { selector: "body", direction: "down", amount: tot })).ok, true);
-  }
+  assert.equal(CDP_HAN_MS, 20000, "hạn phải nằm DƯỚI ngưỡng 35s của máy chủ Bridge");
+  const treoMai = () => new Promise(() => {});
+  const send = createWriteSender(treoMai, [], 40);
+  const t0 = Date.now();
+  await assert.rejects(() => send("DOM.enable", {}), (e) => {
+    assert.ok(e instanceof ActionError);
+    assert.equal(e.code, "CDP_TIMEOUT");
+    assert.match(e.message, /DOM\.enable/, "câu lỗi phải nói ra lệnh nào treo");
+    return true;
+  });
+  assert.ok(Date.now() - t0 < 2000, "phải bỏ cuộc theo hạn, không chờ mãi");
+  /* Và lệnh trả lời bình thường thì KHÔNG bị đụng tới — một cái hạn chặn cả đường đúng sẽ bị gỡ. */
+  const send2 = createWriteSender(async () => ({ ok: 1 }), [], 40);
+  assert.deepEqual(await send2("DOM.enable", {}), { ok: 1 });
+  /* `hanMs` bằng 0 nghĩa là TẮT hạn, cố ý — phép ghim nào cần chạy chậm thì tắt được. */
+  const send3 = createWriteSender(async () => ({ ok: 2 }), [], 0);
+  assert.deepEqual(await send3("DOM.enable", {}), { ok: 2 });
 }
 
 /* ---- ⑧ LÙI / TIẾN: chỉ số tính Ở TRONG, đi đúng MỘT bước ------------- */
@@ -267,7 +274,7 @@ const chay = (ten, page, params) => runAction(ten, { sendRaw: page.sendRaw, ...c
  * đáng sợ không phải toạ độ mà là một con trỏ tự do vào lịch sử duyệt web của Đức. */
 {
   const doc = [
-    ["input.scroll", { selector: "body", direction: "down" }],
+    ["input.scroll", { selector: "body" }],
     ["input.hover", { selector: BTN }],
     ["input.history", { direction: "back" }]
   ];

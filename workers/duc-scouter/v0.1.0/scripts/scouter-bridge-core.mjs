@@ -27,7 +27,7 @@
  * `bridge/scouter-bridge-host.mjs`. Nhân bản seed sang extension khác thì đổi cả hai.
  */
 
-import { MOUSE_BUTTON_NAMES, NAMED_KEY_NAMES, SCROLL_DIRECTION_NAMES } from "./scouter-actions-core.mjs";
+import { MOUSE_BUTTON_NAMES, NAMED_KEY_NAMES } from "./scouter-actions-core.mjs";
 
 /* ---- Hằng số trên dây (khớp bridge-host.mjs) ----------------------------- */
 
@@ -145,13 +145,6 @@ function optionalMouseButton(value) {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "string" || !MOUSE_BUTTON_NAMES.includes(value)) {
     invalidParams("params.button", `expected one of: ${MOUSE_BUTTON_NAMES.join(", ")}`);
-  }
-  return value;
-}
-
-function requiredScrollDirection(value) {
-  if (typeof value !== "string" || !SCROLL_DIRECTION_NAMES.includes(value)) {
-    invalidParams("params.direction", `expected one of: ${SCROLL_DIRECTION_NAMES.join(", ")}`);
   }
   return value;
 }
@@ -501,15 +494,13 @@ const METHOD_ENTRIES = [
   }),
   registryEntry({
     name: "scout.scroll", read_only: false, deadline_ms: 30000,
-    description: "Scroll with the real mouse wheel over one element, for lists that only load more as you scroll. The selector says WHAT to scroll (use body for the page) because the wheel scrolls whatever is under the pointer. Promises the wheel event was sent, NOT that anything moved — check with scout.view.",
-    params_schema: { target_id: "string", selector: "string", direction: "up|down|left|right", amount: "integer:1..5000?" },
+    description: "Bring one element into view WITHOUT clicking it, so you can screenshot it or make a lazy list load the next page (scroll to the last loaded item, repeat). Promises the browser was told to scroll, NOT that the element is now visible — check with scout.view. Does NOT take a pixel amount: the mouse-wheel route never answers on a real page and wedges the tab (G-72).",
+    params_schema: { target_id: "string", selector: "string" },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "selector", "direction", "amount"]);
+      const params = objectParams(raw, ["target_id", "selector"]);
       return {
         target_id: requiredTargetId(params.target_id),
-        selector: requiredSelector(params.selector),
-        direction: requiredScrollDirection(params.direction),
-        amount: optionalInt(params.amount, "params.amount", 1, 5000)
+        selector: requiredSelector(params.selector)
       };
     }
   }),

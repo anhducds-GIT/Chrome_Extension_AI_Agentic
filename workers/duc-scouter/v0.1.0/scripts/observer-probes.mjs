@@ -279,7 +279,33 @@ export class ProbeError extends Error {
 /* ---- Chốt ⑵ + ⑶: người gửi lệnh CDP read-only ---------------------------
  * Mọi phép dò CHỈ nhận được hàm do đây trả ra. Bản thô (`sendRaw`) không bao giờ tới tay
  * phép dò, nên không có đường vòng. */
-export function createReadOnlySender(sendRaw, log) {
+/* ---- HẠN CHO MỖI LỆNH CDP (thêm 14/09) ------------------------------------
+ * Sinh ra từ một lượt đo ở ĐƯỜNG GHI: một lệnh CDP không trả lời giữ `chrome.debugger` cắm vào
+ * tab, nên `finally { detach }` không chạy và **mọi** lệnh sau trên tab đó bị khoá (`G-72`, kẹt
+ * 120 giây thật). Đường đọc khai hạn của RIÊNG nó — luật gói số 6, hai lõi không mượn của nhau —
+ * và nó cần hạn này y như đường ghi: một `Page.captureScreenshot` treo cũng khoá tab hệt thế.
+ *
+ * 20.000ms nằm dưới ngưỡng 35.000ms mà máy chủ Bridge bỏ cuộc, nên người gọi nhận một lỗi CÓ TÊN
+ * chứ không phải một `REQUEST_TIMEOUT` không nói được gì.
+ *
+ * CHÚ Ý chỗ dễ nhầm: hạn này là của MỘT LỆNH CDP, không phải của cả phép dò. `dom.wait` chờ tới
+ * 30 giây bằng cách hỏi đi hỏi lại — mỗi lượt hỏi vẫn nhanh, nên nó không đụng hạn này. */
+export const CDP_HAN_MS = 20000;
+
+function choTraLoi(viec, hanMs, tenMethod) {
+  if (!(hanMs > 0)) return viec;
+  return new Promise((xong, hong) => {
+    const dong = setTimeout(() => hong(new ProbeError("CDP_TIMEOUT",
+      `Chrome không trả lời lệnh CDP "${tenMethod}" sau ${hanMs}ms. Bỏ cuộc để NHẢ debugger ra — ` +
+      "một lượt gọi treo mà không nhả thì khoá cả tab cho mọi lệnh sau.")), hanMs);
+    viec.then(
+      (v) => { clearTimeout(dong); xong(v); },
+      (e) => { clearTimeout(dong); hong(e); }
+    );
+  });
+}
+
+export function createReadOnlySender(sendRaw, log, hanMs = CDP_HAN_MS) {
   const allowed = new Set(READ_ONLY_CDP_METHODS);
   const banned = new Set(CODE_BEARING_PARAM_KEYS);
   return async function send(method, params = {}) {
@@ -292,7 +318,7 @@ export function createReadOnlySender(sendRaw, log) {
       }
     }
     if (log) log.push({ method, params });
-    return await sendRaw(method, params);
+    return await choTraLoi(Promise.resolve(sendRaw(method, params)), hanMs, method);
   };
 }
 

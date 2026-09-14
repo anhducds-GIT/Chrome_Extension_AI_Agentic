@@ -69,8 +69,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | I2 | Gõ chữ | `scout.type` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29` | |
 | I3 | Nhấn phím có tên (Enter, Tab, Esc, mũi tên…) | `scout.key` | **ĐÃ CHỨNG MINH** | Chrome riêng. Ghế Đức: dính `S-22` | |
 | I4 | **Xoá chữ trong ô** (Ctrl+A rồi Delete) | `scout.clear` | **CÓ** | Làm 14/09. Phím `A` và phím bổ trợ `Ctrl` **gõ cứng trong lõi ghi** — không mở tham số `modifiers`, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt. 8 khối ghim · 5 đột biến tay. **CHƯA CHẠY THẬT**. Không xoá được trên macOS (ở đó là `Cmd+A`) | |
-| I5 | Cuộn tự do (bánh xe chuột) | `scout.scroll` | **CÓ** | Làm 14/09, [ADR-0007]. Vì sao vẫn cần dù bấm đã tự cuộn: cuộn-tới-phần-tử chỉ đi tới thứ ĐÃ CÓ trong DOM; danh sách tải-thêm-khi-cuộn thì thứ cần chưa tồn tại. Bốn hướng có tên, không nhận vector tự do. **CHƯA CHẠY THẬT** | |
-| I6 | Rê chuột (hover) | `scout.hover` | **CÓ** | Làm 14/09, [ADR-0007]. Vẫn hỏi-điểm trước khi bắn: rê lên một phần tử đang bị che thì sự kiện tới CÁI CHE, và báo thành công là nói dối — cùng lỗi `S-17`, khác loại sự kiện. **CHƯA CHẠY THẬT** | |
+| I5 | Cuộn tới một phần tử, không bấm | `scout.scroll` | **CÓ** | Làm 14/09, [ADR-0007]. **Cuộn theo SỐ ĐIỂM ẢNH thì KHÔNG**, và đó là một giới hạn đo được chứ không phải chưa làm: `Input.dispatchMouseEvent` kiểu `mouseWheel` **không bao giờ trả lời** trên trang thật, và lượt treo đó **giữ debugger cắm vào tab** nên khoá mọi lệnh sau — kẹt 120 giây thật, phải `scout.reload` mới gỡ (`G-72`). Đối chứng làm kết luận chắc: `scout.hover` chạy được trên đúng tab ấy, cùng method. **CHƯA CHẠY THẬT** |
+| I6 | Rê chuột (hover) | `scout.hover` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007]. **Chạy thật trên Udin cùng ngày** (5,2 giây, `hit.relation: descendant`) — và lượt chạy ấy còn làm một việc thứ hai: nó là ĐỐI CHỨNG chứng minh chỗ treo của `G-72` là riêng `mouseWheel`, không phải tab ẩn. Vẫn hỏi-điểm trước khi bắn: rê lên phần tử bị che thì sự kiện tới CÁI CHE, báo thành công là nói dối (`S-17`, khác loại sự kiện) | |
 | I7 | Bấm đúp / bấm phải | `scout.click` (`button` · `click_count`) | **CÓ** | Làm 14/09: thêm THAM SỐ, **không thêm method** — mọi thứ đắt giá của lượt bấm (khớp đúng một · đưa vào tầm nhìn · hỏi-điểm) là y hệt, và tách ra là chép ba cái chốt ấy sang chỗ thứ hai. Không khai gì thì cư xử y như trước. **CHƯA CHẠY THẬT** | |
 | I8 | Kéo thả A → B | — | **CHƯA CÓ** | toạ độ đích cũng phải suy từ **phần tử đích** (luật gói 7). Cần lệnh Bridge mới | ✋ |
 | I9 | Tải file lên (upload) | — | **CHƯA CÓ** | cần `DOM.setFileInputFiles`; file phải lấy từ vùng ghi Bridge, không lấy tuỳ ý trên máy | ✋ |
@@ -101,13 +101,17 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 21 · MỘT PHẦN 3 · CÓ 10 · CHƯA CÓ / CHƯA ĐO 8 · ĐÃ BỎ 1.** Tổng 43 dòng.
-**Seed Coverage = 21 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
+**ĐÃ CHỨNG MINH 22 · MỘT PHẦN 3 · CÓ 9 · CHƯA CÓ / CHƯA ĐO 8 · ĐÃ BỎ 1.** Tổng 43 dòng.
+**Seed Coverage = 22 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
 
-Ngày 14/09 thêm SÁU dòng `CÓ` cùng một lượt (`O13` `N5` `I5` `I6` `I7`, và `O5` mở rộng) — và con số
-`ĐÃ CHỨNG MINH` **không nhúc nhích**, đúng như nó phải thế: cả sáu có mã, có ghim, **chưa có một
-lượt chạy thật nào**. Đó là toàn bộ khác biệt giữa `CÓ` và `ĐÃ CHỨNG MINH`, và đây là lượt đầu tiên
-khoảng cách ấy lớn tới mức nhìn thấy được trên bảng. Nó là NỢ, không phải thành tích.
+Ngày 14/09 thêm sáu dòng cùng một lượt (`O13` `N5` `I5` `I6` `I7`, và `O5` mở rộng). **Đúng MỘT
+trong sáu** lên `ĐÃ CHỨNG MINH` — `I6` rê chuột, vì nó chạy thật trên Udin. Năm dòng còn lại dừng ở
+`CÓ`: có mã, có ghim, **chưa có lượt chạy thật nào**. Đó là toàn bộ khác biệt giữa hai chữ ấy, và
+đây là lượt đầu tiên khoảng cách đó lớn tới mức nhìn thấy được trên bảng. Nó là NỢ.
+
+Và lượt chạy thật ngày 14/09 **đã lấy lại một dòng**: `I5` mở ra với cuộn-theo-điểm-ảnh, lượt chạy
+thật cho thấy đường đó treo và **khoá cả tab** (`G-72`), nên năng lực thu hẹp lại thành cuộn-tới-
+phần-tử. Một dòng bảng đổi vì phép đo, không vì ai đổi ý — đó là lý do bảng này tồn tại.
 
 > ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
 > (kiểm 14/09: `grep -rl CAPABILITIES --include=*.mjs` → rỗng). Nên một ô khai `ĐÃ CHỨNG MINH`

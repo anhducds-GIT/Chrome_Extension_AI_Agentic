@@ -21,7 +21,7 @@
  */
 import assert from "node:assert/strict";
 
-const { runProbe, PROBE_NAMES, READ_ONLY_CDP_METHODS } =
+const { runProbe, createReadOnlySender, ProbeError, PROBE_NAMES, READ_ONLY_CDP_METHODS, CDP_HAN_MS } =
   await import("../scripts/observer-probes.mjs");
 
 /* Trang giả: trả về số đo bố cục, và GHI LẠI mọi lệnh — test đọc được cả "gửi gì" lẫn "gửi mấy
@@ -217,4 +217,27 @@ const shot = (page, params) => runProbe("page.shot", { sendRaw: page.sendRaw }, 
   }
 }
 
-console.log("scouter-view-smoke: PASS (10 khoi)");
+/* ---- ⑪ HẠN CHO MỖI LỆNH CDP — đường ĐỌC khai hạn của RIÊNG nó ----------
+ * Con bệnh lộ ra ở đường GHI (`G-72`: `mouseWheel` không trả lời, giữ debugger cắm vào tab, khoá
+ * mọi lệnh sau suốt 120 giây). Nhưng nó là bệnh của **mọi** lệnh CDP, không của riêng lệnh ấy:
+ * một `Page.captureScreenshot` treo cũng khoá tab hệt thế. Hai lõi khai riêng — luật gói số 6 —
+ * nên chỗ này phải có phép ghim của chính nó, không dựa vào phép ghim của đường ghi.
+ *
+ * Chú ý chỗ dễ nhầm: hạn là của MỘT LỆNH, không của cả phép dò. `dom.wait` chờ tới 30 giây bằng
+ * cách hỏi đi hỏi lại, mỗi lượt hỏi vẫn nhanh — nên nó không đụng hạn này. */
+{
+  assert.equal(CDP_HAN_MS, 20000, "hạn phải nằm DƯỚI ngưỡng 35s của máy chủ Bridge");
+  const send = createReadOnlySender(() => new Promise(() => {}), [], 40);
+  const t0 = Date.now();
+  await assert.rejects(() => send("DOM.enable", {}), (e) => {
+    assert.ok(e instanceof ProbeError);
+    assert.equal(e.code, "CDP_TIMEOUT");
+    assert.match(e.message, /DOM\.enable/, "câu lỗi phải nói ra lệnh nào treo");
+    return true;
+  });
+  assert.ok(Date.now() - t0 < 2000, "phải bỏ cuộc theo hạn, không chờ mãi");
+  const send2 = createReadOnlySender(async () => ({ ok: 1 }), [], 40);
+  assert.deepEqual(await send2("DOM.enable", {}), { ok: 1 }, "lệnh trả lời bình thường không được đụng tới");
+}
+
+console.log("scouter-view-smoke: PASS (11 khoi)");

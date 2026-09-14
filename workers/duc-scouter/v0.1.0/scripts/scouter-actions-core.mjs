@@ -169,18 +169,35 @@ const MOUSE_BUTTONS = Object.freeze({
 export const MOUSE_BUTTON_NAMES = Object.freeze(Object.keys(MOUSE_BUTTONS));
 const MAX_CLICK_COUNT = 3;
 
-/* Bốn hướng cuộn, không nhận vector tự do. Một `{deltaX, deltaY}` mở là một đường đưa toạ độ
- * từ ngoài vào — thứ chốt ⑶ cấm — chỉ khác cái tên. */
-const SCROLL_DIRECTIONS = Object.freeze({
-  down: { x: 0, y: 1 }, up: { x: 0, y: -1 }, right: { x: 1, y: 0 }, left: { x: -1, y: 0 }
-});
-export const SCROLL_DIRECTION_NAMES = Object.freeze(Object.keys(SCROLL_DIRECTIONS));
-/* Trần một lượt cuộn. Không phải để "an toàn" — để một con số sai (ví dụ thừa ba số 0) dừng lại
- * ở đây kèm câu giải thích, thay vì thành một cú nhảy mà người gọi không hiểu vì sao. */
-const MAX_SCROLL_AMOUNT = 5000;
-const DEFAULT_SCROLL_AMOUNT = 600;
-
 const HISTORY_DIRECTIONS = Object.freeze(["back", "forward"]);
+
+/* ---- HẠN CHO MỖI LỆNH CDP (thêm 14/09 sau một lượt đo đau) ----------------
+ * Đo được: `Input.dispatchMouseEvent` kiểu `mouseWheel` **không bao giờ trả lời** trên tab của
+ * Đức. Hậu quả không dừng ở "lệnh đó hỏng": lượt gọi treo giữ `chrome.debugger` **cắm vào tab**,
+ * nên `finally { detach }` không bao giờ chạy, và từ đó **mọi** lệnh khác trên tab ấy trả
+ * `TARGET_ALREADY_ATTACHED`. Đo thật: kẹt suốt 120 giây, phải `scout.reload` mới gỡ được.
+ *
+ * Nên hạn này KHÔNG phải để chữa `mouseWheel` (cái đó chữa bằng cách không dùng nó nữa). Nó chữa
+ * cái **lớp** bệnh: *một lệnh CDP không trả lời thì khoá cả tab*. Đặt ở đây, một chỗ, nên nó che
+ * mọi lệnh — kể cả lệnh chưa ai viết.
+ *
+ * 20.000ms: dưới ngưỡng 35.000ms mà máy chủ Bridge bỏ cuộc, nên người gọi nhận một lỗi CÓ TÊN
+ * thay vì một `REQUEST_TIMEOUT` không nói được gì. Lệnh CDP chậm nhất đo được tới nay là một lượt
+ * chụp cả trang, tính bằng giây chứ không phải chục giây. */
+export const CDP_HAN_MS = 20000;
+
+function choTraLoi(viec, hanMs, tenMethod, Loi) {
+  if (!(hanMs > 0)) return viec;
+  return new Promise((xong, hong) => {
+    const dong = setTimeout(() => hong(new Loi("CDP_TIMEOUT",
+      `Chrome không trả lời lệnh CDP "${tenMethod}" sau ${hanMs}ms. Bỏ cuộc để NHẢ debugger ra — ` +
+      "một lượt gọi treo mà không nhả thì khoá cả tab cho mọi lệnh sau.")), hanMs);
+    viec.then(
+      (v) => { clearTimeout(dong); xong(v); },
+      (e) => { clearTimeout(dong); hong(e); }
+    );
+  });
+}
 
 const MAX_SELECTOR_LENGTH = 1024;
 const MAX_TEXT_LENGTH = 2000;
@@ -197,14 +214,14 @@ export class ActionError extends Error {
 
 /* ---- Chốt ⑵ + ⑶: người gửi lệnh CDP đường ghi --------------------------- */
 
-export function createWriteSender(sendRaw, log) {
+export function createWriteSender(sendRaw, log, hanMs = CDP_HAN_MS) {
   const allowed = new Set(WRITE_CDP_METHODS);
   return async function send(method, params = {}) {
     if (!allowed.has(method)) {
       throw new ActionError("CDP_METHOD_NOT_ALLOWED", `Method CDP "${method}" không nằm trong bộ hành động.`);
     }
     if (log) log.push({ method, params });
-    return await sendRaw(method, params);
+    return await choTraLoi(Promise.resolve(sendRaw(method, params)), hanMs, method, ActionError);
   };
 }
 
@@ -304,38 +321,34 @@ const ACTIONS = {
     return { selector, matchCount: node.matchCount, hoveredAt: point, hit, method: "Input.dispatchMouseEvent" };
   },
 
-  /* input.scroll — CUỘN bằng bánh xe chuột thật (`I5`).
+  /* input.scroll — ĐƯA MỘT PHẦN TỬ VÀO TẦM NHÌN (`I5`).
    *
-   * Vì sao cần, dù `input.click` đã tự cuộn tới phần tử: cuộn-tới-phần-tử chỉ đi được tới thứ
-   * ĐÃ CÓ trong DOM. Một danh sách tải-thêm-khi-cuộn thì thứ cần lại chưa tồn tại, nên không có
-   * selector nào trỏ tới nó — phải cuộn trước, nó mới sinh ra.
+   * Vì sao cần, dù `input.click` đã tự cuộn tới phần tử: nhiều lúc ta cần thứ đó **hiện ra** mà
+   * KHÔNG bấm vào nó — để chụp nó, hoặc để một danh sách tải-thêm-khi-cuộn sinh ra phần tiếp
+   * theo. Cuộn tới phần tử CUỐI đang có rồi lặp lại chính là cách kéo một danh sách vô hạn.
    *
-   * VÌ SAO VẪN ĐÒI `selector`, dù "cuộn trang" nghe như không cần trỏ vào đâu: bánh xe chuột
-   * cuộn **thứ nằm dưới con trỏ**, không cuộn "trang" một cách trừu tượng. Một trang có bảng
-   * bên cuộn riêng thì "cuộn xuống" là hai việc khác nhau tuỳ chuột đang ở đâu. Bắt nói ra chỗ
-   * cuộn là bắt người gọi nói rõ họ muốn cuộn CÁI GÌ — và giữ đúng luật gói số 7: toạ độ suy ra
-   * từ một phần tử đã khớp, không nhận từ ngoài. Cuộn cả trang thì trỏ `body`.
+   * ══ VÌ SAO KHÔNG PHẢI BÁNH XE CHUỘT, dù đó là bản viết đầu tiên ══
+   * Bản đầu bắn `Input.dispatchMouseEvent` kiểu `mouseWheel` với hướng + số điểm ảnh. Nó **treo**
+   * trên trang thật: 35 giây không một lời đáp, và lượt treo đó **giữ debugger cắm vào tab** nên
+   * khoá luôn mọi lệnh sau — đo được, kẹt 120 giây, phải `scout.reload` mới gỡ (`G-72`).
    *
-   * CỐ Ý KHÔNG hỏi-điểm ở đây, khác `input.click` và `input.hover`: cuộn thứ đang nằm trên cùng
-   * tại điểm đó là **đúng ý** — một lớp phủ cuộn được thì cuộn nó mới là việc người gọi cần.
+   * Phép đối chứng làm cho kết luận này chắc: `input.hover` chạy được trên **đúng cái tab ấy**,
+   * cùng `Input.dispatchMouseEvent`, cùng lúc. Nên chỗ hỏng là riêng `mouseWheel` — không phải
+   * tab ẩn, không phải method, không phải đường ống. Bánh xe chờ compositor báo đã nhận; các kiểu
+   * sự kiện khác thì không.
    *
-   * HỨA GÌ: *đã bắn một sự kiện bánh xe tại điểm đó.* KHÔNG hứa *"trang đã cuộn"*, và ở đây lời
-   * hứa hẹp ấy đắt hơn mọi chỗ khác — một phần tử không cuộn được thì sự kiện đi vào hư không
-   * mà không có lỗi nào. Thứ kiểm được là `scout.view`: đọc `scroll` trước và sau. */
+   * `DOM.scrollIntoViewIfNeeded` không đi qua compositor, và nó đã chạy hàng trăm lượt trong
+   * `input.click` từ 06/09. Đổi sang nó là bỏ một cơ chế chưa chứng minh để lấy một cơ chế đã
+   * chứng minh — mất khả năng "cuộn 600 điểm ảnh", giữ được khả năng THẬT SỰ cần.
+   *
+   * HỨA GÌ: *đã bảo trình duyệt đưa phần tử này vào tầm nhìn.* KHÔNG hứa *"nó đang hiện"* — một
+   * phần tử trong khung không cuộn được thì lệnh này không làm gì cả mà cũng không lỗi. Thứ kiểm
+   * được vẫn là `scout.view`: đọc `scroll` trước và sau. */
   async "input.scroll"(send, params) {
     const selector = readSelector(params.selector);
-    const huong = readHuongCuon(params.direction);
-    const luong = readLuongCuon(params.amount);
     const node = await locateOne(send, selector);
-    const point = await centreOf(send, node.nodeId);
-    await send("Input.dispatchMouseEvent", {
-      type: "mouseWheel", x: point.x, y: point.y, button: "none", buttons: 0,
-      deltaX: huong.vec.x * luong, deltaY: huong.vec.y * luong
-    });
-    return {
-      selector, matchCount: node.matchCount, direction: huong.ten, amount: luong,
-      wheeledAt: point, method: "Input.dispatchMouseEvent"
-    };
+    await send("DOM.scrollIntoViewIfNeeded", { nodeId: node.nodeId });
+    return { selector, matchCount: node.matchCount, method: "DOM.scrollIntoViewIfNeeded" };
   },
 
   /* input.history — LÙI / TIẾN trong lịch sử của đúng tab đó (`N5`).
@@ -696,23 +709,6 @@ function readSoLanBam(value) {
   if (value === undefined || value === null) return 1;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > MAX_CLICK_COUNT) {
     throw new ActionError("CLICK_COUNT_INVALID", `\`click_count\` phải là số nguyên trong 1..${MAX_CLICK_COUNT}.`);
-  }
-  return value;
-}
-
-function readHuongCuon(value) {
-  if (typeof value !== "string" || !Object.hasOwn(SCROLL_DIRECTIONS, value)) {
-    throw new ActionError("DIRECTION_NOT_ALLOWED",
-      `Hướng cuộn "${value}" không có trong bảng. Bảng cố định: ${SCROLL_DIRECTION_NAMES.join(", ")}.`);
-  }
-  return { ten: value, vec: SCROLL_DIRECTIONS[value] };
-}
-
-function readLuongCuon(value) {
-  if (value === undefined || value === null) return DEFAULT_SCROLL_AMOUNT;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > MAX_SCROLL_AMOUNT) {
-    throw new ActionError("SCROLL_AMOUNT_INVALID",
-      `\`amount\` phải là số nguyên trong 1..${MAX_SCROLL_AMOUNT} (điểm ảnh CSS).`);
   }
   return value;
 }

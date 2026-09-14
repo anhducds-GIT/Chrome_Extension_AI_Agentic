@@ -1284,6 +1284,13 @@ BATCHES.push({
       tim: "      if (diem > MAX_SHOT_PIXELS) {",
       thay: "      if (false) {",
       soLan: 1
+    },
+    {
+      ma: "V11",
+      ten: "`G-72` ở ĐƯỜNG ĐỌC — bỏ hạn cho mỗi lệnh CDP: một lượt chụp treo cũng khoá cả tab",
+      tim: "  if (!(hanMs > 0)) return viec;",
+      thay: "  return viec;",
+      soLan: 1
     }
   ]
 });
@@ -1323,9 +1330,16 @@ BATCHES.push({
     },
     {
       ma: "V9",
-      ten: "Cuộn lấy vector của hướng KHÁC — 'xuống' thành 'lên'",
-      tim: "      deltaX: huong.vec.x * luong, deltaY: huong.vec.y * luong",
-      thay: "      deltaX: huong.vec.x * luong, deltaY: -huong.vec.y * luong",
+      ten: "Cuộn KHÔNG cuộn: báo thành công mà chưa bảo trình duyệt đưa phần tử vào tầm nhìn",
+      tim: '    await send("DOM.scrollIntoViewIfNeeded", { nodeId: node.nodeId });' + NL + "    return { selector, matchCount: node.matchCount, method:",
+      thay: '    await send("DOM.enable", {});' + NL + "    return { selector, matchCount: node.matchCount, method:",
+      soLan: 1
+    },
+    {
+      ma: "V10",
+      ten: "`G-72` — bỏ hạn cho mỗi lệnh CDP: một lệnh treo giữ debugger, khoá cả tab cho mọi lệnh sau",
+      tim: "  if (!(hanMs > 0)) return viec;",
+      thay: "  return viec;",
       soLan: 1
     }
   ]

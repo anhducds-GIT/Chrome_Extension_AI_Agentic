@@ -432,9 +432,7 @@ export function createSeedHandlers(deps = {}) {
 
     async "scout.scroll"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runAction("scout.scroll", target, {
-        selector: params.selector, direction: params.direction, amount: params.amount
-      });
+      return await runAction("scout.scroll", target, { selector: params.selector });
     },
 
     async "scout.history"(params) {
