@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T33 — chay lai E2E TRON VEN tren Udin, khong viet them dong nao. Luot 14/09 dung o 2/4 anh vi het tran ghi (16 khuc/anh); nay tran khuc 512 KiB nen moi anh ton 2 don vi. Dong khi: mot mach khong sua tay W1→W2→W3, du anh xuong dia, kich thuoc that khop bytes_total, khong cham tran ghi. Roi T34 (W4) · T36 (W7) · T35 (W6, dinh S-22) · T29 (upload → W8). Xong het la chang ③ dong bang seed roi T21 tach Udin. Chi tiet o CHUOI-VIEC.md."
-- human_action: "@Đức:chốt — MỘT câu định cỡ phần còn lại: `W` nào BẮT BUỘC phải ĐẠT trước khi tách Udin? Đề xuất để Đức chỉ gật hoặc sửa: W1 W2 W3 W4 W7 + E2E trọn vẹn; để W5 W6 W8 ngoài — hai cái đầu dính S-22, cái sau cần T29, cả ba vẫn làm được SAU khi tách. Câu hai, không gấp: G-69."
+- next_step: "T33 T34 T36 XONG 14/09 — danh sach W de xuat BAT BUOC (W1 W2 W3 W4 W7 + E2E) nay DAT TRON. Nen viec ke la chang (3) DONG BANG SEED: T8 doi ten observer->scouter, T9 goi v1. Roi (4) T21 tach Udin. T35 (W6, dinh S-22) va T29 (upload -> W8) de LAI SAU khi tach — dung de xuat cua chinh minh. Duc them W nao vao danh sach bat buoc thi chung quay lai truoc. Chi tiet o CHUOI-VIEC.md."
+- human_action: "@Đức:ký — ⓪ nay chỉ còn một chữ ký: danh sách đề xuất `W1 W2 W3 W4 W7` + E2E đã ĐẠT trọn 14/09. Gật là đủ điều kiện tách Udin; muốn thêm `W5` `W6` `W8` thì nói, `T35`/`T29` quay lại trước. Không gấp: `G-69`. Mười giây: `G-65` — zoom RA rồi DỪNG, để tôi đếm."
