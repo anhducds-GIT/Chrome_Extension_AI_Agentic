@@ -80,7 +80,7 @@ GPT 35 file `.js` · Gemini 34.
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 1072 | 864 | 208 |
 | `provider-adapter.js` | 404 | 210 | 194 |
-| `runner-core.js` | 392 | 223 | 169 |
+| `runner-core.js` | 401 | 223 | 178 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `background.js` | 293 | 202 | 91 |
 | `reconciliation-core.js` | 154 | 69 | 85 |
