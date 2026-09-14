@@ -205,3 +205,28 @@ im lặng.
 
 **Ba phép ghim của vùng vẫn xanh** (`bat-tay-hai-chieu` · `tao-tep-ghep-cap-smoke` ·
 `tuong-duong-voi-ban-goc`) — chạy lại ngay sau lượt sửa, không tin suy luận.
+
+## 2026-09-14 · `claude-scouter-udine` — bộ giải khung nghe được tin bị cắt mảnh
+
+**Một dòng, và nó là gốc của `S-25`.** `websocket-core.mjs` ném ở **mọi mảnh nối**
+(`if (!fin) throw`), mà Chrome **tự cắt mảnh mọi tin vượt ~64 KiB**. Nên dòng đó không chặn một
+ca hiếm — nó chặn đường đi bình thường của mọi câu trả lời hơi lớn, và chặn bằng cách **giết
+kết nối** thay vì trả một lỗi có tên.
+
+**Đây là một ca CHƯA VIẾT, không phải một lớp bảo vệ** — phân biệt được hai thứ đó là điều kiện
+để sửa mà không phạm luật *"không nới bảo vệ cho cổng xanh"*. Bản sửa thuần **thêm vào**.
+
+**Ba chốt mới:** trần tính trên **tin đã ghép** · khung điều khiển **chèn giữa** xử lý ngay ·
+sai trình tự là lỗi giao thức, ném chứ không im lặng. Mỗi chốt có lý do của nó ghi tại chỗ
+trong `tests/ghep-manh-noi.mjs` — đọc đầu file đó trước khi sửa lại bất cứ dòng nào ở đây.
+
+**Khối ① của phép ghim mới là khối đáng giá.** Nó không hỏi *"ghép có đúng không"* mà
+*"tin KHÔNG cắt mảnh có còn y hệt không"*, và hỏi bằng cách so với **bản gốc thật** trong gói
+đã đóng băng. Khối ⑨ đẩy một tin **đúng 1 MiB, cắt 17 mảnh** qua một socket thật.
+
+**Ba gói đóng băng KHÔNG bị chạm** — chúng giữ **bản sao riêng** của file này, nên chúng vẫn
+mang con bệnh. Để nguyên vì đang đóng băng; nhưng đây là chỗ đầu tiên phải nhìn nếu một trong
+ba gặp `TRANSPORT_DISCONNECTED` với câu trả lời hơi lớn.
+
+**Bốn đột biến canh cả hai chiều** (`X5`…`X8`); `X8` là chiều khó. Ba phép ghim cũ của vùng vẫn
+xanh, chạy lại ngay sau lượt sửa.

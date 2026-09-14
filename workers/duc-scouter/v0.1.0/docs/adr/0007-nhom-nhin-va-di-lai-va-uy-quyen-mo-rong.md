@@ -82,3 +82,39 @@ như trước**.
 - Mở `T24` (`S-25`), `T25` (`scout.view`), `T26`…`T30` — xem `CHUOI-VIEC.md`.
 - Danh sách đóng băng (`docs/CAPABILITIES.md` §5.2) nhận thêm nhóm *nhìn & đi lại*.
 - Sau `T24`, **xem lại trần khúc của `scout.grab`**: 64 KiB đặt ra để né đúng cái lỗi này.
+
+## Bổ sung 14/09, sau khi làm xong — hai chỗ file này ghi CHƯA ĐÚNG
+
+**⑴ "Lõi dùng chung với ba gói đóng băng" là SAI.** Ba gói `duc-auto-*` mỗi gói giữ một **bản
+sao riêng** `duc-auto-chatgpt-loopback-bridge-host-v1/websocket-core.mjs`, byte y hệt bản
+`_shared` trước lượt sửa, và `bridge-host.mjs` của chúng nhập bản sao ấy chứ không nhập bản
+dùng chung. Chỉ Scouter (qua `bridge-host-core.mjs`) và một phép ghim của `hnx-fetch` đứng trên
+bản `_shared`.
+
+Hai hệ quả, và cả hai đều đáng ghi: giá của lượt sửa **nhỏ hơn** câu tôi đã nói với Đức; và ba
+bản sao kia **vẫn mang con bệnh mảnh nối**. Để nguyên vì chúng đang đóng băng và chưa ai bị cắn
+— nhưng nếu có ngày một trong ba gặp `TRANSPORT_DISCONNECTED` với câu trả lời hơi lớn thì đây
+là chỗ đầu tiên phải nhìn. Và cái làm cho câu này **kiểm được** thay vì chỉ là một lời nhắc:
+khối ① của `ghep-manh-noi.mjs` đứng trên chính bản sao ấy làm cái mốc, nên nó sẽ ĐỎ ngay nếu
+một ngày nào đó bản gốc cũng được sửa.
+
+## Vì sao KHÔNG có `scout.zoom`, dù `O12` được uỷ quyền
+
+Đường hiển nhiên là `Emulation.setDeviceMetricsOverride`. Nó **không đi được ở kiến trúc hiện
+nay**, và lý do không nằm ở CDP mà nằm ở `observer-engine.js`: engine **gắn rồi THÁO debugger
+quanh từng lượt gọi một** (dòng 123 và 160). Một `Emulation` override sống theo phiên debugger,
+nên lượt gọi kết thúc là override đi theo. Một `scout.zoom` đứng riêng sẽ trả về *"đã thu
+phóng"* rồi không còn gì thu phóng nữa — **một lệnh nói dối theo đúng nghĩa đen**, đúng loại
+hỏng mà cả gói này dựng luật để tránh.
+
+Nên chỗ thu phóng phải nằm **trong chính lượt chụp**: `scout.shot` nhận `full_page` + `scale`
+(`clip.scale` của CDP). Nó trả đúng nhu cầu ⑴ của Đức — cả artboard trong một ảnh ít byte — và
+trả luôn dòng *"chụp cả trang dài: CHƯA CÓ"* của `O5`.
+
+Cái nó **không** trả, và đây là chỗ phải nói thẳng thay vì để bảng khai `CÓ` cho xong: nhu cầu
+⑵ — *ứng dụng canvas có VẼ THÊM phần tử khi thu nhỏ không* (`G-65`). Câu đó cần một lượt thu
+phóng THẬT làm trang dựng lại, tức là một override sống qua nhiều lượt gọi, tức là **giữ
+debugger cắm vào tab của Đức giữa các lượt** — dải băng *đang gỡ lỗi trình duyệt* ở lại lâu
+hơn, và Đức là người ngồi trước cái màn hình đó. Đó là quyết định của Đức, không phải của tôi:
+`G-69`.
+
