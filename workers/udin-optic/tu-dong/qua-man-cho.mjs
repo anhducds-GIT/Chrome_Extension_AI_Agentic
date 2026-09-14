@@ -5,11 +5,11 @@
  *   .concurrency-overlay button.concurrency-button    — nút "Try Again", khớp đúng 1
  *   textarea.agent-textarea                           — ô prompt; lúc bị chắn usable=covered
  *
- *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/udin-optic/scripts/qua-man-cho.mjs
+ *   UDIN_GHE=<id> node workers/udin-optic/tu-dong/qua-man-cho.mjs
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { goi as goiThat, timTab as timTabThat } from "../../trang-thu-cham/scripts/goi-bridge.mjs";
+import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 
 export const URL_UDIN = "https://vinfast.udinbv.com/optic";
 export const SEL = Object.freeze({

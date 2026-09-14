@@ -1,8 +1,8 @@
 /* Phép ghim cho E2E Udin — thứ tự bốn chặng, và chặng W3 chỉ lấy ảnh của LƯỢT NÀY.
  * Trang giả: 2 ảnh cũ sẵn có, gửi xong sinh thêm 2 ảnh mới. */
 import assert from "node:assert/strict";
-import { e2e } from "../scripts/e2e.mjs";
-import { SEL } from "../scripts/gui-prompt.mjs";
+import { e2e } from "../e2e.mjs";
+import { SEL } from "../gui-prompt.mjs";
 
 /* Tin nhắn agent cuối trên trang giả. `CU` là câu của lượt TRƯỚC — nó phải có mặt từ đầu, vì
  * ca hỏng đắt nhất của W4 là đọc lại đúng câu này rồi khai là kết quả của lượt mới. */

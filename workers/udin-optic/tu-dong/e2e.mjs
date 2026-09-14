@@ -6,11 +6,11 @@
  *   · `scout.navigate` mặc định KHÔNG chạy: nó nạp lại tab Đức đang mở. Muốn bắt đầu từ trang
  *     sạch thì thêm `--nap-lai`.
  *
- *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/udin-optic/scripts/e2e.mjs "a blue kite" [--nap-lai]
+ *   UDIN_GHE=<id> node workers/udin-optic/tu-dong/e2e.mjs "a blue kite" [--nap-lai]
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { goi as goiThat, timTab as timTabThat } from "../../trang-thu-cham/scripts/goi-bridge.mjs";
+import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { quaManCho, URL_UDIN } from "./qua-man-cho.mjs";
 import { guiPrompt } from "./gui-prompt.mjs";
 import { layAnh } from "./lay-anh.mjs";
@@ -60,8 +60,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
       if (e?.dangChay) {
         console.error("");
         console.error("CREDIT ĐÃ TIÊU — lượt chạy vẫn sống. Nối lại ngay (ảnh hết hạn sau 900s):");
-        console.error("  node workers/duc-scouter/pilots/udin-optic/scripts/gui-prompt.mjs --noi-lai");
-        console.error("  node workers/duc-scouter/pilots/udin-optic/scripts/lay-anh.mjs <src…>");
+        console.error("  node workers/udin-optic/tu-dong/gui-prompt.mjs --noi-lai");
+        console.error("  node workers/udin-optic/tu-dong/lay-anh.mjs <src…>");
       }
       process.exitCode = 1;
     });

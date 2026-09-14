@@ -10,7 +10,7 @@
  * năm cách nó có thể trả lời sai mà trông như đúng.
  */
 import assert from "node:assert/strict";
-import { docTraLoi, UNG_VIEN } from "../scripts/doc-tra-loi.mjs";
+import { docTraLoi, UNG_VIEN } from "../doc-tra-loi.mjs";
 
 const TRA_LOI = "Here are some options for the bronze desk lamp on a walnut table!";
 const TRAN = 5000;

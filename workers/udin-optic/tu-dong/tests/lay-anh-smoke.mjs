@@ -9,7 +9,7 @@
  * máy giả chép đúng cái hiểu sai của tôi thì vẫn ngã ở lượt gọi thật đầu tiên.
  */
 import assert from "node:assert/strict";
-import { layAnh, tenFile, selectorDuyNhat, THU_MUC } from "../scripts/lay-anh.mjs";
+import { layAnh, tenFile, selectorDuyNhat, THU_MUC } from "../lay-anh.mjs";
 
 const ANH = "img.batch-grid-image";
 /* `G…` = đường dẫn gốc. `A…` = thứ `scout.query` THẬT SỰ trả ra tay adapter: query đã bị cắt và

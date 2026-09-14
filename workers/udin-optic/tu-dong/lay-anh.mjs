@@ -25,11 +25,11 @@
  *
  * Ảnh KHÔNG vào repo — repo này PUBLIC, và vùng ghi của máy chủ là chỗ duy nhất của dữ liệu chạy.
  *
- *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/udin-optic/scripts/lay-anh.mjs [src…]
+ *   UDIN_GHE=<id> node workers/udin-optic/tu-dong/lay-anh.mjs [src…]
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { goi as goiThat, timTab as timTabThat } from "../../trang-thu-cham/scripts/goi-bridge.mjs";
+import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { URL_UDIN } from "./qua-man-cho.mjs";
 import { SEL } from "./gui-prompt.mjs";
 

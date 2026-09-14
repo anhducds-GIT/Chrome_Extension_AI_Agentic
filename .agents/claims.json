@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T19:15:53.729Z",
-      "task": "T21 chang (1): trang tong + llms.txt sinh lai theo HEAD",
+      "claimed_at": "2026-09-14T20:06:02.612Z",
+      "task": "T21 chang (2): khai vung so huu workers/udin-optic",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -82,11 +82,11 @@
       "released_at": null
     },
     "workers/_shared": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-14T19:14:45.349Z",
       "task": "T21 chang (1): dua goi-bridge.mjs ve _shared, bo ten goi go cung",
-      "released_at": null
+      "released_at": "2026-09-14T19:19:35.722Z"
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -94,7 +94,14 @@
       "claimed_at": "2026-09-12T15:29:54.065Z",
       "task": "Dong bo transport; chay suite cho cong nhin thay",
       "released_at": "2026-09-14T11:49:51.386Z"
+    },
+    "workers/udin-optic": {
+      "owner": "claude-scouter-udine",
+      "ai": null,
+      "claimed_at": "2026-09-14T20:10:10.346Z",
+      "task": "T21 chang (2)+(3): dung nha + vo extension, roi dua 10 file logic sang",
+      "released_at": null
     }
   },
-  "_fingerprint": "265cb154c1e8f53f"
+  "_fingerprint": "2797ca2e66e2a283"
 }

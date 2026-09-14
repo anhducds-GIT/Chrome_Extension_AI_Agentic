@@ -25,11 +25,11 @@
  * `scout.text` là CỬA HẸP của ADR-0006: một phần tử, trần 5.000 ký tự, không có đường lấy chữ
  * hàng loạt. Nó **từ chối** khi selector khớp ≠ 1 — đó là chốt, không phải phiền; đừng nới.
  *
- *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/udin-optic/scripts/doc-tra-loi.mjs
+ *   UDIN_GHE=<id> node workers/udin-optic/tu-dong/doc-tra-loi.mjs
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { goi as goiThat, timTab as timTabThat } from "../../trang-thu-cham/scripts/goi-bridge.mjs";
+import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { URL_UDIN } from "./qua-man-cho.mjs";
 
 /* Xếp từ hẹp tới rộng. Cái hẹp nhất ra đúng phần chữ agent viết; cái rộng nhất là lưới an toàn

@@ -7,11 +7,11 @@
  * Nút Send và nút Stop là CÙNG một phần tử đổi class — bấm nhầm Stop là báo "đã nhận" giả (audit 13/09).
  * Đo thật: gửi → 1,5s thành stop-button → 68s tắt → 4 ảnh mới (GIA-THUYET G-30).
  *
- *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/udin-optic/scripts/gui-prompt.mjs "a red car"
+ *   UDIN_GHE=<id> node workers/udin-optic/tu-dong/gui-prompt.mjs "a red car"
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { goi as goiThat, timTab as timTabThat } from "../../trang-thu-cham/scripts/goi-bridge.mjs";
+import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { quaManCho, URL_UDIN, SEL as SEL_CHO } from "./qua-man-cho.mjs";
 
 export const SEL = Object.freeze({

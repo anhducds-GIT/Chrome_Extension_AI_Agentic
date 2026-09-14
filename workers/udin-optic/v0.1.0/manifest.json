@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Udin Optic (v0.1)",
+  "version": "0.1.0",
+  "description": "Chay viec sinh anh tren Udin: gui prompt, cho, roi lay anh ve dia. Chi cham dung mot trang.",
+  "minimum_chrome_version": "120",
+  "permissions": ["debugger", "storage", "alarms", "sidePanel"],
+  "host_permissions": ["https://vinfast.udinbv.com/*", "http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "dung-khan": {
+      "suggested_key": { "default": "Ctrl+Shift+U", "mac": "Command+Shift+U" },
+      "description": "Dung khan: tat cong tac duong ghi cua Udin Optic"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Udin Optic",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  }
+}

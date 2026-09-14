@@ -2,7 +2,7 @@
  * Trang giả giữ TRẠNG THÁI (chữ trong ô, đang chạy, tập ảnh) và trả theo đúng selector + state,
  * để bấm nhầm Stop hay chờ sai state là lộ ra. */
 import assert from "node:assert/strict";
-import { guiPrompt, choXong, UdinDangChay, HAN_URL_MS, SEL } from "../scripts/gui-prompt.mjs";
+import { guiPrompt, choXong, UdinDangChay, HAN_URL_MS, SEL } from "../gui-prompt.mjs";
 
 function lam({ chuSan = "", xoaDuoc = true, dangChaySan = false, goToi = true, nhan = true, vongChay = 2, anhMoi = 4, nutLap = 1, anhCu = 2, tranMs = 300000 } = {}) {
   const nk = [];

@@ -1,6 +1,6 @@
 /* Phép ghim cho adapter vượt màn chờ của Udin — chạy không cần trình duyệt. */
 import assert from "node:assert/strict";
-import { quaManCho, SEL } from "../scripts/qua-man-cho.mjs";
+import { quaManCho, SEL } from "../qua-man-cho.mjs";
 
 /* `daVe` = ứng dụng đã vẽ xong chưa. Ngay sau `scout.navigate` nó là FALSE cho MỌI selector —
  * cả màn chắn lẫn ô prompt đều chưa có trong DOM. Đó là trạng thái đã cắn 14/09. */
