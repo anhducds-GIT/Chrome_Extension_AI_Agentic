@@ -196,6 +196,8 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 | **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
 | **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
 | **I5 I6 I7** | cuộn · rê chuột · bấm đúp/phải | chưa chặn `W` nào của Udin | Bảo hiểm cho **trang thứ hai**. Mở sau khi tách thì trả lại đúng sáu chỗ ở §5.1 |
+| **O12** | thu phóng trang | mọi trang **dạng artboard** (Vizcom, Figma-like) | Đức nêu 14/09. Vào danh sách vì đúng lý do của danh sách: trang thứ hai nhiều khả năng là một artboard, và mở nó **sau** khi tách là trả lại đúng sáu chỗ ở §5.1. Còn một phép đo 10 giây quyết định nó là năng lực thật hay chỉ là tiện (`G-65`) |
+| **S-25** | sửa chỗ tầng vận chuyển **khai dối cỡ phong bì** | `scout.shot` · `scout.grab` · mọi đường "nhìn toàn cảnh" | **Không phải một năng lực — là một LỖI.** Bridge khai 1 MiB, thực tế rớt chập chờn quanh 65 KB (`G-63`). Đụng `_shared/bridge-host` → **câu của Đức** |
 | ~~chính sách che~~ | ~~`de-xuat-chat-v1`~~ | — | **ĐÃ KÝ 14/09** — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md), đường ⒝: ký nguyên bản + cửa hẹp `scout.text`. `O8` hết chặn |
 
 **`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
