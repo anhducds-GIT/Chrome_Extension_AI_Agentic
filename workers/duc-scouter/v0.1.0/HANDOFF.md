@@ -1060,3 +1060,35 @@ từng xanh trọn rồi ngã ở lượt gọi thật đầu tiên. Việc kế
 T13 (không chờ ai) · T14 `S-22` · **D3** — câu hỏi mới cho Đức: có mở `scout.focus` không. Nếu
 `G-49` đúng thì không có nó, Scouter **không tự chạy được**, vì mọi lượt ghi phụ thuộc vào việc
 con người vừa nhìn tab nào.
+
+## 2026-09-14 · `scouter-review` — hai câu đóng, và một lộ trình xoay quanh mốc ĐÓNG BĂNG
+
+**Đức đặt lại đích:** *hoàn thiện nốt Scouter, rồi mới tách Udin Optic ra — để sau đó không phải
+sửa sâu vào Scouter nữa.* Lộ trình cũ đi ngược: nó cho tách ở `P3`, **trước** khi mở `O8` `I4`
+`I9`, tức là đã hẹn sẵn ba lượt mở lại Scouter sau khi tách.
+
+**Giá của một method thêm sau khi tách, đo thật trên `scout.grab`:** sáu chỗ phải sửa tay
+(`ACTION_NAMES` · `WRITE_CDP_METHODS` · `METHOD_REGISTRY` · ba danh sách ghim · bảng và **số đếm**
+trong `README` · số đột biến), cộng một lượt audit và một lượt Đức nạp lại extension. Nên `§5.2`
+nay là một **DANH SÁCH ĐÓNG BĂNG**: `O8` `I4` `I9` (+`I5` `I6` `I7` bảo hiểm trang thứ hai) phải
+xong **trước** khi tách. `I8` kéo thả nằm NGOÀI — Udin không cần nó. Tách lùi `P3 → P4`.
+
+**`D3` `scout.focus` — Đức trả lời KHÔNG:** cửa sổ extension chạy ẩn bên dưới. Không phải rủi ro:
+`G-40` `G-41` `G-42` đã đo tab nền · cửa sổ thu nhỏ · tab chưa từng hiện đều **nhận đủ** cú bấm.
+
+**`S-22` đóng bằng LỜI KHAI, không bằng bản vá.** `README` khai ba method ghi hứa *"đã bắn sự
+kiện thật vào đúng điểm của đúng phần tử"* và **không** hứa *"trang đã nhận"*; adapter tự kiểm
+bằng trang — `W1` `W2` trên Udin đã làm thế và ĐẠT. Lý do dừng điều tra là **chi phí, không phải
+đã hiểu**: cùng câu hỏi *"tab ẩn"* mở **năm lần** (`G-07` `G-38` `G-40` `G-42`, rồi `G-47` `G-49`),
+bốn lần SAI, và khối *Kết luận* của `GIA-THUYET.md` đã ghi **"đừng thử lại"** trước lần thứ tư.
+Sổ làm đúng việc của nó; tôi không đọc lại sổ của chính mình. `G-47` `G-49` nay ghi **RÚT**, và
+luật mới: **mở lại một giả thuyết đã `SAI` phải có DỮ KIỆN MỚI** — `grep` sổ trước khi ghi `G-`.
+Đường chưa thử duy nhất ở `G-50` (Chrome đông cứng renderer tab nền), ghi để **khỏi nghĩ lại**,
+không phải để mở chiến dịch thứ sáu.
+
+**Soát tổ chức bảng năng lực — ba khuyết tật:** không dòng mã nào trong repo đọc `CAPABILITIES.md`
+nên số đếm gõ tay và **không cổng nào đỏ** (nợ `T17`) · tám cách viết cho ba trạng thái, gộp còn
+năm · `O11` mang mã nhóm **A** mà nằm trong nhóm **D**.
+
+**Câu chặn duy nhất còn lại đổi thành `Q1`:** Đức chốt chính sách che `de-xuat-chat-v1`. Nó chặn
+`O8` — mục đắt nhất của danh sách đóng băng — và `scout.grab` đã chạy **trên** nó rồi mà chưa ai ký.
