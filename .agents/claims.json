@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T18:08:01.492Z",
-      "task": "sinh lai trang tong",
-      "released_at": "2026-09-14T18:11:02.421Z",
+      "claimed_at": "2026-09-14T19:15:53.729Z",
+      "task": "T21 chang (1): trang tong + llms.txt sinh lai theo HEAD",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -96,5 +96,5 @@
       "released_at": "2026-09-14T11:49:51.386Z"
     }
   },
-  "_fingerprint": "420b1f6e771d5e0b"
+  "_fingerprint": "265cb154c1e8f53f"
 }
