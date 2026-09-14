@@ -68,6 +68,11 @@
 | G-29 | 13/09 | Udin | `scout.type` vào `textarea.agent-textarea` tới được React: nút `button.agent-send-button` hết `disabled` | type → query nút Send, xem còn thuộc tính `disabled` không | **ĐÚNG** | gõ "a red car" (typed 9) → 800ms sau nút Send mất `disabled`. Chưa bấm Send |
 | G-30 | 13/09 | Udin | `scout.click` nút Send tới trang: Udin nhận prompt (nút Send khoá lại / DOM đổi) | đếm phần tử trước-sau click | **ĐÚNG** | click `descendant` (352,652) → 1,5s: nút thành `stop-button`, `agent-message-item user` hiện → 68s: `stop-button` tắt, 4 `img.batch-grid-image` "Variation 1..4" |
 
+| G-31 | 14/09 | W3 | Ảnh kết quả Udin có `src` là URL **http(s) tuyệt đối** (không phải `blob:`), nên máy phục vụ nền với tới được bằng `scout.fetch` | `scout.query img.batch-grid-image` rồi đọc `src`; hoặc chạy `lay-anh.mjs` và đọc mã lỗi | **CHƯA** | — |
+| G-32 | 14/09 | W3 | Một ảnh nằm dưới trần `FETCH_MAX_BODY_BYTES` (512 KiB **sau** base64 ≈ 384 KiB thô) | `lay-anh.mjs` — quá trần thì trả `FETCH_BODY_TOO_LARGE` kèm số byte thật | **CHƯA** | — |
+| G-33 | 14/09 | W3 | CDN ảnh của Udin **không đòi cookie**: `credentials: omit` (mặc định) vẫn trả 200 | `lay-anh.mjs`; 401/403 thì giả thuyết SAI — và lúc đó **hỏi Đức** trước khi bật `with_credentials` | **CHƯA** | — |
+| G-34 | 14/09 | E2E | Ba chặng W1→W2→W3 chạy liền một mạch trên ghế thật, không cần tay người xen giữa | `e2e.mjs "<chữ MỚI>"` — mỗi lượt một prompt khác | **CHƯA** | — |
+
 ## Phép đo dùng lại được — đừng dựng lại
 
 | cần biết | dùng | tốn |

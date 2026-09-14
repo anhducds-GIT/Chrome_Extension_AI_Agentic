@@ -77,7 +77,9 @@ export async function guiPrompt(prompt, tuyChon = {}) {
 
   const moi = [...(await tapAnh())].filter((src) => !truoc.has(src));
   if (moi.length === 0) throw new Error(`Udin chạy xong nhưng không có ảnh mới (trước có ${truoc.size}).`);
-  return { anhMoi: moi.length, giay: Math.round((Date.now() - t0) / 1000) };
+  /* Trả cả `src` chứ không chỉ số đếm: chặng sau (W3) lấy đúng những ảnh của LƯỢT NÀY về đĩa,
+   * không lấy cả lịch sử của phiên. */
+  return { anhMoi: moi.length, giay: Math.round((Date.now() - t0) / 1000), src: moi };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

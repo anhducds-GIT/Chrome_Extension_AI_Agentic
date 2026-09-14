@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Doc docs/CAPABILITIES.md (Duc chot mo hinh 13/09). Chang P1: dong S-22, W3 lay anh Udin ve dia qua scout.fetch + file.write, roi E2E Udin. Cho Duc chot cac muc tay (O8 I4 I5 I6 I7). Tra docs/GIA-THUYET.md truoc moi phep thu."
-- human_action: "@Duc:bam D2 con mot nua — ghe THU HAI chua co ten. Khong co viec nao khac can tay Duc luc nay."
+- next_step: "T12 — chay THAT W3 (lay anh Udin ve dia) va E2E ba chang: ma va phep ghim xong 14/09, chua chay lan nao vi Bridge tat. Lenh o CHUOI-VIEC.md muc T12, dong dau KHONG tieu credit. Tra docs/GIA-THUYET.md G-31..G-34 truoc khi thu. S-22 van mo. Cho Duc chot cac muc tay (O8 I4 I5 I6 I7)."
+- human_action: "@Duc:bật máy chủ Bridge của Scouter + mở một tab https://vinfast.udinbv.com/optic + bật công tắc 'Cho phép bấm và gõ' thì W3/E2E chạy được ngay. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên."
