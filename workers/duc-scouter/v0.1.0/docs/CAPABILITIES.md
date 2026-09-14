@@ -44,6 +44,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | O7 | Đọc thuộc tính trạng thái (`disabled`, `aria-*`…) | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29`: nút Send mất `disabled` sau khi gõ | |
 | O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | `scout.text` | **ĐÃ CHỨNG MINH** | [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) · Udin 14/09 (`G-57`): đọc màn chắn ra *"User Limit Reached…"*, `div` khớp 146 thì **từ chối**. 10 khối ghim · 6 đột biến tay. Trần 5.000 ký tự **không** chặn được việc đọc cả trang nhỏ (`G-58`) — giới hạn đã khai trong ADR | |
 | O9 | Phần tử trong iframe / shadow DOM | — | **CHƯA ĐO** | Chưa trang nào cần | |
+| O12 | **Thu phóng trang** để nhìn toàn cảnh | — | **CHƯA CÓ** | Đức nêu 14/09 cho **layout dạng artboard** (Udin, Vizcom). Hai cái được, và cái thứ hai mới là lý do thật: ⑴ ảnh chụp khung nhìn phủ được cả artboard mà **ít byte hơn** ảnh cả trang — quan trọng vì tầng vận chuyển rớt quanh 65 KB (`G-63`); ⑵ ứng dụng canvas có thể **vẽ thêm phần tử** khi thu nhỏ, tức là Scouter *nhìn được nhiều hơn* chứ không chỉ *chụp gọn hơn* — **CHƯA ĐO**, xem `G-65`. Cần method CDP mới (`Emulation.*`) và nó **đổi thứ Đức đang nhìn** | ✋ |
 | O10 | Chụp DOM + bố cục một lượt | ~~`scout.snapshot`~~ | **ĐÃ BỎ 08/09** | Làm chết service worker trên 2/3 trang lớn. Đừng mở lại nếu chưa có cách khác | |
 
 ### B · Đi và chọn tab
@@ -99,8 +100,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 3 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 12 · ĐÃ BỎ 1.** Tổng 41 dòng.
-**Seed Coverage = 20 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
+**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 3 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 13 · ĐÃ BỎ 1.** Tổng 42 dòng.
+**Seed Coverage = 20 / 41** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
 đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
 > ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
