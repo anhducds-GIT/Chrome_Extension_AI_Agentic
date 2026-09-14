@@ -28,9 +28,9 @@
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-12T16:11:54.259Z",
-      "task": "B-85 san nhip dat o goi() — moi RPC, khong rieng luot doc",
-      "released_at": "2026-09-12T16:21:59.566Z",
+      "claimed_at": "2026-09-13T01:43:02.080Z",
+      "task": "chay tiep chuoi reasoning, theo doi loi moi",
+      "released_at": "2026-09-13T02:27:28.276Z",
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T06:27:56.937Z",
-      "task": "Chuoi viec Scouter",
+      "claimed_at": "2026-09-14T02:50:49.751Z",
+      "task": "dong phien: ghi Log + claims",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -77,8 +77,8 @@
     "workers/duc-scouter": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-12T06:27:56.867Z",
-      "task": "Chuoi viec Scouter",
+      "claimed_at": "2026-09-14T02:49:24.655Z",
+      "task": "ghi G-37",
       "released_at": null
     },
     "workers/_shared": {
@@ -96,5 +96,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e8b6904053a0021c"
+  "_fingerprint": "05403b7ea15d2a65"
 }

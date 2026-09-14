@@ -995,4 +995,10 @@ URL ký sẵn không bao giờ ra khỏi trình duyệt. Cùng khuôn với lu�
 **Không chạy E2E.** W3 chặn thì cả vòng chỉ tốn credit của Đức rồi ngã ở chặng ba (`G-34` giữ
 `CHƯA`, ghi rõ vì sao). W1 và W2 vẫn ĐẠT như 13/09.
 
+**Một tin tốt đo được trong cùng lượt, `G-37`:** chạy thật `qua-man-cho.mjs` — màn chắn có thật,
+bấm một lần, **màn chắn tắt** và ô prompt `usable`. Đúng hình dạng của `S-22` (bấm không phải
+cuộn) và **không tái hiện** trên ghế `Udin_Scout` hôm nay. Chưa phải `G-26`: câu đó hỏi ca
+`trang-thu-cham`, và nó cần **một tab trống** trên ghế đó — `chrome://` bị `scout.navigate` từ
+chối (đúng thiết kế), còn tab của Đức thì không mượn.
+
 **Số:** suite gói 25/25 · ghim 20 khối · đột biến tay 14/14. Ghế thứ hai vẫn chưa có tên (`D2`).
