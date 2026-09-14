@@ -127,7 +127,7 @@
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
       "next_step": "T33 T34 T36 XONG 14/09 — danh sach W de xuat BAT BUOC (W1 W2 W3 W4 W7 + E2E) nay DAT TRON. Nen viec ke la chang (3) DONG BANG SEED: T8 doi ten observer->scouter, T9 goi v1. Roi (4) T21 tach Udin. T35 (W6, dinh S-22) va T29 (upload -> W8) de LAI SAU khi tach — dung de xuat cua chinh minh. Duc them W nao vao danh sach bat buoc thi chung quay lai truoc. Chi tiet o CHUOI-VIEC.md.",
-      "human_action": "@Đức:ký — ⓪ nay chỉ còn một chữ ký: danh sách đề xuất `W1 W2 W3 W4 W7` + E2E đã ĐẠT trọn 14/09. Gật là đủ điều kiện tách Udin; muốn thêm `W5` `W6` `W8` thì nói, `T35`/`T29` quay lại trước. Không gấp: `G-69`. Mười giây: `G-65` — zoom RA rồi DỪNG, để tôi đếm.",
+      "human_action": "@Đức:ký — ⓪ nay chỉ còn một chữ ký: danh sách đề xuất `W1 W2 W3 W4 W7` + E2E đã ĐẠT trọn 14/09. Gật là đủ điều kiện tách Udin; muốn thêm `W5` `W6` `W8` thì nói, `T35`/`T29` quay lại trước. Hai câu treo cũ đã TỰ ĐÓNG 14/09 bằng phép đo: `G-65` **SAI** (zoom không vẽ thêm phần tử nào), nên `G-69` hết là câu chặn — `G-79` có đường rẻ hơn, không đổi kiến trúc.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
