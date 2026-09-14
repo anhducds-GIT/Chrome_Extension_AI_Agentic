@@ -9,14 +9,18 @@
  *   Đổi lại, thứ file này chứng minh MẠNH HƠN chặng ③ đòi: không phải *"một adapter dựng được
  *   từ báo cáo"* mà *"báo cáo đủ để một kẻ chưa từng thấy trang này lái được nó"*.
  *
- * Ba luật rút selector, và cả ba đều không biết gì về Udin:
- *   ① Ô nhập  — chữ ký đầu tiên của `ba_cau.go_o_dau` khớp **đúng một**.
- *   ② Cái nút — KHÔNG đoán bằng chữ ("Send" là tiếng Anh của một trang cụ thể). Thay vào đó
- *     **hỏi trang bằng một thí nghiệm**: gõ chữ vào ô, xem nút nào từ `disabled` chuyển sang
- *     mở. Đúng một nút đổi thì đó là nó; không thì DỪNG, vì đoán bừa một nút để bấm là thứ
- *     luật gói số 7 cấm.
- *   ③ Vùng kết quả — chữ ký đông nhất của `ba_cau.ket_qua_o_dau`. Đích thao tác phải khớp
- *     đúng một; vùng kết quả thì ngược lại, nhiều mới đúng.
+ * Ba câu, và chúng KHÔNG cùng một nguồn — đây là bài học của trang thứ hai (`T21`, 14/09):
+ *   ① Ô nhập — từ BÁO CÁO: chữ ký đầu của `ba_cau.go_o_dau` khớp **đúng một**. Báo cáo trả lời
+ *     được câu này vì ô nhập luôn có mặt, và HTML/ARIA khai rõ nó (`role=textbox`, `type`).
+ *   ② Cái nút — từ CHÍNH TRANG, không từ báo cáo. Hai lý do, cả hai đo được: KHÔNG đoán bằng
+ *     chữ (`"Send"` là tiếng Anh của một trang cụ thể), và trên ChatGPT nút gửi **chưa tồn tại**
+ *     lúc dò nên nó không có chữ ký nào trong báo cáo để mà lọc. Thay vào đó: chụp trang trước
+ *     và sau lượt gõ, lấy cái nút ĐỔI từ *chưa bấm được* sang *bấm được* — `disabled` mở ra,
+ *     hoặc chưa có mặt rồi hiện ra. Đúng một nút đổi thì đó là nó; không thì DỪNG, vì đoán bừa
+ *     một nút để bấm là thứ luật gói số 7 cấm.
+ *   ③ Vùng kết quả — từ báo cáo: chữ ký đông nhất của `ba_cau.ket_qua_o_dau`. **Câu này chưa
+ *     tổng quát**: trên Udin kết quả là một bầy `img` nên đúng, trên ChatGPT nó ra `li.list-none`
+ *     và sai. *Kết quả* là một khái niệm ngữ nghĩa mà HTML không đánh dấu.
  *
  *   SCOUTER_GHE=<id> node workers/duc-scouter/pilots/t7-tu-sinh/scripts/chay-tu-bao-cao.mjs "<prompt MỚI>"
  */
@@ -42,9 +46,11 @@ export function rutSelector(baoCao) {
   if (!oNhap) throw new Error(`Báo cáo không có ô nhập nào khớp đúng một (${(ba.go_o_dau || []).length} chữ ký) — chưa lái được trang này.`);
   const ketQua = (ba.ket_qua_o_dau || [])[0];
   if (!ketQua) throw new Error("Báo cáo không có vùng kết quả nào — sẽ không biết lượt chạy đã xong hay chưa.");
-  const nut = (ba.bam_o_dau || []).filter((x) => x.khop === 1).map((x) => sangCss(x.selector));
-  if (nut.length === 0) throw new Error("Báo cáo không có cái nút nào khớp đúng một — luật gói số 7 không cho bấm thứ khớp nhiều.");
-  return { oNhap: sangCss(oNhap.selector), ungVienNut: nut, ketQua: sangCss(ketQua.selector), ketQuaTruoc: ketQua.khop };
+  /* `bam_o_dau` KHÔNG còn là điều kiện bắt buộc, và đây là bài học của trang thứ hai: trên
+   * ChatGPT nút gửi **không tồn tại** lúc dò (`#composer-submit-button` khớp 0 khi ô trống),
+   * nên nó không có chữ ký nào trong báo cáo để mà lọc. Báo cáo trả lời được *gõ ở đâu* và
+   * *kết quả ở đâu*; **chính trang** trả lời *bấm ở đâu*, bằng cái nó đổi sau lượt gõ. */
+  return { oNhap: sangCss(oNhap.selector), ketQua: sangCss(ketQua.selector), ketQuaTruoc: ketQua.khop };
 }
 
 export async function chay(prompt, tuyChon = {}) {
@@ -61,24 +67,40 @@ export async function chay(prompt, tuyChon = {}) {
 
   const tab = await timTab(goi, baoCao.url, tuyChon);
   const dem = async (selector) => (await goi("scout.query", { target_id: tab, selector, limit: 1 }, tuyChon)).data;
-  const khoa = async (selector) => {
-    const d = await dem(selector);
-    return d.matchCount === 1 && "disabled" in (d.items[0]?.attributes || {});
+
+  /* ---- THÍ NGHIỆM TÌM NÚT: SO CHÍNH TRANG, TRƯỚC VÀ SAU LƯỢT GÕ ----------
+   * Bản đầu chỉ soi danh sách ứng viên của báo cáo và chỉ biết một dấu hiệu: `disabled` mở ra.
+   * Trang thứ hai phá cả hai giả định cùng lúc (`G-89`):
+   *   · ChatGPT **không vẽ** nút gửi khi ô trống → nó không có mặt trong báo cáo để mà lọc;
+   *   · nên dấu hiệu phải là *chưa bấm được → bấm được*, trong đó **chưa có mặt** cũng là một
+   *     cách chưa bấm được.
+   * Chụp cả trang trước và sau, rồi lấy phần ĐỔI. Ai đổi thì trang tự khai ra, không ai đoán.
+   */
+  const chuKyNut = (it) => {
+    const a = it.attributes || {};
+    if (typeof a.id === "string" && /^[A-Za-z][\w-]*$/.test(a.id)) return "#" + a.id;
+    const tid = a["data-testid"] ?? a["data-test-id"] ?? a["data-qa"];
+    if (typeof tid === "string" && tid !== "") return `${it.nodeName.toLowerCase()}[data-testid=${JSON.stringify(tid)}]`;
+    const lop = String(a.class || "").split(/\s+/).filter(Boolean);
+    return lop.length ? it.nodeName.toLowerCase() + "." + lop.join(".") : null;   // không có móc thì không theo dõi được
+  };
+  const chupNut = async () => {
+    const map = new Map();
+    for (let offset = 0; ; offset += 200) {
+      const d = (await goi("scout.page", { target_id: tab, offset, limit: 200 }, tuyChon)).data;
+      for (const it of d.elements.items) {
+        const la = it.nodeName === "BUTTON" || it.nodeName === "A" || it.attributes?.role === "button";
+        if (!la) continue;
+        const k = chuKyNut(it);
+        if (k === null) continue;
+        /* Một chữ ký trùng nhiều phần tử thì bỏ hẳn: luật gói số 7 không cho bấm thứ khớp nhiều. */
+        map.set(k, map.has(k) ? "nhieu" : ("disabled" in (it.attributes || {})));
+      }
+      if (!d.elements.hasMore) return map;
+    }
   };
 
-  /* ---- THÍ NGHIỆM TÌM NÚT ------------------------------------------------
-   * Chụp trạng thái khoá của mọi ứng viên TRƯỚC, gõ chữ, chụp lại. Nút đổi từ khoá sang mở là
-   * nút nhận chữ của ô này. Đây cũng đúng là phép kiểm "chữ đã tới React chưa" (`G-29`) — một
-   * lượt gõ, hai câu trả lời. */
-  const truoc = new Map();
-  for (const s of sel.ungVienNut) truoc.set(s, await khoa(s));
-  const daKhoa = sel.ungVienNut.filter((s) => truoc.get(s));
-  if (daKhoa.length === 0) {
-    throw new Error(
-      `Không ứng viên nút nào đang KHOÁ (${sel.ungVienNut.length} ứng viên) — thí nghiệm không phân biệt được cái nào ` +
-      "nhận chữ. Ô có thể đang có chữ sẵn: xoá ô rồi dò lại. Chưa gõ gì, chưa bấm gì.",
-    );
-  }
+  const nutTruoc = await chupNut();
 
   /* ---- MỐC KẾT QUẢ: một TẬP, không phải một con số -----------------------
    * Bản đầu chờ "số phần tử kết quả TĂNG". Chạy thật 14/09 cho thấy nó hỏng câm: ảnh của Udin
@@ -110,20 +132,30 @@ export async function chay(prompt, tuyChon = {}) {
   }
   await goi("scout.type", { target_id: tab, selector: sel.oNhap, text: prompt }, tuyChon);
 
-  let mo = [];
-  for (let i = 0; i < 10 && mo.length === 0; i++) {
-    mo = [];
-    for (const s of daKhoa) if (!(await khoa(s))) mo.push(s);
-    if (mo.length === 0) await nghi(300);
+  /* Nút cần tìm là nút ĐỔI TỪ *chưa bấm được* SANG *bấm được*. Hai lối vào cùng một trạng
+   * thái, và cả hai đều gặp trên trang thật:
+   *   · `disabled` → mở      (Udin)
+   *   · không có mặt → có mặt (ChatGPT)
+   * Ai đã bấm được từ trước lượt gõ thì KHÔNG phải nó — nếu không, nút "đăng nhập" nào cũng
+   * thành ứng viên. */
+  let doi = [];
+  for (let i = 0; i < 12 && doi.length === 0; i++) {
+    const nutSau = await chupNut();
+    doi = [...nutSau].filter(([k, v]) => v === false && nutTruoc.get(k) !== false && nutTruoc.get(k) !== "nhieu").map(([k]) => k);
+    if (doi.length === 0) await nghi(300);
   }
-  if (mo.length !== 1) {
+  if (doi.length !== 1) {
     throw new Error(
-      mo.length === 0
-        ? `Gõ xong mà không nút nào mở khoá (thử ${daKhoa.length} ứng viên) — chữ không tới được trang, hoặc trang này không dùng nút khoá/mở. Chưa bấm gì.`
-        : `Gõ xong thì ${mo.length} nút cùng mở khoá (${mo.join(" · ")}) — thí nghiệm không chỉ ra được MỘT nút. Luật gói số 7 không cho bấm khi chưa chắc. Chưa bấm gì.`,
+      doi.length === 0
+        ? `Gõ xong mà không nút nào đổi sang bấm được (trang có ${nutTruoc.size} nút mang móc) — chữ không tới được trang, hoặc trang này không khoá/hiện nút theo ô nhập. Chưa bấm gì.`
+        : `Gõ xong thì ${doi.length} nút cùng đổi sang bấm được (${doi.slice(0, 5).join(" · ")}) — thí nghiệm không chỉ ra được MỘT nút. Luật gói số 7 không cho bấm khi chưa chắc. Chưa bấm gì.`,
     );
   }
-  const nut = mo[0];
+  const nut = doi[0];
+  /* Chữ ký dựng từ thuộc tính; hỏi lại trang xem nó có thật khớp ĐÚNG MỘT không — không thì
+   * đừng bấm. Đây là luật gói số 7, và nó không được suy ra, phải đo. */
+  { const d = await dem(nut);
+    if (d.matchCount !== 1) throw new Error(`Nút '${nut}' khớp ${d.matchCount} phần tử, không phải 1 — không bấm.`); }
 
   /* ---- TỪ ĐÂY TRỞ ĐI TRANG SẼ LÀM VIỆC THẬT ----------------------------- */
   const t0 = Date.now();
@@ -137,8 +169,7 @@ export async function chay(prompt, tuyChon = {}) {
     if (moi.length > 0) {
       return {
         selector: { oNhap: sel.oNhap, nut, ketQua: sel.ketQua },
-        ungVienNut: sel.ungVienNut.length,
-        daThuKhoa: daKhoa.length,
+        nutCoMocTruoc: nutTruoc.size,
         ketQuaTruoc: moc.khop,
         ketQuaSau: nay.khop,
         ketQuaMoi: moi.length,

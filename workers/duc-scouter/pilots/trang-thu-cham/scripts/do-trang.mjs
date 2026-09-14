@@ -88,13 +88,48 @@ async function main() {
    * mà người đọc phải tự lọc thì trên thực tế là báo cáo chưa trả lời — nên gom chữ ký
    * `thẻ.class` kèm số đếm, đúng thứ ta vẫn phải làm bằng tay để nhìn ra câu trả lời.
    * KHÔNG chọn hộ: chọn hộ là đoán, mà đoán selector là luật vàng số 1 của repo. */
-  const chuKy = (items, { loc, duyNhatTruoc = false } = {}) => {
+  /* MÓC MẠNH NHẤT TRƯỚC — đo 14/09 trên ChatGPT, và đây là chỗ bản đầu vứt câu trả lời đi.
+   *
+   * Bản đầu dựng chữ ký thuần `thẻ.class`. Trên Udin (class ít, có nghĩa) nó ra đúng. Trên
+   * ChatGPT nó ra `a.interactive-bg-secondary.behavior-btn.…print\:hidden` — mười class tiện
+   * ích, dài, giòn, và **sai**: nút gửi thật là `#composer-submit-button`, ô nhập thật là
+   * `#prompt-textarea`. Cả hai cái `id` ấy **đã nằm sẵn trong thuộc tính báo cáo trả về** —
+   * luật che là một danh sách CHO PHÉP 24 tên, và `id` · `data-testid` · `aria-label` đều ở
+   * trong đó. Báo cáo không thiếu dữ liệu; nó thiếu một luật biết dùng dữ liệu ấy.
+   *
+   * Thứ tự: `#id` → `[data-testid]` → `thẻ.class`. Mỗi bậc do một trang THẬT đòi, không bậc
+   * nào thêm phòng xa. `id` phải là định danh thường — loại `:r3:`, `radix-:R1:` mà React sinh
+   * ra mỗi lượt vẽ: một selector khớp đúng một hôm nay mà chết sau lượt nạp lại thì tệ hơn là
+   * không có. */
+  const ID_BEN = /^[A-Za-z][\w-]*$/;
+  const moc = (it) => {
+    const a = it.attributes || {};
+    if (typeof a.id === "string" && ID_BEN.test(a.id)) return "#" + a.id;
+    const tid = a["data-testid"] ?? a["data-test-id"] ?? a["data-qa"];
+    if (typeof tid === "string" && tid !== "") return `${it.nodeName}[data-testid=${JSON.stringify(tid)}]`;
+    const lop = String(a.class || "").split(/\s+/).filter(Boolean);
+    return it.nodeName + (lop.length ? "." + lop.join(".") : "");
+  };
+  /* HỎI CHUẨN TRƯỚC, HỎI HÌNH DẠNG CLASS SAU.
+   *
+   * Đo 14/09 trên ChatGPT: ba ứng viên "gõ ở đâu" đều khớp đúng một, nên xếp theo số khớp là
+   * xếp bừa — và nó ra `#upload-files` đứng đầu, một ô `type="file"`. Nhưng trang đã tự khai
+   * hết: `#upload-files` mang `type="file"` và `tabindex="-1"`, còn ô thật `#prompt-textarea`
+   * mang `role="textbox"`. Nút gửi thì mang `type="submit"`.
+   *
+   * Đây KHÔNG phải hiểu biết về ChatGPT — đây là HTML và ARIA, thứ chính tác giả trang viết ra
+   * để người khác đọc được trang. Luật cũ bỏ qua chúng để đi đếm class, tức là bỏ qua lời khai
+   * để đi đoán vân tay. `G-88`. */
+  const KHONG_GO_DUOC = new Set(["file", "checkbox", "radio", "range", "color", "submit", "reset", "button", "image", "hidden"]);
+  const diemGo = (a) => (a.role === "textbox" ? 2 : 0) + (a.tabindex === "-1" ? -2 : 0) + (a.contenteditable === "true" ? 1 : 0);
+  const diemBam = (a) => (a.type === "submit" ? 2 : 0) + (a.tabindex === "-1" ? -2 : 0);
+  const chuKy = (items, { loc, diem, duyNhatTruoc = false } = {}) => {
     const dem = new Map();
     for (const it of items) {
       if (loc && !loc(it)) continue;
-      const lop = String(it.attributes?.class || "").split(/\s+/).filter(Boolean);
-      const ten = it.nodeName + (lop.length ? "." + lop.join(".") : "");
-      dem.set(ten, (dem.get(ten) || 0) + 1);
+      const k = moc(it);
+      const cu = dem.get(k);
+      dem.set(k, { gom: (cu?.gom || 0) + 1, diem: Math.max(cu?.diem ?? -99, diem ? diem(it.attributes || {}) : 0) });
     }
     /* Hai câu ĐÍCH THAO TÁC xếp *khớp đúng một* lên trước; câu KẾT QUẢ xếp theo số đông.
      * Không phải hai quy tắc tuỳ hứng mà là một quy tắc của repo nhìn từ hai phía: luật gói
@@ -112,16 +147,32 @@ async function main() {
    *
    * `nodeName` của CDP viết HOA; CSS phân biệt hoa-thường ở phần class nhưng không ở tên thẻ,
    * nên chỉ hạ đúng phần tên thẻ rồi phát ra selector DÙNG ĐƯỢC NGAY. */
+  /* Tên class KHÔNG phải lúc nào cũng là một định danh CSS hợp lệ. Trên trang dùng CSS tiện ích
+   * (Tailwind và họ hàng) chúng là `text-[13px]`, `md:w-1/2`, `@[45rem]/thread:px-6` — nối thẳng
+   * sau dấu chấm là một selector Chrome từ chối, và lượt dò ChatGPT 14/09 chết đúng ở đó. Thoát
+   * theo luật định danh CSS: mọi ký tự ngoài chữ-số-gạch-dưới-gạch-nối, và chữ số đứng đầu. */
+  const thoat = (lop) =>
+    lop.replace(/[^a-zA-Z0-9_ -￿-]/g, (c) => "\\" + c).replace(/^(-?)(\d)/, (_, g, d) => `${g}\\3${d} `);
   const raCss = (chuKy) => {
+    /* `#id` đã là selector hợp lệ — hạ chữ nó là hỏng nó, vì CSS PHÂN BIỆT hoa thường ở `id`. */
+    if (chuKy.startsWith("#")) return chuKy;
+    const nganh = chuKy.indexOf("[");
+    if (nganh > 0) return chuKy.slice(0, nganh).toLowerCase() + chuKy.slice(nganh);
     const i = chuKy.indexOf(".");
-    return i < 0 ? chuKy.toLowerCase() : chuKy.slice(0, i).toLowerCase() + chuKy.slice(i);
+    if (i < 0) return chuKy.toLowerCase();
+    return chuKy.slice(0, i).toLowerCase() + chuKy.slice(i + 1).split(".").map((c) => "." + thoat(c)).join("");
   };
   const doKhop = async ({ dem, duyNhatTruoc }) => {
     const ds = [];
-    for (const [chuKy, gom] of dem) {
+    for (const [chuKy, { gom, diem }] of dem) {
       const selector = raCss(chuKy);
-      const { matchCount } = (await goi("scout.query", { target_id: tab, selector, limit: 1 })).data;
-      ds.push({ selector, khop: matchCount, gom });
+      /* MỘT chữ ký hỏng không được giết cả lượt dò. Báo cáo là thứ phiên sau đọc để hiểu trang;
+       * mất cả báo cáo vì một selector lạ thì đắt hơn nhiều so với mất một dòng trong nó — và
+       * dòng hỏng ấy vẫn phải HIỆN RA, vì im lặng bỏ nó đi là cái xanh giả thứ năm. */
+      let khop = null, loi = null;
+      try { khop = (await goi("scout.query", { target_id: tab, selector, limit: 1 })).data.matchCount; }
+      catch (e) { loi = String(e.message).slice(0, 120); }
+      ds.push({ selector, khop, gom, diem, ...(loi ? { loi } : {}) });
     }
     /* Đích thao tác xếp theo `khop` ĐO ĐƯỢC (khớp đúng một lên đầu — luật gói số 7).
      * Vùng kết quả xếp theo `gom`, tức cỡ NHÓM có bộ class y hệt, chứ KHÔNG theo `khop`: một
@@ -129,22 +180,30 @@ async function main() {
      * nhiều hơn `img.batch-grid-image` và luôn thắng — một chiến thắng không mang tin gì.
      * Đo 14/09: `img` (39) đè `img.batch-grid-image` (32) đúng ở lượt dò này. */
     const hang = duyNhatTruoc ? (x) => (x.khop === 1 ? 0 : 1) : () => 0;
-    return ds.sort((a, b) => hang(a) - hang(b) || (duyNhatTruoc ? b.khop - a.khop : b.gom - a.gom));
+    return ds.sort((a, b) => hang(a) - hang(b) || b.diem - a.diem || (duyNhatTruoc ? (b.khop ?? -1) - (a.khop ?? -1) : b.gom - a.gom));
   };
   const nhapDuoc = new Set(["TEXTAREA", "INPUT"]);
   const baCau = {
     go_o_dau: await doKhop(chuKy(trang.data.elements.items, {
-      loc: (it) => nhapDuoc.has(it.nodeName) || it.attributes?.contenteditable === "true",
-      duyNhatTruoc: true,
+      loc: (it) => {
+        const a = it.attributes || {};
+        if (a.contenteditable === "true" || a.role === "textbox") return true;
+        if (it.nodeName === "TEXTAREA") return true;
+        /* `INPUT` không phải lúc nào cũng là chỗ gõ chữ: `type` nói rõ cái nào không. */
+        return it.nodeName === "INPUT" && !KHONG_GO_DUOC.has(String(a.type || "text").toLowerCase());
+      },
+      diem: diemGo, duyNhatTruoc: true,
     })),
     bam_o_dau: await doKhop(chuKy(trang.data.elements.items, {
       loc: (it) => it.nodeName === "BUTTON" || it.nodeName === "A",
-      duyNhatTruoc: true,
+      diem: diemBam, duyNhatTruoc: true,
     })),
     ket_qua_o_dau: await doKhop(chuKy(noiDung.data.items)),
   };
   for (const [cau, ds] of Object.entries(baCau)) {
-    console.log(`${cau}: ${ds.length === 0 ? "KHÔNG CÓ ỨNG VIÊN NÀO" : ds.slice(0, 3).map((x) => `${x.selector} (${x.khop})`).join(" · ")}`);
+    const hong = ds.filter((x) => x.loi).length;
+    console.log(`${cau}: ${ds.length === 0 ? "KHÔNG CÓ ỨNG VIÊN NÀO" : ds.slice(0, 3).map((x) => `${x.selector} (${x.khop ?? "?"})`).join(" · ")}`
+      + (hong ? `   [${hong}/${ds.length} chữ ký Chrome từ chối làm selector]` : ""));
   }
 
   const baoCao = {

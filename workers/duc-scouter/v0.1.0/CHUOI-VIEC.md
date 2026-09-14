@@ -523,10 +523,38 @@ Và `G-84` chữa cái **xanh giả** gốc: `scout.tree` nay khai `cutByDepth` 
 Báo cáo Udin giờ **ĐỎ đúng chỗ**: *45 nhánh cụt, 87 nút con rơi ra ngoài* — nâng `max_nodes`
 không chữa được, và nó nói thẳng điều đó ra.
 
+### Trang thứ hai — ChatGPT, 14/09. Hai luật gãy, và chúng gãy KHÁC NHAU
+
+*(Sửa nhãn: lượt trước tôi gọi việc này là `T21`. Sai — `T21` là **tách Udin thành gói riêng**.
+Chạy vòng trên trang thứ hai là nợ của chính `T7`.)*
+
+Chạy chặng ② trên một tab ChatGPT, **chỉ đọc**, không sửa một dòng nào. Ba câu:
+
+| câu | Udin | ChatGPT | phán |
+|---|---|---|---|
+| gõ ở đâu | `textarea.agent-textarea` | `#prompt-textarea` | ✅ **chung** — sau khi sửa `G-88` |
+| bấm ở đâu | `button.agent-send-button` | *không có trong báo cáo* | ⚠️ **đổi nguồn** — `G-89` |
+| kết quả ở đâu | `img.batch-grid-image` (32) | `li.list-none` (31) — **sai** | ❌ **chưa tổng quát** — `G-90` |
+
+· **`G-88`** — luật cũ dựng chữ ký thuần `thẻ.class`, và trên trang dùng CSS tiện ích nó ra
+  `a.interactive-bg-secondary.…print\:hidden`: dài, giòn, sai. Mà trang đã tự khai hết —
+  `role="textbox"`, `type="file"`, `tabindex="-1"`, `type="submit"` — và **luật che không hề
+  cắt những thứ đó** (danh sách cho phép 24 tên, `id` · `data-testid` · `role` đều ở trong).
+  Báo cáo không thiếu dữ liệu; nó thiếu một luật biết dùng. Sửa xong thì **cả hai trang** đều
+  ra đúng ô nhập ở vị trí đầu.
+· **`G-89`** — `#composer-submit-button` khớp **0** khi ô prompt trống: ChatGPT **không vẽ** nút
+  gửi cho tới khi có chữ. Một báo cáo chụp lúc chưa gõ **không thể** chứa cái nút. Nên adapter
+  thôi lấy ứng viên từ báo cáo và **so chính trang** trước/sau lượt gõ — *chưa có mặt* cũng là
+  một cách *chưa bấm được*. Đo lại trên Udin sau khi đổi: vẫn khép, 4 ảnh mới trong 59 giây.
+· **`G-90`** — chưa có lối ra, và **đừng chọn lối rẻ**. Kết quả của ChatGPT là chữ, đánh dấu duy
+  nhất bằng `data-message-author-role`, không nằm trong danh sách cho phép. Nới danh sách ấy là
+  **nới một lớp bảo vệ** → hỏi Đức, đừng tự làm.
+
 ### Còn nợ lại của T7
 
-· Cả vòng chạy trên **một** trang. Chạy lại trên một trang thứ hai mới biết ba luật rút selector
-  là chung hay là vừa khít Udin — đó là `T21`, không phải `T7`.
+· **`G-90`**: câu *kết quả hiện ở đâu* chưa tổng quát. Ba lối đã ghi ở `GIA-THUYET`, chưa chọn.
+· Nhánh *nút hiện ra sau khi gõ* (`G-89`) mới có **phép ghim**, chưa có lượt chạy thật — chạy
+  thật nghĩa là gõ và **gửi** một tin trong hội thoại ChatGPT của Đức. **Phải hỏi Đức trước.**
 · Adapter tự sinh chưa lấy ảnh về đĩa và chưa đọc câu trả lời (`W3` · `W4` của `udin-optic`).
   Cố ý: vòng khép cần **một** đường đi được, không cần đủ tính năng.
 

@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T7 DA KHEP 14/09 — vong tu cai tien chay mot mach tren Udin: do trang (288 KB) -> pilots/t7-tu-sinh/ tu rut selector tu bao cao -> chay -> 4 anh moi trong 39 giay. Ba selector no tu rut trung ban lam tay udin-optic. Viec ke: T9 dong goi seed v1 — no tu khai chi lam sau T7, nay het chan. Truoc do nen chay T7 tren mot trang THU HAI (T21) de biet ba luat rut selector la chung hay vua khit Udin."
-- human_action: "không"
+- next_step: "T7 khep 14/09, va 14/09 da chay them TRANG THU HAI (ChatGPT, chi doc) de biet ba luat rut selector la chung hay vua khit Udin. Ket qua: go o dau CHUNG sau khi sua G-88 (hoi HTML/ARIA truoc, hoi class sau) — ca hai trang deu ra dung o nhap dau danh sach. Bam o dau phai DOI NGUON (G-89): ChatGPT khong ve nut gui khi o trong nen bao cao khong the chua no; adapter nay so CHINH TRANG truoc/sau luot go. Ket qua o dau CHUA TONG QUAT (G-90) — chua co loi ra, va loi re nhat la noi danh sach che, tuc noi mot lop bao ve: phai hoi Duc. Viec ke: T9 dong goi seed v1."
+- human_action: "@Đức:chốt cho chạy thử adapter tự sinh trên tab ChatGPT của anh — nó sẽ GÕ và GỬI một tin bỏ đi. Chưa được thì nhánh nút-hiện-ra-sau-khi-gõ chỉ có phép ghim, chưa có lượt chạy thật."
