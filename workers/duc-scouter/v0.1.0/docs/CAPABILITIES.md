@@ -82,7 +82,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
 | D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn). Đường đúng là `scout.grab` — xem O11 | |
 | O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **CÓ** | Đức chốt `S-24` đường ⒜ 14/09. Đưa selector, extension đọc `src` đầy đủ **bên trong** rồi tải, trả byte; không có trường `url`. 11 khối ghim · đột biến 128/128. **CHƯA CHẠY THẬT** — `T13` | |
-| D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ ở seed** | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
+| D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ** (adapter tự làm) | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
 ### E · An toàn và vận hành
@@ -92,7 +92,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | R1 | Công tắc đường ghi, mặc định ĐÓNG | bảng bên | **ĐÃ CHỨNG MINH** | phanh chặn thật 08/09 giữa lượt tải | |
 | R2 | Dừng khẩn | Ctrl+Shift+X | **CÓ** | chưa có lượt thật ghi lại | |
 | R3 | Trần 200 lượt mỗi lần mở | lõi ghi | **CÓ** | ghim `P1..P12` | |
-| R4 | Mã lỗi nói thật (không báo ĐẠT giả) | hai lõi | **ĐÃ CHỨNG MINH một phần** | `CLICK_HIT_TEST_FAILED` bắt được `S-23`. `S-22` vẫn báo ok giả | |
+| R4 | Mã lỗi nói thật (không báo ĐẠT giả) | hai lõi | **MỘT PHẦN** | `CLICK_HIT_TEST_FAILED` bắt được `S-23`. `S-22` vẫn báo ok giả — nay là **giới hạn đã khai** trong `README`, không phải lỗi chờ vá | |
 | R5 | Nhật ký lượt chạy + ghi đĩa | `scouter-journal-core` + `file.*` | **ĐÃ CHỨNG MINH** | T7 12/09 | |
 | R6 | Tự nạp lại code mới | `scout.reload` | **ĐÃ CHỨNG MINH** | mọi phiên | |
 | R7 | Thử lại / chạy tiếp khi đứt | — | **CHƯA CÓ** | nhóm B của danh sách 25 mục | |
@@ -103,6 +103,15 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 **Seed Coverage = 19 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
 đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
+> ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
+> (kiểm 14/09: `grep -rl CAPABILITIES --include=*.mjs` → rỗng). Nên một ô khai `ĐÃ CHỨNG MINH`
+> mà không có lượt chạy thật thì **không có cổng nào đỏ**. Đó là nợ `T17` ở §5 — và nó ngược
+> đúng luật chung của repo: *bảng là thứ SINH RA, không phải thứ gõ vào*.
+>
+> **Năm chữ trạng thái, không được chế thêm:** `CHƯA CÓ` · `CHƯA ĐO` · `CÓ` · `MỘT PHẦN` ·
+> `ĐÃ CHỨNG MINH` (+ `ĐÃ BỎ <ngày>` cho dòng chết). Trước 14/09 bảng này chạy 8 cách viết cho 3
+> trạng thái — hai trong số đó (`ĐÃ CHỨNG MINH một phần`, `CHƯA CÓ ở seed`) đã gộp lại.
+
 ## 3. Checklist bổ sung cho Seed — theo thứ tự việc thật cần
 
 Mỗi mục đi đủ 4 bước: ☐ ghi `CHƯA` trong `GIA-THUYET.md` → ☐ mã + phép ghim + đột biến → ☐ đạt trên
@@ -110,14 +119,14 @@ Chrome riêng (probe) → ☐ đạt trên trang thật. Bước 4 xong thì s�
 
 | Ưu tiên | Mã | Vì sao trước | Duyệt |
 |---|---|---|---|
-| 1 | `S-22` | Lệnh bấm báo ok mà trang không phản ứng. Mọi năng lực tay người đứng trên nó | |
-| 2 | `T13` nối `lay-anh.mjs` sang `scout.grab` | Đóng W3, và cho `scout.grab` lượt chạy thật đầu tiên | |
-| 3 | O8 đọc chữ | Không đọc được kết quả bằng chữ thì không kiểm được phần lớn workflow | ✋ chốt chính sách che |
-| 4 | I4 xoá ô nhập | Gửi prompt lần hai trên cùng ô | ✋ |
-| 5 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo | ✋ |
-| 6 | I8 kéo thả · I9 upload | Canvas, timeline, ảnh tham chiếu | ✋ |
-| 7 | D5 lỗi console · N5 back/forward · O9 iframe | Làm khi có trang cần | ✋ |
-| 8 | D4 so trước/sau lên seed | Chỉ khi trang thứ hai lặp lại đúng mẫu đó | ✋ |
+| ~~—~~ | ~~`S-22`~~ | **ĐÓNG 14/09 bằng lời khai trong `README`**, không bằng bản vá. Đừng mở lại điều tra | |
+| 1 | `T13` nối `lay-anh.mjs` sang `scout.grab` | Đóng W3, và cho `scout.grab` lượt chạy thật đầu tiên | |
+| 2 | O8 đọc chữ | Không đọc được kết quả bằng chữ thì không kiểm được phần lớn workflow | ✋ chốt chính sách che |
+| 3 | I4 xoá ô nhập · I9 upload | Hai mục cuối của **danh sách đóng băng** §5.2 — phải xong TRƯỚC khi tách Udin | ✋ |
+| 4 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo. Bảo hiểm cho trang thứ hai | ✋ |
+| 5 | I8 kéo thả | **Ngoài** danh sách đóng băng: Udin không cần. Chỉ khi có trang timeline thật | ✋ |
+| 6 | D5 lỗi console · N5 back/forward · O9 iframe | Làm khi có trang cần | ✋ |
+| 7 | D4 so trước/sau lên seed | Chỉ khi trang thứ hai lặp lại đúng mẫu đó | ✋ |
 
 **Không làm:** chạy đồng thời nhiều tab (N8 đồng thời) · lệnh kiểu `addBlock()` / `generateImage()`
 trong seed (đó là việc của adapter) · máy tổng hợp mastery trước khi có trang thứ hai.
@@ -153,32 +162,80 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **2 / 8 workflow ĐẠT · 4 CHẶN · E2E CHẶN**.
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
 
-## 5. Lộ trình triển khai — sửa 14/09 sau một ngày chạy thật
+## 5. Lộ trình — viết lại 14/09 quanh MỘT câu hỏi của Đức
 
-**Đọc trước khi làm gì:** hai thứ đã đổi hình so với bản 13/09. ⑴ `W3` không đi bằng `scout.fetch`
-được — ảnh nằm sau URL ký sẵn, và cách chữa là `scout.grab` (đã có, **chưa chạy thật**). ⑵ `S-22`
-nay còn đúng **một** giả thuyết sống, và nó quyết định Scouter có tự chạy được hay không.
+> **Câu hỏi đặt lại lộ trình:** *"hoàn thiện nốt phần Scouter, sau đó mới tách Udin Optic riêng,
+> như vậy sẽ không phải sửa quá sâu vào code Scouter."*
+>
+> Vậy thước đo của cả lộ trình này **không** còn là "Seed Coverage bao nhiêu phần trăm". Nó là:
+> **cái gì phải đúng TRƯỚC khi tách, để sau khi tách không bao giờ phải mở lại Scouter nữa.**
+
+### 5.1 Vì sao thêm một method SAU khi tách thì đắt
+
+Thêm một lệnh Bridge không phải sửa một file. Đo thật trên `scout.grab` ngày 14/09 — phải sửa tay
+**sáu** chỗ trước khi cổng xanh lại:
+
+`ACTION_NAMES` · `WRITE_CDP_METHODS` · `METHOD_REGISTRY` · ba danh sách ghim
+(`scouter-actions-smoke` · `scouter-bridge-smoke` · `EXPECTED_WRITE_METHODS`) · bảng lệnh trong
+`README` · **số đếm method** trong `README` · số đột biến trong `scouter-mutation-check`.
+
+Cộng thêm một lượt audit độc lập và một lượt Đức nạp lại extension. **Đó chính là "sửa sâu vào
+Scouter" mà Đức muốn tránh.** Nên luật của lộ trình này là:
+
+> **Mọi năng lực mà adapter sẽ cần, phải có TRƯỚC khi tách. Sau khi tách, Scouter đóng băng.**
+
+### 5.2 DANH SÁCH ĐÓNG BĂNG — thứ phải xong trước khi tách
+
+Rút ra từ bảng `W` ở §4: bảy trong tám workflow của Udin hiện **CHƯA hoặc CHẶN**, và bốn cái
+chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
+
+| | Năng lực | Chặn workflow nào | Vì sao không hoãn được |
+|---|---|---|---|
+| **O8** | đọc chữ trên trang | `W4`, và **mọi** dấu kiểm bằng chữ | Không đọc được chữ thì adapter chỉ kiểm được *"có phần tử không"*. Đây là cái đắt nhất trong danh sách |
+| **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
+| **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
+| **I5 I6 I7** | cuộn · rê chuột · bấm đúp/phải | chưa chặn `W` nào của Udin | Bảo hiểm cho **trang thứ hai**. Mở sau khi tách thì trả lại đúng sáu chỗ ở §5.1 |
+| **chính sách che** | `de-xuat-chat-v1` | `O8` **và** `source.masked` của `scout.grab` | **Chưa ai chốt.** `O8` không viết được trước nó, và `scout.grab` đang đứng trên một chính sách chưa ký |
+
+**`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
+thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp nhận mở lại Scouter một lần.
+
+### 5.3 Các chặng
 
 | Chặng | Việc | Xong khi | Chờ ai |
 |---|---|---|---|
 | ~~P0~~ | Chốt mô hình đo | **XONG 13/09** | — |
+| ~~P1b~~ | ~~`T14` đóng `S-22` bằng chẩn đoán~~ | **ĐÓNG 14/09 bằng LỜI KHAI**, không bằng bản vá — `README` khai `scout.click` không hứa *"trang đã nhận"*. Lý do dừng: năm lượt điều tra cùng một giả thuyết | — |
 | **P1a** | `T13` — `lay-anh.mjs` đi bằng `scout.grab`, chạy thật | một ảnh Udin nằm trên đĩa, và `scout.grab` có lượt chạy thật đầu tiên | **không ai** |
-| **P1b** | `T14` — đóng `S-22` | phép đo ghép cặp có đủ hai vế (tab hiện / tab ẩn) | Đức: một cú bấm **hoặc** chốt `D3` |
-| **P1c** | `T15` — E2E Udin | ba chặng chạy một mạch trên ghế thật | P1a + P1b |
-| **P2** | Các mục ✋: `O8` đọc chữ · `I4` xoá ô · `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | mỗi mục ĐÃ CHỨNG MINH trên trang thật | Đức chốt từng mục |
-| **P3** | Tách Udin thành **gói adapter riêng**, điều khiển seed qua Bridge (không chép seed) | các W bắt buộc ĐẠT từ gói mới | P1c |
-| **P4** | Trang thứ hai **khác loại** (node editor / timeline / CRUD) | có W ĐẠT mà **không sửa seed riêng cho trang đó** | P3 |
-| **P5** | Đóng Udin thành extension riêng · máy đếm mastery · `I8` `I9` | Đức chọn | P4 |
+| **P1c** | `T15` — E2E Udin (`W1→W2→W3`) | ba chặng chạy một mạch trên ghế thật | P1a |
+| **P2a** | **`O8` đọc chữ** — sau khi Đức chốt chính sách che | `W4` ĐẠT trên trang thật | ✋ **Đức chốt `de-xuat-chat-v1`** |
+| **P2b** | `I4` xoá ô · `I9` upload | `W7` `W8` ĐẠT trên trang thật | ✋ Đức chốt từng mục |
+| **P2c** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ĐÃ CHỨNG MINH trên Chrome riêng | ✋ Đức chốt gộp một lượt |
+| **P2d** | `T17` — **máy sinh bảng §2**, thay cho gõ tay | một ô khai `ĐÃ CHỨNG MINH` không có dòng `TRIALS` thì cổng ĐỎ | không ai |
+| **P3** | **ĐÓNG BĂNG SEED** — `T8` đổi tên `observer`→`scouter`, `T9` đóng gói `v1` | không method mới nào được thêm sau mốc này mà không có ADR | P2a–P2d |
+| **P4** | **Tách Udin** thành gói riêng, điều khiển seed qua Bridge (không chép seed) | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng nào của Scouter phải sửa** | P3 |
+| **P5** | Trang thứ hai khác loại (node editor / timeline / CRUD) | có `W` ĐẠT mà không sửa seed | P4 |
 
-**Rủi ro lớn nhất đang mở, nói thẳng:** nếu `G-49` đúng — lượt ghi chỉ tới khi tab đang hiện —
-thì **P3 trở đi đều đứng trên một nền không tự chạy được**, vì mọi adapter sẽ cần một con người
-vừa nhìn đúng tab. `D3` (`scout.focus`) là đường chữa; không có nó thì giới hạn đó phải được
-khai to trong `README`, không phải giấu trong một dòng nợ.
+**Đổi so với bản sáng 14/09:** tách Udin từ **P3 lùi xuống P4**, và đứng sau một mốc đóng băng.
+Bản cũ cho tách trước khi mở `O8` `I4` `I9` — tức là đã hẹn sẵn ba lượt mở lại Scouter sau khi
+tách. Đó đúng là thứ Đức bảo tránh.
 
-**Nợ kỹ thuật mở trong ngày 14/09, đừng để rơi:**
-· `T16` — dấu chẩn đoán của trang thử đọc được bằng **giá trị** (hai kết luận ngược đã sinh ra từ
-  chỗ này) · `scout.grab` chưa có phép ghim đi **qua lõi seed** (mới ghim ở lõi hành động + kiểm
-  mã nguồn) · chính sách che `de-xuat-chat-v1` **vẫn chưa được Đức chốt**, mà nay `O8` và cả
-  `source.masked` của `scout.grab` đều đứng trên nó.
+### 5.4 Rủi ro và nợ đang mở
+
+**Câu hỏi chặn lớn nhất, và nay chỉ còn MỘT:** Đức chốt chính sách che `de-xuat-chat-v1`. Nó chặn
+`O8` — mục đắt nhất của danh sách đóng băng — và `scout.grab` đã **chạy trên** nó rồi mà chưa ai ký.
+
+**`D3` (`scout.focus`) — Đức trả lời 14/09: KHÔNG.** Cửa sổ extension chạy **ẩn bên dưới**, chỉ
+vài ca ngoại lệ mới lên trên. Không mở `scout.focus` làm đường mặc định. Kéo theo: mọi adapter
+phải chạy được trên **tab nền** — và đó là trạng thái đã đo: `G-40` `G-41` `G-42` đều cho thấy
+tab nền / cửa sổ thu nhỏ / tab chưa từng hiện **vẫn nhận đủ** cú bấm.
+
+**Nợ kỹ thuật, đừng để rơi:**
+· `T16` — dấu chẩn đoán của trang thử đọc được bằng **giá trị** (hai kết luận ngược sinh ra từ đây)
+· `scout.grab` chưa có phép ghim đi **qua lõi seed** (mới ghim ở lõi hành động + kiểm mã nguồn)
+· `O11` mang mã nhóm **A** nhưng nằm trong nhóm **D** — sửa khi nào có lượt đụng `HANDOFF`
+· **§4 là nội dung của ADAPTER đang nằm trong tài liệu của SEED.** Nó phải dọn sang
+  `pilots/udin-optic/` **trong lúc làm P4**, không phải trước — dọn sớm thì Đức mất trang xem
+  Udin đang ở đâu mà chẳng đổi được gì.
 
 **Nhiều URL:** chỉ làm **lần lượt, một tab một lúc** (N7). Chạy đồng thời phải có ADR mới.

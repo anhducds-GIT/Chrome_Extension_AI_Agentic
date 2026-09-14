@@ -5,8 +5,8 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "T13 — noi lay-anh.mjs sang scout.grab roi chay that (dong W3, va la luot chay that DAU TIEN cua scout.grab). Khong cho ai. Sau do T14 (S-22: con dung mot gia thuyet song, G-49) va T15 (E2E). Doc CHUOI-VIEC.md bang theo doi truoc."
-human_action: "@Duc:mot cau chot D3 — co them scout.focus (dua tab len truoc truoc khi ghi) khong? Neu G-49 dung thi khong co no, moi luot chay tu dong phu thuoc vao viec con nguoi vua nhin tab nao. Gia phai tra: Scouter se giat tab khi dang chay. Chi tiet o CHUOI-VIEC.md muc D3."
+next_step: "T13 — noi lay-anh.mjs sang scout.grab roi chay that (dong W3, va la luot chay that DAU TIEN cua scout.grab). Khong cho ai. Sau do T15 (E2E Udin). Lo trinh doi 14/09: tach Udin lui xuong SAU khi seed dong bang — xem CAPABILITIES.md muc 5.2 DANH SACH DONG BANG. S-22 va D3 da dong."
+human_action: "@Duc:mot cau chot Q1 — phe duyet chinh sach che du lieu de-xuat-chat-v1. No chan O8 (doc chu tren trang), muc dat nhat cua danh sach dong bang, va scout.grab da dung tren no roi ma chua ai ky. Day la cau chan duy nhat con lai. Chi tiet o CHUOI-VIEC.md muc Q1."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Hoàn thiện SEED dùng chung — Scouter là ĐÍCH, trang Udin (vinfast.udinbv.com/optic) chỉ là CA THỬ để ép seed lộ chỗ nó còn hẹp. Ngày 12/09 ca thử đó ép lộ năm khuyết tật của SEED (S-16 tới S-20) và BỐN cái đã vá xong trong ngày, cả bốn đo ngoài đời chứ không chỉ trước máy giả. S-17: scout.click hỏi Chrome điểm sắp bấm thuộc về ai TRUOC khi bắn, có lớp che thì từ chối CLICK_OBSCURED. S-18: scout.wait nhận thêm state usable, phân biệt có mặt với dùng được, và nói ra VÌ SAO chưa dùng được. S-19: scout.navigate nạp lại được cùng một URL — 15 giây báo sai nguyên nhân xuống 254ms báo đúng. S-16: ba hạn chờ xuống dưới ngưỡng 35 giây của máy chủ, và ngưỡng đó nay có tên để phép ghim đọc thẳng thay vì gõ lại. Còn mở: S-20 (nghe mạng trong lúc bấm) và S-21 (target thỉnh thoảng không trả lời được câu hỏi hình học, chưa biết vì sao). Tên ghế đã nghiệm thu ngoài đời: Đức gõ Udin_Scout và định tuyến theo tên chạy đúng. Không thêm method Bridge nào trong lượt T4 — số method hiện ở cột Method Bridge [ĐO] trên DASHBOARD.md, đừng ghi tay vào đây."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
@@ -51,15 +51,17 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 ## Câu còn treo, chỉ Đức chốt được
 
-**Đang treo một câu: `S-24` — URL ký sẵn.** Đo ngày 14/09: ảnh kết quả của Udin nằm trên S3 bằng
-URL ký sẵn, chữ ký nằm trong query, mà lõi đọc **cắt query** khỏi mọi `src`/`href` theo chính
-sách che — nên `scout.fetch` trả 403. Đó là một lớp **bảo vệ** đang làm đúng việc, tôi không
-được tự nới. Ba đường ở `BACKLOG.md` mục `S-24`; tôi đề xuất ⒜ `scout.grab` (nhận selector,
-extension tự đọc URL đầy đủ bên trong, URL không ra khỏi trình duyệt).
+**Đang treo một câu: `Q1` — chính sách che dữ liệu `de-xuat-chat-v1` chưa ai ký.** Nó chặn `O8`
+(đọc chữ trên trang) — mục đắt nhất của **danh sách đóng băng** (`docs/CAPABILITIES.md` §5.2),
+tức là thứ phải xong **trước** khi tách Udin ra gói riêng. Và `scout.grab` đã chạy **trên** chính
+sách đó rồi (`source.masked` cắt query theo nó) mà chưa có chữ ký nào phía sau.
 
-**Câu trước đó đã chốt.** Câu cuối cùng — chính sách che dữ liệu khi ghi báo cáo xuống
-đĩa — Đức chốt ngày 07/09: Scouter **được** ghi
-([ADR-0016](../../../docs/adr/0007-scouter.md)).
+**Ba câu đã chốt ngày 14/09.** `S-24` URL ký sẵn → đường ⒜, `scout.grab` ra đời. `D3` `scout.focus`
+→ **KHÔNG**: cửa sổ extension chạy ẩn bên dưới, adapter phải chạy được trên tab nền. `S-22` →
+đóng bằng **lời khai** trong `README` (`scout.click` không hứa *"trang đã nhận"*), không bằng bản vá.
+
+**Câu trước đó đã chốt.** Chính sách ghi báo cáo xuống đĩa — Đức chốt ngày 07/09: Scouter **được**
+ghi ([ADR-0016](../../../docs/adr/0007-scouter.md)).
 
 Sáu câu treo cũ đã chốt hết: vỏ giao diện là bảng bên (ADR-0002 của gói, 07/09) · chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
 `SEED v0.1`) · hình dạng cái phanh cho đường ghi và quyền `alarms` (ADR-0001 của gói, 07/09) ·

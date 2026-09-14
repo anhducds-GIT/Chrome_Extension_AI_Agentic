@@ -80,6 +80,23 @@ là bấm được vào bất kỳ đâu trên màn hình, và cổng selector t
 `scout.type` **từ chối ký tự điều khiển**: Enter và Tab đi qua `scout.key`. Một ký tự xuống dòng
 lọt vào giữa chuỗi là một lượt gửi biểu mẫu mà không ai yêu cầu.
 
+### Ba method ghi hứa gì — và KHÔNG hứa gì
+
+`scout.click` · `scout.type` · `scout.key` hứa đúng một câu:
+
+> **đã bắn sự kiện chuột/bàn phím thật vào đúng điểm của đúng phần tử đã khớp.**
+
+Chúng **không** hứa *"trang đã nhận"*. Đo được 12–14/09 (`S-22`): có tab mà lệnh DOM chạy bình
+thường trong khi lệnh Input biến mất — không một `mousedown` nào tới trang, mà `scout.click` vẫn
+trả `ok`. Hỏng **theo từng tab**, không theo hồ sơ Chrome, và **không** do tab ẩn hay cửa sổ thu
+nhỏ (năm giả thuyết đó đã chết, xem `docs/GIA-THUYET.md`).
+
+**Hệ quả cho người viết adapter — bắt buộc:** sau mỗi thao tác ghi, **kiểm bằng trạng thái trên
+trang**, đừng tin mã trả về. `pilots/udin-optic/` làm đúng thế: bấm Try Again rồi kiểm *màn chắn
+đã tắt chưa*; bấm Send rồi kiểm *nút có đổi thành Stop không*. Cả hai ĐẠT trên trang thật.
+
+Đây là một **giới hạn đã khai**, không phải một lỗi đang chờ vá.
+
 ## Tự kiểm
 
 ```bash

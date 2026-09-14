@@ -28,19 +28,29 @@
 
 ## Bảng theo dõi — Đức nhìn một cái là biết đang ở đâu
 
+**Mục đích của mọi việc dưới đây, Đức đặt lại 14/09:** *hoàn thiện nốt Scouter, rồi mới tách Udin
+Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* Nên thứ tự không còn chạy theo
+"việc nào dễ" mà theo **danh sách đóng băng** ở `docs/CAPABILITIES.md` §5.2.
+
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
 | **T13** | Nối `lay-anh.mjs` sang `scout.grab`, rồi chạy thật → đóng `W3` | — | **việc kế, không chờ ai** |
-| **T14** | `S-22` — lượt bấm báo ĐẠT mà trang không nhận | một cú bấm của Đức **hoặc** `D3` | **9 giả thuyết đã chết**, còn đúng một biến (`G-49`) |
-| **D3** | Đức chốt: có thêm `scout.focus` (đưa tab lên trước) không | — | **câu hỏi mới, đọc mục D3 bên dưới** |
-| **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 · T14 | chưa chạy lần nào |
+| **Q1** | ✋ **Đức chốt chính sách che `de-xuat-chat-v1`** | — | **câu hỏi chặn duy nhất còn lại** — nó chặn `O8`, mục đắt nhất của danh sách đóng băng |
+| **T15** | E2E Udin: mở trang → W1 → W2 → W3 một mạch | T13 | chưa chạy lần nào |
+| **T18** | `O8` đọc chữ trên trang | Q1 | **trong danh sách đóng băng** |
+| **T19** | `I4` xoá ô nhập · `I9` tải file lên | ✋ Đức | **trong danh sách đóng băng** |
+| **T20** | `I5` cuộn · `I6` rê chuột · `I7` bấm đúp/phải | ✋ Đức, chốt gộp một lượt | bảo hiểm cho trang thứ hai |
+| **T17** | **Máy sinh bảng năng lực** thay cho gõ tay | — | nợ phát hiện 14/09: không dòng mã nào đọc `CAPABILITIES.md` |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị**, không bằng sự tồn tại | — | nợ do `G-48` để lại |
-| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T14 | **③/④ chặng**, chặng 4 dừng ở `S-22` |
-| **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T14 | chờ |
+| **T8** | `S-03` — đổi tên `observer` → `scouter` | T18 · T19 · T20 | mốc **đóng băng seed** |
+| **T9** | Đóng gói v1 cho người ngoài dùng được | T8 | mốc đóng băng seed |
+| **T21** | **Tách Udin Optic thành gói riêng** | T8 · T9 | đích của cả lộ trình; lùi xuống sau đóng băng |
+| **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | — | **③/④ chặng**; chặng 4 nay chạy được vì adapter tự kiểm bằng trang |
+| **T5** | Chạy lại lượt gửi prompt trên Udin | — | `W2` đã ĐẠT 3/3 — mục này gần như thừa, xem lại trước khi làm |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
-| **T8** | `S-03` — đổi tên `observer` → `scouter` | T7 xong trước | chưa bắt đầu |
-| **T9** | Đóng gói v1 cho người ngoài dùng được | T7 | chưa bắt đầu |
+| ~~T14~~ | ~~`S-22` — điều tra lượt bấm báo ĐẠT mà trang không nhận~~ | — | **ĐÓNG 14/09 bằng LỜI KHAI** trong `README`, không bằng bản vá. Đọc mục `T14` bên dưới trước khi nghĩ tới mở lại |
+| ~~D3~~ | ~~`scout.focus`~~ | — | **Đức trả lời 14/09: KHÔNG.** Cửa sổ chạy ẩn bên dưới; adapter phải chạy được trên tab nền |
 | ~~T12~~ | ~~W3 qua `scout.fetch`~~ | — | **CHẾT 14/09** — 403 vì URL ký sẵn (`S-24`); thay bằng T13 |
 | ~~D2~~ | Đặt tên ghế | — | **XONG 14/09** — ghế làm việc tên `Dummy_Scout`; ghế còn lại Đức không dùng |
 | ~~T1 T2 T3 T4 T11~~ | `S-16`…`S-19`, `S-23` | — | **XONG 12–13/09**, đo ngoài đời |
@@ -57,6 +67,32 @@ làm mọi diff khó đọc.
 
 ---
 
+## Q1 · Đức chốt — chính sách che dữ liệu `de-xuat-chat-v1`  ⟵ *câu chặn duy nhất còn lại*
+
+**Xin gì.** Một chữ *được* hoặc *không* cho chính sách đang nằm ở `BACKLOG.md` (`de-xuat-chat-v1`):
+lõi đọc chỉ trả **danh sách trắng** thuộc tính, **cắt query + fragment** khỏi mọi `src`/`href`,
+**không trả chữ trong trang**, không trả `outerHTML`.
+
+**Vì sao nó chặn nhiều thứ đến thế:**
+
+1. **`O8` đọc chữ trên trang** không viết được trước khi chính sách này có chữ ký — vì `O8` chính
+   là việc **nới** điều khoản *"không trả chữ"*, và nới một chính sách chưa ai ký thì không có gì
+   để nới từ đó.
+2. `O8` là mục **đắt nhất** của danh sách đóng băng (`docs/CAPABILITIES.md` §5.2): không đọc được
+   chữ thì adapter chỉ kiểm được *"có phần tử không"*, không kiểm được *"nó nói gì"*.
+3. **`scout.grab` đã đứng trên chính sách này rồi** — `source.masked` cắt query đúng theo nó.
+   Tức là gói đang chạy trên một luật chưa ai ký.
+
+**Ba đường, và tôi đề xuất đường giữa:**
+
+| | Đường | Giá |
+|---|---|---|
+| ⒜ | Ký nguyên bản `de-xuat-chat-v1`, giữ *"không trả chữ"* | `O8` chết hẳn, và cùng nó là `W4` + mọi dấu kiểm bằng chữ. **Không khuyên** |
+| ⒝ | Ký, kèm **một cửa hẹp cho chữ**: `scout.text` trả chữ của **một** phần tử khớp selector, không trả cả trang, không trả `outerHTML` | Đọc được câu trả lời và thông báo lỗi, mà vẫn không có đường hút cả trang ra ngoài. **Khuyên đường này** |
+| ⒞ | Hoãn tiếp | Mọi mục của danh sách đóng băng đứng yên, và mốc tách Udin lùi theo |
+
+· **đóng khi:** Đức chọn ⒜ ⒝ hay ⒞, và lý do ghi vào `decisions.md` — không phải chỉ vào đây.
+
 ## T13 — nối `lay-anh.mjs` sang `scout.grab` · việc kế, không chờ ai
 
 `scout.grab` đã có (14/09, Đức chốt `S-24` đường ⒜): đưa **selector**, extension tự đọc `src`
@@ -71,36 +107,47 @@ src đủ để phân biệt ảnh mới/cũ), chỉ lượt TẢI mới qua gra
 Xong khi: `lay-anh.mjs` không còn chữ `scout.fetch`, ghim của nó xanh lại, và **chạy thật trên
 ghế `Dummy_Scout` lấy được ít nhất một ảnh xuống vùng ghi**. `scout.grab` CHƯA CHẠY THẬT lần nào.
 
-## T14 — `S-22`, và chỗ nó đang đứng
+## ~~T14~~ — `S-22` ĐÓNG 14/09, và đây là bài học đắt nhất của cả chuỗi
 
-**Chín giả thuyết đã chết** (`G-02..G-07`, `G-40..G-46`). Đừng thử lại cái nào. Còn đúng một:
-`G-49` — **tab đang hoạt động thì bấm tới, tab nền thì không**, riêng Chrome của Đức (Chrome sạch
-do phép đo tự mở thì tab ẩn vẫn nhận đủ).
+**Đóng bằng LỜI KHAI, không bằng bản vá.** `README.md` nay nói thẳng: `scout.click` / `scout.type`
+/ `scout.key` hứa *"đã bắn sự kiện thật vào đúng điểm của đúng phần tử"* và **không** hứa *"trang
+đã nhận"*. Adapter tự đặt dấu kiểm trên trang — `W1` và `W2` của Udin đã làm đúng thế và **ĐẠT
+trên trang thật**. Tức là giới hạn này **không chặn việc thật**; nó chỉ chặn việc tin lời báo.
 
-Số đang có: **18/18 lượt tab ẩn → không tới** · **1 lượt tab hiện → tới**. Thiếu nhóm "tab hiện"
-cho đủ cặp. Máy đo ghép cặp: `scratchpad/do-cap-doi.mjs` (đọc **giá trị** bộ đếm, ghi trạng thái
-tab ngay tại lúc bấm).
+**Vì sao dừng điều tra — Đức chỉ ra 14/09, và sổ giả thuyết xác nhận:**
 
-Hai đường khép nó, và đường thứ hai đáng giá hơn:
-⒜ Đức bấm vào tab trang thử rồi để yên một phút, tôi chạy máy đo — xong trong hai phút.
-⒝ **`D3`**: mở `scout.focus`, rồi phép đo tự bật/tắt được cả hai vế mà không cần tay ai.
+Cùng một câu hỏi *"tab ẩn có làm mất cú bấm không"* đã được mở **NĂM lần**:
 
-## D3 · Đức chốt — có thêm `scout.focus` không?
+| lần | mã | kết quả |
+|---|---|---|
+| 1 | `G-07` (13/09) | **SAI** — và Đức nói rõ hôm đó là chính anh đã tự debug trước |
+| 2 | `G-38` (14/09) | **SAI** |
+| 3 | `G-40` (14/09, Chrome sạch) | **SAI** — tab nền vẫn nhận đủ |
+| 4 | `G-42` (14/09, tab chưa từng hiện) | **SAI** |
+| 5 | `G-47` + `G-49` (14/09) | **RÚT** — và `G-49` còn tiêu 18 lượt đo rồi vẫn không kết luận được |
 
-**Vì sao hỏi.** Nếu `G-49` đúng thì mọi lượt chạy tự động của Scouter phụ thuộc vào **việc con
-người vừa nhìn tab nào** — tức là nó không tự chạy được, và đó là chệch hẳn khỏi mục đích của gói.
+Khối *Kết luận* của `GIA-THUYET.md` đã ghi **"tab ẩn — đừng thử lại"** *trước khi* tôi mở lần thứ
+tư và thứ năm. Sổ đã làm đúng việc của nó; tôi không đọc lại sổ của chính mình.
 
-**Xin gì.** Một method `scout.focus { target_id }` đưa tab lên trước trước khi ghi. Cần
-`chrome.tabs.update({ active: true })` — **không phải** method CDP mới, và extension đã có quyền
-`tabs`. Đây là một **thao tác ghi** (nó đổi thứ Đức đang nhìn), nên nó phải chui qua phanh và
-tính vào trần 200 như `scout.click`.
+> **Luật rút ra, áp cho mọi mục về sau:** mở lại một giả thuyết đã ghi `SAI` thì phải có **DỮ KIỆN
+> MỚI** — một quan sát chưa từng có. **Một tương quan cũ đếm lại không phải dữ kiện mới.** Trước
+> khi ghi một dòng `G-` mới, `grep` từ khoá của nó trong `GIA-THUYET.md`.
 
-**Giá phải trả, nói trước:** Scouter sẽ **giật tab** khi đang chạy — Đức đang xem gì đó thì màn
-hình nhảy. Đó là lý do nó phải là chữ của Đức chứ không phải quyết định của tôi.
+**Đường chưa thử duy nhất** nằm ở `G-50` (Chrome tự đông cứng renderer của tab nền — Memory Saver).
+Nó ghi ở đó để không ai phải nghĩ lại từ đầu, **không phải** để mở chiến dịch thứ sáu. Kiểm nó tốn
+một lượt mở `chrome://discards`, không tốn một buổi.
 
-· **Đức nói CÓ** → T14 tự khép được, và mọi adapter về sau chạy được trên tab nền.
-· **Đức nói KHÔNG** → T14 khép bằng đường ⒜, và `README` phải ghi rõ: **lượt ghi chỉ chắc chắn
-  khi tab đang hiện** — một giới hạn thật, không phải một chú thích.
+## ~~D3~~ · `scout.focus` — Đức trả lời 14/09: **KHÔNG**
+
+> *"tôi muốn các cửa sổ extension chạy khi ẩn bên dưới, chỉ một số trường hợp ngoại lệ mới được
+> on top. vì tôi còn phải làm các việc khác nữa."*
+
+**Không mở `scout.focus` làm đường mặc định.** Kéo theo hai điều, cả hai đều đã đo được:
+
+1. **Mọi adapter phải chạy được trên tab nền.** Đây không phải một rủi ro — `G-40` `G-41` `G-42`
+   đã đo: tab nền · cửa sổ thu nhỏ · tab chưa từng hiện đều **nhận đủ** cú bấm.
+2. Nếu về sau có một ca **thật sự** cần đưa tab lên trước, nó quay lại đây như một xin phép
+   **riêng cho ca đó**, kèm tên ca — không phải như một năng lực chung.
 
 ## T16 — dấu chẩn đoán phải đọc được bằng GIÁ TRỊ (nợ của `G-48`)
 

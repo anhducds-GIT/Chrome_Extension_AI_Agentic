@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T13 — noi lay-anh.mjs sang scout.grab roi chay that (dong W3, va la luot chay that DAU TIEN cua scout.grab). Khong cho ai. Sau do T14 (S-22: con dung mot gia thuyet song, G-49) va T15 (E2E). Doc CHUOI-VIEC.md bang theo doi truoc."
-- human_action: "@Duc:mot cau chot D3 — co them scout.focus (dua tab len truoc truoc khi ghi) khong? Neu G-49 dung thi khong co no, moi luot chay tu dong phu thuoc vao viec con nguoi vua nhin tab nao. Gia phai tra: Scouter se giat tab khi dang chay. Chi tiet o CHUOI-VIEC.md muc D3."
+- next_step: "T13 — noi lay-anh.mjs sang scout.grab roi chay that (dong W3, va la luot chay that DAU TIEN cua scout.grab). Khong cho ai. Sau do T15 (E2E Udin). Lo trinh doi 14/09: tach Udin lui xuong SAU khi seed dong bang — xem CAPABILITIES.md muc 5.2 DANH SACH DONG BANG. S-22 va D3 da dong."
+- human_action: "@Duc:mot cau chot Q1 — phe duyet chinh sach che du lieu de-xuat-chat-v1. No chan O8 (doc chu tren trang), muc dat nhat cua danh sach dong bang, va scout.grab da dung tren no roi ma chua ai ky. Day la cau chan duy nhat con lai. Chi tiet o CHUOI-VIEC.md muc Q1."

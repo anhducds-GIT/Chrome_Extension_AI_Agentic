@@ -8,15 +8,25 @@
 > `cuộn`, `hit-test`, `setTimeout`. Thấy dòng **SAI** thì đừng thử lại; thấy **CHƯA** thì đọc
 > cột *cách thử* để khỏi làm lại phần đã làm.
 
-## Kết luận hiện tại (14/09)
+## Kết luận hiện tại (14/09, sửa cuối ngày)
 
+- 🛑 **`S-22` NGỪNG ĐIỀU TRA. Đức chốt 14/09.** Lý do không phải "đã hiểu" mà là **chi phí**:
+  cùng một câu hỏi *"tab ẩn có làm mất cú bấm không"* đã được mở **năm lần** (`G-07` `G-38`
+  `G-40` `G-42`, rồi `G-47` `G-49`), bốn lần trả lời **SAI**, và chính khối này đã ghi *"đừng
+  thử lại"* trước khi tôi mở hai lần cuối. **Mở lại một giả thuyết đã đóng phải có DỮ KIỆN MỚI**
+  — một tương quan cũ đếm lại không phải dữ kiện mới.
+- **`S-22` đóng bằng LỜI KHAI, không bằng bản vá** (đường ⒝ của `T11`): `README.md` nói thẳng
+  `scout.click` hứa *"đã bắn chuột vào đúng điểm của đúng phần tử"* và **không** hứa *"trang đã
+  nhận"*. Adapter tự đặt dấu kiểm trên trang. `W1` và `W2` trên Udin đã làm đúng thế và **ĐẠT**
+  — tức là giới hạn này không chặn việc thật, nó chỉ chặn việc tin lời báo của lệnh bấm.
 - ⚠️ **`G-45` ("chập chờn 1/7") ĐO BẰNG MỘT DỤNG CỤ HỎNG** — xem `G-48`. Đừng trích con số 1/7.
-- **`S-22` vẫn MỞ, nhưng nay gọn lại còn một câu đo được:** trên tab đang hỏng, lệnh **DOM chạy**
-  (hỏi-điểm trả `relation:"descendant"` đúng phần tử) mà lệnh **Input biến mất** — không một
-  `mousedown` nào tới tầng cửa sổ. Hỏng **theo TAB, không theo ghế** (`G-43`).
-- **Bảy giả thuyết đã loại, đừng thử lại:** tab ẩn (`G-07` `G-40`) · cửa sổ thu nhỏ (`G-41`) ·
-  tab chưa từng hiện (`G-42`) · lớp che / vẽ sai / hộp thoại (`G-44`) · bộ đếm giờ (`G-02`) ·
-  tab đông cứng (`G-03`) · toạ độ lệch tỉ lệ (`G-05`).
+- **Thứ đo được và còn đúng:** trên tab đang hỏng, lệnh **DOM chạy** mà lệnh **Input biến mất**,
+  hỏng **theo TAB chứ không theo ghế** (`G-43`). Ai mở lại thì đọc `G-50` trước — đường chưa
+  thử duy nhất nằm ở đó, và nó **không** cần một chiến dịch đo.
+- **Chín giả thuyết đã loại, đừng thử lại:** tab ẩn (`G-07` `G-38` `G-40`) · cửa sổ thu nhỏ
+  (`G-41`) · tab chưa từng hiện (`G-42`) · lớp che / vẽ sai / hộp thoại (`G-44`) · bộ đếm giờ
+  (`G-02`) · tab đông cứng kiểu `G-03` · toạ độ lệch tỉ lệ (`G-05`) · gắn lại gỡ lỗi (`G-45`) ·
+  điều hướng sau khi gắn (`G-46`).
 - **Phép đo A/B trên Chrome SẠCH đã có sẵn** — bản chép của `scouter-action-reality-probe.mjs`
   đo được ba trạng thái tab và hai trạng thái cửa sổ. Dựng lại trong ~5 phút; xem `G-40..G-42`.
 
@@ -100,10 +110,11 @@
 
 | G-45 | 14/09 | S-22 | Phiên gỡ lỗi gắn vào tab hỏng NỬA (DOM còn, Input mất); `scout.reload` gắn lại là chữa được | trên ghế Đức: reload → bấm → đo `data-chuot` | **SAI** | **Lần đầu ĐÚNG** (0→1, `data-bam` 0→1) nên tôi tưởng đã tìm ra. Chạy lại 4 lượt hai chiều: **KHÔNG TỚI cả 4**, kể cả hai lượt ngay sau khi gắn lại. Một lần chạy được **không lặp lại** thì không phải bằng chứng — nó chỉ nói rằng lỗi **CHẬP CHỜN**, đúng như mô tả gốc 12/09 (*"có chạy lúc 16:41 rồi thôi chạy từ ~16:44"*) |
 | G-46 | 14/09 | S-22 | Điều hướng sau khi đã gắn gỡ lỗi làm hỏng đường Input | Chrome sạch: `chrome.tabs.update` đổi URL rồi bấm, không gắn lại | **SAI** | vẫn `themCuBam: 1`. Trên ghế Đức thì lượt sau điều hướng hay hỏng, nhưng G-45 cho thấy lượt KHÔNG điều hướng cũng hỏng → điều hướng không phải biến quyết định |
-| G-47 | 14/09 | S-22 | Biến còn lại: tab **đang hoạt động** (active) của cửa sổ thì bấm tới, tab nền thì không — **riêng Chrome của Đức**, vì Chrome sạch không tái hiện | máy chờ `scratchpad/cho-tab-hien.mjs`: Đức bấm cho tab hiện, script tự bấm lại và đo | **CHƯA** | Khớp 6/7 quan sát trên ghế Đức: Udin (tab active) bấm được mọi lượt · trang thử (tab nền) hỏng 6/7. Lượt thứ 7 chạy được vẫn chưa giải thích được (G-45) |
+| G-47 | 14/09 | S-22 | ~~Biến còn lại: tab **đang hoạt động** (active) của cửa sổ thì bấm tới, tab nền thì không~~ | — | **RÚT 14/09** | **Đây là tab ẩn lần thứ tư.** `G-07` (Đức xác nhận đã tự debug), `G-40` (Chrome sạch, tab nền vẫn nhận đủ), `G-42` (chưa từng hiện, vẫn nhận đủ) đã giết nó, và khối *Kết luận* của chính file này đã ghi **"đừng thử lại"** trước khi tôi mở dòng này. Mở lại một giả thuyết đã đóng thì phải có **dữ kiện mới**, không phải một tương quan cũ đếm lại |
 
 | G-48 | 14/09 | S-22 | ⚠️ **PHÉP ĐO HỎNG, không phải giả thuyết** — mọi lượt đọc `body[data-chuot]` / `#ket-qua[data-bam]` bằng **sự tồn tại** của thuộc tính chỉ thấy được lượt bấm ĐẦU TIÊN | dò `[data-bam="n"]` để lấy **giá trị**, không hỏi "có thuộc tính không" | **ĐÚNG (là lỗi của tôi)** | Đo lại bằng giá trị: `data-chuot` **6 → 7** trên chính tab mà mười phút trước tôi khai "không tới". Bộ đếm đã chạy tới 6 trong khi phép đo của tôi vẫn in "1 → 1". **Mọi dòng ĐỎ đo bằng cách cũ đều phải đọc lại** — gồm cả bốn lượt của `G-45` |
-| G-49 | 14/09 | S-22 | Tab **đang hiện** thì lượt bấm tới, tab **ẩn** thì không — đo GHÉP CẶP, trạng thái tab đọc ngay tại lúc bấm | `scratchpad/do-cap-doi.mjs`: 18 lượt, mỗi lượt ghi `data-hien` trước + sau và **giá trị** `data-bam` | **CHƯA** | Hai số rời đã có, cùng tài liệu, cách nhau vài phút: tab hiện → tới (6→7) · tab ẩn → 3 lượt liền không tới. Nhưng chưa lượt nào ghi trạng thái **tại lúc bấm**, nên chưa được tính |
+| G-49 | 14/09 | S-22 | ~~Tab **đang hiện** thì lượt bấm tới, tab **ẩn** thì không — đo GHÉP CẶP~~ | ~~`scratchpad/do-cap-doi.mjs`, 18 lượt~~ | **RÚT 14/09** | Lần thứ năm của cùng một câu hỏi, xem `G-47`. Phép đo đã chạy 18 lượt và **không kết luận được** (thiếu vế "tab hiện" vì nó cần tay Đức) — tức là nó tốn thời gian của Đức để trả lời một câu đã có đáp án từ `G-40`. Đức chốt 14/09: **thôi đo S-22** |
+| G-50 | 14/09 | S-22 | Nếu còn ai mở lại S-22: thứ CHƯA thử là **Chrome tự đông cứng renderer của tab nền** (Memory Saver / tab freezing) — khác hẳn "tab ẩn", vì nó phụ thuộc **thời gian + số tab + RAM**, nên Chrome sạch chạy 30 giây không bao giờ tái hiện | `chrome://discards` xem cột *Frozen*, hoặc tắt Memory Saver rồi chạy lại — **không cần một chiến dịch đo** | **CHƯA, và cố ý để nguyên** | Khớp với ba thứ đã đo mà chưa giải thích được: hỏng **theo TAB** (`G-43`), DOM chạy mà Input mất, và mô tả gốc 12/09 *"chạy lúc 16:41 rồi thôi từ ~16:44"* — đúng hình dạng một bộ đếm giờ đông cứng. Ghi ra để **không ai phải nghĩ lại từ đầu**; đừng lấy nó làm cớ mở chiến dịch thứ sáu |
 
 ## Phép đo dùng lại được — đừng dựng lại
 
