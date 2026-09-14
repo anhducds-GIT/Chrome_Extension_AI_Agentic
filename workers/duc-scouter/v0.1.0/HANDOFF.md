@@ -1315,3 +1315,28 @@ mức, mức thứ hai mới là gốc: đổi cuộn sang `DOM.scrollIntoViewIf
 hai lõi để một lệnh treo không khoá được cả tab. Thưởng ngoài dự tính: cơ chế mới miễn nhiễm `S-22`.
 
 **Số.** Suite 32/32 · đột biến **143/143, 0 sống sót** · Seed Coverage **24/42**.
+
+## 2026-09-14c · `claude-scouter-udine` — lượt rà soát: năm dòng đã cũ, và lộ trình đổi hình dạng
+
+**Rà soát chứ không kể lại**, và nó có thu hoạch: năm dòng trong tài liệu đã **cũ hơn sự thật**.
+`W4` còn ghi *"chờ Đức chốt chính sách che"* (ADR-0006 ký từ sáng) · `W7` còn ghi `CHẶN` (đã có
+`scout.clear`) · `T25` còn ghi *"chưa chạy thật"* (`T32` đã chạy) · `T27` còn ghi *"cả artboard
+trong một ảnh nhỏ"* (đo thật: trên artboard **không được gì**) · và ghi chú `E2E` còn tính **64
+đơn vị** cho bốn ảnh trong khi nay chỉ còn ~8.
+
+**Và một dòng trong số đó đổi cả hình dạng lộ trình.** Tới sáng 14/09, thứ chặn việc tách Udin là
+**năng lực của seed**. Tới tối, gần cả danh sách ấy đã đóng — danh sách đóng băng chỉ còn **một**
+dòng năng lực thật (`I9` upload). Thứ chặn bây giờ là **workflow của adapter**: `W4` `W5` `W6`
+`W7` đều *hết chặn mà chưa ai làm*.
+
+Nên câu dẫn đường cũng đổi. *"Scouter còn thiếu gì"* không còn dẫn đường được nữa; câu dẫn đường
+là **"`W` nào BẮT BUỘC trước khi tách"** — và bảng `W` từ ngày dựng đã ghi *"Đức chốt mục nào bắt
+buộc"* mà **chưa ai trả lời**. Nó quyết định phần còn lại dài bao nhiêu, nên nó thành mục `⓪`,
+đứng trước mọi việc khác, kèm một đề xuất cụ thể để Đức chỉ phải gật hoặc sửa.
+
+**Việc kế là `T33`, và nó không viết thêm dòng nào**: chạy lại E2E trên một nền đã đổi. Đó là phép
+thử rẻ nhất còn lại, và nó trả lời một câu không phép ghim nào trả lời được — *cả chuỗi Udin có đi
+trọn trong một lần mở khoá không*.
+
+**Bài học mang theo:** lượt rà soát này tìm ra năm chỗ sai vì nó **đối chiếu tài liệu với phép đo**
+chứ không đọc lại tài liệu. Một dòng `CHẶN` không tự biết chặn của nó đã tan.

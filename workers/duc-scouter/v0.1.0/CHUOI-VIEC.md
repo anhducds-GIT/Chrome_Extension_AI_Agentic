@@ -35,11 +35,16 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
 | **T24** | **`S-25` — ghép được tin WebSocket bị cắt mảnh** | — | **XONG 14/09.** 9 khối ghim (có một tin **1 MiB cắt mảnh đi trọn qua socket thật**) · 4 đột biến. Khối ① so thẳng với bản gốc trong gói đóng băng: tin KHÔNG cắt mảnh cư xử y hệt |
-| **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · cỡ tài liệu · còn bao nhiêu để cuộn · thu phóng | — | **XONG 14/09** (mã + ghim). **Chưa chạy thật** — `G-70` |
+| **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · cỡ tài liệu · còn bao nhiêu để cuộn · thu phóng | — | **XONG + CHẠY THẬT 14/09** trên ba trang (`G-70` `G-73`) |
 | **T26** | `scout.scroll` (`I5`) | T25 | **XONG + CHẠY THẬT 14/09.** Bản đầu (bánh xe) treo và **khoá cả tab** (`G-72`) — đổi sang `DOM.scrollIntoViewIfNeeded`, cuộn **1.972 điểm ảnh** đo bằng `scout.view` (`G-73`) |
-| **T27** | `O12` thu phóng | T25 | **NỬA ⑴ XONG 14/09**: `scout.shot` nhận `full_page` + `scale` — cả artboard trong một ảnh nhỏ. **Nửa ⑵ CHẶN bởi kiến trúc**, không bởi thiếu tham số: `observer-engine` tháo debugger sau mỗi lượt gọi, mà `Emulation` override sống theo phiên debugger → `G-69`, **câu của Đức** |
+| **T27** | `O12` thu phóng | T25 | **NỬA ⑴ XONG 14/09**: `scout.shot` nhận `full_page` + `scale`. Đo thật: thắng lớn ở **trang dài** (bốn lần diện tích, hai phần ba số byte), nhưng **trên artboard thì KHÔNG được gì** — tài liệu đúng bằng khung nhìn nên không có gì thêm để chụp. **Nửa ⑵ chặn bởi KIẾN TRÚC** → `G-69`, **câu của Đức** |
 | **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`click_count` (`I7`) | T25 | **XONG về mã.** Chạy thật: lệnh hoàn tất, **trang không nhận** — đó là `S-22`, Đức đã chốt ngừng điều tra. Dừng ở `CÓ` (`G-74`) |
-| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | **việc kế.** Mục cuối của danh sách đóng băng |
+| **⓪** | **Chốt `W` nào BẮT BUỘC trước khi tách** | — | **câu của Đức.** Bảng `W` (§4 `CAPABILITIES.md`) vẫn ghi *"Đức chốt mục nào bắt buộc"* — chưa ai trả lời, mà nó quyết định phần còn lại dài bao nhiêu |
+| **T33** | **Chạy lại E2E TRỌN VẸN** trên Udin | — | **việc kế, và rẻ nhất.** Không viết thêm dòng nào: nền đã đổi (một ảnh tốn **2 đơn vị thay vì 14**), nên lượt trước dừng ở 2/4 ảnh vì trần ghi thì nay phải đi trọn |
+| **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | hết chặn từ 14/09 (`ADR-0006` + `scout.text` đã chạy thật trên Udin) |
+| **T35** | `W6` — đưa một ảnh vào canvas | T33 | hết chặn. **Dính `S-22`**: nó là một cú bấm |
+| **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | hết chặn từ khi có `scout.clear`. Đây là thứ biến Udin từ *một lượt* thành *một phiên* |
+| **T29** | `scout.upload` (`I9`) → `W8` | — | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng |
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
 | **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
 | **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
@@ -83,62 +88,57 @@ làm mọi diff khó đọc.
 
 ---
 
-## T24 · `S-25` — ghép được tin WebSocket bị cắt mảnh  ⟵ *việc kế*
+## ~~T24 T25 T26 T27⑴ T28 T30 T31 T32~~ — XONG 14/09
 
-**Sửa ở:** `workers/_shared/bridge-host/websocket-core.mjs` — **lõi dùng chung với ba gói đóng
-băng.** Đọc khối "Giá phải trả" của [ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md)
-trước khi gõ dòng đầu.
+Chi tiết đã chuyển chỗ thay vì ở lại đây làm nền: bằng chứng ở `docs/GIA-THUYET.md`
+(`G-67`…`G-75`), lý do thiết kế ở `docs/adr/0007-…`, và chuyện kể ở `HANDOFF.md` hai mục
+`2026-09-14` / `2026-09-14b`. Ba điều đáng mang theo:
 
-**Chỗ hỏng, đã chứng minh (`G-67`):** dòng `if (!fin) throw new Error("Fragmented WebSocket
-messages are not supported.")`. Chrome **tự cắt mảnh** tin gửi ra khi nó vượt khoảng 64 KiB, nên
-một câu trả lời hơi lớn không thành lỗi — nó thành **đứt kết nối**, rồi mọi lệnh sau nhận
-`EXTENSION_OFFLINE` cho tới khi extension tự nối lại.
+- **`S-25` là một dòng** — bộ giải khung WebSocket ném ở mọi mảnh nối, mà Chrome cắt mảnh mọi tin
+  vượt ~64 KiB. Một ca **chưa viết**, không phải một lớp bảo vệ.
+- **Đường chia của `T32`**: năng lực đi qua **lệnh DOM** chứng minh được trên ghế Đức; năng lực đi
+  qua **đường sự kiện chuột** thì không (`S-22`). Nhớ nó trước khi gỡ lỗi bất cứ `W` nào.
+- **`G-72`**: một lệnh CDP không trả lời thì **giữ debugger cắm vào tab** và khoá mọi lệnh sau.
+  Chữa bằng `CDP_HAN_MS` ở cả hai lõi. Gặp `TARGET_ALREADY_ATTACHED` kéo dài thì `scout.reload`.
 
-**Vì sao sửa nó KHÔNG phạm luật "không nới bảo vệ":** mảnh nối là một ca **chưa viết** của chuẩn
-WebSocket, không phải một hàng rào ai đó dựng lên. Bản sửa **thuần thêm vào**: hôm nay mảnh nối
-giết kết nối, sau khi sửa thì chúng được ghép. Không một hành vi đang chạy nào đổi nghĩa.
+## ⓪ · `W` nào BẮT BUỘC trước khi tách  ⟵ *câu của Đức, và nó đứng trước mọi việc khác*
 
-**Ba chỗ đừng làm sai:**
-⑴ Tin ghép lại vẫn phải chịu **cùng một trần** `maxPayloadBytes` — cộng dồn từng mảnh và **ném
-khi tổng vượt trần**, không thì mảnh nối thành đường vòng quanh chính cái trần đó.
-⑵ **Khung điều khiển (`opcode >= 0x8`) chen được vào giữa** một tin đang cắt mảnh — đó là chuẩn,
-và ping/pong đi đúng đường ấy. Xử lý chúng ngay, đừng gộp vào bộ đệm đang ghép.
-⑶ Mảnh nối phải mang `opcode = 0`; mảnh đầu mang opcode thật. Nhận sai chỗ này thì hai tin
-chồng lên nhau mà không ai thấy.
+Bảng `W` ở `docs/CAPABILITIES.md` §4 từ ngày dựng đã ghi *"Đức chốt mục nào bắt buộc"*, và **chưa
+ai trả lời**. Tới hôm nay nó chỉ là một ô trống; từ hôm nay nó là **thứ định cỡ phần còn lại**, vì
+điều kiện đóng của `T21` là *"các `W` **bắt buộc** ĐẠT từ gói mới"*.
 
-· **đóng khi:** phép ghim cho ⑴ ⑵ ⑶ · một phép ghim chứng minh **tin KHÔNG cắt mảnh cư xử y hệt
-như trước** (đây là phép ghim quan trọng nhất, vì ba gói đóng băng đứng trên nó) · đột biến giết
-được cả hai chiều · một tin **1 MiB đi trọn qua dây THẬT** · `scout.shot` chạy lại trên Udin ·
-và `npm run test` của cả repo xanh, không chỉ suite của Scouter.
+Đang có: `W1` `W2` `W3` **ĐẠT** · `W4` `W6` `W7` **hết chặn, chưa làm** · `W5` chưa làm ·
+`W8` chặn bởi `I9` (`T29`).
 
-## T25 · `scout.view` — ĐỌC tầm nhìn  ⟵ *nền của cả chặng ②, đi trước T26–T28*
+**Đề xuất của tôi, để Đức chỉ phải gật hoặc sửa:** bắt buộc = `W1` `W2` `W3` `W4` `W7` + `E2E`
+trọn vẹn. Lý do: năm cái đó là **một phiên làm việc khép kín** — vào được, ra lệnh được, biết nó
+nói gì, lấy được kết quả, và ra lệnh tiếp lần hai. `W5` `W6` là tiện nghi một cú bấm và **đang
+dính `S-22`**; `W8` cần `T29`. Để hai nhóm đó ngoài danh sách bắt buộc thì việc tách đi được ngay
+sau `T29`, mà không mất năng lực nào — chúng vẫn làm được sau khi tách, từ gói mới.
 
-**Trả về:** cuộn (`x`, `y`) · khung nhìn (`width`, `height`) · thu phóng · cỡ tài liệu. ĐỌC, nên
-nó vào lõi đọc và **không tiêu trần ghi**.
+## T33 · Chạy lại E2E TRỌN VẸN  ⟵ *việc kế, và rẻ nhất còn lại*
 
-**Vì sao nó phải đi TRƯỚC.** Ba method ghi hứa *"đã bắn sự kiện"*, **không** hứa *"trang đã nhận"*
-(`README`, `S-22`). Nên một lượt `scout.scroll` chỉ kiểm được bằng cách **đọc lại xem trang đã
-cuộn chưa** — làm `T26` trước `T25` là dựng một lệnh ghi không có dấu kiểm.
+**Không viết thêm một dòng nào.** Lượt E2E 14/09 dừng ở **2/4 ảnh** vì hết trần 200 lượt ghi —
+mỗi ảnh tốn 16 khúc. Nền đã đổi: trần khúc về 512 KiB nên **một ảnh 688 KB tốn 2 đơn vị**, bốn ảnh
+còn khoảng 8 đơn vị thay vì 64.
 
-**Và nó trả một món nợ đang nằm trong lõi GHI:** hôm nay lõi ghi tự đọc độ cuộn bằng mẹo hộp
-`margin` của `:root` (`G-24`) vì không có đường đọc tử tế. Mẹo đó ở trong lõi ghi là chỗ nợ.
-**Nhưng đừng để lõi ghi gọi sang lõi đọc** (luật gói số 6) — mỗi lõi khai lấy thứ nó dùng.
+*Đóng khi:* một lượt chạy **một mạch, không sửa tay** đi trọn `W1` → `W2` → `W3` với **đủ số ảnh
+của lượt đó xuống đĩa**, kích thước thật trên đĩa khớp `bytes_total` từng tệp, và **không chạm
+trần ghi**. Ghi số đơn vị đã tiêu vào `TRIALS.md` — đó là con số nói lên `T24` đáng giá bao nhiêu.
 
-· **đóng khi:** đọc đúng trên một trang cuộn được và một trang không cuộn được · số khớp với thứ
-`scout.shot` nhìn thấy · có phép ghim cho trang chưa cuộn (hai hệ toạ độ trùng nhau, đúng chỗ
-`S-23` từng lừa cả một ngày).
+*Chỗ đừng làm sai:* mỗi lượt chạy thật tốn credit của Đức và **phải dùng một prompt MỚI** (luật
+thường trực). Đừng chạy lại bằng prompt cũ để "cho nhanh".
 
-## T26–T28 · Ba lệnh đổi tầm nhìn
+## T34 T35 T36 · Ba `W` vừa hết chặn
 
-| | Lệnh | Ghi chú thiết kế |
-|---|---|---|
-| `T26` | `scout.scroll { selector \| dx,dy }` | Cuộn **tới một phần tử** là cách bền; cuộn theo pixel là cách giòn. Mở cả hai thì mặc định phải là phần tử |
-| `T27` | `scout.zoom { factor }` | **Đổi thứ Đức đang nhìn** — cùng họ với `scout.focus` mà Đức đã từ chối. Nên nó phải **trả lại mức cũ được**, và `scout.view` phải đọc được mức hiện tại trước khi đổi |
-| `T28` | `scout.hover` · `scout.click` nhận `button` + `clickCount` | `I7` **không cần lệnh mới** — thêm hai tham số vào `scout.click` là đủ, và giữ nguyên lời hứa hẹp của nó. Ít method hơn, cùng năng lực |
+| | `W` | Chặn tan vì | Chỗ đừng làm sai |
+|---|---|---|---|
+| `T34` | `W4` đọc câu trả lời chữ | `ADR-0006` + `scout.text` (đã chạy thật trên Udin) | `scout.text` **từ chối** khi selector khớp ≠ 1 — đó là chốt, không phải phiền. Tìm selector đúng một, đừng nới phép kiểm |
+| `T35` | `W6` đưa ảnh vào canvas | vốn chỉ cần `I1` | **Dính `S-22`**: một cú bấm. Viết được, nhưng có thể không ĐẠT **trên ghế này**, và đó không phải lỗi adapter |
+| `T36` | `W7` prompt lần hai | `scout.clear` (`I4`) | `gui-prompt.mjs` hôm nay **từ chối khi ô có chữ** — chỗ sửa đã biết chính xác. Sau khi xoá phải **kiểm bằng trang** (nút Send khoá lại), không tin lệnh xoá đã xong |
 
-**Cả ba kiểm bằng `scout.view`, không tin lời báo của chính mình.** Và `scout.hover` có một cái
-bẫy riêng: menu hiện ra khi rê chuột sẽ **biến mất** ngay khi chuột rời đi, nên dấu kiểm phải đọc
-trang **trong lúc chuột còn ở đó**.
+Cả ba đóng khi có **hợp đồng ⟨trước · thao tác · thành công · thất bại⟩** ghi vào bảng `W`, một
+lượt chạy thật, và phép ghim cho đường hỏng — không chỉ đường đúng.
 
 ## T29 · `scout.upload` (`I9`) — đưa một tệp vào trang
 

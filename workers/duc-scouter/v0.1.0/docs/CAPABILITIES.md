@@ -167,12 +167,12 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
 | W3 | Lấy ảnh kết quả về đĩa | O11 | **ĐẠT** 14/09 | `lay-anh.mjs` · trước: có ảnh mới của lượt này · thao tác: chọn selector duy nhất → grab từng khúc → `file.write` + `file.append` · thành công: **kích thước thật trên đĩa** khớp `bytes_total` · thất bại: selector không duy nhất · tệp đổi giữa chừng · đĩa nhận thiếu. Bằng chứng: hai ảnh 330.270 + 290.214 byte, `TRIALS` 14/09 |
-| W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
-| W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
-| W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
-| W7 | Gửi prompt lần hai trên cùng ô | I4 | **CHẶN** | |
+| W4 | Đọc câu trả lời chữ của agent | O8 | **HẾT CHẶN, chưa làm** | Chặn tan 14/09: [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) ký chính sách che và mở `scout.text`, `O8` **ĐÃ CHỨNG MINH** trên chính Udin (`G-57`). Còn lại là việc của adapter, không của seed |
+| W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | Dính `S-22` như mọi lượt bấm trên ghế này |
+| W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09. Một cú bấm — nên nó dính `S-22` y như `W5` |
+| W7 | Gửi prompt lần hai trên cùng ô | I4 | **HẾT CHẶN, chưa làm** | Chặn tan 14/09: `scout.clear` (`I4`) ra đời. Đây là thứ biến Udin từ *một lượt* thành *một phiên làm việc* — và `gui-prompt.mjs` hôm nay vẫn **từ chối** khi ô có chữ, nên chỗ sửa đã biết chính xác |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **ĐẠT một phần** 14/09 | Ba chặng chạy **một mạch, không sửa tay**: W1 vượt màn chắn → W2 sinh 4 ảnh → W3 lấy được **2/4** rồi dừng vì **hết trần 200 lượt ghi** — một cái trần, không phải một khuyết tật. Đủ 4 ảnh cần ~64 đơn vị; chữa gốc là `S-25` |
+| **E2E** | Mở trang → W1 → W2 → W3 | | **ĐẠT một phần** 14/09 | Ba chặng chạy **một mạch, không sửa tay**: W1 vượt màn chắn → W2 sinh 4 ảnh → W3 lấy được **2/4** rồi dừng vì **hết trần 200 lượt ghi** — một cái trần, không phải một khuyết tật. **Con số đó nay đã đổi**: `S-25` xong và trần khúc về 512 KiB, nên một ảnh 688 KB tốn **2 đơn vị thay vì 14**; đủ 4 ảnh còn ~8 đơn vị chứ không phải ~64. Chạy lại là `T33`, và đây là phép thử rẻ nhất còn lại của cả gói |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
@@ -203,15 +203,16 @@ Scouter" mà Đức muốn tránh.** Nên luật của lộ trình này là:
 
 ### 5.2 DANH SÁCH ĐÓNG BĂNG — thứ phải xong trước khi tách
 
-Rút ra từ bảng `W` ở §4: bảy trong tám workflow của Udin hiện **CHƯA hoặc CHẶN**, và bốn cái
-chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
+Viết lại 14/09 sau một ngày làm việc. **Danh sách này gần cạn** — và đó là tin quan trọng nhất
+của bảng: thứ còn lại chặn việc tách Udin **không còn là năng lực của seed** mà là **workflow của
+adapter**. Bốn dòng `W` từng `CHẶN` nay chỉ còn `W8` chặn thật.
 
 | | Năng lực | Chặn workflow nào | Vì sao không hoãn được |
 |---|---|---|---|
 | ~~**O8**~~ | ~~đọc chữ trên trang~~ | — | **XONG 14/09** — `scout.text`, chạy thật trên Udin (`G-57`) |
-| **I4** | xoá chữ trong ô | `W7` gửi prompt lần hai | Một phiên làm việc thật là **nhiều** lượt prompt, không phải một |
-| **I9** | tải file lên | `W8` ảnh tham chiếu | Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm |
-| ~~**I5 I6 I7**~~ | ~~cuộn · rê chuột · bấm đúp/phải~~ | — | **XONG 14/09** — `scout.scroll` · `scout.hover` · `scout.click` thêm `button`+`click_count`. **Chưa chạy thật** (`G-70`) |
+| ~~**I4**~~ | ~~xoá chữ trong ô~~ | — | **XONG 14/09** — `scout.clear`. `W7` hết chặn |
+| **I9** | tải file lên | `W8` ảnh tham chiếu | **DÒNG NĂNG LỰC CUỐI CÙNG còn chặn thật.** Udin là công cụ ảnh; không upload được thì một nửa công cụ nằm ngoài tầm. Làm ở `T29` |
+| ~~**I5 I6 I7**~~ | ~~cuộn · rê chuột · bấm đúp/phải~~ | — | **XONG 14/09.** `I5` **ĐÃ CHỨNG MINH** (cuộn 1.972 điểm ảnh); `I6` `I7` dừng ở `CÓ` vì `S-22` — lệnh hoàn tất, trang không nhận (`G-74`) |
 | **O12** | thu phóng trang | mọi trang **dạng artboard** (Vizcom, Figma-like) | **NỬA ⑴ XONG 14/09** — `scout.shot full_page + scale`. **Nửa ⑵ còn mở và nó là câu của Đức**: một lượt thu phóng THẬT (trang dựng lại, có thể vẽ thêm phần tử) đòi một `Emulation` override sống qua nhiều lượt gọi, mà `observer-engine` tháo debugger sau mỗi lượt — xem `G-69`. Nếu câu trả lời là *không đổi kiến trúc* thì dòng này **đóng ở nửa ⑴** và ra khỏi danh sách |
 | ~~**S-25**~~ | ~~tầng vận chuyển khai dối cỡ phong bì~~ | — | **XONG 14/09.** Gốc là **một dòng** (`G-67`): bộ giải khung ném ở mọi mảnh nối, mà Chrome cắt mảnh mọi tin vượt ~64 KiB. Một ca **chưa viết**, không phải một lớp bảo vệ — bản sửa thuần thêm vào. Và ba gói "đóng băng" **không dùng chung** file này: mỗi gói giữ một bản sao riêng, nên chúng KHÔNG bị chạm (và cũng vẫn mang con bệnh) |
 | ~~chính sách che~~ | ~~`de-xuat-chat-v1`~~ | — | **ĐÃ KÝ 14/09** — [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md), đường ⒝: ký nguyên bản + cửa hẹp `scout.text`. `O8` hết chặn |
@@ -219,24 +220,38 @@ chặn vì **seed thiếu tay chân**, không vì adapter viết chưa xong.
 **`I8` kéo thả nằm NGOÀI danh sách** — Udin không cần (nút *"Add to canvas"* là một cú bấm
 thường, `W6`). Chỉ mở khi có trang timeline thật, và lúc đó chấp nhận mở lại Scouter một lần.
 
-### 5.3 Các chặng — viết lại 14/09 sau khi Đức uỷ quyền ([ADR-0007](adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md))
+### 5.3 Các chặng — viết lại 14/09 (lượt hai, sau khi chặng ① và ② đóng)
+
+**Hình dạng phần còn lại ĐÃ ĐỔI, và đây là chỗ đáng đọc kỹ nhất của cả tài liệu.** Tới sáng 14/09,
+thứ chặn việc tách Udin là **năng lực của seed**: đọc chữ, xoá ô, lấy tệp, cuộn, thu phóng, và một
+lỗi vận chuyển. Tới tối cùng ngày, gần như cả danh sách ấy đã đóng. Thứ còn chặn bây giờ là
+**workflow của adapter** — `W4` `W5` `W6` `W7` đều *hết chặn mà chưa ai làm*.
+
+Nghĩa là thước đo cũng đổi theo: từ đây, *"Scouter còn thiếu gì"* không còn là câu hỏi dẫn đường.
+Câu dẫn đường là **"`W` nào bắt buộc phải ĐẠT trước khi tách"** — và bảng `W` ở §4 vẫn ghi *"Đức
+chốt mục nào bắt buộc"*, tức là câu đó **chưa ai trả lời**. Nó quyết định phần còn lại dài bao
+nhiêu, nên nó đứng trước mọi việc khác trong bảng dưới.
 
 | Chặng | Việc | Xong khi | Chờ ai |
 |---|---|---|---|
-| ~~P0 P1a P1b P1c P2a~~ | mô hình đo · `T13` grab · `S-22` · E2E · `O8` | **XONG 12–14/09** | — |
-| ~~**①**~~ | ~~`T24` `S-25` · `T31`~~ | **XONG 14/09** — tin 1 MiB cắt mảnh đi trọn qua socket thật; phép ghim so thẳng với bản gốc chứng minh tin KHÔNG cắt mảnh y hệt; trần khúc về 512 KiB. Còn nợ **một lượt đo trên dây thật** (`G-68`) | — |
-| **②** | **Nhìn & đi lại** — mã và phép ghim **XONG 14/09** (`T25` `T26` `T27`⑴ `T28` `T30`) | mỗi lệnh có **lượt chạy thật**, và mỗi lệnh ghi **kiểm bằng `scout.view`** → `T32` | **Đức nạp lại extension** |
-| **②b** | `T29` `scout.upload` (`I9`) | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở máy chủ | **không ai** |
-| **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` đóng gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ① + ② |
+| ~~P0…P2a · ① · ②~~ | mô hình đo · `T13` · `S-22` · `O8` · `T24` `S-25` · `T31` · nhìn & đi lại · `T32` chạy thật | **XONG 12–14/09** | — |
+| **⓪** | **Chốt `W` nào BẮT BUỘC** trước khi tách | có một danh sách `W` đóng, ghi vào §4 | **Đức** |
+| **②c** | `T33` chạy lại **E2E trọn vẹn** | bốn ảnh của một lượt đều xuống đĩa, không chạm trần ghi | không ai |
+| **②d** | `T34` `W4` đọc chữ · `T35` `W6` thêm ảnh vào canvas · `T36` `W7` prompt lần hai | mỗi `W` có hợp đồng ⟨trước · thao tác · thành công · thất bại⟩ và một lượt chạy thật | không ai |
+| **②e** | `T29` `scout.upload` (`I9`) → `W8` | một ảnh từ vùng ghi vào được trang; `..` bị từ chối ở **máy chủ** | không ai |
+| **③** | **ĐÓNG BĂNG SEED** — `T8` đổi tên · `T9` gói `v1` | không method mới nào thêm sau mốc này mà không có ADR | ⓪ ②c ②d ②e |
 | **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |
 | **⑤** | Trang thứ hai khác loại (artboard: Vizcom / node editor / timeline) | có `W` ĐẠT mà không sửa seed | ④ |
 
-**Vì sao ① đứng đầu dù nó không mở năng lực nào:** nó là một **lỗi**, và nó đang thu hẹp mọi năng
-lực khác — `scout.shot` chết, mỗi ảnh tốn 16 đơn vị trần ghi, và mọi đường *"nhìn toàn cảnh"* bị
-chặn kể cả `O12`.
+**Hai thứ `S-22` ĐANG che khuất, nói trước khi ai đó tưởng là lỗi mới.** `W5` và `W6` đều là *một
+cú bấm*, và trên ghế này **không lượt bấm nào tới trang** (`G-74`). Nên hai `W` đó có thể viết
+xong mà vẫn không ĐẠT được **trên ghế này** — và đó KHÔNG phải lỗi của adapter. Ai gặp chuyện ấy
+thì đọc `S-22` trước, đừng đi tìm bug trong `pilots/udin-optic/`.
 
-**Vì sao `T25` đi trước trong ②:** ba method ghi hứa *"đã bắn sự kiện"*, không hứa *"trang đã
-nhận"*. Một lệnh cuộn không có đường đọc lại tầm nhìn là một lệnh ghi **không có dấu kiểm**.
+**Vì sao `T33` đứng trước mọi việc mới:** nó không viết thêm dòng nào. Nó chỉ chạy lại thứ đã có
+trên một nền đã đổi — trần khúc 512 KiB làm một ảnh tốn 2 đơn vị thay vì 14 — và nó trả lời một
+câu mà không phép ghim nào trả lời được: *cả chuỗi Udin có đi trọn trong một lần mở khoá không*.
+Rẻ nhất, và nó là điều kiện để tin phần còn lại.
 
 ### 5.4 Rủi ro và nợ đang mở
 
