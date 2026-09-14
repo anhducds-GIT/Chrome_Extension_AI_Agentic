@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T21 — Duc chot 15/09: tach Udin thanh EXTENSION RIENG, mot bo day du. Lo trinh SAU chang o CHUOI-VIEC.md muc T21. Bat dau o chang (1): GOP transport.mjs ve _shared — do duoc hai goi hien co chi khac 18/576 dong, tuc 97% la ban chep, nen dung goi thu ba theo kieu cu la de ra ban sao THU BA. Gop truoc thi phan that su moi cua Udin chi con tu vung rieng + vo giao dien + 1.404 dong logic da co. May chu Bridge thi DA gop tu truoc (_shared/bridge-host/bridge-host-core.mjs, 519 dong) nen host goi moi chi la vo ~194 dong theo mau hnx-fetch."
+- next_step: "T21 chang (1) XONG 15/09: goi-bridge.mjs da ve workers/_shared/goi-bridge/, bon thu rieng cua Scouter (giao thuc, duong tep ghep cap, SCOUTER_GHEP, SCOUTER_GHE) thanh THAM SO, 7 khoi ghim moi canh chuyen tu vung do; 36 phep ghim xanh. Chang KE TIEP la (2): dung nha + vo extension workers/udin-optic/v0.1.0 — manifest, background, bang ben, host vo ~194 dong tren loi _shared, bridge-core rieng, giao thuc udin-optic.bridge, va transport.mjs CHEP NGUYEN VAN kem ba dong them vao bang CAP cua phep ghim goi moi."
 - human_action: "không"

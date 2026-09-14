@@ -230,3 +230,33 @@ ba gặp `TRANSPORT_DISCONNECTED` với câu trả lời hơi lớn.
 
 **Bốn đột biến canh cả hai chiều** (`X5`…`X8`); `X8` là chiều khó. Ba phép ghim cũ của vùng vẫn
 xanh, chạy lại ngay sau lượt sửa.
+
+## 2026-09-15 · `claude-scouter-udine` — `goi-bridge/` vào nhà này, và một chặng lộ trình chết tại chỗ
+
+**Vì sao vùng này bị đụng.** `T21` tách Udin Optic ra gói riêng. Lộ trình viết 15/09 mở đầu bằng
+*"gộp `transport.mjs` về `_shared` — làm trước mọi thứ"*. **Chặng đó không làm được** (`G-92`).
+
+**Ranh giới thật của vùng này là Node ↔ Chrome, không phải số dòng giống nhau.** `bridge-host`
+gộp được vì nó là tiến trình **Node**: `../../../_shared/` là một đường dẫn đĩa bình thường.
+`transport.mjs` chạy **bên trong extension**; Chrome nạp `v0.1.0/` làm **gốc gói**, mọi `import`
+thành URL `chrome-extension://<id>/…` và `..` **bị kẹp ở gốc** — service worker không đăng ký
+được. Ai định dọn thêm một file về đây: **hỏi file đó chạy ở đâu trước khi đếm dòng.**
+
+Hai đo phụ: hai bản transport hôm nay giống nhau **TỪNG BYTE** (con số *"khác 18 dòng"* khai
+15/09 là đo sai), và `ADR-0021 ⑵` **đã chốt sẵn** đường chép-nguyên-văn + phép ghim so từng byte.
+
+**Thứ vào nhà này thay vào đó: `goi-bridge/`** — bên **gọi** Bridge từ dòng lệnh, Node, nên nó
+qua được cái ranh giới trên. Nó là sợi dây duy nhất còn buộc Udin vào Scouter: một bản duy nhất,
+10 chỗ gọi, 5 trong đó là Udin gọi qua `../../trang-thu-cham/`.
+
+**Và dời thôi thì chưa chữa gì.** Bản cũ gõ cứng **bốn** thứ riêng của Scouter — tên giao thức ·
+đường tệp ghép cặp · `SCOUTER_GHEP` · `SCOUTER_GHE`. Chép y nguyên sang gói mới là để gói đó
+**tự khai sai tên mình trên dây**. Đó là `G9` lặp lại ở tầng khác: 12/09 một chuỗi `"duc-scouter"`
+trong `transport.mjs` đi theo bản chép sang `hnx-fetch`. Nên đây là **cái xưởng**
+`taoGoiBridge({goi})`, mỗi gói dựng cái vỏ năm dòng của mình — nhờ vậy 10 chỗ gọi không sửa gì.
+
+**Khối ⓐ của phép ghim đọc chính mã của lớp dùng chung và ĐỎ khi thấy một tên gói.** Nó bắt được
+ngay lượt chạy đầu: tôi để `'duc-scouter'` làm ví dụ trong một câu báo lỗi. Cái lưới đặt **trước**
+khi có bản chép thứ hai, thay vì sau như lần trước.
+
+Đường tệp ghép cặp nay hỏi `duongGhepCapChuan()` thay vì gõ cứng lần hai.

@@ -1561,3 +1561,32 @@ này khớp với điều đó.
 ### Để lại
 
 `human_action` nay là **"không"** — không còn gì chờ Đức. Bắt đầu ở chặng ①.
+
+## 2026-09-15d · `claude-scouter-udine` — `T21` chặng ① xong, và lộ trình rụng một chặng
+
+**Chặng ① cũ chết** (`G-92`): gộp `transport.mjs` về `_shared` **không làm được** — nó chạy trong
+extension, mà Chrome kẹp mọi `import` lại ở gốc gói `v0.1.0/`. Lõi host gộp được vì nó là Node.
+**Ranh giới Node ↔ Chrome mới quyết định gộp được hay không, không phải số dòng giống nhau.**
+
+Hai chuyện đi kèm, cả hai là lỗi của tôi: con số *"khác 18 dòng"* khai hôm qua là **đo sai** (hai
+bản giống nhau **từng byte**, cksum `3518328594`), và `ADR-0021 ⑵` **đã chốt sẵn** đường
+chép-nguyên-văn + phép ghim so từng byte — tôi viết chặng ① mà không tra ADR cai quản chính file
+đó. **Bản chép có người canh không phải nợ.**
+
+**Chặng ① mới, và nó là việc thật:** `pilots/trang-thu-cham/scripts/goi-bridge.mjs` về
+`workers/_shared/goi-bridge/`. Đây là sợi dây **duy nhất** còn buộc Udin vào Scouter — 5 trong 10
+chỗ gọi là Udin. Bản cũ gõ cứng bốn thứ riêng của Scouter (giao thức · đường tệp ghép cặp ·
+`SCOUTER_GHEP` · `SCOUTER_GHE`); chép nguyên sang gói mới là để gói đó **tự khai sai tên mình
+trên dây** — `G9`, chỉ đổi tầng.
+
+Bản ở lại chỗ cũ là **cái vỏ năm dòng** khai danh tính Scouter, nên **10 chỗ gọi không sửa một ký
+tự nào**. 7 khối ghim mới ở `_shared/goi-bridge/tests/`; khối ⓐ đọc chính mã lớp dùng chung và đỏ
+khi thấy một tên gói — nó bắt lỗi ngay lượt chạy đầu. Hai lượt đột biến tay (gõ cứng lại giao
+thức · bỏ phép kiểm tên gói) đều **chết**.
+
+**36 phép ghim xanh** (35 + 1, tự bắt qua lượt quét hình dạng `_shared/<bất kỳ>/tests/`).
+
+**Chặng ② kế tiếp:** dựng nhà + vỏ extension `workers/udin-optic/v0.1.0/` — và ở đó
+`transport.mjs` **chép nguyên văn**, kèm **ba dòng thêm vào bảng `CẶP`** của phép ghim gói mới
+(mẫu: `hnx-fetch/v0.1.0/tests/be-mat-hep-smoke.mjs` khối ⑷). Chép mà quên ghim là đẻ lại đúng
+bệnh ba gói `duc-auto-*`.
