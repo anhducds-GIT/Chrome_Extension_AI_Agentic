@@ -8,7 +8,18 @@
 > `cuộn`, `hit-test`, `setTimeout`. Thấy dòng **SAI** thì đừng thử lại; thấy **CHƯA** thì đọc
 > cột *cách thử* để khỏi làm lại phần đã làm.
 
-## Kết luận hiện tại (13/09)
+## Kết luận hiện tại (14/09)
+
+- **`S-22` vẫn MỞ, nhưng nay gọn lại còn một câu đo được:** trên tab đang hỏng, lệnh **DOM chạy**
+  (hỏi-điểm trả `relation:"descendant"` đúng phần tử) mà lệnh **Input biến mất** — không một
+  `mousedown` nào tới tầng cửa sổ. Hỏng **theo TAB, không theo ghế** (`G-43`).
+- **Bảy giả thuyết đã loại, đừng thử lại:** tab ẩn (`G-07` `G-40`) · cửa sổ thu nhỏ (`G-41`) ·
+  tab chưa từng hiện (`G-42`) · lớp che / vẽ sai / hộp thoại (`G-44`) · bộ đếm giờ (`G-02`) ·
+  tab đông cứng (`G-03`) · toạ độ lệch tỉ lệ (`G-05`).
+- **Phép đo A/B trên Chrome SẠCH đã có sẵn** — bản chép của `scouter-action-reality-probe.mjs`
+  đo được ba trạng thái tab và hai trạng thái cửa sổ. Dựng lại trong ~5 phút; xem `G-40..G-42`.
+
+## Kết luận cũ (13/09)
 
 - **`S-23` ĐÃ VÁ:** `DOM.getNodeForLocation` nói theo hệ TRANG, hộp/chuột theo hệ KHUNG NHÌN.
   Cộng độ cuộn (hộp `:root`) ở cả hai lõi. Probe 11/11, đột biến 128/128.
@@ -43,7 +54,7 @@
 | G-04 | 13/09 | S-22 | Tab **không được vẽ** | `scout.shot` | **SAI** | 28.488 byte, ảnh đúng trang |
 | G-05 | 13/09 | S-22 | Toạ độ lệch vì màn hình 125% | so `clickedAt` với ảnh chụp | **SAI** | `x:87 y:275` CSS px ↔ `108,344` trên ảnh = ×1,25 đúng |
 | G-06 | 13/09 | S-22 | Có lớp che | `hit` + ảnh chụp | **SAI** | `relation: "descendant"`, ảnh trống trơn |
-| G-07 | 13/09 | S-22 | ⚠️ **XEM LẠI — G-38 (14/09) dựng lại đúng mối tương quan này trên ghế `Dummy_Scout`, chưa lật kết luận nhưng đừng coi câu này là đã đóng.** Tab ẩn (`visibilityState: hidden`) làm mất sự kiện nhập | trang tự ghi `visibilityState` vào `body[data-hien]` | **SAI** | Đo được tab `hidden` và không `mousedown` nào tới cửa sổ — nhưng hai thứ chỉ **trùng lúc**. Đức xác nhận 13/09 đã debug trước: tab ẩn **không** ảnh hưởng bấm. Và G-08 tái hiện lỗi trên Chrome riêng |
+| G-07 | 13/09 | S-22 | ✅ **ĐÃ KIỂM LẠI 14/09 (G-40) — kết luận SAI giữ nguyên, nay có phép đo hai chiều chứ không chỉ lời nói.** Tab ẩn (`visibilityState: hidden`) làm mất sự kiện nhập | trang tự ghi `visibilityState` vào `body[data-hien]` | **SAI** | Đo được tab `hidden` và không `mousedown` nào tới cửa sổ — nhưng hai thứ chỉ **trùng lúc**. Đức xác nhận 13/09 đã debug trước: tab ẩn **không** ảnh hưởng bấm. Và G-08 tái hiện lỗi trên Chrome riêng |
 | G-08 | 13/09 | S-22 | Lỗi nằm ở **lõi ghi**, không riêng ghế `Udin_Scout` | `npm run scouter:action-probe` — Chrome riêng, hồ sơ trống, chạy chính lõi hiện tại | **ĐÚNG, một phần** | `CLICK_REACHES_BELOW_THE_FOLD` ĐỎ, tái hiện 3/3; bấm/gõ/Enter trên màn hình vẫn XANH. Ca không cuộn ở ghế Đức thì chưa tái hiện được ở đây |
 | G-09 | 13/09 | S-22 | Lỗi có từ TRƯỚC bản sửa T1 | chạy cùng phép đo với lõi ở commit `be4f16b5` | **SAI** | lõi trước T1: 11/11 XANH → **T1 gây ra** |
 | G-10 | 13/09 | S-22 | Thủ phạm là **làm tròn toạ độ** (`Math.round`, T1) | lõi hiện tại, bỏ riêng làm tròn | **SAI** | vẫn ĐỎ |
@@ -77,8 +88,14 @@
 
 | G-37 | 14/09 | S-22 | Trên ghế `Udin_Scout` HÔM NAY, một lượt bấm **không phải cuộn** có tới được trang không | chạy `qua-man-cho.mjs` thật: bấm Try Again rồi kiểm **màn chắn có tắt không** — kiểm bằng trang, không bằng lời báo của `scout.click` | **ĐÚNG** | `{"daChan":true,"bam":1}` — màn chắn có thật, bấm 1 lần, màn chắn tắt, ô prompt `usable`. Đây **chưa phải** G-26: G-26 hỏi ca `trang-thu-cham` (cần một tab trống trên ghế đó), còn đây là một trang khác. Nhưng nó đúng HÌNH DẠNG của S-22 (bấm không cuộn) và **không tái hiện** |
 
-| G-38 | 14/09 | S-22 | Lượt bấm chỉ tới được trang khi tab ĐANG HIỆN; tab ẩn thì sự kiện không tới cửa sổ | cùng một lệnh `vong.mjs`, chạy hai lần: một lần tab ẩn (đã có), một lần sau khi tay người bấm cho tab hiện lên | **CHƯA** | Mới có MỘT vế: tab ẩn → `data-hien="hidden"`, `data-chuot` 0, bấm hỏng. Vế kia (tab hiện → bấm tới) mới có bằng chứng ở trang KHÁC (`G-37`, Udin). Cần đúng một lượt bấm tay của Đức để khép |
+| G-38 | 14/09 | S-22 | ~~Lượt bấm chỉ tới được trang khi tab ĐANG HIỆN~~ **SAI, xem G-40** — giữ dòng để đừng ai thử lại | cùng một lệnh `vong.mjs`, chạy hai lần: một lần tab ẩn (đã có), một lần sau khi tay người bấm cho tab hiện lên | **SAI** | Vế kia đo được ở `G-40`: tab ẩn trên Chrome sạch vẫn nhận đủ cú bấm. Mối tương quan ở ghế Đức là TRÙNG LÚC, đúng như `G-07` đã kết luận 13/09 |
 | G-39 | 14/09 | S-22 | `document.hasFocus()` là dấu đáng tin để biết vì sao bấm hỏng | đọc `body[data-focus]` cùng lúc với `data-hien` | **SAI** | Đo được `data-focus="co"` TRONG KHI `data-hien="hidden"` — giá trị cũ đọng lại vì trang chỉ ghi lại lúc có sự kiện. Dùng `data-hien`, đừng dùng `data-focus` |
+
+| G-40 | 14/09 | S-22 | (vế còn thiếu của G-38) Tab **ẩn** thì lượt bấm không tới — đo trên Chrome SẠCH do phép đo tự mở | bản chép `scouter-action-reality-probe.mjs` + mở tab thứ hai cho tab trang thử thành nền | **SAI** | tab `hidden` vẫn nhận đủ: `themCuBam: 1` cả ba lượt (ẩn · ẩn · hiện lại). **G-38 SAI theo** — Đức đã đúng từ 13/09, và `G-07` giữ nguyên kết luận SAI |
+| G-41 | 14/09 | S-22 | Cửa sổ Chrome **thu nhỏ** thì lượt bấm không tới | cùng phép đo, `Browser.setWindowBounds` `minimized` rồi `normal` | **SAI** | thu nhỏ vẫn `themCuBam: 1`. Đây cũng là giả thuyết ⒜ của `S-21` (G-14) — nay loại được |
+| G-42 | 14/09 | S-22 | Tab **mở nền và CHƯA TỪNG được hiện lần nào** (chưa vẽ) thì lượt bấm không tới | cùng phép đo, `chrome.tabs.create({active:false})` rồi bấm ngay, sau đó cho hiện lên bấm lại | **SAI** | chưa từng hiện vẫn `themCuBam: 1` |
+| G-43 | 14/09 | S-22 | Hỏng theo GHẾ (cả ghế mất đường ghi) hay theo TAB | cùng ghế `Dummy_Scout`, cùng phút: bấm ô nhập trên Udin, rồi bấm nút trên trang thử | **Theo TAB** | Udin: `:focus` 0 → 1, `relation:"self"`. Trang thử: `relation:"descendant"` mà `data-chuot` vẫn 0. Ghế vẫn ghi được; riêng tab đó thì Input biến mất |
+| G-44 | 14/09 | S-22 | Trang thử đang bị che / có hộp thoại / vẽ sai nên lượt bấm rơi chỗ khác | `scout.shot` + `scout.page` chính tab đang hỏng | **SAI** | ảnh đúng trang, không lớp che, 2 phần tử tương tác. Và tay nghe đặt ở **tầng cửa sổ, pha bắt** — sai toạ độ thì vẫn phải thấy `mousedown`, mà `data-chuot` = 0: **không một sự kiện chuột nào tới trang** |
 
 ## Phép đo dùng lại được — đừng dựng lại
 
