@@ -36,13 +36,13 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 |---|---|---|---|
 | **T24** | **`S-25` — ghép được tin WebSocket bị cắt mảnh** | — | **XONG 14/09.** 9 khối ghim (có một tin **1 MiB cắt mảnh đi trọn qua socket thật**) · 4 đột biến. Khối ① so thẳng với bản gốc trong gói đóng băng: tin KHÔNG cắt mảnh cư xử y hệt |
 | **T25** | **`scout.view`** — ĐỌC cuộn · khung nhìn · cỡ tài liệu · còn bao nhiêu để cuộn · thu phóng | — | **XONG 14/09** (mã + ghim). **Chưa chạy thật** — `G-70` |
-| **T26** | `scout.scroll` (`I5`) | T25 | **XONG 14/09** (mã + ghim). Chưa chạy thật |
+| **T26** | `scout.scroll` (`I5`) | T25 | **XONG + CHẠY THẬT 14/09.** Bản đầu (bánh xe) treo và **khoá cả tab** (`G-72`) — đổi sang `DOM.scrollIntoViewIfNeeded`, cuộn **1.972 điểm ảnh** đo bằng `scout.view` (`G-73`) |
 | **T27** | `O12` thu phóng | T25 | **NỬA ⑴ XONG 14/09**: `scout.shot` nhận `full_page` + `scale` — cả artboard trong một ảnh nhỏ. **Nửa ⑵ CHẶN bởi kiến trúc**, không bởi thiếu tham số: `observer-engine` tháo debugger sau mỗi lượt gọi, mà `Emulation` override sống theo phiên debugger → `G-69`, **câu của Đức** |
-| **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`click_count` (`I7`) | T25 | **XONG 14/09** (mã + ghim). Chưa chạy thật |
-| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | **việc kế** sau lượt kiểm thật của chặng ② |
-| **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG 14/09** (mã + ghim). Chưa chạy thật |
-| **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG 14/09**: 64 KiB → **512 KiB**. Chưa đo lại trên dây thật (`G-68` vẫn `CHƯA`) |
-| **T32** | **Chạy thật cả chặng ② trên Udin** | Đức nạp lại extension | **việc kế.** Sáu dòng năng lực đang ở `CÓ`, không dòng nào `ĐÃ CHỨNG MINH` — đó là NỢ, và đây là thứ trả nó |
+| **T28** | `scout.hover` (`I6`) · `scout.click` nhận `button`+`click_count` (`I7`) | T25 | **XONG về mã.** Chạy thật: lệnh hoàn tất, **trang không nhận** — đó là `S-22`, Đức đã chốt ngừng điều tra. Dừng ở `CÓ` (`G-74`) |
+| **T29** | `scout.upload` (`I9`) — đường dẫn **tương đối**, máy chủ tự ghép vào vùng ghi | — | **việc kế.** Mục cuối của danh sách đóng băng |
+| **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
+| **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
+| **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | nợ do `G-48` để lại |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | T8 | mốc đóng băng seed |

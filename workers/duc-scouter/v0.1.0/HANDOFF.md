@@ -1289,3 +1289,40 @@ ghi là ĐỨT. Nửa còn lại (chặng ②) cần Đức nạp lại extensio
 
 **Nợ nói thẳng:** sáu dòng năng lực đổi sang `CÓ` trong một lượt và **không dòng nào** sang
 `ĐÃ CHỨNG MINH`. `T32` sinh ra để trả nó, và nó cần Đức nạp lại extension.
+
+## 2026-09-14b · `claude-scouter-udine` — lượt chạy thật, và nó lấy lại hai dòng bảng
+
+**Chạy thật cả chặng ② (`T32`), và kết quả chia đôi rất sạch:** mọi năng lực đi qua **lệnh DOM**
+chứng minh được trên ghế Đức; mọi năng lực đi qua **đường sự kiện chuột** thì không.
+
+Bên chứng minh được: `scout.view` đọc đúng ba trang khác nhau · `scout.scroll` cuộn **1.972 điểm
+ảnh** (`G-73`) · `scout.history` lùi từ trang thử về đúng Udin · `scout.shot full_page` chụp một
+trang cao 3.002px, và ở tỉ lệ 0,25 nó cho **bốn lần diện tích với hai phần ba số byte**.
+
+Bên không: `scout.hover`, `scout.click button/click_count` — lệnh trả `ok`, trang **không đếm được
+lấy một sự kiện nào**, kể cả của một lượt bấm thường. Đó là **`S-22`**, Đức đã chốt **ngừng điều
+tra** ngày 14/09. Tôi ghi thành `G-74` và **không mở lại**.
+
+**Hai lỗi của chính tôi trong lượt này, ghi cả hai:**
+
+⑴ **Khai `I6` là `ĐÃ CHỨNG MINH` rồi rút lại trong cùng ngày.** Tôi lấy *"lệnh hoàn tất 5,2 giây,
+hỏi-điểm trả descendant"* làm bằng chứng — nhưng đó là *lệnh chạy xong*, không phải *trang đã
+nhận*. Đúng cái ranh giới `README` đã ghi sau `S-22`, và tôi vẫn bước qua nó.
+
+⑵ **Suýt kết luận "lượt bấm không tới nơi" từ một phép đo hỏng.** Tôi đọc dấu chẩn đoán bằng
+`attributes["data-chuot"]`, mà chính sách che **cắt mọi `data-*`** khỏi phần thuộc tính — nên nó
+luôn ra `null`. Đọc đúng là đếm **số khớp selector** (`body[data-chuot="1"]`). Kết luận cuối cùng
+trùng nhau, nhưng nó trùng do may: một phép đo luôn trả `null` thì "không có dấu" và "không đọc
+được dấu" trông y hệt nhau. Ghi thành `G-75` — đây là món nợ `T16`, nay có giá cụ thể.
+
+**`G-72` — con đắt nhất của ngày.** `scout.scroll` bản đầu bắn `mouseWheel`; nó **không bao giờ
+trả lời**, và lượt treo đó **giữ debugger cắm vào tab** nên khoá mọi lệnh sau — kẹt 120 giây thật,
+phải `scout.reload` mới gỡ. Đối chứng `scout.hover` (cùng method, cùng tab, OK 5,2s) khoanh chỗ
+hỏng vào riêng `mouseWheel`. Hai mức sửa, và mức thứ hai mới là gốc: đổi cuộn sang
+`DOM.scrollIntoViewIfNeeded`, **và** đặt `CDP_HAN_MS = 20000` ở **cả hai lõi** để một lệnh CDP
+treo không còn khoá được cả tab. Phần thưởng ngoài dự tính: cơ chế mới **miễn nhiễm `S-22`**.
+
+**`T31` đo thật:** ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa —
+tức là một phong bì **512 KiB** đi trọn qua dây, chỗ trước đây chết ở 65 KB.
+
+**Số.** Suite 32/32 · đột biến **143/143, 0 sống sót** · Seed Coverage **24/42**.

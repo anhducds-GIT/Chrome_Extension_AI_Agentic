@@ -32,6 +32,13 @@
 
   <div id="tam-chan" hidden>Đang bận — thử lại sau</div>
 
+  <!-- Khoảng đệm cao để TRANG CUỘN ĐƯỢC. Không có nó thì `scout.scroll` và
+       `scout.view` không có gì để đo: một trang vừa khít khung nhìn trả về
+       `conLai: 0` dù cuộn chạy hay không, tức là phép đo không phân biệt
+       được hai ca ngược nhau. -->
+  <div id="dem-cao" style="height:2400px"></div>
+  <div id="cuoi-trang">đáy trang — chỗ để `scout.scroll` cuộn tới</div>
+
 <script>
 (function () {
   "use strict";
@@ -66,6 +73,30 @@
   window.addEventListener("keydown", function () {
     than.dataset.phim = String(Number(than.dataset.phim || 0) + 1);
   }, true);
+
+  // BỐN DẤU THÊM 14/09 cho nhóm "nhìn & đi lại". Cùng một khuôn với hai dấu trên,
+  // và cùng một lý do: Scouter cố ý không chạy được mã trên trang, nên cách duy
+  // nhất để biết một sự kiện CÓ TỚI NƠI là để chính trang đếm nó.
+  //
+  // `contextmenu` và `dblclick` là sự kiện TỔNG HỢP: trình duyệt chỉ sinh ra chúng
+  // khi chuỗi nhấn-nhả đúng hình dạng. Nên đếm chúng trả lời được câu mà đếm
+  // `mousedown` không trả lời nổi: *trình duyệt có CÔNG NHẬN đây là một lượt bấm
+  // phải / bấm đúp không*, chứ không chỉ *có hai lượt nhấn tới nơi không*.
+  window.addEventListener("contextmenu", function (e) {
+    than.dataset.chuotphai = String(Number(than.dataset.chuotphai || 0) + 1);
+    e.preventDefault();   // đừng mở menu thật: nó phủ lên trang và chặn lượt đo sau
+  }, true);
+  window.addEventListener("dblclick", function () {
+    than.dataset.bamdup = String(Number(than.dataset.bamdup || 0) + 1);
+  }, true);
+  window.addEventListener("wheel", function () {
+    than.dataset.banhxe = String(Number(than.dataset.banhxe || 0) + 1);
+  }, true);
+  // Ghi ĐỘ CUỘN, không đếm số lượt: câu cần trả lời là *trang có DI CHUYỂN không*,
+  // và một lượt cuộn tới chỗ đang đứng là một lượt không di chuyển gì.
+  function ghiCuon() { than.dataset.cuon = String(Math.round(window.scrollY)); }
+  ghiCuon();
+  window.addEventListener("scroll", ghiCuon, true);
 
   nut.addEventListener("click", function () {
     // Dấu NGAY LÚC BẤM, không qua bộ đếm giờ: nhờ nó mà phân biệt được

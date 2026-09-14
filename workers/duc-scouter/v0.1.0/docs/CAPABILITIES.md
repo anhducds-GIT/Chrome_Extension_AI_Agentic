@@ -39,11 +39,11 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | O2 | Cây DOM | `scout.tree` | **ĐÃ CHỨNG MINH** | Udin 12/09 | |
 | O3 | Cây trợ năng (vai trò + tên) | `scout.a11y` | **ĐÃ CHỨNG MINH** | Udin 12/09: phân biệt "Agent" / "Manual Gen" mà class không phân biệt được | |
 | O4 | Đếm phần tử khớp selector | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 | |
-| O5 | Chụp màn hình phần đang thấy, **và cả trang dài** | `scout.shot` | **ĐÃ CHỨNG MINH** | Udin 12/09. `full_page` + `scale` thêm 14/09 (`T27`): chụp cả tài liệu rồi thu nhỏ trong chính lượt chụp. Trần 25 triệu điểm ảnh, từ chối TRƯỚC khi dựng ảnh — `dom.snapshot` đã chết vì đúng chỗ đó. **Phần `full_page` CHƯA CHẠY THẬT** | |
+| O5 | Chụp màn hình phần đang thấy, **và cả trang dài** | `scout.shot` | **ĐÃ CHỨNG MINH** | Udin 12/09. `full_page` + `scale` thêm 14/09 (`T27`): chụp cả tài liệu rồi thu nhỏ trong chính lượt chụp. Trần 25 triệu điểm ảnh, từ chối TRƯỚC khi dựng ảnh — `dom.snapshot` đã chết vì đúng chỗ đó. **Chạy thật 14/09** trên một trang cao 3.002px: khung nhìn 64 KB → cả trang 273 KB → cả trang ở tỉ lệ 0,25 chỉ **43 KB**, tức **bốn lần diện tích với hai phần ba số byte** | |
 | O6 | Chờ có / hết / **bấm được thật** | `scout.wait` | **ĐÃ CHỨNG MINH** | Udin 13/09, `G-28` `G-30` | |
 | O7 | Đọc thuộc tính trạng thái (`disabled`, `aria-*`…) | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29`: nút Send mất `disabled` sau khi gõ | |
 | O8 | **Đọc chữ trên trang** (câu trả lời, thông báo lỗi) | `scout.text` | **ĐÃ CHỨNG MINH** | [ADR-0006](adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md) · Udin 14/09 (`G-57`): đọc màn chắn ra *"User Limit Reached…"*, `div` khớp 146 thì **từ chối**. 10 khối ghim · 6 đột biến tay. Trần 5.000 ký tự **không** chặn được việc đọc cả trang nhỏ (`G-58`) — giới hạn đã khai trong ADR | |
-| O13 | **Đang nhìn phần nào của trang** (độ cuộn · khung nhìn · cỡ trang · còn bao nhiêu để cuộn · thu phóng) | `scout.view` | **CÓ** | Làm 14/09, [ADR-0007](adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md). Là phép ĐỌC của cả nhóm *nhìn & đi lại*, và là thứ DUY NHẤT kiểm được `scout.scroll` — ba lệnh ghi chỉ hứa *đã bắn sự kiện*. Đọc bằng đơn vị CSS, và nói ra đã dùng đơn vị nào. **CHƯA CHẠY THẬT** | |
+| O13 | **Đang nhìn phần nào của trang** (độ cuộn · khung nhìn · cỡ trang · còn bao nhiêu để cuộn · thu phóng) | `scout.view` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007](adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md). Là phép ĐỌC của cả nhóm *nhìn & đi lại*, và là thứ DUY NHẤT kiểm được `scout.scroll` — ba lệnh ghi chỉ hứa *đã bắn sự kiện*. Đọc bằng đơn vị CSS, và nói ra đã dùng đơn vị nào. **Chạy thật 14/09** trên ba trang: Udin `1090×783` không cuộn được (artboard vẽ trong khung cố định), bảng bên `404×3002` cuộn được, trang thử đo được **đúng 1.972 điểm ảnh** một lượt cuộn — tức là nó làm được đúng việc nó sinh ra để làm: **kiểm một lệnh ghi bằng trang** | |
 | O9 | Phần tử trong iframe / shadow DOM | — | **CHƯA ĐO** | Chưa trang nào cần | |
 | O12 | **Thu phóng trang** để nhìn toàn cảnh | `scout.shot` (`full_page` + `scale`) | **MỘT PHẦN** | Đức nêu 14/09 cho **layout dạng artboard** (Udin, Vizcom). Hai cái được, và cái thứ hai mới là lý do thật: ⑴ ảnh chụp khung nhìn phủ được cả artboard mà **ít byte hơn** ảnh cả trang — quan trọng vì tầng vận chuyển rớt quanh 65 KB (`G-63`); ⑵ ứng dụng canvas có thể **vẽ thêm phần tử** khi thu nhỏ, tức là Scouter *nhìn được nhiều hơn* chứ không chỉ *chụp gọn hơn* — **CHƯA ĐO**, xem `G-65`. Làm 14/09: **nửa ⑴ xong** bằng `scout.shot full_page + scale` — cả artboard trong một ảnh nhỏ, không cần `Emulation.*` nào. **Nửa ⑵ CHƯA**, và lý do là kiến trúc chứ không phải thiếu tham số: `observer-engine.js` gắn rồi THÁO debugger quanh **từng lượt gọi**, mà `Emulation.setDeviceMetricsOverride` sống theo phiên debugger — xem `G-69` | |
 | O10 | Chụp DOM + bố cục một lượt | ~~`scout.snapshot`~~ | **ĐÃ BỎ 08/09** | Làm chết service worker trên 2/3 trang lớn. Đừng mở lại nếu chưa có cách khác | |
@@ -56,7 +56,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | N2 | Chọn tab làm việc | `target_id` trong từng lệnh | **ĐÃ CHỨNG MINH** | mọi lượt thật từ 07/09. `targetId` đổi sau điều hướng, phải hỏi lại (`T7`) | |
 | N3 | Đi tới URL | `scout.navigate` | **ĐÃ CHỨNG MINH** | 08/09, `T3` | |
 | N4 | Tải lại trang | `scout.navigate` cùng URL | **ĐÃ CHỨNG MINH** | `T3` / `S-19` đóng | |
-| N5 | Quay lại / tiến tới | `scout.history` | **CÓ** | Làm 14/09, [ADR-0007]. Đi đúng MỘT bước; người gọi nói hướng, `entryId` tính ở trong — mở một tham số `entry_id` là biến lệnh lùi thành con trỏ tự do vào lịch sử duyệt web của Đức. Hết đường thì `HISTORY_AT_END`, không im lặng. **CHƯA CHẠY THẬT** | |
+| N5 | Quay lại / tiến tới | `scout.history` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007]. Đi đúng MỘT bước; người gọi nói hướng, `entryId` tính ở trong — mở một tham số `entry_id` là biến lệnh lùi thành con trỏ tự do vào lịch sử duyệt web của Đức. Hết đường thì `HISTORY_AT_END`, không im lặng. **Chạy thật 14/09**: đi từ Udin sang trang thử rồi `back` về đúng Udin (`entry 3/4`, `arrivedBy: new_document`), hai lượt liền | |
 | N6 | Biết trang tải xong | `scout.navigate` chờ đọc được | **MỘT PHẦN** | trang SPA tải tiếp sau đó: dùng `scout.wait` | |
 | N7 | Nhiều URL **lần lượt**, một tab | `scout.navigate` + `scout.wait` | **CHƯA ĐO** | ADR ⑶ "một Scouter một URL" giữ nguyên. Chạy đồng thời nhiều tab: **không làm** | |
 | N8 | Mở / đóng tab | — | **CHƯA CÓ** | cần `Target.createTarget`, đụng ADR ⑶ | ✋ |
@@ -69,9 +69,9 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | I2 | Gõ chữ | `scout.type` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29` | |
 | I3 | Nhấn phím có tên (Enter, Tab, Esc, mũi tên…) | `scout.key` | **ĐÃ CHỨNG MINH** | Chrome riêng. Ghế Đức: dính `S-22` | |
 | I4 | **Xoá chữ trong ô** (Ctrl+A rồi Delete) | `scout.clear` | **CÓ** | Làm 14/09. Phím `A` và phím bổ trợ `Ctrl` **gõ cứng trong lõi ghi** — không mở tham số `modifiers`, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt. 8 khối ghim · 5 đột biến tay. **CHƯA CHẠY THẬT**. Không xoá được trên macOS (ở đó là `Cmd+A`) | |
-| I5 | Cuộn tới một phần tử, không bấm | `scout.scroll` | **CÓ** | Làm 14/09, [ADR-0007]. **Cuộn theo SỐ ĐIỂM ẢNH thì KHÔNG**, và đó là một giới hạn đo được chứ không phải chưa làm: `Input.dispatchMouseEvent` kiểu `mouseWheel` **không bao giờ trả lời** trên trang thật, và lượt treo đó **giữ debugger cắm vào tab** nên khoá mọi lệnh sau — kẹt 120 giây thật, phải `scout.reload` mới gỡ (`G-72`). Đối chứng làm kết luận chắc: `scout.hover` chạy được trên đúng tab ấy, cùng method. **CHƯA CHẠY THẬT** |
-| I6 | Rê chuột (hover) | `scout.hover` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007]. **Chạy thật trên Udin cùng ngày** (5,2 giây, `hit.relation: descendant`) — và lượt chạy ấy còn làm một việc thứ hai: nó là ĐỐI CHỨNG chứng minh chỗ treo của `G-72` là riêng `mouseWheel`, không phải tab ẩn. Vẫn hỏi-điểm trước khi bắn: rê lên phần tử bị che thì sự kiện tới CÁI CHE, báo thành công là nói dối (`S-17`, khác loại sự kiện) | |
-| I7 | Bấm đúp / bấm phải | `scout.click` (`button` · `click_count`) | **CÓ** | Làm 14/09: thêm THAM SỐ, **không thêm method** — mọi thứ đắt giá của lượt bấm (khớp đúng một · đưa vào tầm nhìn · hỏi-điểm) là y hệt, và tách ra là chép ba cái chốt ấy sang chỗ thứ hai. Không khai gì thì cư xử y như trước. **CHƯA CHẠY THẬT** | |
+| I5 | Cuộn tới một phần tử, không bấm | `scout.scroll` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007]. **Cuộn theo SỐ ĐIỂM ẢNH thì KHÔNG**, và đó là một giới hạn đo được chứ không phải chưa làm: `Input.dispatchMouseEvent` kiểu `mouseWheel` **không bao giờ trả lời** trên trang thật, và lượt treo đó **giữ debugger cắm vào tab** nên khoá mọi lệnh sau — kẹt 120 giây thật, phải `scout.reload` mới gỡ (`G-72`). Đối chứng làm kết luận chắc: `scout.hover` chạy trọn trên đúng tab ấy, cùng method. **Chạy thật 14/09**: trang thử cuộn **1.972 điểm ảnh**, `conLai` từ 1.971 xuống 0, đo bằng `scout.view`. Và nó **miễn nhiễm với `S-22`**: `DOM.scrollIntoViewIfNeeded` là lệnh DOM, không đi qua đường sự kiện chuột — nên nó là lệnh ghi DUY NHẤT của nhóm này chứng minh được trên ghế Đức | |
+| I6 | Rê chuột (hover) | `scout.hover` | **CÓ** | Làm 14/09, [ADR-0007]. Chạy trên Udin: lệnh **hoàn tất** 5,2 giây, hỏi-điểm trả `descendant`. **Nhưng thế KHÔNG phải chứng minh trang đã nhận** — tôi đã trót khai `ĐÃ CHỨNG MINH` rồi rút lại trong cùng ngày, vì trên ghế Đức **không sự kiện chuột nào tới trang** (`S-22`, Đức chốt ngừng điều tra 14/09): trang thử không đếm được lấy một lượt `mousedown` nào, kể cả của một lượt bấm thường. Cái ĐÃ chứng minh: lệnh chạy trọn, hỏi-điểm đúng, không treo. Vẫn hỏi-điểm trước khi bắn (`S-17`, khác loại sự kiện) | |
+| I7 | Bấm đúp / bấm phải | `scout.click` (`button` · `click_count`) | **CÓ** | Làm 14/09: thêm THAM SỐ, **không thêm method** — mọi thứ đắt giá của lượt bấm (khớp đúng một · đưa vào tầm nhìn · hỏi-điểm) là y hệt, và tách ra là chép ba cái chốt ấy sang chỗ thứ hai. Không khai gì thì cư xử y như trước. Chạy trên trang thử 14/09: **lệnh hoàn tất, trang không đếm được sự kiện nào** — đó là `S-22`, không phải lỗi của hai tham số này. Ghế nào không dính `S-22` thì đây là chỗ đo lại | |
 | I8 | Kéo thả A → B | — | **CHƯA CÓ** | toạ độ đích cũng phải suy từ **phần tử đích** (luật gói 7). Cần lệnh Bridge mới | ✋ |
 | I9 | Tải file lên (upload) | — | **CHƯA CÓ** | cần `DOM.setFileInputFiles`; file phải lấy từ vùng ghi Bridge, không lấy tuỳ ý trên máy | ✋ |
 | I10 | Đưa tiêu điểm vào ô | trong `scout.type` | **CÓ** | không có lệnh riêng; chưa cần | |
@@ -101,17 +101,24 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 22 · MỘT PHẦN 3 · CÓ 9 · CHƯA CÓ / CHƯA ĐO 8 · ĐÃ BỎ 1.** Tổng 43 dòng.
-**Seed Coverage = 22 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
+**ĐÃ CHỨNG MINH 24 · MỘT PHẦN 3 · CÓ 7 · CHƯA CÓ / CHƯA ĐO 8 · ĐÃ BỎ 1.** Tổng 43 dòng.
+**Seed Coverage = 24 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
 
-Ngày 14/09 thêm sáu dòng cùng một lượt (`O13` `N5` `I5` `I6` `I7`, và `O5` mở rộng). **Đúng MỘT
-trong sáu** lên `ĐÃ CHỨNG MINH` — `I6` rê chuột, vì nó chạy thật trên Udin. Năm dòng còn lại dừng ở
-`CÓ`: có mã, có ghim, **chưa có lượt chạy thật nào**. Đó là toàn bộ khác biệt giữa hai chữ ấy, và
-đây là lượt đầu tiên khoảng cách đó lớn tới mức nhìn thấy được trên bảng. Nó là NỢ.
+Ngày 14/09 thêm sáu dòng cùng một lượt (`O13` `N5` `I5` `I6` `I7`, và `O5` mở rộng), rồi **chạy thật
+cả sáu trong cùng ngày**. Bốn lên `ĐÃ CHỨNG MINH` — `O13` `N5` `I5` `O5`. **Hai dừng ở `CÓ`, và
+đúng hai cái đó bắn SỰ KIỆN CHUỘT**: `I6` rê chuột, `I7` bấm phải / bấm đúp. Trên ghế Đức không sự
+kiện chuột nào tới trang (`S-22`, Đức chốt ngừng điều tra 14/09), nên lượt chạy chỉ chứng minh được
+*lệnh hoàn tất*, không chứng minh được *trang đã nhận*.
 
-Và lượt chạy thật ngày 14/09 **đã lấy lại một dòng**: `I5` mở ra với cuộn-theo-điểm-ảnh, lượt chạy
-thật cho thấy đường đó treo và **khoá cả tab** (`G-72`), nên năng lực thu hẹp lại thành cuộn-tới-
-phần-tử. Một dòng bảng đổi vì phép đo, không vì ai đổi ý — đó là lý do bảng này tồn tại.
+Đường chia ấy **không phải ngẫu nhiên, và nó là thứ đáng nhớ nhất của cả lượt này**: mọi năng lực
+đi qua lệnh DOM đều chứng minh được trên ghế này; mọi năng lực đi qua đường sự kiện chuột thì
+không. `scout.scroll` nằm bên đúng phía **vì bản sửa `G-72`** — bản bánh xe (sự kiện chuột) treo và
+khoá cả tab; bản `scrollIntoViewIfNeeded` (lệnh DOM) cuộn được **1.972 điểm ảnh** đo bằng
+`scout.view`. Bỏ một cơ chế chưa chứng minh để lấy một cơ chế đã chứng minh, và phần thưởng là nó
+miễn nhiễm luôn với `S-22`.
+
+Tôi đã trót khai `I6` là `ĐÃ CHỨNG MINH` rồi **rút lại trong cùng ngày** — "lệnh chạy xong" không
+phải "trang đã nhận", và đó chính là ranh giới mà `README` đã ghi sau `S-22`.
 
 > ⚠️ **Con số này gõ tay và KHÔNG có máy nào soát.** Không dòng mã nào trong repo đọc file này
 > (kiểm 14/09: `grep -rl CAPABILITIES --include=*.mjs` → rỗng). Nên một ô khai `ĐÃ CHỨNG MINH`
