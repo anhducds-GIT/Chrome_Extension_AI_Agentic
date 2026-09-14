@@ -686,31 +686,38 @@ chính nó — làm ở chặng ②, lúc gói đó có thật.
 
 ### Năm chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
 
-**① `goi-bridge.mjs` ra chỗ dùng chung — VÀ bỏ tên gói gõ cứng.**
-77 dòng, **một bản duy nhất**, 10 chỗ gọi — **5 trong đó là Udin**, gọi qua
-`../../trang-thu-cham/`. Udin dọn đi là đường đó đứt. Nhưng *dời* thôi chưa đủ: file đang gõ cứng
-**bốn thứ riêng của Scouter** — `protocol: "duc-scouter.bridge"` · đường tệp ghép cặp mặc định ·
-`SCOUTER_GHEP` · `SCOUTER_GHE` (và `client_id`). Chép y nguyên sang Udin thì Udin **tự khai sai
-tên mình trên dây** — đúng cái bẫy `G9` đã bắt ở transport 12/09, chỉ đổi tầng.
-*Đóng khi:* một bản duy nhất · bốn thứ trên thành **tham số** chứ không hằng số · `npm run
-test:scouter` xanh · và có **một phép ghim đỏ** nếu tên giao thức quay lại làm hằng số.
-*Vì sao đây là chặng ①:* nó là sợi dây DUY NHẤT còn buộc Udin vào Scouter. Cắt nó trước thì chặng
-③ chỉ còn là `git mv`.
+**① `goi-bridge.mjs` ra chỗ dùng chung — VÀ bỏ tên gói gõ cứng. ✅ XONG 15/09.**
+Thân hàm về `workers/_shared/goi-bridge/`; bốn thứ riêng của Scouter (giao thức · đường tệp ghép
+cặp · `SCOUTER_GHEP` · `SCOUTER_GHE`) thành **tham số**. Bản ở lại là vỏ năm dòng, nên **10 chỗ
+gọi không sửa một ký tự**. 7 khối ghim; khối ⓐ đọc chính mã lớp dùng chung và đỏ khi thấy một
+tên gói — nó bắt lỗi ngay lượt chạy đầu.
 
-**② Dựng nhà + vỏ extension cho gói mới.**
-`workers/udin-optic/v0.1.0/` · khoá vùng trong `.agents/claims.json` · khai steward · bốn file ·
-`manifest.json` · background · bảng bên · host (**vỏ ~194 dòng trên lõi `_shared`**, theo mẫu
-`hnx-fetch/v0.1.0/bridge/`) · `bridge-core` **riêng** với từ vựng của Udin · giao thức riêng
-(`udin-optic.bridge` — **không** được trùng `duc-scouter.bridge`) · `transport.mjs` **chép nguyên
-văn** từ Scouter, kèm ba dòng thêm vào bảng `CẶP` của phép ghim gói mới.
-*Đóng khi:* `claim.mjs --take workers/udin-optic` nhận được · `session-check` xanh · `rule-compile
---sinh` đẻ ra `PHIEN.md` cho gói mới · phép ghim so-từng-byte của gói mới xanh · extension **nạp
-được vào Chrome** và bảng bên mở ra.
+**② Dựng nhà + vỏ extension cho gói mới. ✅ XONG 15/09.**
+**Và đây là chặng lộ trình đã đo sai giá** (`G-93`). Bản viết 14/09 lấy `hnx-fetch` làm thước mà
+không hỏi *vì sao thước đó ngắn*: gói đó **không khai quyền `debugger`**, cả gói chạy trên một
+lệnh `scout.fetch`. Udin gọi **5 lệnh GHI**, nên gói mới buộc phải mang theo `scouter-probes.mjs`
+(1.181) + `scouter-actions-core.mjs` (938) + `scouter-seed-core.mjs` (715, **chứa cái phanh**) —
+**~2.100 dòng mã an toàn bị chép lại**, không có trong bản đếm cũ.
 
-**③ Dời 10 file logic bằng `git mv`, KHÔNG sửa một dòng logic.**
-Chỉ được đổi đường `import`. Thấy mình đang *"tiện tay sửa luôn"* là dừng.
-*Đóng khi:* 5 phép ghim chạy xanh **từ gói mới** · suite Scouter xanh **mà không còn Udin** ·
-`git diff` trên file logic **chỉ** đổi dòng `import`.
+Con số đó được đưa cho Đức **trước khi làm**, kèm đường thứ hai (gói script, 0 dòng chép, chạy
+trên extension Scouter). Đức chốt **vẫn tách**, lý do nằm ngoài phép đo:
+
+> *"Vì sau này Scouter sẽ còn thay đổi nhiều, ngoài ra UI của Udin Extension cũng sẽ bị thay đổi
+> cho phù hợp usecase, do đó tách riêng sẽ hợp lý hơn."*
+
+Đó là lý lẽ **tách rời nhịp thay đổi**, và nó đổi bản chất bản chép: một bản *được phép trôi*
+không phải fork — fork là hai bản trôi **mà không ai biết**. Nên cái giá đi kèm **một tấm lưới**:
+`be-mat-hep-smoke.mjs` khối ⑷ băm **bảy tệp chép** và đỏ khi lệch; muốn khác thật thì khai
+`CO_Y_KHAC` kèm lý do. Bốn tệp CỐ Ý khác (`bridge-core` · `manifest` · `sidepanel.*` ·
+`background`) **không** bị ghim — đó đúng là chỗ Đức nói sẽ đổi.
+
+Gói hẹp hơn Scouter, đo được: **12 lệnh** (24) · **5 lệnh ghi** (11) · **một trang** thay vì
+`<all_urls>` · `scout.fetch` và `scout.reload` **không tồn tại**. Quyền `debugger` thì giống —
+chiều duy nhất không hẹp lại được, và là lý do bảy tệp kia phải bị ghim.
+
+**③ Dời 10 file logic bằng `git mv`. ✅ XONG 15/09.**
+Sang `workers/udin-optic/tu-dong/`, chỉ đổi dòng `import` và đường dẫn trong ghi chú. Suite
+Scouter còn **31 xanh và không còn Udin**; suite gói mới **7 xanh**.
 
 **④ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI.**
 Ghép cặp bằng **tệp riêng, cổng riêng** (`tao-tep-ghep-cap.mjs --goi udin-optic`), nạp extension

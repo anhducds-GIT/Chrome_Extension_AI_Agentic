@@ -1590,3 +1590,34 @@ thức · bỏ phép kiểm tên gói) đều **chết**.
 `transport.mjs` **chép nguyên văn**, kèm **ba dòng thêm vào bảng `CẶP`** của phép ghim gói mới
 (mẫu: `hnx-fetch/v0.1.0/tests/be-mat-hep-smoke.mjs` khối ⑷). Chép mà quên ghim là đẻ lại đúng
 bệnh ba gói `duc-auto-*`.
+
+## 2026-09-15e · `claude-scouter-udine` — Udin rời nhà, và lộ trình sai giá lần thứ hai trong ngày
+
+**`T21` chặng ①②③ xong.** Udin Optic nay là `workers/udin-optic/` — gói riêng, extension riêng,
+khoá vùng riêng. Suite Scouter còn **31 xanh và không còn Udin**; suite gói mới **7 xanh**.
+
+**Chặng ② đã đo sai giá, và sai cùng hình dạng với `G-92` sáng nay** (`G-93`). Bản lộ trình lấy
+`hnx-fetch` làm thước mà **không hỏi vì sao thước đó ngắn**: `hnx-fetch/AGENTS.md` ⑴ nói thẳng
+*"không có quyền `debugger`, và đó là lời hứa lớn nhất của gói"* — cả gói chạy trên **một** lệnh
+`scout.fetch`. Udin gọi **5 lệnh GHI**, nên gói mới buộc phải mang `scouter-probes.mjs` (1.181) +
+`scouter-actions-core.mjs` (938) + `scouter-seed-core.mjs` (715, **chứa cái phanh**) — **~2.100
+dòng mã an toàn bị chép lại**, không có trong bản đếm cũ.
+
+**Bài học chung của cả hai lần:** một tiền lệ chỉ đo được việc mới nếu hai việc **cùng điều kiện
+sinh ra con số** — cùng ranh giới Node/Chrome (`G-92`), cùng bề mặt quyền (`G-93`). Chép con số
+mà bỏ điều kiện là đo sai, và lần này nó suýt đi vào một quyết định của Đức.
+
+**Đức được đưa con số TRƯỚC khi làm**, kèm đường thứ hai (gói script, 0 dòng chép). Đức chốt vẫn
+tách: *"Scouter sẽ còn thay đổi nhiều, UI của Udin cũng sẽ đổi cho phù hợp usecase."* Đó là lý lẽ
+**tách rời nhịp thay đổi** — và nó đổi bản chất bản chép: một bản *được phép trôi* không phải
+fork; fork là hai bản trôi **mà không ai biết**.
+
+Nên bảy tệp chép bị **ghim so từng byte** (`udin-optic/v0.1.0/tests/be-mat-hep-smoke.mjs` ⑷).
+Bốn tệp cố ý khác (`bridge-core` · `manifest` · `sidepanel.*` · `background`) không ghim — đó
+đúng là chỗ Đức nói sẽ đổi.
+
+**Scouter bị đụng những gì:** không một dòng mã. Chỉ `pilots/udin-optic/` biến mất và
+`goi-bridge.mjs` thành vỏ năm dòng. Vế *"`git status workers/duc-scouter` sạch"* của chặng ④ vẫn
+còn nguyên đường để đạt.
+
+**Chặng ④ cần Đức:** nạp extension mới vào Chrome và bật công tắc ở bảng bên CỦA GÓI ĐÓ.
