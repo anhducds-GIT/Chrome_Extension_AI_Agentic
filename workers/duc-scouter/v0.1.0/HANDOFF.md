@@ -1160,3 +1160,38 @@ báo gì** — một lý do rất cụ thể cho `O8` / `T18`.
 
 **Đo:** ghim W3 `15 → 23` khối · suite **26/26** · đột biến repo **128/128** · sáu con đột biến
 làm tay trên adapter, **cả sáu giết được**.
+
+## 2026-09-14 · `scouter-review` — bốn việc đóng, và ba lỗi chỉ lượt chạy thật mới lộ
+
+**`T22`** — *quá giờ* ≠ *hỏng* (`G-55`). Trần lên **900s** = đúng `X-Amz-Expires` của ảnh Udin:
+quá hạn đó thì ảnh có lấy cũng 403, nên đây là trần **tự nhiên** chứ không phải một con số đẹp.
+Hết trần ném `UdinDangChay` mang theo **tập ảnh trước lúc gửi** — không có nó thì không nối lại
+được. Tách `choXong(truoc)` để bám vào một lượt đang chạy mà **không gõ, không bấm** (bấm lúc đó
+là bấm *Stop*, giết chính lượt đã tiêu tiền). CLI `--noi-lai`.
+
+**`T18` — `scout.text` ([ADR-0006])**, và nó **chạy thật** sau `scout.reload` (19 method, `G-57`):
+đọc màn chắn Udin ra *"User Limit Reached…"*, `div` khớp **146** thì từ chối. Ba khoá: khớp phải
+đúng một · trần 5.000 ký tự và nói thật khi cắt · chỉ chữ đi ra. Bỏ hẳn `<script>`/`<style>`:
+chữ trong đó là **mã**, trả nó dưới danh nghĩa "chữ" là lách chính sách bằng một cái tên khác.
+Sửa luôn một **lời khai SAI đi ra trên MỌI lượt đọc**: `redactionNote` vẫn ghi *"Đức chưa chốt"*
+và *"không trả text node"*.
+`G-58` đo được giới hạn thật của nó: `body` Udin chỉ **1.390 ký tự** nên ra hết trong một lượt —
+trần **không** giữ được "khối lượng". Giá này đã khai trước trong ADR; không siết thêm, vì
+`scout.shot` vốn đã trả cả trang dưới dạng ảnh.
+
+**`I4` — `scout.clear`.** Phím `A` và phím bổ trợ `Ctrl` **gõ cứng trong lõi ghi**. Không mở
+tham số `modifiers` cho `scout.key` dù đó là đường ngắn hơn: `Ctrl` + phím tuỳ ý chạm tới lệnh
+của **trình duyệt** (`Ctrl+W` đóng tab), không chỉ của trang. Một thao tác có TÊN, không phải
+một máy gõ phím đa năng. Giới hạn đã khai: macOS dùng `Cmd+A` nên ở đó không xoá được.
+
+**`T17`** — ghim bảng năng lực vào sự thật, hai chiều. Lượt chạy **đầu tiên** bắt được bốn chỗ
+thật: `scout.clear` vừa thêm vào mã + README mà **quên bảng** · hai ô dùng từ vựng ngoài danh
+sách · ba con số gõ tay lệch · `N2` khai ĐÃ CHỨNG MINH mà không trỏ vào đâu.
+
+**`W1` vá một khuyết tật thật:** ngay sau `scout.navigate`, cả màn chắn lẫn ô prompt đều chưa có
+trong DOM, nên `quaManCho` đọc *"không màn chắn"* rồi trả về **sẵn sàng** — chặng sau ngã với
+*"thấy 0 nút Send"*. **Vắng mặt cái chắn không phải có mặt cái sẵn sàng** (cùng họ `S-18`).
+
+**Đo:** suite **29/29** · đột biến repo **128/128** · **16 con đột biến làm tay** trên bốn mục
+mới, cả 16 giết được. **Chặn duy nhất còn lại là Udin đang hết chỗ** — vòng chờ tự chạy, không
+cần ai bấm.
