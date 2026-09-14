@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T21 chang (1) XONG 15/09: goi-bridge.mjs da ve workers/_shared/goi-bridge/, bon thu rieng cua Scouter (giao thuc, duong tep ghep cap, SCOUTER_GHEP, SCOUTER_GHE) thanh THAM SO, 7 khoi ghim moi canh chuyen tu vung do; 36 phep ghim xanh. Chang KE TIEP la (2): dung nha + vo extension workers/udin-optic/v0.1.0 — manifest, background, bang ben, host vo ~194 dong tren loi _shared, bridge-core rieng, giao thuc udin-optic.bridge, va transport.mjs CHEP NGUYEN VAN kem ba dong them vao bang CAP cua phep ghim goi moi.",
-      "human_action": "không",
+      "next_step": "T21 chang (1)(2)(3) XONG 15/09. Udin Optic nay song o workers/udin-optic — goi rieng, extension rieng, 12 lenh, quyen hep ve mot trang. Suite Scouter con 31 xanh va KHONG con Udin. Chang KE TIEP la (4) PHEP KIEM THAT: sinh tep ghep cap rieng cho udin-optic, bat may chu Bridge cua goi do, nap extension moi vao Chrome, chay e2e that voi prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH — ve sau moi la ve chung minh.",
+      "human_action": "Chang (4) sap can Duc: nap extension Udin Optic moi vao Chrome (Load unpacked thu muc workers/udin-optic/v0.1.0) va bat cong tac Cho phep bam va go o bang ben CUA GOI DO. AI se bao khi may chu va tep ghep cap da san sang. @Đức:bấm",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Lo trinh T21 tu SAU chang xuong NAM: chang gop transport.mjs ve _shared DA CHET (G-92). Loi may chu Bridge gop duoc vi no la tien trinh Node; transport.mjs chay BEN TRONG extension, ma Chrome nap thu muc v0.1.0 lam goc goi nen moi import vuot len tren goc bi kep lai — service worker khong dang ky duoc. Ranh gioi Node/Chrome moi quyet dinh gop duoc hay khong, khong phai so dong giong nhau. Hai ban transport hom nay giong nhau TUNG BYTE va ADR-0021 (2) da chot san duong chep-nguyen-van + phep ghim so tung byte. Dong dau Scouter v1 van DE LAI cho toi khi T21 dong voi git status workers/duc-scouter SACH."
+      "open_item": "Scouter vua bi tach mot mieng: Udin Optic ra goi rieng. Phep kiem dong T21 la hai ve — 4 chang Udin DAT, VA Scouter SACH khong phai sua mot dong. Hai chang dau cua lo trinh deu bi do lai va deu SAI: (1) gop transport ve _shared khong lam duoc vi no chay trong Chrome (G-92); (2) gia tach goi khong phai transport+bridge-core ma cong them ~2.100 dong may bam/go vi hnx-fetch — cai thuoc toi dung — KHONG co quyen debugger (G-93). Duc duoc dua con so truoc khi lam va chot van tach, vi Scouter con doi nhieu va UI Udin se doi theo usecase. Bay gio bay tep chep bi ghim so tung byte. Dong dau Scouter v1 van DE LAI cho toi khi chang (4) xong."
     },
     {
       "id": "hnx-fetch",
@@ -147,6 +147,20 @@
       "last_verified": "2026-09-08",
       "last_verified_commit": "7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea",
       "open_item": "Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh extension nữa. Sổ nợ RỖNG. Việc còn lại chỉ là chạy mỗi ngày một lượt."
+    },
+    {
+      "id": "udin-optic",
+      "path": "workers/udin-optic/v0.1.0",
+      "lifecycle": "building",
+      "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
+      "owner": "claude-scouter-udine",
+      "next_step": "T21 chang (4) — PHEP KIEM THAT: sinh tep ghep cap rieng (node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi udin-optic), bat may chu Bridge cua goi nay, nap workers/udin-optic/v0.1.0 vao Chrome bang Load unpacked, roi chay e2e that voi mot prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH.",
+      "human_action": "Chang (4) can Duc: nap extension moi vao Chrome va bat cong tac Cho phep bam va go o bang ben cua Udin Optic. Chua toi luc — AI se bao khi may chu va tep ghep cap da san sang. @Đức:bấm",
+      "priority_rank": 5,
+      "superseded_by": null,
+      "last_verified": null,
+      "last_verified_commit": null,
+      "open_item": "Goi vua ra doi 15/09, tach khoi duc-scouter theo T21. Duc chot 15/09 luot hai, SAU khi do duoc rang tach ra la chep lai ~2.100 dong may bam/go: \\\"Vi sau nay Scouter se con thay doi nhieu, ngoai ra UI cua Udin Extension cung se bi thay doi cho phu hop usecase, do do tach rieng se hop ly hon.\\\" Bay gio: 7 phep ghim xanh, tu vung dong o 12 lenh (Scouter 24), quyen hep ve dung mot trang thay vi <all_urls>. CHUA tung chay that tu extension nay — do la chang (4)."
     }
   ],
   "active_work": [
@@ -188,8 +202,15 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T21 chang (1) XONG 15/09: goi-bridge.mjs da ve workers/_shared/goi-bridge/, bon thu rieng cua Scouter (giao thuc, duong tep ghep cap, SCOUTER_GHEP, SCOUTER_GHE) thanh THAM SO, 7 khoi ghim moi canh chuyen tu vung do; 36 phep ghim xanh. Chang KE TIEP la (2): dung nha + vo extension workers/udin-optic/v0.1.0 — manifest, background, bang ben, host vo ~194 dong tren loi _shared, bridge-core rieng, giao thuc udin-optic.bridge, va transport.mjs CHEP NGUYEN VAN kem ba dong them vao bang CAP cua phep ghim goi moi.",
+      "title": "T21 chang (1)(2)(3) XONG 15/09. Udin Optic nay song o workers/udin-optic — goi rieng, extension rieng, 12 lenh, quyen hep ve mot trang. Suite Scouter con 31 xanh va KHONG con Udin. Chang KE TIEP la (4) PHEP KIEM THAT: sinh tep ghep cap rieng cho udin-optic, bat may chu Bridge cua goi do, nap extension moi vao Chrome, chay e2e that voi prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH — ve sau moi la ve chung minh.",
       "rank": 4,
+      "claim": null
+    },
+    {
+      "id": "workers/udin-optic/v0.1.0",
+      "unit": "workers/udin-optic/v0.1.0",
+      "title": "T21 chang (4) — PHEP KIEM THAT: sinh tep ghep cap rieng (node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi udin-optic), bat may chu Bridge cua goi nay, nap workers/udin-optic/v0.1.0 vao Chrome bang Load unpacked, roi chay e2e that voi mot prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH.",
+      "rank": 5,
       "claim": null
     }
   ],
