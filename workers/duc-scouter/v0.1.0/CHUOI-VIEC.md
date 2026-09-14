@@ -31,7 +31,7 @@
 | | Việc | Chặn bởi | Trạng thái |
 |---|---|---|---|
 | **T11** | ~~`S-23`~~ **XONG 13/09** · `S-22` còn mở | — | Udin: đã vượt màn chờ (`pilots/udin-optic/`) |
-| **T12** | W3 lấy ảnh Udin về đĩa · E2E ba chặng — **chạy thật** | Bridge bật + ghế Udin mở | **mã + ghim xong 14/09**, chưa chạy thật lần nào |
+| **T12** | W3 lấy ảnh Udin về đĩa · E2E ba chặng — **chạy thật** | **`S-24`: Đức chốt đường đi** | **CHẶN 14/09** — chạy thật ra 403: URL ký sẵn, lõi đọc cắt query (`G-35`) |
 | **T7** | Đóng vòng tự cải tiến MỘT lần — `ROADMAP` bước 2 | T11 | **③/④ chặng** — bàn đo đã dựng, chặng 4 dừng ở `S-22` |
 | **T5** | Chạy lại lượt gửi prompt trên Udin, phân biệt hai giả thuyết | T11 (cùng một đường ghi) · tài khoản rảnh | chờ |
 | **T6** | `S-20` — nghe mạng trong lúc bấm: chọn đường, rồi làm | T7 cho biết có thật cần không | chưa bắt đầu |
@@ -56,13 +56,14 @@ làm mọi diff khó đọc.
 
 ## T12 — W3 lấy ảnh về đĩa, rồi E2E · chạy thật
 
-**Mã đã xong 14/09, chưa chạy thật một lần nào.** Không cần lệnh Bridge mới, không cần Đức duyệt
-gì thêm — chỉ cần **máy chủ Bridge bật** và **một tab đang mở `https://vinfast.udinbv.com/optic`**.
-Phiên 14/09 không chạy được vì Bridge tắt (`fetch failed` ở `127.0.0.1`).
+**Mã xong 14/09 và ĐÃ chạy thật cùng ngày** trên ghế `Udin_Scout`. Cần **Bridge bật** + **một tab
+đang mở `https://vinfast.udinbv.com/optic`** + công tắc *Cho phép bấm và gõ* BẬT.
 
-**Ba câu chưa biết, tra `docs/GIA-THUYET.md` G-31..G-34 trước khi thử** — đừng đoán lại:
-`src` có phải `blob:` không · ảnh có dưới trần 512 KiB sau base64 không · CDN có đòi cookie không.
-`lay-anh.mjs` ĐỎ riêng từng ca đó với mã lỗi khác nhau, nên lượt chạy đầu tự nó trả lời cả ba.
+**ĐÃ CHẠY THẬT 14/09, và nó dừng ở một cái chặn thật.** Kết quả ở `GIA-THUYET` G-31..G-36:
+`src` là URL https thật (**G-31 ĐÚNG**) · nhưng `scout.fetch` trả **403** vì ảnh là URL **ký sẵn** và
+lõi đọc **cắt query** theo chính sách che (**G-35**). Không phải chuyện cookie — **G-33 SAI, và
+đừng đi bật `with_credentials`**: cookie không cứu một URL thiếu chữ ký. Việc kế là **`S-24`**,
+Đức chốt một trong ba đường; mọi thứ dưới đây chỉ chạy lại được SAU khi có đường đó.
 
 ```bash
 # ⓵ chỉ lấy ảnh đang có sẵn trên trang — KHÔNG tiêu credit, chạy cái này TRƯỚC
@@ -74,10 +75,12 @@ SCOUTER_GHE=Udin_Scout node workers/duc-scouter/pilots/udin-optic/scripts/e2e.mj
 - **Công tắc "Cho phép bấm và gõ" phải BẬT**: `scout.fetch` tiêu ngân sách ghi, không chỉ `scout.click`.
 - **Mỗi lượt ⓶ một prompt mới** — luật repo, không có ngoại lệ. Script từ chối khi thiếu chữ.
 - Ảnh xuống **vùng ghi của máy chủ**, thư mục `udin-optic/<mốc-thời-gian>/`. **Không vào repo.**
-- Chạy xong: sửa `G-31..G-34`, đổi W3/E2E ở `docs/CAPABILITIES.md` thành **ĐẠT** kèm bằng chứng
+- Hai lệnh trên **chỉ chạy lại được sau `S-24`**. ⓵ nay dừng ở `403`; ⓶ sẽ tốn credit rồi ngã ở
+  chặng ba. Chạy được rồi thì sửa `G-32` `G-34`, đổi W3/E2E thành **ĐẠT** kèm bằng chứng
   (ngày · số ảnh · số byte), rồi mới ghi `HANDOFF`.
-- 401/403 ở ⓵ nghĩa là CDN đòi cookie → **hỏi Đức** trước khi bật `with_credentials`; đó là lượt
-  gọi mượn danh tính đăng nhập của Đức, không phải một tham số cho tiện.
+- ~~401/403 ở ⓵ nghĩa là CDN đòi cookie~~ — **SAI, đã đo 14/09**: 403 đến từ URL bị cắt chữ ký
+  (`G-35`), không từ cookie. Giữ dòng gạch này để phiên sau đừng đi lại: bật `with_credentials`
+  không chữa được gì, mà lại gửi cookie đăng nhập của Đức ra ngoài.
 
 ## ĐÃ XONG 12/09 — T1, T2, T3, T4
 

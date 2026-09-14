@@ -5,8 +5,8 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "T12 — chay THAT W3 (lay anh Udin ve dia) va E2E ba chang: ma va phep ghim xong 14/09, chua chay lan nao vi Bridge tat. Lenh o CHUOI-VIEC.md muc T12, dong dau KHONG tieu credit. Tra docs/GIA-THUYET.md G-31..G-34 truoc khi thu. S-22 van mo. Cho Duc chot cac muc tay (O8 I4 I5 I6 I7)."
-human_action: "@Duc:bật máy chủ Bridge của Scouter + mở một tab https://vinfast.udinbv.com/optic + bật công tắc 'Cho phép bấm và gõ' thì W3/E2E chạy được ngay. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên."
+next_step: "CHAN o S-24 — Duc chot mot trong ba duong cho URL ky san (anh Udin la S3 presigned; loi doc cat query theo chinh sach che, G-35). Truoc do W3 va E2E khong chay lai duoc. Viec chay duoc ngay ma khong cho ai: S-22 (G-26, tren trang-thu-cham). Cho Duc chot cac muc tay (O8 I4 I5 I6 I7)."
+human_action: "@Duc:chốt S-24 — ảnh Udin nằm sau URL ký sẵn mà lõi đọc cắt mất chữ ký (bảo vệ đang làm đúng việc, tôi không được tự nới). Ba đường ở BACKLOG.md mục S-24; tôi đề xuất đường ⒜ thêm method scout.grab. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Hoàn thiện SEED dùng chung — Scouter là ĐÍCH, trang Udin (vinfast.udinbv.com/optic) chỉ là CA THỬ để ép seed lộ chỗ nó còn hẹp. Ngày 12/09 ca thử đó ép lộ năm khuyết tật của SEED (S-16 tới S-20) và BỐN cái đã vá xong trong ngày, cả bốn đo ngoài đời chứ không chỉ trước máy giả. S-17: scout.click hỏi Chrome điểm sắp bấm thuộc về ai TRUOC khi bắn, có lớp che thì từ chối CLICK_OBSCURED. S-18: scout.wait nhận thêm state usable, phân biệt có mặt với dùng được, và nói ra VÌ SAO chưa dùng được. S-19: scout.navigate nạp lại được cùng một URL — 15 giây báo sai nguyên nhân xuống 254ms báo đúng. S-16: ba hạn chờ xuống dưới ngưỡng 35 giây của máy chủ, và ngưỡng đó nay có tên để phép ghim đọc thẳng thay vì gõ lại. Còn mở: S-20 (nghe mạng trong lúc bấm) và S-21 (target thỉnh thoảng không trả lời được câu hỏi hình học, chưa biết vì sao). Tên ghế đã nghiệm thu ngoài đời: Đức gõ Udin_Scout và định tuyến theo tên chạy đúng. Không thêm method Bridge nào trong lượt T4 — số method hiện ở cột Method Bridge [ĐO] trên DASHBOARD.md, đừng ghi tay vào đây."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
@@ -51,7 +51,13 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 ## Câu còn treo, chỉ Đức chốt được
 
-**Không còn câu nào chờ Đức.** Câu cuối cùng — chính sách che dữ liệu khi ghi báo cáo xuống
+**Đang treo một câu: `S-24` — URL ký sẵn.** Đo ngày 14/09: ảnh kết quả của Udin nằm trên S3 bằng
+URL ký sẵn, chữ ký nằm trong query, mà lõi đọc **cắt query** khỏi mọi `src`/`href` theo chính
+sách che — nên `scout.fetch` trả 403. Đó là một lớp **bảo vệ** đang làm đúng việc, tôi không
+được tự nới. Ba đường ở `BACKLOG.md` mục `S-24`; tôi đề xuất ⒜ `scout.grab` (nhận selector,
+extension tự đọc URL đầy đủ bên trong, URL không ra khỏi trình duyệt).
+
+**Câu trước đó đã chốt.** Câu cuối cùng — chính sách che dữ liệu khi ghi báo cáo xuống
 đĩa — Đức chốt ngày 07/09: Scouter **được** ghi
 ([ADR-0016](../../../docs/adr/0007-scouter.md)).
 

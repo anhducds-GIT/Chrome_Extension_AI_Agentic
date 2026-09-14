@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T12 — chay THAT W3 (lay anh Udin ve dia) va E2E ba chang: ma va phep ghim xong 14/09, chua chay lan nao vi Bridge tat. Lenh o CHUOI-VIEC.md muc T12, dong dau KHONG tieu credit. Tra docs/GIA-THUYET.md G-31..G-34 truoc khi thu. S-22 van mo. Cho Duc chot cac muc tay (O8 I4 I5 I6 I7)."
-- human_action: "@Duc:bật máy chủ Bridge của Scouter + mở một tab https://vinfast.udinbv.com/optic + bật công tắc 'Cho phép bấm và gõ' thì W3/E2E chạy được ngay. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên."
+- next_step: "CHAN o S-24 — Duc chot mot trong ba duong cho URL ky san (anh Udin la S3 presigned; loi doc cat query theo chinh sach che, G-35). Truoc do W3 va E2E khong chay lai duoc. Viec chay duoc ngay ma khong cho ai: S-22 (G-26, tren trang-thu-cham). Cho Duc chot cac muc tay (O8 I4 I5 I6 I7)."
+- human_action: "@Duc:chốt S-24 — ảnh Udin nằm sau URL ký sẵn mà lõi đọc cắt mất chữ ký (bảo vệ đang làm đúng việc, tôi không được tự nới). Ba đường ở BACKLOG.md mục S-24; tôi đề xuất đường ⒜ thêm method scout.grab. Việc cũ còn treo: bấm D2 — ghế THỨ HAI chưa có tên."

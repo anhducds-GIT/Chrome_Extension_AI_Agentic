@@ -967,3 +967,32 @@ bộ đột biến in số lần khớp neo, không thì "trượt neo" đọc y
 
 **Việc kế:** `G-31..G-34` đều `CHƯA`; lệnh chạy thật ở `CHUOI-VIEC.md` mục `T12` — dòng đầu
 **không tiêu credit**.
+
+## 2026-09-14 · `claude-scouter-udine` — chạy thật W3: 403, và cái chặn nằm ở đúng một lớp bảo vệ
+
+**Đức nối ghế, tôi chạy.** Hai lần ngã, và cả hai đáng ghi hơn một lượt chạy trơn.
+
+**Ngã ⑴ — hình dạng dây.** `scout.fetch` trả kết quả **PHẲNG**, không bọc `.data` như
+`scout.query`. Mã tôi đọc `.data` nên ngã ngay lượt gọi thật — trong khi **15 khối ghim vẫn
+xanh**, vì máy giả của tôi chép đúng cái hiểu sai của tôi. `hnx-fetch` đã đọc phẳng từ lâu; tôi
+không tra. **Phép ghim không kiểm được hình dạng dây** — chỉ một lượt gọi thật kiểm được (`G-36`).
+
+**Ngã ⑵ — và nó là cái chặn thật, `S-24`.** Sửa xong thì `scout.fetch` trả **403** cho mọi ảnh.
+Không phải cookie (`G-33` **SAI** — đừng đi bật `with_credentials`, cookie không cứu một URL
+thiếu chữ ký). Nguyên nhân: ảnh Udin nằm trên S3 bằng **URL ký sẵn**, chữ ký nằm trong query,
+mà lõi ĐỌC **cắt query khỏi mọi `src`/`href`** (`stripQuery`) theo chính sách che
+`de-xuat-chat-v1`. Đo: **17/17 `src` trên trang đều kết thúc bằng `…`**, và chính `scout.query`
+tự khai chính sách đó trong phần trả về.
+
+**Đây là bảo vệ đang làm ĐÚNG việc** — query là chỗ token hay nằm nhất. Luật vàng 3 cấm nới một
+lớp bảo vệ để cổng xanh, nên tôi dừng và hỏi. Ba đường ở `BACKLOG.md` mục `S-24`; tôi đề xuất
+⒜ **`scout.grab`**: nhận **selector**, extension tự đọc `src` đầy đủ *bên trong* rồi tải luôn —
+URL ký sẵn không bao giờ ra khỏi trình duyệt. Cùng khuôn với luật gói 7.
+
+**Chặn này rộng hơn Udin:** mọi trang phục vụ tệp qua CDN ký sẵn đều dừng ở đây. Đã thêm dòng
+`O11` vào bảng năng lực — Seed Coverage 19/40.
+
+**Không chạy E2E.** W3 chặn thì cả vòng chỉ tốn credit của Đức rồi ngã ở chặng ba (`G-34` giữ
+`CHƯA`, ghi rõ vì sao). W1 và W2 vẫn ĐẠT như 13/09.
+
+**Số:** suite gói 25/25 · ghim 20 khối · đột biến tay 14/14. Ghế thứ hai vẫn chưa có tên (`D2`).

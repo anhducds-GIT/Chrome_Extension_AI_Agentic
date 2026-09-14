@@ -15,8 +15,9 @@ function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiB
       const items = trenTrang.map((src) => ({ attributes: { src } }));
       return { data: { matchCount: items.length, items: items.slice(tu, tu + lay), hasMore: tu + lay < items.length } };
     }
+    /* PHẲNG, không bọc `.data` — hình dạng thật của `scout.fetch`, đo trên dây 14/09. */
     if (method === "scout.fetch") {
-      return { data: { ok: status >= 200 && status < 300, status, content_type: kieu, bytes, body_base64: than, body: null } };
+      return { ok: status >= 200 && status < 300, status, content_type: kieu, bytes, body_base64: than, body: null };
     }
     if (method === "file.write") return { path: p.path, bytes: ghiBytes ?? bytes, size: ghiBytes ?? bytes };
     throw new Error("method lạ " + method);
@@ -84,7 +85,7 @@ const ghi = (nk) => nk.filter((g) => g.method === "file.write");
 { let lan = 0;
   const t = lam();
   const goiGoc = t.goi;
-  t.goi = async (m, p) => { if (m === "scout.fetch" && lan++ === 1) return { data: { ok: false, status: 500 } }; return goiGoc(m, p); };
+  t.goi = async (m, p) => { if (m === "scout.fetch" && lan++ === 1) return { ok: false, status: 500 }; return goiGoc(m, p); };
   await assert.rejects(() => layAnh(["https://cdn.udin/v1.webp", "https://cdn.udin/v2.webp"], t), /Đã lấy 1 ảnh/);
   assert.equal(ghi(t.nk).length, 1); }
 
@@ -107,7 +108,7 @@ const ghi = (nk) => nk.filter((g) => g.method === "file.write");
 
 // ⓛ lời báo lúc hỏng phải nói ra CHỖ để file dở, không chỉ nói con số
 { let lan = 0; const t = lam(); const goiGoc = t.goi;
-  t.goi = async (m, p) => { if (m === "scout.fetch" && lan++ === 1) return { data: { ok: false, status: 500 } }; return goiGoc(m, p); };
+  t.goi = async (m, p) => { if (m === "scout.fetch" && lan++ === 1) return { ok: false, status: 500 }; return goiGoc(m, p); };
   await assert.rejects(() => layAnh(["https://cdn.udin/v1.webp", "https://cdn.udin/v2.webp"], t), /2026-09-14T00-00-00-000Z/); }
 
 // ⓜ đường dẫn báo ra là đường MÁY CHỦ trả, không phải đường mình xin (máy chủ có quyền đổi)

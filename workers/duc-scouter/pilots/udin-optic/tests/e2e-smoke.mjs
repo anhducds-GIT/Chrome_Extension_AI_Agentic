@@ -26,7 +26,7 @@ function lam({ nhan = true } = {}) {
       if (p.selector === SEL.dangChay) return { data: { satisfied: p.state === "present" ? trang.chay : !trang.chay } };
       return { data: { satisfied: true } };
     }
-    if (method === "scout.fetch") return { data: { ok: true, status: 200, content_type: "image/webp", bytes: 3, body_base64: "QUFB" } };
+    if (method === "scout.fetch") return { ok: true, status: 200, content_type: "image/webp", bytes: 3, body_base64: "QUFB" };
     if (method === "file.write") return { path: p.path, bytes: 3, size: 3 };
     throw new Error("method lạ " + method + " " + (p.selector || ""));
   };

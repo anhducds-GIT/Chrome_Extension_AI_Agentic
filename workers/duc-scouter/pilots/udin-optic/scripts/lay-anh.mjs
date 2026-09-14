@@ -98,7 +98,10 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
         );
       }
 
-      const d = (await goi("scout.fetch", { url: url.href, as: "base64" }, tuyChon)).data;
+      /* `scout.fetch` trả PHẲNG, không bọc trong `.data` như `scout.query` — hai hình dạng khác
+       * nhau trên cùng một sợi dây. Đo ngoài đời 14/09: bản đầu đọc `.data` và ngã ngay lượt gọi
+       * thật, trong khi 15 khối ghim vẫn xanh vì máy giả chép đúng cái hiểu sai của tôi. */
+      const d = await goi("scout.fetch", { url: url.href, as: "base64" }, tuyChon);
       if (!d.ok) throw nga(`Ảnh ${i + 1}: máy chủ trả ${d.status}.`);
       if (!d.content_type || !/^image\//i.test(d.content_type)) {
         throw nga(`Ảnh ${i + 1}: 200 OK nhưng kiểu '${d.content_type || "không khai"}' không phải ảnh — chưa ghi.`);

@@ -680,3 +680,33 @@ Fail-closed nên không bấm nhầm — nhưng mọi nút dưới màn hình kh
 
 **~~S-23~~ ĐÓNG 13/09:** hỏi-điểm dùng hệ toạ độ TRANG; hai lõi nay cộng độ cuộn đọc từ hộp `:root`.
 `scouter:action-probe` 11/11 · ghim `ⓔ2` `W16` `W17` · đột biến `CU1..CU4`. Chi tiết `docs/GIA-THUYET.md` G-20..G-25.
+
+## MỞ · S-24 (2026-09-14, `claude-scouter-udine`) — URL ký sẵn: lớp che cắt đúng phần cần để tải file
+
+**Đo, không đoán.** Chạy thật trên ghế `Udin_Scout` 14/09: `scout.fetch` trả **403** cho mọi ảnh
+kết quả. Nguyên nhân ở `docs/GIA-THUYET.md` **G-35**: ảnh Udin nằm trên S3 với **URL ký sẵn**
+(chữ ký + hạn giờ nằm trong query string), còn lõi ĐỌC **cắt query khỏi mọi `href`/`src`**
+(`stripQuery` trong `scripts/observer-probes.mjs`) theo chính sách che `de-xuat-chat-v1`. Đo được:
+**17/17 `src` khác nhau trên trang đều kết thúc bằng `…`**, và chính `scout.query` tự khai chính
+sách đó trong phần trả về.
+
+**Đây là BẢO VỆ đang làm đúng việc của nó, không phải bug.** Query string là chỗ token hay nằm
+nhất; trả nguyên query nghĩa là token đi vào nhật ký, vào đĩa, vào mọi bản ghi phiên. Luật vàng
+số 3 của repo cấm nới một lớp bảo vệ để cổng xanh — nên **không lane nào được tự sửa `stripQuery`**.
+
+**Cái này chặn nhiều hơn một workflow:** mọi trang phục vụ ảnh/tệp qua CDN ký sẵn (S3 presigned,
+CloudFront signed, Firebase, Cloudinary có hạn giờ) đều dừng ở đây, không riêng Udin.
+
+**Ba đường, Đức chọn — không đường nào tôi được tự đi:**
+
+⒜ **Method mới `scout.grab`** *(tôi đề xuất)*: nhận **selector**, extension tự đọc `src` đầy đủ
+  **bên trong** rồi tải luôn, trả về byte. URL ký sẵn **không bao giờ ra khỏi trình duyệt** — cùng
+  khuôn với luật gói 7 ("toạ độ không nhận từ ngoài dây"): thứ nhạy cảm được dùng ở trong, không
+  được phát ra ngoài. Đắt nhất để làm, an toàn nhất, và tổng quát cho mọi trang sau.
+⒝ **Nới `stripQuery` cho riêng `src` của `img`**: rẻ nhất, nhưng token đi thẳng vào nhật ký và
+  đĩa. Tôi **không khuyến nghị**.
+⒞ **Bỏ W3 cho Udin**, dùng `scout.shot` chụp màn hình thay ảnh gốc: mất chất lượng và mất tệp
+  thật; chỉ hợp nếu Đức chỉ cần *nhìn thấy* kết quả.
+
+· **đóng khi:** Đức chốt một trong ba đường, và đường đó làm xong kèm phép ghim + đột biến —
+hoặc Đức chốt là KHÔNG làm, và mục này đóng bằng một dòng ghi lý do.

@@ -80,7 +80,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 |---|---|---|---|---|---|
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
-| D3 | Lấy file / ảnh về đĩa | `scout.fetch` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: **CHƯA ĐO** (việc kế) | |
+| D3 | Lấy file / ảnh về đĩa | `scout.fetch` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: **CHẶN** 14/09 — URL ký sẵn, xem O11 và `S-24` | |
+| O11 | Lấy được **URL đầy đủ** của một tài nguyên (kể cả query) để tải nó về | — | **CHƯA CÓ** | Lõi đọc cắt query khỏi `src`/`href` (`stripQuery`) vì query là chỗ token hay nằm. Mọi trang dùng URL ký sẵn (S3, CDN có hạn giờ) đều chặn ở đây. Ba đường ở `S-24` | ✋ |
 | D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ ở seed** | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
@@ -98,8 +99,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 19 · MỘT PHẦN 2 · CÓ 4 · CHƯA CÓ / CHƯA ĐO 14 · ĐÃ BỎ 1.** Tổng 40 dòng.
-**Seed Coverage = 19 / 39** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
+**ĐÃ CHỨNG MINH 19 · MỘT PHẦN 2 · CÓ 4 · CHƯA CÓ / CHƯA ĐO 15 · ĐÃ BỎ 1.** Tổng 41 dòng.
+**Seed Coverage = 19 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09.
 
 ## 3. Checklist bổ sung cho Seed — theo thứ tự việc thật cần
 
@@ -109,7 +110,7 @@ Chrome riêng (probe) → ☐ đạt trên trang thật. Bước 4 xong thì s�
 | Ưu tiên | Mã | Vì sao trước | Duyệt |
 |---|---|---|---|
 | 1 | `S-22` | Lệnh bấm báo ok mà trang không phản ứng. Mọi năng lực tay người đứng trên nó | |
-| 2 | D3 với ảnh Udin | Workflow W3; không cần lệnh mới | |
+| 2 | `S-24` URL ký sẵn | Chặn W3 và mọi trang dùng CDN có chữ ký. Ba đường, Đức chọn | ✋ |
 | 3 | O8 đọc chữ | Không đọc được kết quả bằng chữ thì không kiểm được phần lớn workflow | ✋ chốt chính sách che |
 | 4 | I4 xoá ô nhập | Gửi prompt lần hai trên cùng ô | ✋ |
 | 5 | I6 hover · I5 cuộn · I7 bấm đúp/phải | Menu ẩn, danh sách dài, trình soạn thảo | ✋ |
@@ -138,17 +139,17 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 |---|---|---|---|---|
 | W1 | Vượt màn "User Limit Reached" | O4 O6 I1 | **ĐẠT** 13/09 | `qua-man-cho.mjs` · trước: màn chắn có · thao tác: chờ nút `usable` → bấm · thành công: màn chắn hết + ô prompt `usable` · thất bại: màn chắn còn sau 15 giây · `G-28` |
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
-| W3 | Lấy ảnh kết quả về đĩa | D3 | **CHƯA** | `lay-anh.mjs` 14/09: mã + 15 khối ghim + 14 đột biến tay chết + audit độc lập 3 vòng (vòng 3 CONDITIONAL PASS). **Chưa chạy thật lần nào** — cần Bridge bật và ghế Udin mở. Ba câu chưa biết ở `GIA-THUYET` G-31 G-32 G-33 |
+| W3 | Lấy ảnh kết quả về đĩa | D3 + **O11** | **CHẶN** 14/09 | Chạy thật: `scout.fetch` trả **403**. Ảnh Udin là URL S3 **ký sẵn**, chữ ký nằm trong query — mà lõi đọc **cắt query khỏi mọi `src`/`href`** theo chính sách che `de-xuat-chat-v1`. 17/17 `src` bị cắt. Đây là **bảo vệ**, không phải bug (`G-35`). Chờ Đức chốt `S-24` |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **CHẶN** | chờ Đức chốt chính sách che |
 | W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | |
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09 |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **CHẶN** | |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | |
-| **E2E** | Mở trang → W1 → W2 → W3 | | **CHƯA** | `e2e.mjs` 14/09: mã + 5 khối ghim. Chưa chạy thật (`G-34`). Prompt là tham số **bắt buộc**: mỗi lượt tiêu credit một chữ mới |
+| **E2E** | Mở trang → W1 → W2 → W3 | | **CHẶN** | `e2e.mjs` 14/09: mã + 5 khối ghim. **Cố ý chưa chạy**: W3 đang chặn, chạy chỉ tốn credit rồi ngã ở chặng ba (`G-34`) |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
-Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **2 / 8 workflow ĐẠT · 3 CHẶN · E2E chưa chạy**.
+Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **2 / 8 workflow ĐẠT · 4 CHẶN · E2E CHẶN**.
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
 
 ## 5. Lộ trình triển khai
