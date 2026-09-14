@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T9 — duong cai dat XONG 15/09: README co BA LENH chay duoc (sinh tep ghep cap, bat may chu Bridge, kiem ban cai) thay cho cau bat may chu Bridge truoc day khong noi bat bang gi; va scripts/kiem-cai-dat.mjs (npm run scouter:kiem-cai-dat) — sau buoc, dung o buoc dau tien hong, moi buoc hong noi luon phai lam gi. Ca ba lenh da chay thu that. Con lai cua T9 la TUYEN BO phien ban, mot quyet dinh phat hanh chu khong phai mot phep do — cho Duc chot. Sau do la T21 tach Udin thanh goi rieng.",
-      "human_action": "@Đức:chốt — đọc mục Cài và chạy trong README gói, thấy đủ để người ngoài dùng được thì đóng dấu Scouter v1. Chú ý: SEED v1 (23 mục năng lực) là chuyện KHÁC và vẫn đóng.",
+      "next_step": "T21 — tach Udin Optic ra khoi Scouter. LO TRINH DA VIET 15/09, doc o CHUOI-VIEC.md muc T21: nam chang deu dung duoc va kiem duoc, kem nam cai bay. Phep kiem dong chi co MOT cau: cac W cua Udin DAT TU GOI MOI va khong mot dong nao cua Scouter phai sua — nen chang (4) doi ca hai ve, DAT va `git status workers/duc-scouter` SACH. Bat dau o chang (1): doi goi-bridge.mjs ra cho dung chung, dung chep — ba pilot dang dung chung no. Truoc do can Duc chot (0).",
+      "human_action": "@Đức:chốt hai việc. MỘT: T21 tách kiểu nào — gói ĐIỀU KHIỂN riêng (khuyên) hay EXTENSION riêng như hnx-fetch; đọc mục ⓪ ở CHUOI-VIEC. HAI: đóng dấu Scouter v1 hay chưa (T9 đã xong đường cài đặt).",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Bo kiem cai dat co hai chot dung dao. Mot: cong tac ghi DONG khong phai hong — do la mac dinh va la mot lop bao ve (luat goi so 8); khai no thanh hong la day nguoc luat. Hai: buoc dau phai hoi bridge.sessions chu khong system.ping — ping di toi extension nen tren may co hai ghe no tra TARGET_AMBIGUOUS, tuc buoc chan doan chet vi dung cai no di tim (G-91, cung ho G-81). 35 phep ghim xanh, 5 mutant cua bo kiem deu chet."
+      "open_item": "Udin-optic hom nay la 5 script + 5 phep ghim, 1.404 dong, va KHONG CO MOT DONG MA EXTENSION NAO — phu thuoc ra ngoai dung mot: goi-bridge.mjs. Nen hai kieu tach chenh nhau rat xa: goi dieu khien rieng chi doi 10 file, con extension rieng nhu hnx-fetch phai them manifest + background + bang ben + may chu Bridge + transport + giao thuc rieng, tuc ban sao THU TU cua tang transport trong repo nay. Phep kiem dong chang (3) khong doi kieu thu hai."
     },
     {
       "id": "hnx-fetch",
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T9 — duong cai dat XONG 15/09: README co BA LENH chay duoc (sinh tep ghep cap, bat may chu Bridge, kiem ban cai) thay cho cau bat may chu Bridge truoc day khong noi bat bang gi; va scripts/kiem-cai-dat.mjs (npm run scouter:kiem-cai-dat) — sau buoc, dung o buoc dau tien hong, moi buoc hong noi luon phai lam gi. Ca ba lenh da chay thu that. Con lai cua T9 la TUYEN BO phien ban, mot quyet dinh phat hanh chu khong phai mot phep do — cho Duc chot. Sau do la T21 tach Udin thanh goi rieng.",
+      "title": "T21 — tach Udin Optic ra khoi Scouter. LO TRINH DA VIET 15/09, doc o CHUOI-VIEC.md muc T21: nam chang deu dung duoc va kiem duoc, kem nam cai bay. Phep kiem dong chi co MOT cau: cac W cua Udin DAT TU GOI MOI va khong mot dong nao cua Scouter phai sua — nen chang (4) doi ca hai ve, DAT va `git status workers/duc-scouter` SACH. Bat dau o chang (1): doi goi-bridge.mjs ra cho dung chung, dung chep — ba pilot dang dung chung no. Truoc do can Duc chot (0).",
       "rank": 4,
       "claim": null
     }
