@@ -740,3 +740,14 @@ thấy một cái. Bộ kiểm gốc repo: **13 xanh → 24 xanh**, `npm test` t
 thẳng vào bảng trạng thái và `PHIEN.md` mà mọi phiên gói nạp, nên nó dạy sai từng phiên một.
 Sửa, và đổi `next_step`/`human_action` sang thứ Đức thật sự cần chốt: `N-65`. Và token giả
 trong fixture gói chatgpt nay mang dấu `fake` — bộ dò secret thôi đỏ mỗi lượt chạy.
+
+## 2026-09-15 · `claude-scouter-udine` — thêm một npm script cho gói Scouter
+
+Chỉ một dòng ở gốc: `scouter:kiem-cai-dat` trong `package.json`. Nó gọi
+`workers/duc-scouter/v0.1.0/scripts/kiem-cai-dat.mjs` — bộ kiểm **bản cài của người dùng**,
+việc của `T9`. Mọi thứ còn lại nằm trong gói; chi tiết ở `HANDOFF.md` của gói đó.
+
+**Bẫy công cụ đáng chép ra đây** vì nó không riêng gói nào: sửa tệp repo bằng Python thì
+`io.open(p,"w")` ghi xuống dòng kiểu Windows và làm đỏ `eol-lf-smoke` cho **mọi** tệp đã sửa
+trong lượt. Ghi bằng `newline=""` thì không dịch gì. Đã có dòng này trong sổ nhớ từ trước, và
+tôi vẫn vấp — nên chép vào đây, chỗ phiên sau thật sự đọc.

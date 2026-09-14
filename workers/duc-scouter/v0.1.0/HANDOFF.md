@@ -1464,3 +1464,32 @@ Chạy chặng ② trên một tab ChatGPT, **chỉ đọc**, không sửa dòng
 - `G-90` còn ba lối, chưa chọn — chi tiết ở `GIA-THUYET`.
 - Sửa nhãn: lượt trước tôi gọi việc này là `T21`. **`T21` là tách Udin thành gói riêng**; chạy
   vòng trên trang thứ hai là nợ của chính `T7`.
+
+## 2026-09-15 · `T9` — đường cài đặt thật, và một lệnh trả lời *"bản cài CỦA TÔI có chạy không"*
+
+Nấc `v1` khai *"seed đủ để người ngoài lấy về dùng được"*. Thứ còn thiếu là đường cài đặt.
+
+- README nay có **ba lệnh chạy được** — sinh tệp ghép cặp · bật máy chủ Bridge · kiểm bản cài —
+  thay cho câu *"bật máy chủ Bridge"* trước đây, không nói bật bằng gì. **Cả ba đã chạy thử
+  thật**: bước ① sinh tệp vào thư mục nháp, bước ② máy chủ lên đúng cổng 32152, bước ⑤ sáu bước
+  xanh trên bản cài đang chạy.
+- `scripts/kiem-cai-dat.mjs` (`npm run scouter:kiem-cai-dat`). Nó gõ cửa **đúng Bridge bạn đang
+  chạy và đúng extension bạn đã nạp** — khác hẳn `scouter:bridge-live`, lệnh đó dựng máy chủ
+  riêng để đo **mã**, không đo **bản cài**.
+
+### Hai chốt trong đó, đừng đảo
+
+- **Công tắc ghi ĐÓNG không phải hỏng.** Đó là mặc định và là một lớp bảo vệ (luật gói số 8);
+  khai nó thành hỏng là dạy ngược luật cho người mới.
+- **Bước ① hỏi `bridge.sessions`, không hỏi `system.ping`** (`G-91`). Bản đầu dùng ping vì tôi
+  tưởng nó kết thúc ở máy chủ. Lượt chạy thật đầu tiên đỏ ngay bước một với `TARGET_AMBIGUOUS`:
+  ping **đi tới extension**, nên bước chẩn đoán chết vì đúng cái nó đi tìm. Cùng bài học `G-81`.
+
+### Để lại
+
+- **Chờ Đức:** đóng dấu *Scouter v1* hay chưa. Tôi không tự đóng — đó là quyết định phát hành,
+  không phải phép đo. **Đừng đọc nhầm:** `SEED v1` (23 mục năng lực) là chuyện KHÁC và vẫn đóng;
+  [ADR-0007](../../../docs/adr/0007-scouter.md) mục ⑹ tách rõ hai chữ này.
+- Việc kế theo bảng: `T21` — tách Udin Optic thành gói riêng.
+- **Bẫy công cụ:** Python ghi lại tệp bằng xuống dòng Windows và làm đỏ `eol-lf-smoke`. Ghi bằng
+  `newline=""` thì không dịch gì.
