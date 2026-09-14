@@ -75,6 +75,8 @@
 | G-34 | 14/09 | E2E | Ba chặng W1→W2→W3 chạy liền một mạch trên ghế thật, không cần tay người xen giữa | `e2e.mjs "<chữ MỚI>"` — mỗi lượt một prompt khác | **CHƯA** | không chạy: W3 đang CHẶN (G-35), chạy chỉ tốn credit rồi ngã ở chặng ba |
 | G-35 | 14/09 | W3 | 403 là vì **chính sách che của lõi ĐỌC cắt query string** khỏi mọi `href`/`src`, mà ảnh S3 là URL ký sẵn — chữ ký nằm đúng trong phần bị cắt | đọc `stripQuery` trong `observer-probes.mjs`; đếm `src` kết thúc bằng `…` trên trang thật | **ĐÚNG** | 17/17 `src` khác nhau đều bị cắt; `scout.query` tự khai `policy: de-xuat-chat-v1` — *"href/src bị cắt query và fragment"*. Đây là **bảo vệ**, không phải bug: đừng nới |
 
+| G-37 | 14/09 | S-22 | Trên ghế `Udin_Scout` HÔM NAY, một lượt bấm **không phải cuộn** có tới được trang không | chạy `qua-man-cho.mjs` thật: bấm Try Again rồi kiểm **màn chắn có tắt không** — kiểm bằng trang, không bằng lời báo của `scout.click` | **ĐÚNG** | `{"daChan":true,"bam":1}` — màn chắn có thật, bấm 1 lần, màn chắn tắt, ô prompt `usable`. Đây **chưa phải** G-26: G-26 hỏi ca `trang-thu-cham` (cần một tab trống trên ghế đó), còn đây là một trang khác. Nhưng nó đúng HÌNH DẠNG của S-22 (bấm không cuộn) và **không tái hiện** |
+
 ## Phép đo dùng lại được — đừng dựng lại
 
 | cần biết | dùng | tốn |
