@@ -81,7 +81,9 @@ export async function chay(cau, tuyChon = {}) {
     throw new Error(
       "LUOT_BAM_KHONG_TOI_NOI: scout.click báo trúng " +
         `(${JSON.stringify(trungVao)}) nhưng tay nghe lượt bấm của trang không chạy. ` +
-        "Xem S-22 — cửa sổ Chrome của ghế này có đang hiện không?",
+        "Xem S-22 (CHẬP CHỜN, 1/7 lượt vẫn chạy được). ĐỪNG đoán lại tám giả thuyết đã chết — " +
+        "tab ẩn, cửa sổ thu nhỏ, tab chưa từng hiện, lớp che, điều hướng, gắn lại gỡ lỗi: " +
+        "tất cả đã ĐO và SAI. Tra docs/GIA-THUYET.md G-38..G-47 TRƯỚC khi thử bất cứ gì.",
     );
   }
 

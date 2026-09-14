@@ -628,6 +628,11 @@ chụp 28KB đúng trang · ⑶ toạ độ lệch vì màn hình 125% — đã 
 `hit` trả `descendant`, và ảnh trống trơn · ⑸ trang hỏng — cùng trang, cùng ghế, cùng lượt gọi
 đó **chạy đúng lúc 16:41** rồi thôi chạy từ khoảng 16:44.
 
+**CẬP NHẬT 14/09 — ⒜ đã ĐO và SAI.** Cửa sổ thu nhỏ vẫn nhận đủ cú bấm (`G-41`), và cùng với nó
+bảy giả thuyết khác cũng chết: tab ẩn (`G-40`) · tab chưa từng hiện (`G-42`) · lớp che (`G-44`) ·
+điều hướng sau khi gắn (`G-46`) · gắn lại gỡ lỗi là thuốc (`G-45`). Thu hẹp được: hỏng **theo TAB**,
+không theo ghế (`G-43`), và **CHẬP CHỜN** — 1/7 lượt vẫn chạy. Biến cuối chưa thử: `G-47`.
+
 **Giả thuyết chưa kiểm, đừng tin cái nào:** ⒜ cửa sổ Chrome của ghế đó đang thu nhỏ hoặc bị che
 nên renderer bỏ sự kiện nhập — **phép thử rẻ nhất, và cần tay Đức: đưa cửa sổ ra trước rồi chạy
 lại `vong.mjs`** · ⒝ một client debug khác đang giữ target · ⒞ Chrome hạ mức xử lý sự kiện nhập
