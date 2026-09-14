@@ -48,6 +48,7 @@ export const ACTION_NAMES = Object.freeze([
   "input.click",
   "input.type",
   "input.key",
+  "input.clear",
   "input.navigate",
   /* MỞ 14/09 — Đức chốt `S-24` đường ⒜. KHÔNG có lệnh Bridge nào ánh xạ thẳng tới nó:
    * nó trả về URL ĐẦY ĐỦ (kể cả chữ ký trong query), nên nó chỉ được gọi TỪ TRONG máy,
@@ -125,6 +126,11 @@ const NAMED_KEYS = Object.freeze({
 });
 
 export const NAMED_KEY_NAMES = Object.freeze(Object.keys(NAMED_KEYS));
+
+/* Mặt nạ phím bổ trợ của CDP: Alt=1, **Ctrl=2**, Meta=4, Shift=8. Chỉ `Ctrl` có mặt ở đây, và
+ * chỉ `input.clear` dùng nó. Thêm một hằng số nữa vào chỗ này là bước đầu tiên để có một tham
+ * số `modifiers` — xem khối giải trình ở `input.clear`. */
+const CTRL = 2;
 
 const MAX_SELECTOR_LENGTH = 1024;
 const MAX_TEXT_LENGTH = 2000;
@@ -222,6 +228,41 @@ const ACTIONS = {
     await send("DOM.focus", { nodeId: node.nodeId });
     for (const character of [...text]) await typeCharacter(send, character);
     return { selector, matchCount: node.matchCount, typed: text.length, method: "Input.dispatchKeyEvent" };
+  },
+
+  /* ③b input.clear — XOÁ SẠCH một ô nhập bằng bàn phím thật (`I4`).
+   *
+   * Vì sao cần: `scout.type` **không xoá chữ cũ**, nên `gui-prompt.mjs` phải từ chối khi ô đã
+   * có chữ — tức là một phiên làm việc thật (nhiều lượt prompt trên cùng một ô) không chạy được.
+   *
+   * VÌ SAO KHÔNG MỞ "PHÍM BỔ TRỢ TỰ DO" cho `input.key`, dù đó là đường ngắn hơn: `Ctrl` + một
+   * phím bất kỳ chạm tới **lệnh của trình duyệt**, không chỉ của trang — `Ctrl+W` đóng tab,
+   * `Ctrl+N` mở cửa sổ, `Ctrl+Shift+N` mở ẩn danh. Mở một tham số `modifiers` là giao cả bộ đó
+   * cho người gọi. Nên ở đây **phím `A` và phím bổ trợ `Ctrl` gõ cứng trong mã**: không tham số
+   * nào của người gọi chạm tới chúng. Cùng khuôn với chốt ⑶ (toạ độ tính ở trong, không nhận
+   * từ ngoài) — một thao tác có TÊN, không phải một cái máy gõ phím đa năng.
+   *
+   * HỨA GÌ: *đã gửi Ctrl+A rồi Delete vào đúng phần tử đã khớp.* KHÔNG hứa *"ô đã rỗng"* —
+   * cùng lời hứa hẹp của `scout.click`/`scout.type` (`README`, `S-22`). Adapter tự kiểm bằng
+   * trang: với Udin, ô rỗng thì nút Send khoá lại.
+   *
+   * GIỚI HẠN ĐÃ BIẾT, ghi ra thay vì giả vờ không có: trên macOS phím chọn-tất-cả là `Cmd+A`,
+   * không phải `Ctrl+A`, nên thao tác này **không xoá được trên máy Mac**. Gói chạy trên Windows
+   * của Đức. Ai chạy trên Mac thì đây là chỗ sửa, và dấu kiểm của adapter sẽ bắt được. */
+  async "input.clear"(send, params) {
+    const selector = readSelector(params.selector);
+    const node = await locateOne(send, selector);
+    await send("DOM.focus", { nodeId: node.nodeId });
+    for (const type of ["keyDown", "keyUp"]) {
+      await send("Input.dispatchKeyEvent", {
+        type, key: "a", code: "KeyA", windowsVirtualKeyCode: 65, modifiers: CTRL
+      });
+    }
+    const xoa = NAMED_KEYS.Delete;
+    for (const type of ["keyDown", "keyUp"]) {
+      await send("Input.dispatchKeyEvent", { type, key: "Delete", code: xoa.code, windowsVirtualKeyCode: xoa.vk });
+    }
+    return { selector, matchCount: node.matchCount, steps: ["Ctrl+A", "Delete"], method: "Input.dispatchKeyEvent" };
   },
 
   /* ③ input.key — gõ MỘT phím có tên, chọn từ bảng cố định. */

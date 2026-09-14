@@ -462,6 +462,20 @@ const METHOD_ENTRIES = [
     }
   }),
   registryEntry({
+    name: "scout.clear", read_only: false, deadline_ms: 30000,
+    description: "Clear one input/textarea with real keystrokes (Ctrl+A then Delete). The key and the modifier are hard-coded in the write core; no parameter can change them. Promises the keystrokes were sent, NOT that the field is now empty — verify by page state.",
+    params_schema: { target_id: "string", selector: "string" },
+    params_validator: (raw) => {
+      /* CỐ Ý chỉ hai trường. Một tham số `key` hay `modifiers` ở đây là mở lại đúng cửa mà
+       * `input.clear` đóng: Ctrl + phím tuỳ ý chạm tới lệnh của TRÌNH DUYỆT (Ctrl+W đóng tab). */
+      const params = objectParams(raw, ["target_id", "selector"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector)
+      };
+    }
+  }),
+  registryEntry({
     /* ---- LỆNH GỌI MẠNG (S-10, Đức chốt 07/09) ----------------------------
      * Method đầu tiên của Scouter đi ra ngoài trình duyệt. Nó tồn tại vì một phép đo, không vì
      * một ý thích: `hnx.vn` gửi chuỗi chứng chỉ THIẾU (chỉ lá, không có trung gian

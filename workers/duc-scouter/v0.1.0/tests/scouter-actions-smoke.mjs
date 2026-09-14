@@ -114,7 +114,7 @@ function makeFakePage(options = {}) {
 
 /* ---- ① Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.navigate", "input.grabUrl"]);
+  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.clear", "input.navigate", "input.grabUrl"]);
 
   for (const bogus of ["input.drag", "input.scroll", "dom.query", "Input.dispatchMouseEvent", ""]) {
     const page = makeFakePage();

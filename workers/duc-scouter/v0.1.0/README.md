@@ -24,7 +24,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Mười chín** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Hai mươi** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -42,6 +42,7 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`). Kiểm điểm sắp bấm thuộc về ai TRƯỚC khi bắn; có thứ chắn thì từ chối `CLICK_OBSCURED` |
 | `scout.type` | **có** | gõ một chuỗi bằng **bàn phím thật**, từng phím một. Không xoá nội dung cũ |
 | `scout.key` | **có** | gõ một phím có tên: Enter · Tab · Escape · Backspace · Delete · bốn mũi tên · Home · End |
+| `scout.clear` | **có** | **xoá sạch một ô nhập** bằng bàn phím thật: `Ctrl+A` rồi `Delete`. Phím và phím bổ trợ **gõ cứng trong lõi ghi** — không tham số nào đổi được, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt (`Ctrl+W` đóng tab). Trên macOS **không xoá được** (ở đó là `Cmd+A`) |
 | `scout.fetch` | **có** | gọi một URL http(s) bằng **chồng mạng của chính trình duyệt**. Trả văn bản; `as: "base64"` cho thân nhị phân như PDF. Không kèm cookie trừ khi khai `with_credentials` |
 | `scout.grab` | **có** | tải TỆP mà một phần tử trỏ tới (`src` hoặc `href`), dùng URL đọc được **bên trong** trình duyệt. **Không trả URL** — ảnh sau URL ký sẵn thì chữ ký không lọt ra nhật ký hay xuống đĩa. Nhận selector, không nhận url |
 | `scout.navigate` | **có** | đi sang trang khác rồi đợi tới nơi — **kể cả đi tới đúng trang đang mở, tức là F5**. Trả về `reloaded` và `arrivedBy` (`new_document` hay `url_change`). Đổi trang là điều khiển trang, nên nó là lệnh GHI |

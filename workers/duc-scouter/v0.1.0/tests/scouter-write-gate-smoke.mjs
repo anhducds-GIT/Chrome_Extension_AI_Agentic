@@ -189,6 +189,8 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     ["scout.click", CLICK],
     ["scout.type", { target_id: "T1", selector: "#in", text: "xin chao" }],
     ["scout.key", { target_id: "T1", selector: "#in", key: "Enter" }],
+    /* Xoa o nhap cung la GHI: no doi noi dung tren trang cua Duc. */
+    ["scout.clear", { target_id: "T1", selector: "#in" }],
     /* Doi trang la DIEU KHIEN trang, nen no phai tra dung cai gia ma scout.click tra.
      * Them mot hanh dong GHI ma quen dong nay la mo mot cua di vong qua phanh. */
     ["scout.navigate", { target_id: "T1", url: "https://vi-du.test/x" }]

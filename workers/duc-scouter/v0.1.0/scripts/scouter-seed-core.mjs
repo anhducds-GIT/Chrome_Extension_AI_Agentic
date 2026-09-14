@@ -40,7 +40,8 @@ const ACTION_BY_METHOD = Object.freeze({
   "scout.click": "input.click",
   "scout.navigate": "input.navigate",
   "scout.type": "input.type",
-  "scout.key": "input.key"
+  "scout.key": "input.key",
+  "scout.clear": "input.clear"
 });
 
 /* Trần chống bão nạp lại. Vòng tự cải tiến của ADR-0009 là: AI ghi code → gọi `scout.reload`
@@ -377,6 +378,14 @@ export function createSeedHandlers(deps = {}) {
     async "scout.key"(params) {
       const target = await resolveTarget(params.target_id);
       return await runAction("scout.key", target, { selector: params.selector, key: params.key });
+    },
+
+    /* `scout.clear` — xoá sạch một ô nhập (`I4`). GHI, nên nó chui qua phanh và trần 200 như
+     * `scout.type`. Chỉ nhận `selector`: phím và phím bổ trợ gõ cứng trong lõi ghi, người gọi
+     * không chạm tới — xem khối giải trình ở `input.clear`. */
+    async "scout.clear"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.clear", target, { selector: params.selector });
     },
 
     /* ---- LỆNH GỌI MẠNG (S-10) ------------------------------------------
