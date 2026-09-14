@@ -12,8 +12,8 @@ current_focus: "Goi vua ra doi 15/09, tach khoi duc-scouter theo T21. Duc chot 1
 lam_duoc: "Chay viec sinh anh tren Udin tu dong lenh: vuot man cho, gui prompt, doi anh moi, roi lay anh ve dia. Bon chang W1..W4 deu co phep ghim."
 khong_lam_duoc: "Khong tu chay. Khong do trang la: khong co scout.page, scout.tree, scout.a11y, scout.shot, scout.network — chung KHONG TON TAI o goi nay, khong phai bi chan. Khong goi mang tuy y: scout.fetch bi cat. Khong tu nap lai chinh no: scout.reload bi cat, do la viec cua seed Scouter. Manifest chi khai dung mot trang."
 dung_the_nao: "Sinh tep ghep cap rieng bang tao-tep-ghep-cap.mjs --goi udin-optic, bat may chu Bridge cua goi nay, nap thu muc v0.1.0 vao Chrome, chon tep ghep cap o bang ben, roi bat cong tac Cho phep bam va go. Phanh khan: Ctrl+Shift+U (KHAC Scouter co y — trung phim thi mot goi mat phanh)."
-ref_readme: workers/udin-optic/README.md
-ref_handoff: workers/udin-optic/HANDOFF.md
+ref_readme: workers/udin-optic/v0.1.0/README.md
+ref_handoff: workers/udin-optic/v0.1.0/HANDOFF.md
 ref_runbook: workers/udin-optic/v0.1.0/AGENTS.md
 ---
 

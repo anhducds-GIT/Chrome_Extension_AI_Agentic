@@ -751,3 +751,29 @@ việc của `T9`. Mọi thứ còn lại nằm trong gói; chi tiết ở `HAND
 `io.open(p,"w")` ghi xuống dòng kiểu Windows và làm đỏ `eol-lf-smoke` cho **mọi** tệp đã sửa
 trong lượt. Ghi bằng `newline=""` thì không dịch gì. Đã có dòng này trong sổ nhớ từ trước, và
 tôi vẫn vấp — nên chép vào đây, chỗ phiên sau thật sự đọc.
+
+## 2026-09-15 · `claude-scouter-udine` — vùng sở hữu thứ mười: `workers/udin-optic`
+
+**Ba dòng ở gốc.** `.agents/claims.json` thêm khoá `workers/udin-optic` · `.repo-structure.json`
+thêm gói đó vào danh sách sinh `PHIEN.md` · `package.json` thêm `udin:test` và nối suite gói mới
+vào `npm test`. Mọi thứ còn lại nằm trong gói.
+
+**Vì sao đây là một vùng, không phải một thư mục.** `.repo-structure.json` khai sẵn luật ở dòng
+của `workers/_shared/`: một thư mục dưới `workers/` thành **đơn vị sở hữu riêng** khi nó là một
+Extension — tức **có `manifest.json`**. Udin Optic nay có. Không có manifest thì steward là
+`_root`, y như `_shared` hôm nay.
+
+**Khuôn thư mục: theo Scouter, không theo `hnx-fetch`.** Hai gói đang có hai khuôn khác nhau —
+`hnx-fetch` để `AGENTS.md`/`README.md`/`HANDOFF.md` ở **gốc gói**, Scouter để tất cả trong
+`v0.1.0/`. Hai cổng ép chọn khuôn Scouter, và đáng ghi lại vì tôi mất hai lượt mới thấy:
+ · `rule-compile --sinh` đọc `AGENTS.md` **trong thư mục phiên bản**, và đòi trong đó một mục
+   tiêu đề đúng chữ `## Luật vàng` — thiếu thì `THIEU_LUAT_VANG`, và gói không có `PHIEN.md`.
+ · cổng *"File mới đã khai vào Bản đồ file"* đối chiếu theo đường dẫn tính từ **thư mục đơn vị**,
+   nên `README.md` nằm ngoài `v0.1.0/` không có bản đồ nào nhận nó.
+
+Nên `hnx-fetch` xanh được là vì nó **không** nằm trong danh sách sinh `PHIEN.md` — nó dùng
+`PROTOCOL.md` làm cửa vào thay thế. Ai định thêm gói vào danh sách đó thì phải dọn khuôn trước.
+
+**Nhiễu đo cần biết, KHÔNG phải lỗi repo:** `rule-compile` đang đếm cả
+`.claude/worktrees/<...>/` — worktree của một phiên nền chạy song song — nên "quyết định mồ côi"
+nhảy từ 3 lên 167. Số thật vẫn là 3, và nó trở lại khi worktree kia được dọn. Đừng "sửa" nó.

@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T21 chang (1) XONG 15/09: goi-bridge.mjs da ve workers/_shared/goi-bridge/, bon thu rieng cua Scouter (giao thuc, duong tep ghep cap, SCOUTER_GHEP, SCOUTER_GHE) thanh THAM SO, 7 khoi ghim moi canh chuyen tu vung do; 36 phep ghim xanh. Chang KE TIEP la (2): dung nha + vo extension workers/udin-optic/v0.1.0 — manifest, background, bang ben, host vo ~194 dong tren loi _shared, bridge-core rieng, giao thuc udin-optic.bridge, va transport.mjs CHEP NGUYEN VAN kem ba dong them vao bang CAP cua phep ghim goi moi."
-- human_action: "không"
+- next_step: "T21 chang (1)(2)(3) XONG 15/09. Udin Optic nay song o workers/udin-optic — goi rieng, extension rieng, 12 lenh, quyen hep ve mot trang. Suite Scouter con 31 xanh va KHONG con Udin. Chang KE TIEP la (4) PHEP KIEM THAT: sinh tep ghep cap rieng cho udin-optic, bat may chu Bridge cua goi do, nap extension moi vao Chrome, chay e2e that voi prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH — ve sau moi la ve chung minh."
+- human_action: "Chang (4) sap can Duc: nap extension Udin Optic moi vao Chrome (Load unpacked thu muc workers/udin-optic/v0.1.0) va bat cong tac Cho phep bam va go o bang ben CUA GOI DO. AI se bao khi may chu va tep ghep cap da san sang. @Đức:bấm"

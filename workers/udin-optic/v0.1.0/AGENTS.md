@@ -44,24 +44,39 @@ bên đóng.
 
 ## Bản đồ file
 
+Đường dẫn tính từ thư mục chứa file này (`workers/udin-optic/v0.1.0/`).
+
 | File | Vai trò |
 |---|---|
-| `v0.1.0/manifest.json` | **RIÊNG** — quyền hẹp về một trang, phím phanh `Ctrl+Shift+U` |
-| `v0.1.0/background.js` | **RIÊNG** — lớp nối dây, khai `worker_id: "udin-optic"` |
-| `v0.1.0/scripts/bridge-core.mjs` | **RIÊNG** — từ vựng 12 lệnh, giao thức `udin-optic.bridge` |
-| `v0.1.0/sidepanel.{html,js,css}` | **RIÊNG** — bảng bên; chỗ Đức sẽ đổi theo usecase |
-| `v0.1.0/scouter-engine.js` | chép NGUYÊN VĂN từ Scouter — bơm `chrome.debugger` vào hai lõi |
-| `v0.1.0/scripts/scouter-probes.mjs` | chép NGUYÊN VĂN — bốn phép dò chỉ đọc |
-| `v0.1.0/scripts/scouter-actions-core.mjs` | chép NGUYÊN VĂN — **hành động GHI**: bấm, gõ như tay người |
-| `v0.1.0/scripts/scouter-seed-core.mjs` | chép NGUYÊN VĂN — handler + **CÁI PHANH** (trần 200/lần mở) |
-| `v0.1.0/scripts/scouter-transport-loopback.mjs` | chép NGUYÊN VĂN — dây WebSocket, bắt tay hai chiều |
-| `v0.1.0/scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
-| `v0.1.0/bridge/udin-optic-host.mjs` | **RIÊNG** — vỏ mỏng trên lõi `_shared/bridge-host/` |
-| `v0.1.0/bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
-| `tu-dong/*.mjs` | **năm chặng việc** W1..W4 + e2e. Script Node gọi Bridge từ dòng lệnh |
-| `tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói, thân ở `_shared/goi-bridge/` |
-| `v0.1.0/tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
-| `v0.1.0/tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này |
+| `manifest.json` | **RIÊNG** — quyền hẹp về một trang, phím phanh `Ctrl+Shift+U` |
+| `background.js` | **RIÊNG** — lớp nối dây, khai `worker_id: "udin-optic"` |
+| `scripts/bridge-core.mjs` | **RIÊNG** — từ vựng 12 lệnh, giao thức `udin-optic.bridge` |
+| `sidepanel.html` · `sidepanel.js` · `sidepanel.css` | **RIÊNG** — bảng bên; chỗ Đức sẽ đổi theo usecase |
+| `bridge/udin-optic-host.mjs` | **RIÊNG** — vỏ mỏng trên lõi `../../_shared/bridge-host/` |
+| `scouter-engine.js` | chép NGUYÊN VĂN từ Scouter — bơm `chrome.debugger` vào hai lõi |
+| `scripts/scouter-probes.mjs` | chép NGUYÊN VĂN — bốn phép dò chỉ đọc |
+| `scripts/scouter-actions-core.mjs` | chép NGUYÊN VĂN — **hành động GHI**: bấm, gõ như tay người |
+| `scripts/scouter-seed-core.mjs` | chép NGUYÊN VĂN — handler + **CÁI PHANH** (trần 200 lượt mỗi lần mở) |
+| `scripts/scouter-transport-loopback.mjs` | chép NGUYÊN VĂN — dây WebSocket, bắt tay hai chiều |
+| `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
+| `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
+| `icons/icon-16.png` | biểu tượng, chép từ Scouter |
+| `icons/icon-32.png` | biểu tượng, chép từ Scouter |
+| `icons/icon-48.png` | biểu tượng, chép từ Scouter |
+| `icons/icon-128.png` | biểu tượng, chép từ Scouter |
+| `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
+| `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
+| `tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này theo hình dạng |
+| `STATUS.md` | trạng thái một trang — máy đọc, `DASHBOARD` lấy số từ đây |
+| `PHIEN.md` | **cửa vào MỘT FILE** cho phiên sau. Máy sinh, đừng gõ tay (`rule-compile --sinh`) |
+| `AGENTS.md` | file này — luật riêng của gói |
+| `README.md` | đường cài đặt cho người ngoài: ba lệnh, rồi một lượt chạy |
+| `HANDOFF.md` | nhật ký gói. Ghi thêm ở CUỐI, trần một mục 2.600 byte |
+| `../tu-dong/*.mjs` | **năm chặng việc** W1..W4 + e2e. Script Node gọi Bridge từ dòng lệnh |
+| `../tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói; thân ở `../../_shared/goi-bridge/` |
+| `../tu-dong/tests/*.mjs` | năm phép ghim của tầng chạy việc |
+| `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — máy chủ Bridge. Luật của vùng: `workers/_shared/AGENTS.md` |
+| `../../_shared/goi-bridge/` | **LÕI DÙNG CHUNG** — bên gọi Bridge từ dòng lệnh |
 
 ## Chạy
 

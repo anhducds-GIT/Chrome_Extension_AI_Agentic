@@ -33,9 +33,9 @@ trôi* không phải fork — fork là hai bản trôi **mà không ai biết**.
 `<all_urls>` · `scout.fetch` và `scout.reload` **không tồn tại**. Quyền `debugger` thì giống —
 đó là chiều duy nhất không hẹp lại được, và là lý do bảy tệp kia phải bị ghim.
 
-**Đã xong:** 10 tệp logic `git mv` sang `tu-dong/`, chỉ đổi dòng `import` và đường dẫn trong ghi
-chú · vỏ `goi-bridge` riêng (`udin-optic.bridge` · `UDIN_GHEP` · `UDIN_GHE`) · manifest · host vỏ
-mỏng · 7 phép ghim xanh · suite Scouter còn **31 xanh và không còn Udin**.
+**Đã xong:** 10 tệp logic sang `tu-dong/` · vỏ `goi-bridge` riêng · manifest · host vỏ mỏng ·
+7 phép ghim xanh · suite Scouter còn **31 xanh và không còn Udin**.
 
-**CHƯA làm:** chưa một lượt chạy thật nào từ extension này — đó là chặng ④, và nó cần Đức nạp
-extension rồi bật công tắc.
+**CHƯA làm:** chưa một lượt chạy thật nào từ extension này — chặng ④, cần Đức nạp extension.
+
+<!-- HANDOFF-THANG: 2026-09 -->
