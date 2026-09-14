@@ -51,7 +51,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | Mã | Năng lực | Lệnh | Trạng thái | Bằng chứng / ghi chú | Duyệt |
 |---|---|---|---|---|---|
 | N1 | Liệt kê tab | `scout.targets` | **ĐÃ CHỨNG MINH** | mọi lượt thật | |
-| N2 | Chọn tab làm việc | `target_id` trong từng lệnh | **ĐÃ CHỨNG MINH** | `targetId` đổi sau điều hướng, phải hỏi lại | |
+| N2 | Chọn tab làm việc | `target_id` trong từng lệnh | **ĐÃ CHỨNG MINH** | mọi lượt thật từ 07/09. `targetId` đổi sau điều hướng, phải hỏi lại (`T7`) | |
 | N3 | Đi tới URL | `scout.navigate` | **ĐÃ CHỨNG MINH** | 08/09, `T3` | |
 | N4 | Tải lại trang | `scout.navigate` cùng URL | **ĐÃ CHỨNG MINH** | `T3` / `S-19` đóng | |
 | N5 | Quay lại / tiến tới | — | **CHƯA CÓ** | cần `Page.navigateToHistoryEntry` | ✋ |
@@ -66,7 +66,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | I1 | Bấm chuột trái | `scout.click` | **ĐÃ CHỨNG MINH** | Chrome riêng 11/11 (kể cả phải cuộn, `S-23`) · Udin 13/09. **`S-22` còn mở** | |
 | I2 | Gõ chữ | `scout.type` | **ĐÃ CHỨNG MINH** | Udin 13/09 `G-29` | |
 | I3 | Nhấn phím có tên (Enter, Tab, Esc, mũi tên…) | `scout.key` | **ĐÃ CHỨNG MINH** | Chrome riêng. Ghế Đức: dính `S-22` | |
-| I4 | **Xoá chữ trong ô** (Ctrl+A rồi Delete) | — | **CHƯA CÓ** | `scout.type` không xoá chữ cũ; `gui-prompt.mjs` phải từ chối khi ô có chữ. Cần phím tổ hợp: method CDP đã có, chỉ mở rộng bảng phím | ✋ |
+| I4 | **Xoá chữ trong ô** (Ctrl+A rồi Delete) | `scout.clear` | **CÓ** | Làm 14/09. Phím `A` và phím bổ trợ `Ctrl` **gõ cứng trong lõi ghi** — không mở tham số `modifiers`, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt. 8 khối ghim · 5 đột biến tay. **CHƯA CHẠY THẬT**. Không xoá được trên macOS (ở đó là `Cmd+A`) | |
 | I5 | Cuộn tự do (bánh xe chuột) | — | **CHƯA CÓ** | Bấm đã tự cuộn tới phần tử. Cuộn danh sách dài để tải thêm thì chưa. Method CDP đã có, cần lệnh Bridge mới | ✋ |
 | I6 | Rê chuột (hover) | — | **CHƯA CÓ** | menu chỉ hiện khi rê chuột. Method CDP đã có, cần lệnh Bridge mới | ✋ |
 | I7 | Bấm đúp / bấm phải | — | **CHƯA CÓ** | Method CDP đã có, cần thêm tham số | ✋ |
@@ -80,9 +80,9 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 |---|---|---|---|---|---|
 | D1 | Nghe mạng (không header, không nội dung) | `scout.network` | **ĐÃ CHỨNG MINH** | 30 lượt gọi trên một lượt tải trang (`HANDOFF`) | |
 | D2 | Request hỏng (mã lỗi) | `scout.network` | **CÓ** | có trường status; chưa dùng trong workflow nào | |
-| D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** với `hnx.vn` | Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn). Đường đúng là `scout.grab` — xem O11 | |
+| D3 | Lấy file / ảnh về đĩa | `scout.fetch` · `scout.grab` + `file.write` | **ĐÃ CHỨNG MINH** | `hnx.vn` 07/09. Ảnh Udin: `scout.fetch` **KHÔNG dùng được** (403, URL ký sẵn) — đường đúng là `scout.grab`, xem O11 | |
 | O11 | Lấy tệp sau một **URL ký sẵn** mà không để chữ ký ra ngoài | `scout.grab` | **MỘT PHẦN** | Đức chốt `S-24` đường ⒜ 14/09. Đã nạp vào extension và **đã gọi thật** trên Udin: đọc `src` đầy đủ bên trong, gọi mạng, trả mã trạng thái (`G-52`). **Chưa có lượt 200 → byte → đĩa**, vì mọi ảnh trên trang đã quá hạn 900s (`G-51`). Chờ một lượt Udin rảnh chỗ. 11 khối ghim · đột biến 128/128 | |
-| D4 | So trước / sau một thao tác | — (adapter tự làm) | **CHƯA CÓ** (adapter tự làm) | `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
+| D4 | So trước / sau một thao tác | — | **CHƯA CÓ** | Adapter tự làm: `gui-prompt.mjs` so tập `src` ảnh. Lặp ở trang thứ hai thì đưa lên seed (luật gói 2) | ✋ |
 | D5 | Lỗi console / lỗi JS của trang | — | **CHƯA CÓ** | cần `Log.enable`; `Runtime.*` bị cấm | ✋ |
 
 ### E · An toàn và vận hành
@@ -99,7 +99,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 2 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 13 · ĐÃ BỎ 1.** Tổng 41 dòng.
+**ĐÃ CHỨNG MINH 20 · MỘT PHẦN 3 · CÓ 5 · CHƯA CÓ / CHƯA ĐO 12 · ĐÃ BỎ 1.** Tổng 41 dòng.
 **Seed Coverage = 20 / 40** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt). O11 thêm 14/09 và
 đang ở `CÓ`: có mã, có ghim, **chưa có lượt chạy thật** — đúng định nghĩa ở đầu §2.
 
