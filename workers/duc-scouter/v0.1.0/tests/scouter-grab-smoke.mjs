@@ -109,8 +109,11 @@ for (const xau of [`blob:https://trang.test/${CHU_KY}`, `data:image/png;base64,$
   const { METHOD_REGISTRY } = await import("../scripts/scouter-bridge-core.mjs");
   const muc = METHOD_REGISTRY["scout.grab"];
   assert.ok(muc, "scout.grab phải có trong bảng từ vựng");
-  assert.deepEqual(Object.keys(muc.params_schema).sort(), ["attribute", "selector", "target_id"],
-    "lược đồ không được có trường url: nhận địa chỉ từ ngoài là biến grab thành fetch thứ hai");
+  assert.deepEqual(Object.keys(muc.params_schema).sort(), ["attribute", "part", "selector", "target_id"],
+    "lược đồ không được có trường url: nhận địa chỉ từ ngoài là biến grab thành fetch thứ hai. " +
+    "`part` thêm 14/09 (`G-59`) — nó là SỐ THỨ TỰ KHÚC, không phải một địa chỉ");
+  assert.throws(() => muc.params_validator({ target_id: "T", selector: "img.anh", part: -1 }), /part/,
+    "`part` âm thành `Range: bytes=-N`, mà cú pháp đó nghĩa là N byte CUỐI — một khúc khác hẳn");
   assert.throws(
     () => muc.params_validator({ target_id: "T", selector: "img.anh", url: "https://khac.test/x.png" }),
     /unknown field/,
@@ -147,4 +150,4 @@ for (const xau of [`blob:https://trang.test/${CHU_KY}`, `data:image/png;base64,$
   assert.ok(traVe.includes("masked"), "vẫn phải trả `source.masked` để người gọi đặt được tên tệp");
 }
 
-console.log("  · scouter grab: 11 khối xanh");
+console.log("  · scouter grab: 12 khối xanh");

@@ -118,6 +118,29 @@ const WRITE_CAP_PER_UNLOCK = 200;
  * (JSON escape, các trường khác) phình thêm được đáng kể, và chạm trần phong bì thì cả lượt
  * chết ở tầng vận chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
 const FETCH_MAX_BODY_BYTES = 512 * 1024;
+/* Bao nhiêu byte THÔ nhét vừa trần trên, sau khi base64 phồng 4/3. Con số này là thứ chia tệp
+ * thành khúc — suy ra từ trần, không gõ riêng, để hai số không bao giờ lệch nhau. */
+const FETCH_MAX_RAW_BYTES = Math.floor(FETCH_MAX_BODY_BYTES / 4) * 3;
+
+/* `Content-Range: bytes 0-393215/746722` → 746722. Trả `null` khi không đọc được, và người gọi
+ * phải coi `null` là "máy chủ không nhận Range" chứ không phải "tệp dài 0". */
+function docTongTu(chu) {
+  const khop = /\/(\d+)\s*$/.exec(String(chu || ""));
+  if (!khop) return null;
+  const so = Number(khop[1]);
+  return Number.isInteger(so) && so >= 0 ? so : null;
+}
+
+/* Số thứ tự khúc. Không trần trên: tệp dài bao nhiêu thì `parts` nói, và xin quá thì máy chủ
+ * trả `416`. Nhưng phải là số nguyên không âm — một `part` âm thành `Range: bytes=-524288`,
+ * mà cú pháp đó nghĩa là "524288 byte CUỐI", tức là một khúc khác hẳn khúc người gọi tưởng. */
+function readPhanKhuc(value) {
+  if (value === undefined || value === null) return 0;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new BridgeProtocolError("INVALID_PARAMS", "`part` phải là số nguyên không âm.", { field: "params.part" });
+  }
+  return value;
+}
 
 /* Kiểu thân ĐỌC ĐƯỢC bằng văn bản. Danh sách CHO PHÉP, không phải danh sách cấm: kiểu lạ thì
  * mặc định coi là nhị phân và bắt người gọi khai `as: "base64"`. Ngược lại — cấm vài kiểu đã
@@ -511,9 +534,24 @@ export function createSeedHandlers(deps = {}) {
        * không dùng `url` — một thông báo lỗi chở chữ ký cũng là rò rỉ. */
       const { url, masked, attribute, selector, matchCount } = found.data;
 
+      /* LẤY THEO KHÚC. Đo 14/09 (`G-59`): một ảnh Udin là 746.722 byte → base64 995.632, vượt
+       * trần thân 524.288. Và trần ấy không tuỳ tiện — phong bì Bridge chặn ở 1 MiB, mà con số
+       * đó nằm ở `_shared/bridge-host`, **lõi dùng chung với ba gói đóng băng**. Nên đường đúng
+       * KHÔNG phải nới trần, mà là xin từng khúc bằng `Range`.
+       *
+       * Mỗi khúc là một lượt gọi ĐỘC LẬP: không giữ thân file giữa hai lượt, nên service worker
+       * không phải ôm một MB, và không có cái kho tạm nào để rò rỉ. Giá phải trả, nói trước:
+       * mỗi khúc tiêu **một** đơn vị trần ghi, và URL phải còn hạn suốt cả loạt. */
+      const khuc = readPhanKhuc(params.part);
+      const dau = khuc * FETCH_MAX_RAW_BYTES;
+      const cuoi = dau + FETCH_MAX_RAW_BYTES - 1;
+
       let response;
       try {
-        response = await doFetch(url, { method: "GET", credentials: "omit", redirect: "follow" });
+        response = await doFetch(url, {
+          method: "GET", credentials: "omit", redirect: "follow",
+          headers: { Range: `bytes=${dau}-${cuoi}` }
+        });
       } catch (error) {
         throw new BridgeProtocolError(
           "ACTION_FAILED",
@@ -522,12 +560,27 @@ export function createSeedHandlers(deps = {}) {
         );
       }
 
+      /* `206 Partial Content` = máy chủ CÓ nhận `Range`. `200` = nó lờ đi và trả cả file —
+       * phải ĐỎ ngay, vì khúc 0 lúc đó là cả file (có thể vượt trần) và khúc 1 sẽ là một bản
+       * sao thứ hai của cùng nội dung, ghép lại ra một tệp hỏng mà không ai thấy. */
       const buffer = new Uint8Array(await response.arrayBuffer());
+      const dai = docTongTu(response.headers.get("content-range"));
+      if (response.status !== 206 || dai === null) {
+        throw new BridgeProtocolError(
+          "ACTION_FAILED",
+          `Máy chủ của '${masked}' không nhận 'Range' (trả ${response.status}` +
+          `${response.headers.get("content-range") ? "" : ", không có Content-Range"}). ` +
+          `Tệp ${buffer.length} byte, mà một phong bì chỉ chở được ${FETCH_MAX_RAW_BYTES} byte thô. ` +
+          "Không ghép được thì không tải — ghép mù ra một tệp hỏng mà không ai thấy.",
+          { action: "grab", action_code: "RANGE_NOT_SUPPORTED", status: response.status, bytes: buffer.length, source: masked }
+        );
+      }
+
       const base64 = base64Tu(buffer);
       if (base64.length > FETCH_MAX_BODY_BYTES) {
         throw new BridgeProtocolError(
           "ACTION_FAILED",
-          `Tệp ${buffer.length} byte (${base64.length} sau mã hoá) quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`,
+          `Khúc ${khuc} dài ${buffer.length} byte (${base64.length} sau mã hoá) quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`,
           { action: "grab", action_code: "FETCH_BODY_TOO_LARGE", bytes: base64.length, max_bytes: FETCH_MAX_BODY_BYTES, source: masked }
         );
       }
@@ -539,6 +592,13 @@ export function createSeedHandlers(deps = {}) {
         content_type: response.headers.get("content-type"),
         bytes: buffer.length,
         body_base64: base64,
+        /* Người gọi cần BA con số để ghép đúng và biết lúc nào xong. `bytes` là của khúc này;
+         * `bytes_total` là của cả tệp; `parts` là số khúc phải xin. Thiếu `bytes_total` thì
+         * không có cách nào kiểm tệp ghép xong có đủ không — và "đủ chưa" là câu duy nhất
+         * đáng hỏi sau một lượt ghép. */
+        part: khuc,
+        parts: Math.max(1, Math.ceil(dai / FETCH_MAX_RAW_BYTES)),
+        bytes_total: dai,
         /* KHÔNG có trường `url`. `source` là gốc + đường dẫn — đúng bằng thứ lõi đọc vẫn cho
          * phép thấy, nên nó không mở thêm gì; con `GR7` canh để không ai thêm `url` vào đây. */
         source: { selector, attribute, masked, matchCount },

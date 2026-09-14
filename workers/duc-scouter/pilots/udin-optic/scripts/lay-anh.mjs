@@ -179,7 +179,8 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
        * nhau trên cùng một sợi dây. Đo ngoài đời 14/09: bản đầu của file này đọc `.data` và ngã
        * ngay lượt gọi thật, trong khi 15 khối ghim vẫn xanh vì máy giả chép đúng cái hiểu sai
        * của tôi. Hình dạng dưới đây đọc thẳng từ `scouter-seed-core.mjs`, không đọc từ trí nhớ. */
-      const d = await goi("scout.grab", { target_id: tab, selector, attribute: "src" }, tuyChon);
+      const xin = async (part) => goi("scout.grab", { target_id: tab, selector, attribute: "src", part }, tuyChon);
+      const d = await xin(0);
       if (!d.ok) throw nga(`Ảnh ${i + 1}: máy chủ trả ${d.status}.`);
       if (!d.content_type || !/^image\//i.test(d.content_type)) {
         throw nga(`Ảnh ${i + 1}: 200 OK nhưng kiểu '${d.content_type || "không khai"}' không phải ảnh — chưa ghi.`);
@@ -191,13 +192,35 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
       /* Đặt tên theo `source.masked` — thứ GRAB nói nó đã tải, không phải thứ ta tưởng nó tải.
        * Hai cái lệch nhau được (trang đổi giữa chừng), và lúc lệch thì tên file phải theo byte. */
       const ten = `${thuMuc}/${tenFile(d.source?.masked || src, i + 1)}`;
-      const ghi = await goi("file.write", { path: ten, content: d.body_base64, encoding: "base64" }, tuyChon);
-      if (ghi.bytes !== d.bytes) {
+      let ghi = await goi("file.write", { path: ten, content: d.body_base64, encoding: "base64" }, tuyChon);
+
+      /* GHÉP KHÚC (`G-59`). Một ảnh Udin lớn hơn một phong bì Bridge, nên grab trả về từng khúc
+       * và chỗ ghép là ở đây. Khúc 0 đi bằng `file.write` (đè, để chạy lại không nối vào đuôi
+       * một tệp dở của lượt trước); các khúc sau đi bằng `file.append`. */
+      const soKhuc = Number.isInteger(d.parts) && d.parts > 0 ? d.parts : 1;
+      for (let k = 1; k < soKhuc; k += 1) {
+        const p = await xin(k);
+        if (!p.ok) throw nga(`Ảnh ${i + 1} khúc ${k}: máy chủ trả ${p.status}. Tệp dở nằm ở '${ghi.path}'.`);
+        /* Tệp đổi giữa hai khúc thì các khúc KHÔNG thuộc về nhau nữa — ghép tiếp là dựng ra một
+         * tệp hỏng trông như tệp thật. URL ký sẵn hết hạn giữa loạt cũng rơi vào đây. */
+        if (p.bytes_total !== d.bytes_total) {
+          throw nga(`Ảnh ${i + 1}: tệp đổi giữa chừng (khúc 0 khai ${d.bytes_total} byte, khúc ${k} khai ${p.bytes_total}) — KHÔNG tin file '${ghi.path}'.`);
+        }
+        if (typeof p.body_base64 !== "string" || p.body_base64 === "") {
+          throw nga(`Ảnh ${i + 1} khúc ${k}: thân rỗng dù status ${p.status}. Tệp dở nằm ở '${ghi.path}'.`);
+        }
+        ghi = await goi("file.append", { path: ten, content: p.body_base64, encoding: "base64" }, tuyChon);
+      }
+
+      /* Trọng tài là KÍCH THƯỚC THẬT TRÊN ĐĨA (`size`), không phải tổng các con số ta tự cộng:
+       * cộng lấy từ chính thứ mình vừa gửi thì nó luôn khớp, kể cả khi đĩa nhận thiếu. */
+      const tongByte = Number.isInteger(d.bytes_total) ? d.bytes_total : d.bytes;
+      if (ghi.size !== tongByte) {
         /* File ĐÃ nằm trên đĩa rồi mới phát hiện lệch, nên phải gọi tên nó ra: người dọn cần biết
          * xoá cái nào, không phải biết "có một cái ở đâu đó". */
-        throw nga(`Ảnh ${i + 1}: tải về ${d.bytes} byte mà ghi ${ghi.bytes} — byte hỏng trên đường, KHÔNG tin file '${ghi.path}'.`);
+        throw nga(`Ảnh ${i + 1}: tải về ${tongByte} byte mà trên đĩa có ${ghi.size} — byte hỏng trên đường, KHÔNG tin file '${ghi.path}'.`);
       }
-      daLay.push({ src: d.source?.masked || src, file: ghi.path, bytes: ghi.bytes, selector });
+      daLay.push({ src: d.source?.masked || src, file: ghi.path, bytes: ghi.size, khuc: soKhuc, selector });
     } catch (loi) {
       /* Lỗi đã ghi chú rồi thì để nguyên; lỗi thô từ dây thì khoác thêm chỗ để file. */
       throw loi?.[DA_GHI_CHU] ? loi : nga(`Ảnh ${i + 1}: ${loi?.message || loi}.`, loi);

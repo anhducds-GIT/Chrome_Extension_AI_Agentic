@@ -40,8 +40,9 @@ function khop(ds, sel) {
 }
 
 /** @param trenTrang mảng thuộc tính của các nút ảnh — nhiều nút cùng `src` là chuyện THẬT của trang này. */
-function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiBytes = null, trenTrang = null, danhSach = [A1, A2] } = {}) {
+function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiBytes = null, trenTrang = null, danhSach = [A1, A2], soKhuc = 1 } = {}) {
   const nk = [];
+  const dia = new Map();
   /* Mặc định: mỗi src một nút, có `alt` phân biệt — ca đơn giản nhất. */
   const ds = (trenTrang || danhSach.map((src, i) => ({ src, alt: `Variation ${i + 1}` }))).map(nut);
   const goi = async (method, p) => {
@@ -56,16 +57,28 @@ function lam({ kieu = "image/webp", status = 200, than = "QUFB", bytes = 3, ghiB
       const hop = khop(ds, p.selector);
       /* Đúng như lõi thật: khớp không phải một thì TỪ CHỐI, không đoán "cái đầu tiên". */
       if (hop.length !== 1) throw new Error(`SELECTOR_AMBIGUOUS — ${hop.length} phần tử`);
+      /* HÌNH DẠNG KHÚC (`G-59`): grab thật trả về `part` · `parts` · `bytes_total`, vì một ảnh
+       * Udin (746.722 byte) lớn hơn một phong bì Bridge. Máy giả phải chở đúng ba trường đó,
+       * không thì nó lại chép cái hiểu sai của tôi — đúng bài học hai lần trong hai ngày. */
+      const k = p.part || 0;
       return {
         action: "grab", status, ok: status >= 200 && status < 300, content_type: kieu,
         bytes, body_base64: than,
+        part: k, parts: soKhuc, bytes_total: bytes * soKhuc,
         /* `masked` của grab thật dựng TRONG extension từ URL đầy đủ (`origin + pathname`) — nên
          * nó KHÔNG mang dấu `…`. Khác với `src` mà `scout.query` trả ra; hai đường, hai hình dạng. */
         source: { selector: p.selector, attribute: p.attribute, masked: String(hop[0].src).replace(/…+$/, ""), matchCount: 1 },
         write_budget: { remaining: 199 },
       };
     }
-    if (method === "file.write") return { path: p.path, bytes: ghiBytes ?? bytes, size: ghiBytes ?? bytes };
+    /* Đĩa giả GIỮ TRẠNG THÁI: `size` là tổng thật sau mỗi lượt, đúng như `ghiFile` trả về.
+     * Cộng dồn con số mình vừa gửi thì nó luôn khớp — kể cả khi đĩa nhận thiếu. */
+    if (method === "file.write" || method === "file.append") {
+      const cu = method === "file.append" ? (dia.get(p.path) || 0) : 0;
+      const them = ghiBytes ?? bytes;
+      dia.set(p.path, cu + them);
+      return { path: p.path, bytes: them, appended: method === "file.append", size: dia.get(p.path) };
+    }
     throw new Error("method lạ " + method);
   };
   return { nk, goi, timTab: async () => "TAB", dau: "2026-09-14T00:00:00.000Z" };
@@ -122,6 +135,31 @@ const grab = (nk) => nk.filter((g) => g.method === "scout.grab");
   assert.ok(k.daLay[0].selector.includes("[src^="), `phải rơi xuống src^= vì alt trùng; thật ra: ${k.daLay[0].selector}`);
   assert.ok(!k.daLay[0].selector.includes("…"), "tiền tố còn dính dấu `…` thì không khớp gì trên trang thật");
   assert.equal(ghi(t.nk)[0].p.path, `${THU_MUC}/2026-09-14T00-00-00-000Z/01-batch-2-2.webp`); }
+
+/* ⓦ GHÉP KHÚC (`G-59`) — ca THẬT: một ảnh Udin là 746.722 byte, lớn hơn một phong bì Bridge,
+ * nên grab trả về từng khúc. Khúc 0 đi `file.write` (đè), các khúc sau đi `file.append`. */
+{ const t = lam({ soKhuc: 3, danhSach: [A1] });
+  const k = await layAnh([A1], t);
+  assert.equal(grab(t.nk).length, 3, "phải xin đủ ba khúc");
+  assert.deepEqual(grab(t.nk).map((g) => g.p.part), [0, 1, 2], "đúng thứ tự, không sót không lặp");
+  const viet = t.nk.filter((g) => g.method === "file.write" || g.method === "file.append");
+  assert.deepEqual(viet.map((g) => g.method), ["file.write", "file.append", "file.append"],
+    "khúc 0 phải ĐÈ: chạy lại mà append từ đầu là nối vào đuôi một tệp dở của lượt trước");
+  assert.ok(viet.every((g) => g.p.path === viet[0].p.path), "ba khúc phải vào CÙNG một tệp");
+  assert.equal(k.daLay[0].bytes, 9, "byte báo ra là kích thước THẬT trên đĩa, không phải của một khúc");
+  assert.equal(k.daLay[0].khuc, 3); }
+
+/* ⓧ TỆP ĐỔI GIỮA CHỪNG → ĐỎ. URL ký sẵn hết hạn giữa loạt, hoặc trang thay ảnh, thì các khúc
+ * KHÔNG thuộc về nhau nữa — ghép tiếp là dựng ra một tệp hỏng trông y như tệp thật. */
+{ const t = lam({ soKhuc: 3, danhSach: [A1] }); const goc = t.goi;
+  t.goi = async (m, p) => { const r = await goc(m, p); return (m === "scout.grab" && p.part === 2) ? { ...r, bytes_total: 999 } : r; };
+  await assert.rejects(() => layAnh([A1], t), (e) => /đổi giữa chừng/.test(e.message) && /KHÔNG tin file/.test(e.message)); }
+
+/* ⓨ ĐĨA NHẬN THIẾU → ĐỎ. Trọng tài là `size` thật trên đĩa, không phải tổng các con số mình
+ * vừa gửi — cộng thứ mình gửi thì nó luôn khớp, kể cả lúc đĩa nuốt mất một khúc. */
+{ const t = lam({ soKhuc: 3, danhSach: [A1] }); const goc = t.goi;
+  t.goi = async (m, p) => { const r = await goc(m, p); return (m === "file.append" && p.content) ? { ...r, size: r.size - 1 } : r; };
+  await assert.rejects(() => layAnh([A1], t), (e) => /KHÔNG tin file/.test(e.message)); }
 
 // ⓟ THỨ TỰ ứng viên: có `id` thì dùng id và KHÔNG hỏi tới alt/src
 { const t = lam({ trenTrang: [{ src: A1, alt: "Variation 1", id: "anh-1" }] });
@@ -234,4 +272,4 @@ assert.equal(tenFile(`https://cdn.udin/a/v1.webp…`, 3), "03-v1.webp");
 assert.notEqual(tenFile("https://cdn.udin/a/v.webp", 1), tenFile("https://cdn.udin/b/v.webp", 2));
 assert.match(tenFile("https://cdn.udin/", 7), /^07-anh$/);
 
-console.log("  · udin lay-anh: 23 khối xanh");
+console.log("  · udin lay-anh: 26 khối xanh");

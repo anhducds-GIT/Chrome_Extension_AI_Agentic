@@ -537,9 +537,9 @@ const METHOD_ENTRIES = [
   registryEntry({
     name: "scout.grab", read_only: false, deadline_ms: 34000,
     description: "Download the file one element points to (its src or href), using the URL read inside the browser. The URL itself is never returned: signed URLs keep their signature out of logs and off disk. Takes a selector, never a URL, and refuses unless it matches exactly one element.",
-    params_schema: { target_id: "string", selector: "string", attribute: "src|href?" },
+    params_schema: { target_id: "string", selector: "string", attribute: "src|href?", part: "integer:0..?" },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "selector", "attribute"]);
+      const params = objectParams(raw, ["target_id", "selector", "attribute", "part"]);
       /* Danh sách TRẮNG hai tên, kiểm ở đây CHỨ KHÔNG chỉ ở lõi hành động: cửa từ vựng là chỗ
        * người gọi nhận được câu trả lời rõ ràng, và là chỗ duy nhất một tên lạ bị chặn trước
        * khi nó chạm tới trang. */
@@ -553,7 +553,11 @@ const METHOD_ENTRIES = [
       return {
         target_id: requiredTargetId(params.target_id),
         selector: requiredSelector(params.selector),
-        attribute
+        attribute,
+        /* `part` — số thứ tự khúc (`G-59`). Tệp lớn hơn một phong bì thì xin từng khúc; số khúc
+         * do máy trả về (`parts`), người gọi không phải tự tính. Không có trần trên ở đây: tệp
+         * dài bao nhiêu thì `parts` nói thật, và xin quá thì máy chủ trả `416`. */
+        part: optionalInt(params.part, "params.part", 0, Number.MAX_SAFE_INTEGER)
       };
     }
   }),
