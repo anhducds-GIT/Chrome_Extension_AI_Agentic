@@ -23,14 +23,14 @@ export function encodeFrame(payload, options = {}) {
   const fin = options.fin !== false;
   const masked = Boolean(options.masked);
   const body = payloadBuffer(payload);
-  if (![0x1, 0x8, 0x9, 0xa].includes(opcode)) throw new Error("Unsupported WebSocket opcode.");
-  if (!fin) throw new Error("Fragmented WebSocket messages are not supported.");
+  if (![0x0, 0x1, 0x8, 0x9, 0xa].includes(opcode)) throw new Error("Unsupported WebSocket opcode.");
+  if (opcode >= 0x8 && !fin) throw new Error("Control frames must not be fragmented.");
   if (opcode >= 0x8 && body.length > 125) throw new Error("Control-frame payload exceeds 125 bytes.");
   let lengthBytes = 0;
   if (body.length >= 126 && body.length <= 0xffff) lengthBytes = 2;
   else if (body.length > 0xffff) lengthBytes = 8;
   const header = Buffer.alloc(2 + lengthBytes + (masked ? 4 : 0));
-  header[0] = 0x80 | opcode;
+  header[0] = (fin ? 0x80 : 0) | opcode;
   if (!lengthBytes) header[1] = (masked ? 0x80 : 0) | body.length;
   else if (lengthBytes === 2) {
     header[1] = (masked ? 0x80 : 0) | 126;
@@ -62,6 +62,9 @@ export function createFrameDecoder(options = {}) {
   const maxPayloadBytes = Number(options.maxPayloadBytes || DEFAULT_MAX_PAYLOAD_BYTES);
   const requireMasked = options.requireMasked;
   let buffered = Buffer.alloc(0);
+  /* Tin đang ghép dở, hoặc `null`. Chrome tự cắt mảnh mọi tin vượt khoảng 64 KiB, nên đây là
+   * đường đi BÌNH THƯỜNG của một câu trả lời hơi lớn, không phải ca hiếm. */
+  let dangGhep = null;
 
   function push(chunk) {
     buffered = Buffer.concat([buffered, payloadBuffer(chunk)]);
@@ -73,8 +76,8 @@ export function createFrameDecoder(options = {}) {
       const fin = Boolean(first & 0x80);
       const opcode = first & 0x0f;
       const masked = Boolean(second & 0x80);
-      if (!fin) throw new Error("Fragmented WebSocket messages are not supported.");
-      if (![0x1, 0x8, 0x9, 0xa].includes(opcode)) throw new Error("Unsupported WebSocket opcode.");
+      if (![0x0, 0x1, 0x8, 0x9, 0xa].includes(opcode)) throw new Error("Unsupported WebSocket opcode.");
+      if (opcode >= 0x8 && !fin) throw new Error("Control frames must not be fragmented.");
       if (requireMasked === true && !masked) throw new Error("Client WebSocket frames must be masked.");
       if (requireMasked === false && masked) throw new Error("Server WebSocket frames must not be masked.");
       let offset = 2;
@@ -101,12 +104,49 @@ export function createFrameDecoder(options = {}) {
         for (let index = 0; index < payload.length; index += 1) payload[index] ^= mask[index % 4];
       }
       buffered = buffered.subarray(offset + length);
+
+      /* Khung điều khiển được CHÈN GIỮA một tin đang ghép dở (RFC 6455 §5.4) và phải xử lý ngay
+       * — nuốt một cái ping vì đang ghép dở thì kết nối chết vì quá hạn. */
+      if (opcode >= 0x8) {
+        frames.push({ fin, opcode, masked, payload, text: null });
+        continue;
+      }
+
+      /* Mảnh nối mang `opcode = 0`; mảnh đầu mang opcode thật. Hai lỗi thứ tự dưới đây là lỗi
+       * giao thức của phía kia, không phải ca chưa viết của phía này. */
+      if (opcode === 0x0 && !dangGhep) throw new Error("WebSocket continuation frame has nothing to continue.");
+      if (opcode !== 0x0 && dangGhep) throw new Error("WebSocket data frame interrupted a fragmented message.");
+
+      if (fin && !dangGhep) {
+        frames.push({
+          fin,
+          opcode,
+          masked,
+          payload,
+          text: opcode === 0x1 ? payload.toString("utf8") : null
+        });
+        continue;
+      }
+
+      /* Trần tính trên TIN ĐÃ GHÉP, không trên từng mảnh — nếu không thì mọi trần đều lách được
+       * bằng cách cắt nhỏ ra. */
+      const ghep = dangGhep || (dangGhep = { opcode, masked, manh: [], tong: 0 });
+      ghep.tong += payload.length;
+      if (ghep.tong > maxPayloadBytes) {
+        dangGhep = null;
+        throw new Error("WebSocket payload exceeds the configured limit.");
+      }
+      ghep.manh.push(payload);
+      if (!fin) continue;
+
+      const tron = Buffer.concat(ghep.manh);
+      dangGhep = null;
       frames.push({
-        fin,
-        opcode,
-        masked,
-        payload,
-        text: opcode === 0x1 ? payload.toString("utf8") : null
+        fin: true,
+        opcode: ghep.opcode,
+        masked: ghep.masked,
+        payload: tron,
+        text: ghep.opcode === 0x1 ? tron.toString("utf8") : null
       });
     }
     return frames;

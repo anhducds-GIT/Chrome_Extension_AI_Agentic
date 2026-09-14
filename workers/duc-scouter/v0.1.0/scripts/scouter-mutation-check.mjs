@@ -1206,4 +1206,45 @@ BATCHES.push({
   ]
 });
 
+/* ---- LÕI DÙNG CHUNG — GHÉP MẢNH NỐI (`T24`, `S-25`) ----------------------
+ * Lượt sửa 14/09 dạy bộ giải khung nghe được tin bị cắt mảnh. Bốn con dưới đây canh hai chiều,
+ * và chiều thứ hai mới là chiều khó: `X8` không hỏi "ghép có đúng không" mà hỏi **"lượt thêm
+ * tính năng có lỡ đổi hành vi của tin KHÔNG cắt mảnh không"** — câu duy nhất đáng sợ ở đây, vì
+ * ba gói đóng băng đang chạy trên một bản sao y hệt của file này. */
+BATCHES.push({
+  ten: "LÕI DÙNG CHUNG — ghép tin WebSocket bị cắt mảnh",
+  target: path.join(ROOT, "..", "..", "_shared", "bridge-host", "websocket-core.mjs"),
+  pin: path.join(ROOT, "..", "..", "_shared", "bridge-host", "tests", "ghep-manh-noi.mjs"),
+  mutants: [
+    {
+      ma: "X5",
+      ten: "Nuốt khung điều khiển khi đang ghép dở — ping không được trả lời, phía kia tưởng chết",
+      tim: "      if (opcode >= 0x8) {",
+      thay: "      if (opcode >= 0x8 && !dangGhep) {",
+      soLan: 1
+    },
+    {
+      ma: "X6",
+      ten: "Trần tính theo TỪNG MẢNH — mọi trần lách được bằng cách cắt nhỏ ra",
+      tim: "      if (ghep.tong > maxPayloadBytes) {",
+      thay: "      if (payload.length > maxPayloadBytes) {",
+      soLan: 1
+    },
+    {
+      ma: "X7",
+      ten: "Tin ghép xong mang opcode của MẢNH CUỐI (0) chứ không của mảnh đầu",
+      tim: "        opcode: ghep.opcode,",
+      thay: "        opcode,",
+      soLan: 1
+    },
+    {
+      ma: "X8",
+      ten: "CHIỀU NGƯỢC: khung điều khiển bỗng có `text` — tin không cắt mảnh đổi hành vi",
+      tim: "        frames.push({ fin, opcode, masked, payload, text: null });",
+      thay: "        frames.push({ fin, opcode, masked, payload, text: payload.toString(" + Q + "utf8" + Q + ") });",
+      soLan: 1
+    }
+  ]
+});
+
 process.exit(chayDotBien(BATCHES, ROOT));
