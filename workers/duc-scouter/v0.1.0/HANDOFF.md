@@ -1621,3 +1621,18 @@ Bốn tệp cố ý khác (`bridge-core` · `manifest` · `sidepanel.*` · `back
 còn nguyên đường để đạt.
 
 **Chặng ④ cần Đức:** nạp extension mới vào Chrome và bật công tắc ở bảng bên CỦA GÓI ĐÓ.
+
+## 2026-09-15f · `claude-scouter-udine` — `G-94`: thu hẹp quyền là một thay đổi HÀNH VI
+
+Ghi vào sổ giả thuyết của Scouter vì bài học thuộc về **seed**, không thuộc về gói Udin.
+
+Lượt chạy live đầu tiên của `udin-optic` (gói vừa tách ra): W1 và W2 ĐẠT, W3 chết với
+`Failed to fetch`. Gốc không phải mã — `scout.grab` gọi `fetch` **trong service worker** (bắt
+buộc, vì header `Range` giết service worker, `G-62`), nên một tên miền không khai trong
+`host_permissions` bị CORS chặn. **Ảnh Udin không nằm trên trang làm việc**, chúng nằm trên một
+bucket S3 riêng. Scouter không bao giờ gặp vì nó mở `<all_urls>`.
+
+**Điều đáng chép về đây:** bảy phép ghim của gói mới, suite gốc xanh, và một máy chủ Bridge chạy
+thật **đều không thấy** — vì không cái nào gọi ra ngoài internet. Nên với bất kỳ gói nào sinh ra
+từ seed này: *thu hẹp `host_permissions` là một thay đổi HÀNH VI, không phải một dòng khai báo*,
+và thứ duy nhất đo được nó là một lượt chạy thật.
