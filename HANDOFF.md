@@ -820,3 +820,12 @@ số vận hành nằm ngay dòng bản đồ `AGENTS.md`. Về lại **9.830/9.
 Hai lỗi của tôi ở lượt này, cổng bắt: sửa mục Log đã commit (HANDOFF là vùng **CHỈ-THÊM** —
 phải ghi mục mới), và tưởng file mới không bị tính thước (nó chỉ chưa bị tính khi còn
 **chưa track**; commit xong là vào sổ).
+
+## 2026-09-15 · `claude-bridge-read` — rút gọn ADR-0037
+
+Đức: *"32 dòng tôi thấy nhiều"*. Rà lại thì mục **Cách làm** đang kể lại đúng những gì mục
+Bối cảnh đã nói — đó mới là chỗ phình, không phải chỗ có thông tin.
+
+ADR-0037 **94 → 65 dòng**. Bốn số đo trong Bối cảnh gộp thành bốn gạch đánh số ⑴–⑷, mục
+Quyết định trỏ ngược `(⑷)` thay vì kể lại; phần thi hành còn **một khối 4 dòng**. Số không đổi:
+`limit 2 × max_chars 3000`, tăng một lần, tổng ≤ 12.000, GPT `BUDGET 250 w` mọi mode.
