@@ -257,3 +257,32 @@ cầu thật đã được đáp bằng hai tầng trên.
 · Nạp lại extension gộp đúng **một** lần, sau `U4`.
 
 Còn đúng **hai điểm dừng**, cả hai ở cuối: Đức nạp lại extension, rồi Đức ký `Scouter v1`.
+
+## 2026-09-16a · `U0`–`U4`: hai lời khai của chính lộ trình bị bác bỏ
+
+Chạy một mạch `U0`→`U4`. Hai chặng hỏng vì **tôi viết lộ trình mà chưa đo** — cùng hình dạng `G-92`.
+
+**`G-95`** — `setZoom` **không** đòi quyền `tabs`, nên `U2` không đụng manifest. Nhưng phép đo
+lật ngược chỗ đặt lớp an toàn: `setZoom` cũng **không** bị `host_permissions` chặn — nó phóng to
+được cả tab ngoài mọi quyền. Thứ duy nhất ngăn phóng nhầm tab người khác là `tab.url` bị Chrome
+**giấu**. Lớp an toàn nằm trên đường **ĐỌC**, không trên đường **GHI**: ai “chữa nút xám” bằng cách cứ
+zoom tab đang xem là gỡ mất lớp chặn duy nhất. Phép ghim: tab lạ thì `setZoom` **không được gọi**.
+
+**`G-96`** — bảng bên **không** gọi được `bridge.sessions`: extension chỉ TRẢ LỜI, ba loại khung duy
+nhất nó gửi ra dây là `auth` · `keepalive` · `rpc_response`. Mở đường phát yêu cầu = đổi luật an
+toàn → chuỗi dừng. Chữa bằng cách **đứng sang phía bên kia**: năm bước hỏi cùng những câu ấy từ
+phía extension (`scripts/kiem-nhanh.mjs`).
+
+**Làm được:** `U1` cỡ chữ bảng bên 100/110/120%, sống qua một lượt đóng/mở · `U2` thu phóng trang
+80/90/100%, nút khoá **kèm lý do** (sáu nguyên nhân, sáu câu khác nhau) · `U3` nút *Kiểm tra kết nối*,
+dừng ở bước hỏng đầu tiên, tắt máy chủ thì nói đúng *“chưa nối được máy chủ Bridge”* · `U4`
+`--du-an "<tên>"` → `<vùng-ghi>/udin-optic/<tên>/<lượt>/`, in đường đầy đủ, `--mo` mở Explorer;
+vùng ghi đọc từ `vung-ghi.txt` **ngoài repo**; tên project xấu bị từ chối kèm lý do, **trước khi
+tốn credit**.
+
+**Ba sửa dọc đường:** bảng bên in `Ctrl+Shift+X` (phím Scouter) ở đúng chỗ nói *“thấy lạ thì bấm
+cái này”* — gói này là `Ctrl+Shift+U` · `AGENTS.md` còn ghi icon *nền vàng*, Đức đã chốt **hồng
+pastel** · chặng `U4` chỉ vào `START-BRIDGE_Udin-Optic.ps1`, **tệp đó không tồn tại**.
+
+**ĐIỂM DỪNG ①.** Đức: `chrome://extensions` › Udin Optic › **Nạp lại**, rồi đóng và mở lại bảng
+bên. Một lượt nạp cho cả bốn chặng. Sau đó AI chạy E2E thật để nghiệm thu `U4` bằng ĐĨA.

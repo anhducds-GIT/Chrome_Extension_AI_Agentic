@@ -1669,3 +1669,20 @@ Việc mới của Udin ghi ở `workers/udin-optic/v0.1.0/`.
 
 **`T21` ĐÓNG.** Nấc `Scouter v1` từ hôm nay mới có nghĩa: nó được **chứng minh**, không được
 tuyên bố. Tuyên bố phiên bản là chữ ký của Đức.
+
+## 2026-09-16a · Sổ giả thuyết: `G-95` và `G-96`
+
+Phiên này làm `U0`–`U4` bên `udin-optic`; ở vùng Scouter nó chỉ **ghi hai hàng vào sổ giả
+thuyết** `v0.1.0/docs/GIA-THUYET.md` — không đổi một dòng mã nào của Scouter.
+
+**`G-95`** — `chrome.tabs.setZoom` **không** đòi quyền `tabs`, và cũng **không** bị
+`host_permissions` chặn: nó phóng to được cả một tab ngoài mọi quyền. Thứ duy nhất ngăn một tiện ích
+phóng nhầm tab người khác là `tab.url` bị Chrome giấu ở tab ngoài quyền — lớp an toàn nằm
+trên đường **ĐỌC**. **Scouter cần đọc kỹ hàng này trước `U5`**: Scouter mở `<all_urls>`, nên
+nó ĐỌC được `url` của mọi tab, tức cái khoá tự nhiên của Udin **không có ở bên đó**. Mang
+`U2` về nguyên văn là mang về một cái khoá đã mở sẵn.
+
+**`G-96`** — extension **chỉ trả lời**: ba loại khung duy nhất nó gửi ra dây là `auth`,
+`keepalive`, `rpc_response`. Nên bảng bên — cả của Udin lẫn của Scouter — **không gọi được**
+`bridge.sessions` hay bất kỳ method nào của máy chủ. Điều này giới hạn mọi bộ chẩn đoán chạy
+trong bảng bên, kể cả bản sẽ mang về Scouter ở `U5`.

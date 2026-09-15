@@ -81,6 +81,8 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `icons/icon-128.png` | biểu tượng, máy sinh |
 | `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
 | `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
+| `tests/zoom-smoke.mjs` | hai hàng nút phóng to: lõi thuần · ghim tĩnh HTML/CSS · **chạy khối thật trong** `node:vm` |
+| `tests/kiem-nhanh-smoke.mjs` | nút *Kiểm tra kết nối*: năm bước · từng câu *“làm gì tiếp”* · `engine` giả **áp đúng chữ ký** |
 | `tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này theo hình dạng |
 | `CHUOI-VIEC.md` | **việc kế tiếp là gì** — chuỗi `U0..U5` (UI) và đường ranh Udin↔Scouter |
 | `STATUS.md` | trạng thái một trang — máy đọc, `DASHBOARD` lấy số từ đây |

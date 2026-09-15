@@ -68,7 +68,7 @@ giữ tiền tố `scouter-` cố ý: nó nói ra xuất xứ, và phép so byte
 `manifest.json` · `sidepanel.*` · `background.js` · `scripts/make-icons.mjs`. Đức chốt 15/09 rằng
 **UI sẽ đổi theo usecase** — đó là lý do gói này tồn tại, đừng ghim nó lại.
 
-Icon là chữ **U** trên nền vàng, Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
+Icon là chữ **U** mận sẫm trên nền **hồng pastel** (`#FFD1DC`), Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
 tệp PNG vào: PNG là nhị phân, `git diff` không đọc được, và ba tháng nữa không ai biết nó vẽ bằng
 gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệp PNG**.
 
@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Chuoi U0..U5 o CHUOI-VIEC.md, chot 15/09 de CHAY MOT MACH. Bat dau U0: do chrome.tabs.setZoom tren ghe that (mot luot goi, khong viet ma) — no quyet dinh U2 co phai them quyen tabs khong. Roi U1 Zoom UI, U2 Zoom web, U3 Check ket noi, U4 thu muc theo project. Khong chang nao can method Bridge moi, nen khong chang nao phai dung hoi."
-- human_action: "không"
+- next_step: "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1)."
+- human_action: "CO — nap lai extension MOT lan. chrome://extensions > Udin Optic > Nap lai, roi dong va mo lai bang ben. Gop cho ca U1 U2 U3 U4."
