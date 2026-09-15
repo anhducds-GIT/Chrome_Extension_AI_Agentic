@@ -27,6 +27,12 @@ if "%~1"=="" (
 )
 set "PAIRING=%~1"
 set "ROOT=%~2"
+REM  Vung ghi lay theo thu tu: tham so thu 2  >  vung-ghi.txt canh tep ghep cap  >  anh-ra.
+REM  Doi sang o D: thi tao mot tep "vung-ghi.txt" canh tep ghep cap, trong do MOT DONG
+REM  duy nhat la duong dan, vi du:  D:\Udin\ket-xuat
+REM  Tep do nam NGOAI repo, nen no khong bao gio bi git nuot, va moi may mot duong khac nhau.
+if "%ROOT%"=="" if exist "%~dp1vung-ghi.txt" set /p ROOT=<"%~dp1vung-ghi.txt"
+if defined ROOT set "ROOT=%ROOT:"=%"
 if "%ROOT%"=="" set "ROOT=%~dp1anh-ra"
 if not exist "%ROOT%" mkdir "%ROOT%"
 echo May chu Udin Optic  ·  ghep cap: %PAIRING%

@@ -89,6 +89,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `README.md` | đường cài đặt cho người ngoài: ba lệnh, rồi một lượt chạy |
 | `HANDOFF.md` | nhật ký gói. Ghi thêm ở CUỐI, trần một mục 2.600 byte |
 | `../tu-dong/*.mjs` | **năm chặng việc** W1..W4 + e2e. Script Node gọi Bridge từ dòng lệnh |
+| `../tu-dong/thu-muc-du-an.mjs` | tên project → thư mục ra. **Từ chối tên xấu kèm lý do, KHÔNG tự sửa lén**. Đức chốt 15/09 |
 | `../tu-dong/doi-sang-jpg.mjs` | đổi ảnh vừa tải sang **JPG** (chặng cuối của E2E). Đức chốt 15/09 |
 | `../tu-dong/doi-sang-jpg.ps1` | bộ đổi thật, chạy bằng **WIC của Windows** — không thêm dependency nào |
 | `../tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói; thân ở `../../_shared/goi-bridge/` |

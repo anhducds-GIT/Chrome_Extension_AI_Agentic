@@ -123,12 +123,56 @@ function lam({ nhan = true, traLoiMoi = true, jpgHong = false } = {}) {
   assert.ok(daLay.length > 0, "W3 phải đã ghi ảnh xuống đĩa TRƯỚC khi lượt đổi hỏng");
 }
 
-/* `--khong-jpg`: chỉ muốn `.webp` thì tắt được, và tắt rồi thì KHÔNG hỏi máy chủ vùng ghi. */
+/* `--khong-jpg`: chỉ muốn `.webp` thì tắt được, và chặng JPG không được chạy lén.
+ *
+ * Lời khai CŨ ở đây là *"tắt rồi thì KHÔNG hỏi máy chủ vùng ghi"*. `U4` (16/09) làm nó SAI,
+ * và sai theo chiều đúng: nay E2E hỏi `host.capabilities` ở cuối để in ĐƯỜNG ĐẦY ĐỦ cho
+ * Đức mở thư mục. Nên sửa lời khai cho đúng sự thật mới, và giữ nguyên Ý ĐỊNH cũ bằng
+ * cách đếm: ĐÚNG MỘT lượt hỏi (của dòng in), không phải hai (dòng in + chặng JPG). */
 {
   const t = lam();
   const k = await e2e("prompt khac", { ...t, boQuaJpg: true });
   assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "W2", "W3", "W4"]);
-  assert.ok(!t.nk.some((g) => g.method === "host.capabilities"));
+  assert.equal(t.nk.filter((g) => g.method === "host.capabilities").length, 1,
+    "tắt JPG thì chỉ còn đúng một lượt hỏi vùng ghi — lượt của dòng in đường dẫn");
+  assert.equal(k.thuMucDayDu, "C:/vung-ghi-gia/udin-optic/" + k.thuMuc.split("/").pop(),
+    "phải in đường ĐẦY ĐỦ, ghép vùng ghi của máy chủ với đường tương đối");
 }
 
-console.log("  · udin e2e: 7 khối xanh");
+/* ---- U4: THƯ MỤC THEO PROJECT ------------------------------------------
+ * Ảnh phải chạy xuống đúng `<vùng-ghi>/udin-optic/<tên>/<lượt>/`, và đường ấy phải là
+ * đường THẬT đi xuống `file.write`, không phải một con số báo cáo. */
+{
+  const t = lam();
+  const k = await e2e("prompt du an", { ...t, duAn: "xe-dien-2026", boQuaJpg: true });
+  const ghi = t.nk.filter((g) => g.method === "file.write");
+  assert.ok(ghi.length > 0, "phải có lượt ghi");
+  for (const g of ghi) {
+    assert.ok(g.p.path.startsWith("udin-optic/xe-dien-2026/"),
+      `đường ghi thật phải nằm trong thư mục project, thấy: ${g.p.path}`);
+  }
+  assert.match(k.thuMucDayDu, /vung-ghi-gia[\\/]udin-optic[\\/]xe-dien-2026[\\/]/);
+}
+
+/* Không đưa `--du-an` thì hình dạng CŨ giữ nguyên — lượt chạy cũ không được gãy. */
+{
+  const t = lam();
+  await e2e("prompt khong du an", { ...t, boQuaJpg: true });
+  for (const g of t.nk.filter((g) => g.method === "file.write")) {
+    assert.match(g.p.path, /^udin-optic\/\d{4}-\d{2}-\d{2}T/,
+      "không có project thì vẫn là `udin-optic/<lượt-chạy>/`, không thêm tầng nào");
+  }
+}
+
+/* TÊN XẤU PHẢI ĐỎ TRƯỚC KHI TIÊU CREDIT. Đây là nửa quan trọng của `U4`: ném sau khi đã
+ * gửi prompt thì tiền đã mất và ảnh thì không lấy được. */
+for (const xau of ["../ra-ngoai", "co/gach", "Dự án A", "CON", "ten.", " dau-cach", ""]) {
+  const t = lam();
+  await assert.rejects(() => e2e("prompt ten xau", { ...t, duAn: xau }),
+    (e) => typeof e.message === "string" && e.message.length > 0,
+    `tên project xấu (${JSON.stringify(xau)}) phải bị từ chối`);
+  assert.deepEqual(t.nk, [],
+    `tên xấu (${JSON.stringify(xau)}) phải đỏ khi CHƯA gọi một lệnh nào — chưa tốn gì cả`);
+}
+
+console.log("  · udin e2e: 11 khối xanh");

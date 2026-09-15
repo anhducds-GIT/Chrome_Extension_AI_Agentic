@@ -32,8 +32,10 @@ import { resolve } from "node:path";
 import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { URL_UDIN } from "./qua-man-cho.mjs";
 import { SEL } from "./gui-prompt.mjs";
+import { THU_MUC_GOC, duongThuMuc } from "./thu-muc-du-an.mjs";
 
-export const THU_MUC = "udin-optic";
+/* Giữ tên cũ làm bí danh: hai script và một phép ghim đang nhập nó từ đây. */
+export const THU_MUC = THU_MUC_GOC;
 
 /* Dấu RIÊNG của module, không phải một tên thuộc tính ai cũng gõ được: một lỗi từ dây mang sẵn
  * trường tên `daGhiChu` sẽ lách qua lượt ghi chú (audit độc lập vòng 3, 14/09). */
@@ -141,8 +143,10 @@ export async function layAnh(dsSrc = null, tuyChon = {}) {
   const ds = tuTrang ? [...new Set(tren.map((a) => a.src))] : dsSrc;
   if (ds.length === 0) throw new Error("Không có ảnh kết quả nào trên trang — chưa chạy lượt nào?");
 
+  /* `duongThuMuc` **ném** khi tên project xấu, và ném Ở ĐÂY là cố ý: trước khi tải một byte
+   * nào. Ném sau khi đã tải thì ảnh nằm ở một chỗ không ai định đặt, và credit thì đã tiêu. */
   const dau = (tuyChon.dau || new Date().toISOString()).replace(/[:.]/g, "-");
-  const thuMuc = `${THU_MUC}/${dau}`;
+  const thuMuc = duongThuMuc({ duAn: tuyChon.duAn ?? null, dau });
   const daLay = [];
   /* Hỏng giữa chừng thì file đã ghi VẪN NẰM TRÊN ĐĨA — lời báo phải nói ra chỗ đó, không chỉ
    * nói ra con số, không thì người dọn phải đi mò. Lỗi NÉM TỪ DÂY (`goi` ném khi máy chủ trả
