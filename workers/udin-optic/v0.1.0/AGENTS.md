@@ -8,7 +8,7 @@
 Extension Chrome cục bộ chạy việc sinh ảnh trên `vinfast.udinbv.com`: vượt màn chờ → gửi prompt
 → đợi ảnh mới → lấy ảnh về đĩa. Tách khỏi `duc-scouter` ngày 15/09 (`T21`).
 
-## Luật vàng — bảy điều riêng của gói này, đừng đảo lại
+## Luật vàng — tám điều riêng của gói này, đừng đảo lại
 
 **⑴ Từ vựng ĐÓNG ở mười hai lệnh.** `session.hello` · `system.capabilities` · `system.ping` ·
 `scout.targets` · `scout.query` · `scout.text` · `scout.wait` · `scout.click` · `scout.type` ·
@@ -42,6 +42,11 @@ lặng" — `hnx-fetch` mất một buổi vì đúng chuyện đó ngày 08/09.
 `"scouter-seed-v0.1"` vào `session.hello` và `system.ping`, nên `background.js` **đè** hai handler
 đó. Đừng sửa tệp chép cho gọn — mất phép so byte trên đúng tệp chứa cái phanh. Khối ⑺ canh cái đè
 và canh hai chỗ khai tên phải KHỚP nhau.
+
+**⑻ Ảnh gốc `.webp` KHÔNG BAO GIỜ bị xoá.** Lượt đổi sang JPG chỉ **thêm** tệp. Xoá dữ liệu gốc
+là việc phải hỏi Đức (luật gốc), và chính máy chủ Bridge cũng cố ý không có `file.delete` vì đúng
+lý do đó. Và đừng tin lời khai của bộ đổi: mỗi tệp ra phải được đọc lại và kiểm **ba byte đầu
+`FF D8 FF`** — "xong" mà không kiểm đĩa là một xanh giả.
 
 **⑺ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, chỉ tay Đức
 mở lại được. Phím phanh `Ctrl+Shift+U` — **khác Scouter cố ý**: hai extension xin cùng một tổ hợp
@@ -80,6 +85,8 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `README.md` | đường cài đặt cho người ngoài: ba lệnh, rồi một lượt chạy |
 | `HANDOFF.md` | nhật ký gói. Ghi thêm ở CUỐI, trần một mục 2.600 byte |
 | `../tu-dong/*.mjs` | **năm chặng việc** W1..W4 + e2e. Script Node gọi Bridge từ dòng lệnh |
+| `../tu-dong/doi-sang-jpg.mjs` | đổi ảnh vừa tải sang **JPG** (chặng cuối của E2E). Đức chốt 15/09 |
+| `../tu-dong/doi-sang-jpg.ps1` | bộ đổi thật, chạy bằng **WIC của Windows** — không thêm dependency nào |
 | `../tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói; thân ở `../../_shared/goi-bridge/` |
 | `../tu-dong/tests/*.mjs` | năm phép ghim của tầng chạy việc |
 | `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — máy chủ Bridge. Luật của vùng: `workers/_shared/AGENTS.md` |

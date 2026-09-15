@@ -47,6 +47,20 @@ rồi tự đóng. Không lệnh Bridge nào bật được nó — chỉ tay Đ
 tổ hợp thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phanh lúc bảng bên đóng.
 Nếu phím bị gói khác chiếm, đặt lại ở `chrome://extensions/shortcuts`.
 
+## Ảnh lưu ra dạng gì
+
+Udin trả ảnh **WebP** và không có tham số nào đổi được ở đầu kia, nên E2E tự đổi sang **JPG** ở
+chặng cuối — bằng **WIC của Windows**, không cài thêm gì. **Ảnh `.webp` gốc giữ nguyên**, lượt đổi
+chỉ thêm tệp; muốn chỉ còn JPG thì xoá tay.
+
+Chỉ muốn `.webp`: thêm `--khong-jpg`. Đổi lại một thư mục đã tải về trước đó:
+
+```bash
+node workers/udin-optic/tu-dong/doi-sang-jpg.mjs "udin-optic/<thư-mục-lượt-chạy>"
+```
+
+**Chỉ chạy trên Windows** — repo đã Windows-only ở nhiều chỗ, nhưng chỗ này khai ra chứ không giấu.
+
 ## Gói này KHÔNG làm được gì
 
 Không dò trang lạ — `scout.page`, `scout.tree`, `scout.a11y`, `scout.shot`, `scout.network`

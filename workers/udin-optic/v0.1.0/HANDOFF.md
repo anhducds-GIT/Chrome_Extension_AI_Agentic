@@ -167,3 +167,34 @@ và đã qua**.
 **Chặng ④ cần đúng hai lượt chạy live để đóng**, và lượt đầu không phí: nó đẻ ra `G-94` (ảnh nằm
 trên S3, không trên trang làm việc), thứ mà bảy phép ghim + suite gốc + máy chủ chạy thật đều
 không thấy.
+
+## 2026-09-15g · `claude-scouter-udine` — ảnh ra **JPG**, và không thêm một dependency nào
+
+Đức 15/09: *"ảnh lưu về là .webp. Tôi muốn JPG"*. Udin trả WebP trên S3 và không có tham số nào
+đổi định dạng ở đầu kia, nên việc đổi phải làm ở đầu này.
+
+**Chỗ khó, và nó không nằm ở JavaScript:** Node **không giải mã được WebP**, mà repo này có
+**đúng không dependency nào**. Thêm `sharp` (nhị phân native, vài chục MB) vào một repo
+không-dependency là một thay đổi kiến trúc — để lấy một việc **Windows đã làm sẵn**: WIC có codec
+WebP từ Windows 10 1809, và `PresentationCore` gọi thẳng nó. Đo trước khi viết một dòng nào: ảnh
+Udin 1728×1728 giải mã và ghi JPG được, **không cài gì**.
+
+Giá phải trả đã khai chứ không giấu: **chỉ chạy trên Windows**. Repo đã Windows-only ở nhiều chỗ
+(nhà chung, bộ khởi động `.cmd`), nên đây không phải ràng buộc MỚI.
+
+**Hai chốt trong thiết kế:**
+· **Ảnh gốc `.webp` KHÔNG bị xoá** — xoá dữ liệu gốc phải hỏi Đức, và chính máy chủ Bridge cũng
+  cố ý không có `file.delete`. Lượt đổi chỉ **thêm** tệp.
+· **Không tin lời khai của bộ đổi.** PowerShell nói "xong" mới chỉ là một câu; mỗi tệp ra được đọc
+  lại và kiểm **ba byte đầu `FF D8 FF`**, cộng số byte thật trên đĩa. Cùng kỷ luật với lượt kiểm
+  `RIFF…WEBP` của `lay-anh.mjs`.
+
+**Chặng `JPG` đứng SAU `W3`, trước `W4`** — cùng lý do W4 đứng cuối: lượt đổi hỏng thì ảnh đã nằm
+nguyên trên đĩa. `--khong-jpg` tắt được.
+
+**Chạy thật trên bốn ảnh của lượt E2E:** 786.870 → 746.455 · 959.068 → 922.290 · 964.148 →
+914.480 · 943.476 → 889.895 byte, giữ nguyên 1728×1728.
+
+5 khối ghim mới; khối ⓐ chạy **PowerShell thật** trên icon PNG của chính gói — vì thứ đáng nghi ở
+đây là *"Windows làm được không"*, và một máy giả cho câu đó chỉ hỏi lại niềm tin của tôi. Suite
+gói: **8 xanh**. Đột biến bỏ phép kiểm `FF D8 FF` → **chết**.

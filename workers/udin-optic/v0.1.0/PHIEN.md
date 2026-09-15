@@ -81,6 +81,11 @@ lặng" — `hnx-fetch` mất một buổi vì đúng chuyện đó ngày 08/09.
 đó. Đừng sửa tệp chép cho gọn — mất phép so byte trên đúng tệp chứa cái phanh. Khối ⑺ canh cái đè
 và canh hai chỗ khai tên phải KHỚP nhau.
 
+**⑻ Ảnh gốc `.webp` KHÔNG BAO GIỜ bị xoá.** Lượt đổi sang JPG chỉ **thêm** tệp. Xoá dữ liệu gốc
+là việc phải hỏi Đức (luật gốc), và chính máy chủ Bridge cũng cố ý không có `file.delete` vì đúng
+lý do đó. Và đừng tin lời khai của bộ đổi: mỗi tệp ra phải được đọc lại và kiểm **ba byte đầu
+`FF D8 FF`** — "xong" mà không kiểm đĩa là một xanh giả.
+
 **⑺ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, chỉ tay Đức
 mở lại được. Phím phanh `Ctrl+Shift+U` — **khác Scouter cố ý**: hai extension xin cùng một tổ hợp
 thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phanh lúc bảng bên đóng.

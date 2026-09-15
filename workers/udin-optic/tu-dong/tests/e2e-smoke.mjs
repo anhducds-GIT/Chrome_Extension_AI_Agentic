@@ -9,13 +9,19 @@ import { SEL } from "../gui-prompt.mjs";
 const CU = "Here are a few options for a red car.";
 const MOI = "Here are some options for the bronze desk lamp.";
 
-function lam({ nhan = true, traLoiMoi = true } = {}) {
+/* Bộ đổi JPG giả: trả đúng hình dạng mà `.ps1` in ra, một dòng JSON mỗi tệp. Ảnh THẬT không có
+ * ở đây nên `doiSangJpg` sẽ kiểm `FF D8 FF` và đỏ — nên phép ghim này tiêm luôn `laJpeg` giả.
+ * Việc kiểm ấy đã có bộ ghim RIÊNG chạy PowerShell thật (`doi-sang-jpg-smoke.mjs` khối ⓐ). */
+function lam({ nhan = true, traLoiMoi = true, jpgHong = false } = {}) {
   const nk = [];
   const trang = { chu: "", chay: false, vong: 0, traLoi: CU, anh: ["https://cdn.udin/cu-1.webp", "https://cdn.udin/cu-2.webp"] };
   const q = (n, items = [], hasMore = false) => ({ data: { matchCount: n, items, hasMore } });
   const goi = async (method, p) => {
     nk.push({ method, p });
     if (method === "scout.navigate") return { data: { ok: true } };
+    /* Chặng JPG hỏi máy chủ vùng ghi ở đâu. Trang giả trả lời để chặng đó chạy THẬT trong phép
+     * ghim này — bỏ qua nó bằng `boQuaJpg` thì thứ tự chặng không còn được canh. */
+    if (method === "host.capabilities") return { write_root: "C:/vung-ghi-gia" };
     if (method === "scout.query") {
       if (p.selector === ".concurrency-overlay") return q(0);
       if (p.selector === SEL.anhKetQua) return q(trang.anh.length, trang.anh.map((src) => ({ attributes: { src } })), false);
@@ -55,16 +61,24 @@ function lam({ nhan = true, traLoiMoi = true } = {}) {
     if (method === "file.write") return { path: p.path, bytes: 3, size: 3 };
     throw new Error("method lạ " + method + " " + (p.selector || ""));
   };
-  return { nk, goi, timTab: async () => "TAB", ngu: async () => {}, buocMs: 0, dau: "2026-09-14T00:00:00.000Z" };
+  const chay = async () => (jpgHong
+    ? JSON.stringify({ nguon: "moi-1.webp", loi: "codec khong ho tro" })
+    : ["moi-1", "moi-2"].map((t, i) => JSON.stringify({ nguon: t + ".webp", ra: t + ".jpg", byteNguon: 100 + i, byteRa: 90 + i, rong: 8, cao: 8 })).join(String.fromCharCode(10)));
+  return { nk, goi, chay, laJpeg: () => true, co: () => null, timTab: async () => "TAB", ngu: async () => {}, buocMs: 0, dau: "2026-09-14T00:00:00.000Z" };
 }
 
 // ⓐ bốn chặng đúng thứ tự, và W3 ghi ĐÚNG hai ảnh mới — không ghi lại hai ảnh cũ
 { const t = lam();
   const k = await e2e("a blue kite", t);
-  assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "W2", "W3", "W4"]);
-  assert.equal(k.chang[2].daLay.length, 2);
+  /* JPG đứng SAU W3 và TRƯỚC W4, và thứ tự đó là một chốt: lượt đổi hỏng thì ảnh `.webp` đã
+   * nằm nguyên trên đĩa, không mất gì. Đặt nó trước W3 là đổi một thứ chưa tải về. */
+  assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "W2", "W3", "JPG", "W4"]);
+  assert.equal(k.chang.find((c) => c.chang === "JPG").so, 2, "hai ảnh mới thì hai tệp JPG");
+  assert.equal(k.chang.find((c) => c.chang === "W3").daLay.length, 2);
   /* W4 phải trả câu MỚI, không phải câu đang có trên trang lúc bắt đầu */
-  assert.equal(k.chang[3].chu, MOI);
+  /* Tra theo TEN chặng, không theo chỉ số: chèn một chặng mới vào giữa thì chỉ số trôi, và một
+   * phép ghim trôi theo thì nó thôi canh cái nó sinh ra để canh. */
+  assert.equal(k.chang.find((c) => c.chang === "W4").chu, MOI);
   /* và nó đứng SAU lượt ghi ảnh — đọc chữ trước khi ảnh xuống đĩa là đọc giữa chừng */
   assert.ok(t.nk.findLastIndex((g) => g.method === "file.write") < t.nk.findLastIndex((g) => g.method === "scout.text")); }
 
@@ -76,7 +90,7 @@ function lam({ nhan = true, traLoiMoi = true } = {}) {
 // ⓐ3 chỉ ghi ảnh của lượt này, và ghi SAU khi gửi
 { const t = lam();
   const k = await e2e("a slate coaster", t);
-  assert.equal(k.chang.length, 4);
+  assert.equal(k.chang.length, 5);
   const daGhi = t.nk.filter((g) => g.method === "file.write").map((g) => g.p.path);
   assert.equal(daGhi.length, 2, "chỉ ghi ảnh của lượt này");
   assert.ok(daGhi.every((p) => /moi-/.test(p)), `phải là ảnh mới, thấy ${daGhi.join(" ")}`);
@@ -99,5 +113,22 @@ function lam({ nhan = true, traLoiMoi = true } = {}) {
   await assert.rejects(() => e2e("a red gate", t), /không chạy/);
   assert.equal(t.nk.filter((g) => g.method === "file.write").length, 0);
   assert.equal(t.nk.filter((g) => g.method === "scout.grab").length, 0); }
+
+/* ⓩ Lượt đổi JPG hỏng thì ĐỎ, nhưng ảnh của W3 đã an toàn trên đĩa — và W3 phải đã chạy xong
+ * trước đó. Im lặng bỏ qua lượt đổi thì Đức mở thư mục ra thấy `.webp` và tưởng lệnh chạy đúng. */
+{
+  const t = lam({ jpgHong: true });
+  await assert.rejects(() => e2e("prompt moi", t), /hỏng 1 tệp/);
+  const daLay = t.nk.filter((g) => g.method === "file.write" || g.method === "file.append");
+  assert.ok(daLay.length > 0, "W3 phải đã ghi ảnh xuống đĩa TRƯỚC khi lượt đổi hỏng");
+}
+
+/* `--khong-jpg`: chỉ muốn `.webp` thì tắt được, và tắt rồi thì KHÔNG hỏi máy chủ vùng ghi. */
+{
+  const t = lam();
+  const k = await e2e("prompt khac", { ...t, boQuaJpg: true });
+  assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "W2", "W3", "W4"]);
+  assert.ok(!t.nk.some((g) => g.method === "host.capabilities"));
+}
 
 console.log("  · udin e2e: 7 khối xanh");
