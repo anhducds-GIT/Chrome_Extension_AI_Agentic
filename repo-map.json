@@ -154,13 +154,13 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "Chuoi U0..U5 o CHUOI-VIEC.md, chot 15/09 de CHAY MOT MACH. Bat dau U0: do chrome.tabs.setZoom tren ghe that (mot luot goi, khong viet ma) — no quyet dinh U2 co phai them quyen tabs khong. Roi U1 Zoom UI, U2 Zoom web, U3 Check ket noi, U4 thu muc theo project. Khong chang nao can method Bridge moi, nen khong chang nao phai dung hoi.",
-      "human_action": "không",
+      "next_step": "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1).",
+      "human_action": "@Đức:bấm — nap lai extension MOT lan. chrome://extensions > Udin Optic > Nap lai, roi dong va mo lai bang ben. Gop cho ca U1 U2 U3 U4.",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? U4 da chot: thu muc ra chia HAI TANG — vung ghi la thiet lap cua may (Duc dat mot lan, doi duoc sang o D bang mot dong cau hinh), thu muc con la <du-an>/<luot-chay> do AI dat theo tung job. Ca hai VAN nam sau may chu Bridge, nen giu nguyen chot vung-ghi. Duong showDirectoryPicker cua ba goi duc-auto-* CHET — no vut bo ca duong ghi da co phep ghim de doi lay mot hop thoai. CON DUNG HAI DIEM, ca hai o cuoi: (1) Duc nap lai extension MOT lan sau U4; (2) Duc ky Scouter v1 sau U5."
+      "open_item": "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."
     }
   ],
   "active_work": [
@@ -209,7 +209,7 @@
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "Chuoi U0..U5 o CHUOI-VIEC.md, chot 15/09 de CHAY MOT MACH. Bat dau U0: do chrome.tabs.setZoom tren ghe that (mot luot goi, khong viet ma) — no quyet dinh U2 co phai them quyen tabs khong. Roi U1 Zoom UI, U2 Zoom web, U3 Check ket noi, U4 thu muc theo project. Khong chang nao can method Bridge moi, nen khong chang nao phai dung hoi.",
+      "title": "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1).",
       "rank": 5,
       "claim": null
     }
