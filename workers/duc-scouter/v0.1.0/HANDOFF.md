@@ -1659,3 +1659,13 @@ một máy chủ chạy thật đều không thấy, vì không cái nào gọi 
 từ seed này mà thu quyền lại thì phải có một lượt chạy live trước khi tin.**
 
 Còn lại của `T21`: chặng ⑤ — dọn sổ.
+
+## 2026-09-15h · `claude-scouter-udine` — `T21` chặng ⑤: Udin rời khỏi sổ của Scouter
+
+`CAPABILITIES.md` · bảng theo dõi đầu `CHUOI-VIEC.md` · `TRIALS.md`. Bảng `W1..W8` **ở lại** sổ
+này, và cố ý: nó không còn là danh sách việc của Scouter mà là **bằng chứng seed dùng chung
+được** — bốn chặng E2E ĐẠT từ một extension khác trong khi `git status workers/duc-scouter` sạch.
+Việc mới của Udin ghi ở `workers/udin-optic/v0.1.0/`.
+
+**`T21` ĐÓNG.** Nấc `Scouter v1` từ hôm nay mới có nghĩa: nó được **chứng minh**, không được
+tuyên bố. Tuyên bố phiên bản là chữ ký của Đức.
