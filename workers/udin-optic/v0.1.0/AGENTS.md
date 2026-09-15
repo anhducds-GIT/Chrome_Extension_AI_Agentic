@@ -72,6 +72,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
 | `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
 | `scripts/make-icons.mjs` | **RIÊNG** — sinh bộ icon chữ **U**. Icon là MÃ NGUỒN, không phải cục nhị phân mồ côi |
+| `scripts/zoom-core.mjs` | **RIÊNG** — lõi thuần của hai hàng nút phóng to. Tách ra để phép ghim **gọi được hàm thật** thay vì dò chữ trong `sidepanel.js` |
 | `scripts/do-quyen-zoom.mjs` | **RIÊNG** — phép đo `U0`: `setZoom` có đòi quyền `tabs` không. Chrome sạch, không đụng ghế Đức (`G-95`) |
 | `icons/icon-16.png` | biểu tượng, **máy sinh** — đừng sửa tay, chạy lại `make-icons.mjs` |
 | `icons/icon-32.png` | biểu tượng, máy sinh |

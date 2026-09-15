@@ -21,6 +21,7 @@ import { capabilities } from "./scripts/bridge-core.mjs";
 import { JOURNAL_CONSTANTS, nanSo, tenMien, tinhTienDo } from "./scripts/scouter-journal-core.mjs";
 import { validatePairing, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
+import { KHOA_ZOOM_UI, chuanHoaZoomUi, trungMuc, xetTabDangXem, MIEN_UDIN } from "./scripts/zoom-core.mjs";
 
 const engine = new ScouterEngine();
 const $ = (chon) => document.querySelector(chon);
@@ -467,6 +468,118 @@ chrome.storage.onChanged.addListener((doi, vung) => {
   if (doi[TRANSPORT_CONSTANTS.INSTANCE_STORAGE_KEY] || doi[TRANSPORT_CONSTANTS.INSTANCE_LABEL_STORAGE_KEY]) veTenGhe();
 });
 
+/* ---- CỠ CHỮ BẢNG BÊN -------------------------------------------------------
+ * `zoom` của CSS, không phải `chrome.tabs.setZoom`: hai thứ khác hẳn nhau và hàng nút
+ * này **không đụng tới trang web** — nó chỉ đổi cỡ chữ của chính bảng này, nên nó không
+ * cần quyền gì, không cần tab nào đang mở, và không bao giờ xám. */
+const nutZoomUi = () => Array.from(document.querySelectorAll(".zoom-nut[data-ui-zoom]"));
+
+function apZoomUi(muc) {
+  const chon = chuanHoaZoomUi(muc);
+  document.documentElement.style.setProperty("--udin-ui-zoom", String(chon));
+  for (const nut of nutZoomUi()) doLop(nut, "chon", Number(nut.dataset.uiZoom) === chon);
+  return chon;
+}
+
+/* Kho lưu hỏng thì về 100% — bảng bên vẫn dùng được. Một tính năng tiện nghi không
+ * được phép làm chết cả bảng. */
+async function khoiPhucZoomUi() {
+  let luu = 1;
+  try {
+    const v = await chrome.storage.local.get(KHOA_ZOOM_UI);
+    luu = v?.[KHOA_ZOOM_UI] ?? 1;
+  } catch { /* kho lưu không đọc được thì mặc định vẫn chạy */ }
+  return apZoomUi(luu);
+}
+
+for (const nut of nutZoomUi()) {
+  nut.addEventListener("click", () => {
+    const chon = apZoomUi(nut.dataset.uiZoom);
+    /* Ghi SAU khi đã chuẩn hoá: kho lưu không bao giờ giữ một mức không có nút nào. */
+    chrome.storage?.local?.set({ [KHOA_ZOOM_UI]: chon })?.catch?.(() => {});
+  });
+}
+
+khoiPhucZoomUi();
+
+/* ---- THU PHÓNG TRANG WEB ---------------------------------------------
+ * Gọi THẬNG `chrome.tabs.setZoom`, **không đi qua Bridge**: nó không gửi gì, không gõ gì,
+ * nên nó không phải một hành động GHI và không cần thêm một method nào vào từ vựng 12 lệnh.
+ *
+ * Đọc kỹ chỗ này trước khi "chữa" nó (`G-95`, đo 16/09): `setZoom` **KHÔNG** bị
+ * `host_permissions` chặn — nó phóng to được cả một tab hoàn toàn ngoài quyền. Thứ duy
+ * nhất ngăn Udin phóng nhầm tab của người khác là `tab.url` bị Chrome GIẤU ở tab ngoài
+ * quyền. Nên lớp an toàn nằm trên đường ĐỌC: **không đọc được `url` thì KHOÁ NÚT.**
+ * Ai "chữa lỗi nút xám" bằng cách cứ zoom tab đang xem là vừa gỡ mất lớp chặn duy nhất.
+ *
+ * GIỚI HẠN, nói thẳng: `getZoom` chứng minh **Chrome đã nhận lệnh thu phóng**, nó KHÔNG
+ * chứng minh **trang đã vẽ lại**. Muốn chứng minh điều thứ hai thì phải đo trong trang, mà
+ * `scout.view` không nằm trong 12 lệnh của gói này. Với một nút giao diện thì thế là đủ. */
+const nutZoomWeb = () => Array.from(document.querySelectorAll(".zoom-nut[data-web-zoom]"));
+const NHOM_ZOOM_WEB = "Thu phóng trang Udin";
+
+/* Nút xám phải TỰ KHAI vì sao. Bốn nguyên nhân khác hẳn nhau mà cùng cho ra một nút xám câm
+ * thì "nút zoom hỏng" là tất cả những gì Đức gõ được vào chat, và không ai chẩn đoán được từ
+ * xa. Đặt tooltip lên CẢ cụm lẫn từng nút: nút `disabled` không phát sự kiện chuột ở mọi
+ * trình duyệt, nên chỉ gắn lên cụm là có chỗ rê chuột vào mà không hiện gì. */
+function khoaZoomWeb(vi) {
+  const nhan = vi ? `Chưa dùng được — ${vi}` : NHOM_ZOOM_WEB;
+  for (const nut of nutZoomWeb()) { nut.disabled = true; doLop(nut, "chon", false); nut.title = nhan; }
+  const cum = document.getElementById("zoom-web-nhom");
+  if (cum) cum.title = nhan;
+}
+
+function moZoomWeb() {
+  for (const nut of nutZoomWeb()) { nut.disabled = false; nut.title = NHOM_ZOOM_WEB; }
+  /* Dọn lý do CŨ trên cụm. Không dọn thì Đức thấy một câu cảnh báo đã hết hạn trong khi
+     nút đang bấm được bình thường. */
+  const cum = document.getElementById("zoom-web-nhom");
+  if (cum) cum.title = NHOM_ZOOM_WEB;
+}
+
+async function tabUdinDangXem() {
+  if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+    return { dung: false, vi: "chưa gọi được API tab của Chrome, thử nạp lại tiện ích", tab: null };
+  }
+  let tab = null;
+  try { [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); }
+  catch (loi) { return { dung: false, vi: `không đọc được tab đang xem (${loi?.message || loi})`, tab: null }; }
+  return { ...xetTabDangXem(tab, MIEN_UDIN), tab };
+}
+
+async function veZoomWeb() {
+  if (!nutZoomWeb().length) return;
+  const xet = await tabUdinDangXem();
+  if (!xet.dung) { khoaZoomWeb(xet.vi); return; }
+  try {
+    const muc = await chrome.tabs.getZoom(xet.tab.id);
+    moZoomWeb();
+    for (const nut of nutZoomWeb()) doLop(nut, "chon", trungMuc(muc, Number(nut.dataset.webZoom)));
+  } catch (loi) {
+    khoaZoomWeb(`Chrome từ chối đọc mức thu phóng (${loi?.message || loi})`);
+  }
+}
+
+for (const nut of nutZoomWeb()) {
+  nut.addEventListener("click", async () => {
+    /* HỬI LẠI tab ngay trước khi đặt, không dùng kết quả cũ: Đức đổi tab xong mới bấm thì
+       kết quả cũ trỏ sang tab khác, và `setZoom` sẵn sàng phóng to tab đó (`G-95`). */
+    const xet = await tabUdinDangXem();
+    if (!xet.dung) { khoaZoomWeb(xet.vi); return; }
+    try {
+      await chrome.tabs.setZoom(xet.tab.id, Number(nut.dataset.webZoom));
+      await veZoomWeb();
+    } catch (loi) {
+      khoaZoomWeb(`đặt mức thu phóng không thành (${loi?.message || loi})`);
+    }
+  });
+}
+
+/* Đức đổi tab thì hàng nút phải đổi theo. Bọc `try` vì đây là tiện nghi: thiếu nó thì
+ * hàng nút chỉ cũ một nhịp cho đến lượt bấm sau, không phải một lỗi. */
+try { chrome.tabs?.onActivated?.addListener(() => { veZoomWeb(); }); } catch { /* tiện nghi, bỏ qua */ }
+
+veZoomWeb();
 veNangLuc();
 veBridge().then(veSo);
 veTenGhe();

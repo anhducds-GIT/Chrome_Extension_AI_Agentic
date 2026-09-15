@@ -16,6 +16,23 @@
           <span id="bridge-badge" class="huy-hieu">Đang đọc…</span>
         </div>
         <p class="mo">Quan sát trang · báo cáo qua Bridge · tự nạp lại mình.</p>
+        <!-- ĐẶT Ở HEADER, không đặt trong thẻ "Hệ thống": Đức chỉnh cỡ chữ đúng lúc đang
+             đọc không ra, và bắt đi tìm sang thẻ khác để chỉnh là bắt đọc thêm một màn nữa. -->
+        <div class="zoom-hang" role="group" aria-label="Cỡ chữ bảng bên">
+          <span class="mo">Cỡ chữ</span>
+          <button class="zoom-nut" type="button" data-ui-zoom="1">100%</button>
+          <button class="zoom-nut" type="button" data-ui-zoom="1.1">110%</button>
+          <button class="zoom-nut" type="button" data-ui-zoom="1.2">120%</button>
+        </div>
+        <!-- THU PHÓNG TRANG. Ba nút này ship ở trạng thái **TẮT**, và đó là cố ý: chúng chỉ được
+             bật sau khi đọc được một tab Udin thật. Ship ở trạng thái BẬT thì một đột biến xoá
+             lượt mở khoá vẫn xanh — bài học đã trả giá ở gói Gemini. -->
+        <div class="zoom-hang" id="zoom-web-nhom" role="group" aria-label="Thu phóng trang Udin">
+          <span class="mo">Trang web</span>
+          <button class="zoom-nut" type="button" data-web-zoom="0.8" disabled>80%</button>
+          <button class="zoom-nut" type="button" data-web-zoom="0.9" disabled>90%</button>
+          <button class="zoom-nut" type="button" data-web-zoom="1" disabled>100%</button>
+        </div>
       </header>
 
       <!-- CÔNG TẮC. Cố ý KHÔNG gọi là "phanh": công tắc này BẬT thì Udin Optic được ghi, nên
@@ -33,7 +50,7 @@
         </div>
         <p id="gate-note" class="mo">Đang đọc trạng thái công tắc…</p>
         <div class="cong-tac-day">
-          <span class="phim">Ctrl + Shift + X</span>
+          <span class="phim">Ctrl + Shift + U</span>
           <span class="mo">Dừng khẩn — chỉ tắt được, không bật được</span>
         </div>
       </section>
@@ -178,7 +195,7 @@
             <li>Bật máy chủ Bridge trên máy, rồi chọn tệp ghép cặp ở khối trên cùng.</li>
             <li>Mở trang web muốn thuần hoá. Để AI gửi lệnh xuống qua Bridge.</li>
             <li>Muốn AI <strong>bấm hoặc gõ</strong> thì bật công tắc ở đầu bảng. Mỗi lần bật được 200 lượt.</li>
-            <li>Thấy AI làm gì lạ thì nhấn <strong>Ctrl + Shift + X</strong> — tắt ngay, kể cả khi bảng này đã đóng.</li>
+            <li>Thấy AI làm gì lạ thì nhấn <strong>Ctrl + Shift + U</strong> — tắt ngay, kể cả khi bảng này đã đóng.</li>
           </ol>
         </details>
       </section>
