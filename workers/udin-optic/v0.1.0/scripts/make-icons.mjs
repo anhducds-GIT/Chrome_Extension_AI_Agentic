@@ -1,4 +1,4 @@
-/* make-icons.mjs — sinh bộ icon của Udin Optic: chữ **U** trên nền vuông bo góc.
+/* make-icons.mjs — sinh bộ icon của Udin Optic: chữ **U** mận sẫm trên nền **hồng pastel**.
  *
  * Chép từ `duc-scouter/v0.1.0/scripts/make-icons.mjs` và đổi đúng phần VẼ CHỮ. Phần đóng gói
  * PNG, khử răng cưa, và nền bo góc giữ nguyên từng dòng.
@@ -30,8 +30,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const THU_MUC_RA = join(HERE, "..", "icons");
 
 /* ---- Hai thứ duy nhất đáng đổi ------------------------------------------ */
-const NEN = [255, 193, 7, 255];        // NỀN vàng hổ phách #FFC107 — cùng tông với Scouter
-const CHU = [26, 22, 4, 255];          // chữ U nâu gần đen, để nổi trên nền vàng
+const NEN = [255, 209, 220, 255];      // NỀN hồng pastel #FFD1DC (Đức chốt 15/09)
+const CHU = [92, 34, 51, 255];         // chữ U mận sẫm #5C2233 — nền pastel rất sáng nên chữ
+                                       // phải SẪM, không dùng lại tông hồng; hồng trên hồng là
+                                       // không còn chữ nào ở cỡ 16px.
 /* ------------------------------------------------------------------------- */
 
 const CO = [16, 32, 48, 128];
@@ -90,7 +92,12 @@ function phu(duoi, tren, a) {
 
 export function veIcon(co) {
   /* Nét dày lên ở cỡ nhỏ: 0.115 ở 128px cho ra chưa tới 2 điểm ảnh ở 16px, và một chữ U dày
-   * 1 điểm ảnh thì ở thanh công cụ nhìn ra vệt bẩn chứ không ra chữ. */
+   * 1 điểm ảnh thì ở thanh công cụ nhìn ra vệt bẩn chứ không ra chữ.
+   *
+   * NỀN PASTEL ĐÁNH ĐỔI MỘT THỨ, và nói ra để lần sau khỏi tưởng là hỏng: một ô hồng rất sáng
+   * gần như biến mất trên thanh công cụ CHẾ ĐỘ SÁNG (nền gần trắng). Ở chế độ tối thì nổi rõ.
+   * Vàng hổ phách của Scouter nổi trên cả hai. Đây là lựa chọn của Đức, không phải một vệt
+   * trôi — đổi lại thì sửa `NEN` rồi chạy lại. */
   const day = Math.max(0.115, 2.4 / co);
   const diem = new Uint8Array(co * co * 4);
   for (let y = 0; y < co; y += 1) {
