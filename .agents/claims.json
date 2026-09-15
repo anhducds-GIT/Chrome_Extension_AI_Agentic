@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-15T18:39:14.611Z",
       "task": "sinh lai bang may sinh sau U0..U4 cua udin-optic",
-      "released_at": null,
+      "released_at": "2026-09-15T19:14:04.176Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e48f201d96a9d70b"
+  "_fingerprint": "1ab69fc9323110ad"
 }
