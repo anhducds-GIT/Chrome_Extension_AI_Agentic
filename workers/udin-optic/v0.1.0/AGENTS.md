@@ -28,9 +28,13 @@ chuột, và **cái phanh**. Khối ⑷ băm từng tệp và **đỏ khi lệch
 `CO_Y_KHAC` kèm lý do — không có đường thứ ba. Tên tệp **giữ nguyên tiền tố `scouter-`** cố ý:
 nó nói ra xuất xứ, và làm phép so byte không cần bảng đổi tên.
 
-**⑷ Bốn tệp CỐ Ý khác và được phép đổi tự do:** `scripts/bridge-core.mjs` (chỗ gói hẹp lại) ·
-`manifest.json` · `sidepanel.*` · `background.js`. Đức chốt 15/09 rằng **UI sẽ đổi theo usecase**
-— đó là lý do gói này tồn tại, đừng ghim nó lại.
+**⑷ Năm tệp CỐ Ý khác và được phép đổi tự do:** `scripts/bridge-core.mjs` (chỗ gói hẹp lại) ·
+`manifest.json` · `sidepanel.*` · `background.js` · `scripts/make-icons.mjs`. Đức chốt 15/09 rằng
+**UI sẽ đổi theo usecase** — đó là lý do gói này tồn tại, đừng ghim nó lại.
+
+Icon là chữ **U** trên nền vàng, Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
+tệp PNG vào: PNG là nhị phân, `git diff` không đọc được, và ba tháng nữa không ai biết nó vẽ bằng
+gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệp PNG**.
 
 **⑸ Tệp ghép cặp RIÊNG, cổng RIÊNG, giao thức RIÊNG.** `udin-optic.bridge`, sinh bằng
 `tao-tep-ghep-cap.mjs --goi udin-optic`. Dùng chung với Scouter thì mọi lượt gọi không nêu đích
@@ -60,10 +64,11 @@ bên đóng.
 | `scripts/scouter-transport-loopback.mjs` | chép NGUYÊN VĂN — dây WebSocket, bắt tay hai chiều |
 | `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
 | `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
-| `icons/icon-16.png` | biểu tượng, chép từ Scouter |
-| `icons/icon-32.png` | biểu tượng, chép từ Scouter |
-| `icons/icon-48.png` | biểu tượng, chép từ Scouter |
-| `icons/icon-128.png` | biểu tượng, chép từ Scouter |
+| `scripts/make-icons.mjs` | **RIÊNG** — sinh bộ icon chữ **U**. Icon là MÃ NGUỒN, không phải cục nhị phân mồ côi |
+| `icons/icon-16.png` | biểu tượng, **máy sinh** — đừng sửa tay, chạy lại `make-icons.mjs` |
+| `icons/icon-32.png` | biểu tượng, máy sinh |
+| `icons/icon-48.png` | biểu tượng, máy sinh |
+| `icons/icon-128.png` | biểu tượng, máy sinh |
 | `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
 | `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
 | `tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này theo hình dạng |
