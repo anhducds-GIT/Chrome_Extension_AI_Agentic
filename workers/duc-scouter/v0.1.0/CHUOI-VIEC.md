@@ -51,7 +51,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T16** | Dấu chẩn đoán của trang thử đọc được bằng **giá trị** | — | **XONG 14/09** — ô `#dau-chan` chép mọi dấu sang CHỮ, một lượt `scout.text` ra cả bảng (`G-80`). Bản đầu vẽ qua `setTimeout` và chết vì tab nền bóp nghẹt bộ đếm giờ — `G-81` |
 | **T8** | `S-03` — đổi tên `observer` → `scouter` | T24…T30 | mốc **ĐÓNG BĂNG SEED** |
 | **T9** | Đóng gói `v1` | — | đường cài đặt XONG 15/09; chờ Đức chốt phiên bản |
-| **T21** | **Tách Udin thành EXTENSION riêng** | — | Đức chốt ⒝ 15/09; **bắt đầu ở chặng ①: gộp transport** |
+| **T21** | **Tách Udin thành EXTENSION riêng** | — | **CHẶNG ①②③④ ĐÓNG 15/09.** Gói `workers/udin-optic/` sống riêng: 12 method, quyền một trang, 4 ảnh xuống đĩa từ extension của chính nó, **và `git status workers/duc-scouter` SẠCH**. Còn chặng ⑤ dọn sổ |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |

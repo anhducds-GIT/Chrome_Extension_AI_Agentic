@@ -160,7 +160,15 @@ Mỗi workflow của một adapter khai đủ 5 phần. Không có phần 3 và 
 **Bằng chứng tối thiểu:** ngày · adapter · điều kiện trước quan sát được · thao tác đã chạy · dấu hiệu
 thành công quan sát được. Không cần chụp màn hình từng cú bấm; bằng chứng phải chứng minh **kết quả**.
 
-### Udin Optic — `pilots/udin-optic/` (danh sách đề xuất, **Đức chốt mục nào bắt buộc**)
+### Udin Optic — **`workers/udin-optic/` (GÓI RIÊNG từ 15/09)**
+
+**Dọn nhà 15/09 (`T21`).** Udin không còn là pilot của Scouter; nó là **extension riêng** — giao
+thức `udin-optic.bridge`, tệp ghép cặp và cổng riêng, **12 method thay vì 24**, quyền hẹp về một
+trang thay vì `<all_urls>`. Mọi hàng dưới đây nay đo **gói đó**, không đo Scouter.
+
+Bảng này ở lại sổ của Scouter vì nó là **bằng chứng seed dùng chung được**: bốn chặng E2E ĐẠT từ
+extension khác **mà `git status workers/duc-scouter` SẠCH** (15/09). Việc mới của Udin thì ghi ở
+`workers/udin-optic/v0.1.0/`.
 
 | Mã | Workflow | Cần | Trạng thái | Hợp đồng / bằng chứng |
 |---|---|---|---|---|
@@ -172,7 +180,7 @@ thành công quan sát được. Không cần chụp màn hình từng cú bấm
 | W6 | Đưa một ảnh kết quả vào canvas | I1 | **CHƯA** | nút "Add to canvas" có trong DOM 13/09. Một cú bấm — nên nó dính `S-22` y như `W5` |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **ĐẠT** 14/09 | `gui-prompt.mjs` cờ `xoaOCu` · trước: ô prompt CÓ chữ sẵn (nút Send đã mở) · thao tác: `scout.clear` → **chờ nút Send khoá lại** → gõ prompt mới · thành công: chữ gõ ra không dính một mẩu nào của lượt trước · thất bại: không xin `xoaOCu` thì **vẫn từ chối như cũ** (lời từ chối là lớp bảo vệ, không phải thiếu sót); xoá xong mà Send vẫn mở thì ĐỎ và **không bấm lần nào**. Bằng chứng `G-77` |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | `T29` `scout.upload` (`I9`) — dòng năng lực THẬT cuối cùng còn lại của cả gói |
-| **E2E** | Mở trang → W1 → W2 → W3 → W4 | | **ĐẠT** 14/09 | `T33` 14/09 chạy **một mạch, không sửa tay** và lấy **4/4** ảnh: 764.000 + 686.422 + 787.096 + 603.660 byte, kích thước thật trên đĩa khớp từng byte. Tốn **9 đơn vị** trần ghi cho cả bốn ảnh, chỗ lượt 14/09 trước đó tốn 16 cho MỘT ảnh và chết ở 2/4 — `T24` đáng giá đúng con số đó. Chặng W4 nối thêm cùng ngày, và nó ĐỌC nên đứng SAU lượt tiêu tiền: một W4 đỏ không bao giờ làm mất ảnh đã nằm trên đĩa. `G-76` `G-78` |
+| **E2E** | Mở trang → W1 → W2 → W3 → W4 | | **ĐẠT** 14/09 · **ĐẠT LẠI TỪ GÓI RIÊNG** 15/09 | 14/09 (`T33`, còn là pilot): 4/4 ảnh, 9 đơn vị trần ghi, `G-76` `G-78`. **15/09 (`T21` chặng ④, từ extension `udin-optic`)**: 4/4 ảnh — 786.870 · 959.068 · 964.148 · 943.476 byte, mỗi ảnh 3 khúc, đầu tệp `RIFF…WEBP` hợp lệ; W4 đọc đúng câu trả lời cho prompt vừa gửi. **Và vế chứng minh: `git status workers/duc-scouter` SẠCH.** Cần hai lượt live để đóng — lượt đầu đẻ ra `G-94` (ảnh nằm trên S3 chứ không trên trang làm việc, nên `host_permissions` vừa thu hẹp làm `scout.grab` chết) |
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
