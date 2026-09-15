@@ -5,17 +5,17 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi."
-human_action: "không"
+next_step: "Chuoi U0..U5 o CHUOI-VIEC.md. BAT DAU O U0: do chrome.tabs.setZoom tren ghe that — no quyet dinh U2 co phai dung manifest khong. Roi U1 Zoom UI va U3 Check ket noi: ca hai khong can method Bridge moi nen lam duoc ngay. U4 cho Duc chot nga ba."
+human_action: "MOT cau chot cho U4 — chon thu muc ra: (a)+(c) giu nguyen chot an toan cua may chu Bridge (toi khuyen), hay (b) hop thoai Windows that nhung bo qua may chu. Chi tiet: CHUOI-VIEC.md muc Nga ba U4. @Đức:chốt"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
-current_focus: "CHANG (4) DONG 15/09: bon anh that xuong dia tu chinh extension nay (786.870 / 959.068 / 964.148 / 943.476 byte, dau tep RIFF...WEBP hop le), W4 doc dung cau tra loi cho prompt vua gui. VA `git status workers/duc-scouter` SACH — mot extension khac chay tron mot viec that tren ma cua Scouter ma khong bat Scouter sua mot dong. Cau \"Scouter la bo do nghe chung\" khong con la loi khai. Con lai chi la don so."
+current_focus: "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1. Dong y, dung ADR-0007. Duong ranh lam no an toan: 4 tep CO Y KHAC chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai — sua chung o Udin truoc la lam gay phep so byte tren dung tep chua CAI PHANH. Phep thu mot cau truoc moi viec: co can mot method Bridge MOI khong?"
 lam_duoc: "Chay viec sinh anh tren Udin tu dong lenh: vuot man cho, gui prompt, doi anh moi, roi lay anh ve dia. Bon chang W1..W4 deu co phep ghim."
 khong_lam_duoc: "Khong tu chay. Khong do trang la: khong co scout.page, scout.tree, scout.a11y, scout.shot, scout.network — chung KHONG TON TAI o goi nay, khong phai bi chan. Khong goi mang tuy y: scout.fetch bi cat. Khong tu nap lai chinh no: scout.reload bi cat, do la viec cua seed Scouter. Manifest chi khai dung mot trang."
 dung_the_nao: "Sinh tep ghep cap rieng bang tao-tep-ghep-cap.mjs --goi udin-optic, bat may chu Bridge cua goi nay, nap thu muc v0.1.0 vao Chrome, chon tep ghep cap o bang ben, roi bat cong tac Cho phep bam va go. Phanh khan: Ctrl+Shift+U (KHAC Scouter co y — trung phim thi mot goi mat phanh)."
 ref_readme: workers/udin-optic/v0.1.0/README.md
 ref_handoff: workers/udin-optic/v0.1.0/HANDOFF.md
-ref_runbook: workers/udin-optic/v0.1.0/AGENTS.md
+ref_runbook: workers/udin-optic/v0.1.0/CHUOI-VIEC.md
 ---
 
 # Udin Optic

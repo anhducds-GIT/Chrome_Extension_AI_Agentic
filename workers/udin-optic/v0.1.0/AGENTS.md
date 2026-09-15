@@ -79,6 +79,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
 | `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
 | `tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này theo hình dạng |
+| `CHUOI-VIEC.md` | **việc kế tiếp là gì** — chuỗi `U0..U5` (UI) và đường ranh Udin↔Scouter |
 | `STATUS.md` | trạng thái một trang — máy đọc, `DASHBOARD` lấy số từ đây |
 | `PHIEN.md` | **cửa vào MỘT FILE** cho phiên sau. Máy sinh, đừng gõ tay (`rule-compile --sinh`) |
 | `AGENTS.md` | file này — luật riêng của gói |

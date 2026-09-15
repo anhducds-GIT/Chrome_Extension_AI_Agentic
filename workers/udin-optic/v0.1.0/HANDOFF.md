@@ -198,3 +198,33 @@ nguyên trên đĩa. `--khong-jpg` tắt được.
 5 khối ghim mới; khối ⓐ chạy **PowerShell thật** trên icon PNG của chính gói — vì thứ đáng nghi ở
 đây là *"Windows làm được không"*, và một máy giả cho câu đó chỉ hỏi lại niềm tin của tôi. Suite
 gói: **8 xanh**. Đột biến bỏ phép kiểm `FF D8 FF` → **chết**.
+
+## 2026-09-15h · `claude-scouter-udine` — Đức đảo thứ tự: làm ở Udin trước, rồi mang về Scouter
+
+> *"Tôi thấy B làm xong, rồi apply vào Scout & đóng nó lại thì hay hơn chứ nhỉ?"*
+
+**Đồng ý**, và nó đúng vì một luật đã có: `ADR-0007` — *mỗi nấc mở bằng một VIỆC THẬT chứ không
+bằng một danh sách*. Udin có việc thật; Scouter là bộ đồ nghề. Làm ở Udin trước thì Scouter chỉ
+nhận thứ **đã sống sót qua một lượt dùng thật**.
+
+**Nhưng chiều đi KHÔNG tự do, và đây là chỗ dễ hỏng nhất.** Gói này có bảy tệp chép bị ghim so
+từng byte. Nên đường ranh:
+· **4 tệp CỐ Ý KHÁC** (`sidepanel.*` · `manifest` · `bridge-core` · `background`) → **Udin trước**.
+· **7 tệp CHÉP** (`probes` · `actions-core` · `seed-core` · `transport` · `engine` · `journal` ·
+  `file-core`) → **Scouter trước**. Sửa chúng ở đây trước là **làm gãy phép so byte trên đúng tệp
+  chứa cái phanh**.
+
+**Phép thử một câu, dùng trước mỗi việc:** *có cần một method Bridge MỚI không?* Không → Udin. Có
+→ việc của seed, và thêm method là đổi luật an toàn (luật gói ⑴, ⑷) → hỏi Đức.
+
+**Đo "giống Extension khác" là gì:** ba gói `duc-auto-*` có bảng bên **676 · 649 · 646 dòng**;
+Udin và Scouter **188**. Ba gói kia có sẵn thu phóng 80–120%, `Choose Folder`, nối/ngắt ghép cặp.
+
+**Ba trong bốn tính năng Đức nêu KHÔNG cần method mới** — `Zoom UI` là CSS, `Zoom web` là
+`chrome.tabs.setZoom` gọi thẳng từ bảng bên, `Check kết nối` là đường đã có. Cái thứ tư là một
+**ngã ba phải chốt**: ba gói `duc-auto-*` chọn thư mục bằng `showDirectoryPicker`, tức **trình
+duyệt ghi thẳng, bỏ qua hẳn máy chủ Bridge** — mất đúng lớp bảo vệ vùng-ghi mà `T21` vừa chứng
+minh là chạy được. Tôi khuyên đường thư-mục-con, và nói rõ đường kia là lựa chọn của Đức.
+
+Chuỗi `U0..U5` ở `CHUOI-VIEC.md`. **`U0` đứng đầu và nó chỉ là một lượt đo**: `chrome.tabs.setZoom`
+có cần quyền `tabs` không — vì thêm quyền là **nới quyền**, không phải một dòng khai báo (`G-94`).
