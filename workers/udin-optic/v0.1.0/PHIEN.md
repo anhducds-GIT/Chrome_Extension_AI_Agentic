@@ -94,4 +94,4 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 
 - lifecycle: building
 - next_step: "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1)."
-- human_action: "CO — nap lai extension MOT lan. chrome://extensions > Udin Optic > Nap lai, roi dong va mo lai bang ben. Gop cho ca U1 U2 U3 U4."
+- human_action: "@Đức:bấm — nap lai extension MOT lan. chrome://extensions > Udin Optic > Nap lai, roi dong va mo lai bang ben. Gop cho ca U1 U2 U3 U4."

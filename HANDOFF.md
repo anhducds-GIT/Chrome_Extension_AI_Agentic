@@ -829,3 +829,14 @@ Bối cảnh đã nói — đó mới là chỗ phình, không phải chỗ có 
 ADR-0037 **94 → 65 dòng**. Bốn số đo trong Bối cảnh gộp thành bốn gạch đánh số ⑴–⑷, mục
 Quyết định trỏ ngược `(⑷)` thay vì kể lại; phần thi hành còn **một khối 4 dòng**. Số không đổi:
 `limit 2 × max_chars 3000`, tăng một lần, tổng ≤ 12.000, GPT `BUDGET 250 w` mọi mode.
+
+## 2026-09-16a · Bảng máy sinh theo HEAD mới sau `U0`–`U4` (udin-optic)
+
+Việc thật nằm ở `workers/udin-optic/`; ở gốc repo phiên này chỉ **sinh lại ba bảng máy sinh**
+(`DASHBOARD.md` · `FEATURE-PARITY-AUTO.md` · trang tổng HTML) và `.agents/claims.json`.
+Không đổi một dòng luật, một dòng `scripts/` hay `tests/` nào ở tầng gốc.
+
+Một thứ đáng ghi lại cho lane sau: cổng bắt đúng một lỗi **đáng tiền** ở `STATUS.md` của
+`udin-optic` — `human_action` có việc thật (Đức phải nạp lại extension) nhưng **không có dấu**
+`@Đức` nào, nên việc đó sẽ rơi khỏi bảng *Đức cần làm* **một cách im lặng** (`N-29`). Đã gắn
+`@Đức:bấm`. Đây đúng là loại lỗi không ai tự thấy: cả hai đầu đều *trông như* đúng.
