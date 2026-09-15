@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-15T02:32:07.194Z",
-      "task": "T21 chang (4): sinh lai trang tong theo HEAD",
+      "claimed_at": "2026-09-15T03:48:27.631Z",
+      "task": "T21: sinh lai trang tong sau khi doi icon",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "83ea7da0cf37f5c7"
+  "_fingerprint": "a382f6070fa76f0f"
 }

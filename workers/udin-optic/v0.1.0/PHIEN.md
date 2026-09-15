@@ -66,9 +66,13 @@ chuột, và **cái phanh**. Khối ⑷ băm từng tệp và **đỏ khi lệch
 `CO_Y_KHAC` kèm lý do — không có đường thứ ba. Tên tệp **giữ nguyên tiền tố `scouter-`** cố ý:
 nó nói ra xuất xứ, và làm phép so byte không cần bảng đổi tên.
 
-**⑷ Bốn tệp CỐ Ý khác và được phép đổi tự do:** `scripts/bridge-core.mjs` (chỗ gói hẹp lại) ·
-`manifest.json` · `sidepanel.*` · `background.js`. Đức chốt 15/09 rằng **UI sẽ đổi theo usecase**
-— đó là lý do gói này tồn tại, đừng ghim nó lại.
+**⑷ Năm tệp CỐ Ý khác và được phép đổi tự do:** `scripts/bridge-core.mjs` (chỗ gói hẹp lại) ·
+`manifest.json` · `sidepanel.*` · `background.js` · `scripts/make-icons.mjs`. Đức chốt 15/09 rằng
+**UI sẽ đổi theo usecase** — đó là lý do gói này tồn tại, đừng ghim nó lại.
+
+Icon là chữ **U** trên nền vàng, Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
+tệp PNG vào: PNG là nhị phân, `git diff` không đọc được, và ba tháng nữa không ai biết nó vẽ bằng
+gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệp PNG**.
 
 **⑸ Tệp ghép cặp RIÊNG, cổng RIÊNG, giao thức RIÊNG.** `udin-optic.bridge`, sinh bằng
 `tao-tep-ghep-cap.mjs --goi udin-optic`. Dùng chung với Scouter thì mọi lượt gọi không nêu đích
