@@ -797,3 +797,26 @@ Hai chỗ cổng bắt tôi, đã sửa: sửa tay `.agents/claims.json` làm v�
 
 **CHƯA ĐO:** DOM ChatGPT có giữ hết mọi lượt với hội thoại dài không. Một lệnh là ra:
 mở chat dài, `chat-read`, đọc `matched`.
+
+## 2026-09-15 · `claude-bridge-read` — nắp đọc về `2 × 3.000`, và bỏ file protocol
+
+Đức chốt lại: nắp **tổng** 6.000 = `limit 2 × max_chars 3000`, không phải 6.000 mỗi lượt.
+Kèm đó `BUDGET 250 w` cho MỌI mode GPT — một con số thay cho bảng sáu mode. Cập nhật ở
+[ADR-0037](docs/adr/0037-nap-doc-dom-dat-bang-tham-so-do-duoc.md).
+
+**Vì sao 250 w:** hai lượt **không dùng chung hạn mức**, nên `2 × 3.000` thực chất là
+*"câu trả lời GPT được tối đa 3.000"*. Đo 15/09 một lượt 3.058 ký tự đã bị cắt.
+
+**Lý lẽ mạnh nhất, do Đức nêu:** `chat.read` **không bao giờ báo lỗi vì xin ít** — DOM hội
+thoại dài có hàng trăm nghìn ký tự, nên mọi mức nắp đều trả về kết quả trông đầy đủ như
+nhau. Nắp là **van tiêu tiền**, không phải cửa đúng/sai, nên **đọc thừa hoàn toàn vô hình**.
+Đó là lý do con số phải nằm trong luật chứ không để mỗi phiên tự chọn.
+
+**Đã XOÁ `docs/protocols/BRIDGE-READ.md`.** Nó đẩy `docs/` lên 9.865 / thước 9.830, và
+`.repo-structure.json` dặn nguyên văn: văn xuôi của repo này thì **xoá hoặc chuyển sang
+ADR, không nâng thước**. Phần thi hành nay nằm trong ADR-0037 (`adr/` không tính thước),
+số vận hành nằm ngay dòng bản đồ `AGENTS.md`. Về lại **9.830/9.830**.
+
+Hai lỗi của tôi ở lượt này, cổng bắt: sửa mục Log đã commit (HANDOFF là vùng **CHỈ-THÊM** —
+phải ghi mục mới), và tưởng file mới không bị tính thước (nó chỉ chưa bị tính khi còn
+**chưa track**; commit xong là vào sổ).
