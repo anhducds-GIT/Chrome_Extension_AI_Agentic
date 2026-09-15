@@ -30,7 +30,7 @@ giữ tiền tố `scouter-` cố ý: nó nói ra xuất xứ, và phép so byte
 `manifest.json` · `sidepanel.*` · `background.js` · `scripts/make-icons.mjs`. Đức chốt 15/09 rằng
 **UI sẽ đổi theo usecase** — đó là lý do gói này tồn tại, đừng ghim nó lại.
 
-Icon là chữ **U** trên nền vàng, Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
+Icon là chữ **U** mận sẫm trên nền **hồng pastel** (`#FFD1DC`), Đức chốt 15/09. Nó sinh bằng `make-icons.mjs` chứ không dán bốn
 tệp PNG vào: PNG là nhị phân, `git diff` không đọc được, và ba tháng nữa không ai biết nó vẽ bằng
 gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệp PNG**.
 
@@ -72,6 +72,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
 | `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
 | `scripts/make-icons.mjs` | **RIÊNG** — sinh bộ icon chữ **U**. Icon là MÃ NGUỒN, không phải cục nhị phân mồ côi |
+| `scripts/do-quyen-zoom.mjs` | **RIÊNG** — phép đo `U0`: `setZoom` có đòi quyền `tabs` không. Chrome sạch, không đụng ghế Đức (`G-95`) |
 | `icons/icon-16.png` | biểu tượng, **máy sinh** — đừng sửa tay, chạy lại `make-icons.mjs` |
 | `icons/icon-32.png` | biểu tượng, máy sinh |
 | `icons/icon-48.png` | biểu tượng, máy sinh |

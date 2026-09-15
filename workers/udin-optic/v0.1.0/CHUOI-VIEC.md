@@ -52,14 +52,12 @@ lại: nó bắt trình duyệt ghi thẳng, tức **vứt bỏ cả đường g
 
 ## ⓪c Ba quyết định đã LẤY TRƯỚC, để chuỗi không phải dừng
 
-**⑴ `tabs` được phép thêm vào manifest nếu `U0` đo ra là cần.** Lý do: Udin đã có `debugger` và
-`scout.targets` — nó **đã** đọc được URL của mọi tab. `tabs` không mở thêm cửa nào nó chưa có, nên
-đây không phải nới quyền theo nghĩa `G-94`. *Vẫn phải:* ghi vào `HANDOFF` và sửa khối ⑵ của
-`be-mat-hep-smoke.mjs` — danh sách quyền là **hợp đồng so `deepEqual`**, thêm một chữ cũng đỏ.
+**⑴ ĐÃ ĐO 16/09 — KHÔNG cần `tabs`, mục này khép lại.** `npm run udin:zoom-probe` nạp chính gói này (manifest nguyên vẹn) vào Chrome sạch: `setZoom`/`getZoom` **chạy đúng** mà không cần quyền `tabs`. Nên `U2` **không đụng `manifest.json`** và không đụng hợp đồng `deepEqual` khối ②.
+*Nhưng phép đo đổi một thứ khác, và `U2` phải viết theo:* `setZoom` **không** bị `host_permissions` chặn — nó phóng to được cả tab lạ. Thứ chặn là **`tab.url` bị giấu** ở tab ngoài quyền. Lớp an toàn nằm trên đường **ĐỌC**: không đọc được `url` thì **khóa nút**, tuyệt đối không được "đoán" là tab Udin rồi zoom đại. Chi tiết: `G-95`.
 
 **⑵ `U2` KHÔNG được thêm `scout.view` để tự kiểm.** Đo 15/09: `scout.view` **không nằm trong 12
 method** của gói này. Thêm nó lại là thêm một method → phải hỏi Đức → chuỗi dừng. Nên `U2` kiểm
-bằng `chrome.tabs.getZoom`, và **nói thẳng giới hạn**: nó chứng minh *Chrome đã nhận lệnh thu
+bằng `chrome.tabs.getZoom` (sai số `ZOOM_EPSILON = 0.015`, **không** phải 0,01 — đếm lại trong mã ba gói `duc-auto-*` 16/09; đo thực thì Chrome trả về **đúng y** 1.2 và 0.8, không trôi), và **nói thẳng giới hạn**: nó chứng minh *Chrome đã nhận lệnh thu
 phóng*, KHÔNG chứng minh *trang đã vẽ lại*. Với một tiện ích giao diện thì thế là đủ; muốn mạnh
 hơn thì đó là một việc riêng, bàn cùng lúc với `v1`.
 
@@ -78,7 +76,8 @@ Udin đang có: cửa Bridge · hồ sơ ghế · năng lực · sổ hoạt đ�
 
 ## Sáu chặng, chạy liền — mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
 
-**U0 · ĐO `chrome.tabs.setZoom` trên ghế thật.** Một lượt gọi, không viết mã.
+**U0 · ĐO `chrome.tabs.setZoom` — ✅ XONG 16/09, kết quả: KHÔNG cần `tabs` (`G-95`).**
+~~Một lượt gọi, không viết mã~~ — đo bằng Chrome sạch chứ không bằng ghế Đức, vì **không có đường chạy mã trong extension đang nạp mà không bắt Đức nạp lại** — tức đúng thứ `U0` sinh ra để tránh. Để lại `scripts/do-quyen-zoom.mjs` để đo lại khi Chrome đổi phiên bản.
 *Đóng khi:* biết chắc có cần `tabs` không. *Vì sao đứng đầu:* nó quyết định `U2` có phải đụng
 manifest không, và đụng manifest là đụng hợp đồng quyền.
 
