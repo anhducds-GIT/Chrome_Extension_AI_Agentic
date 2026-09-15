@@ -3,100 +3,129 @@
 > **File này sinh ra để sống sót qua một lượt compact.** Nó KHÔNG kể chuyện đã qua (`HANDOFF.md`),
 > KHÔNG chép luật (`AGENTS.md`). Nó trả lời đúng một câu: **việc kế tiếp là gì, và làm xong thì
 > biết bằng cách nào.**
+>
+> **Chuỗi này chốt 15/09 để CHẠY MỘT MẠCH.** Mọi chỗ lẽ ra phải dừng hỏi Đức đều đã được quyết
+> trước và ghi lý do ngay tại chỗ. Còn đúng **hai** điểm dừng, và cả hai đều nằm ở cuối.
 
-## ⓪ Đức đảo thứ tự 15/09 — **tôi đồng ý**, và đây là đường ranh làm nó an toàn
+## ⓪ Đức đảo thứ tự 15/09 — làm ở Udin trước, rồi mang về Scouter
 
 > *"Tôi thấy B làm xong, rồi apply vào Scout & đóng nó lại thì hay hơn chứ nhỉ?"*
 
-**Đúng, và nó đúng vì một lý do đã thành luật ở repo này**: [ADR-0007](../../duc-scouter/v0.1.0/docs/adr/0007-scouter.md)
+**Đúng**, và đúng vì một luật đã có: [ADR-0007](../../duc-scouter/v0.1.0/docs/adr/0007-scouter.md)
 — *mỗi nấc mở bằng một VIỆC THẬT chứ không bằng một danh sách*. Udin có việc thật; Scouter là bộ
-đồ nghề. Làm ở Udin trước thì Scouter **chỉ nhận thứ đã sống sót qua một lượt dùng thật**, thay vì
-nhận một danh sách tính năng nghe hợp lý.
+đồ nghề. Làm ở Udin trước thì Scouter **chỉ nhận thứ đã sống sót qua một lượt dùng thật**.
 
-**Nhưng chiều đi không tự do, và đây là chỗ dễ hỏng nhất của cả kế hoạch.** Gói này có **bảy tệp
-chép bị ghim so từng byte** (`AGENTS.md` ⑶) — chúng là bộ máy gắn debugger, tổng hợp phím chuột,
-và **cái phanh**. Nên:
+**Chiều đi KHÔNG tự do — đây là chỗ dễ hỏng nhất của cả chuỗi.** Gói này có **bảy tệp chép bị ghim
+so từng byte** (`AGENTS.md` ⑶), trong đó có **cái phanh**.
 
-| tính năng đụng tới | làm ở đâu TRƯỚC | vì sao |
+| việc đụng tới | làm ở đâu TRƯỚC | vì sao |
 |---|---|---|
-| `sidepanel.*` · `manifest.json` · `bridge-core.mjs` · `background.js` — **4 tệp CỐ Ý KHÁC** | **Udin**, rồi mang về Scouter | không tệp nào bị ghim; đây đúng là chỗ Đức nói UI sẽ đổi |
-| 7 tệp chép (`probes` · `actions-core` · `seed-core` · `transport` · `engine` · `journal` · `file-core`) | **Scouter**, rồi chép xuống Udin | sửa ở Udin trước là **làm gãy phép so byte trên đúng tệp chứa cái phanh** |
+| `sidepanel.*` · `manifest.json` · `bridge-core.mjs` · `background.js` · `tu-dong/*` | **Udin** → mang về Scouter | không tệp nào bị ghim; đây đúng chỗ Đức nói UI sẽ đổi |
+| 7 tệp chép (`probes` · `actions-core` · `seed-core` · `transport` · `engine` · `journal` · `file-core`) | **Scouter** → chép xuống Udin | sửa ở Udin trước là **làm gãy phép so byte trên đúng tệp chứa cái phanh** |
 
-**Phép thử một câu, dùng trước mỗi việc:** *tính năng này có cần một method Bridge MỚI không?*
-· **Không** → làm ở Udin. · **Có** → nó là việc của seed, làm ở Scouter, và **thêm method là đổi
-luật an toàn → hỏi Đức** (luật gói số 4).
+**Phép thử một câu, chạy trước MỖI việc:** *cái này có cần một method Bridge MỚI không?*
+· **Không** → làm ở Udin, chạy tiếp, đừng hỏi. · **Có** → dừng, vì thêm method là đổi luật an toàn
+(luật gói ⑴ ⑷) → hỏi Đức.
+
+## ⓪b Đức chốt `U4` 15/09 — và câu trả lời làm đường ⒝ **chết**
+
+> *"Tôi phải chọn folder, hoặc AI local tạo thư mục và chọn cho tôi. Vì các project, job khác nhau
+> sẽ có kết xuất khác nhau."*
+
+Nhu cầu thật là **tách kết xuất theo project/job**, KHÔNG phải *"ghi vào ổ đĩa bất kỳ"*. Hai thứ
+đó khác nhau, và chỉ thứ hai mới đòi bỏ máy chủ Bridge.
+
+**Nên chốt: hai tầng, và mỗi tầng đổi theo một nhịp khác nhau.**
+
+| tầng | là gì | ai đặt | đổi mấy lần |
+|---|---|---|---|
+| **vùng ghi** (`--root`) | ổ đĩa + thư mục gốc | Đức, **một lần cho cả máy** | gần như không bao giờ |
+| **thư mục con** | `<du-an>/<lượt-chạy>` | **AI đặt theo từng job** | mỗi lượt |
+
+Cả hai **vẫn nằm sau máy chủ Bridge**, nên giữ nguyên chốt *"vùng ghi không được chứa tệp ghép
+cặp"* và trần tệp — đúng lớp bảo vệ mà `T21` vừa chứng minh là chạy được. Muốn đổi sang ổ `D:` thì
+sửa **một dòng** trong tệp cấu hình cạnh bộ khởi động, không đụng một dòng mã nào.
+
+**Đường `showDirectoryPicker` của ba gói `duc-auto-*` CHẾT ở đây**, và ghi lại lý do để đừng ai mở
+lại: nó bắt trình duyệt ghi thẳng, tức **vứt bỏ cả đường ghi đã có phép ghim** (`scout.grab` +
+`file.write`) để đổi lấy một hộp thoại — trong khi nhu cầu thật đã được đáp bằng hai tầng trên.
+
+## ⓪c Ba quyết định đã LẤY TRƯỚC, để chuỗi không phải dừng
+
+**⑴ `tabs` được phép thêm vào manifest nếu `U0` đo ra là cần.** Lý do: Udin đã có `debugger` và
+`scout.targets` — nó **đã** đọc được URL của mọi tab. `tabs` không mở thêm cửa nào nó chưa có, nên
+đây không phải nới quyền theo nghĩa `G-94`. *Vẫn phải:* ghi vào `HANDOFF` và sửa khối ⑵ của
+`be-mat-hep-smoke.mjs` — danh sách quyền là **hợp đồng so `deepEqual`**, thêm một chữ cũng đỏ.
+
+**⑵ `U2` KHÔNG được thêm `scout.view` để tự kiểm.** Đo 15/09: `scout.view` **không nằm trong 12
+method** của gói này. Thêm nó lại là thêm một method → phải hỏi Đức → chuỗi dừng. Nên `U2` kiểm
+bằng `chrome.tabs.getZoom`, và **nói thẳng giới hạn**: nó chứng minh *Chrome đã nhận lệnh thu
+phóng*, KHÔNG chứng minh *trang đã vẽ lại*. Với một tiện ích giao diện thì thế là đủ; muốn mạnh
+hơn thì đó là một việc riêng, bàn cùng lúc với `v1`.
+
+**⑶ Nạp lại extension gộp thành ĐÚNG MỘT lần**, sau `U4`. Luật chuỗi của Scouter số 5: nạp lại là
+việc Đức nhìn thấy — báo trước, gộp một lần ở cuối, đừng rải.
 
 ## Đo trước khi bàn — "giống như Extension khác" nghĩa là gì
 
-| gói | `sidepanel.html` |
+| bảng bên của | dài |
 |---|---:|
 | `duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video` | **676 · 649 · 646 dòng** |
-| `duc-scouter` · `udin-optic` | **188 dòng** |
-| `hnx-fetch` | 65 dòng |
+| **`duc-scouter` · `udin-optic`** | **188 dòng** |
 
-Ba gói `duc-auto-*` có sẵn: thu phóng 80–120%, `Choose Folder` + bộ chọn thư mục thật, nối/ngắt
-ghép cặp, mẫu tên tệp, quản lý hàng đợi. Udin hiện có: cửa Bridge · hồ sơ ghế · năng lực · sổ hoạt
-động · tiến độ · danh sách tab. **Thiếu đúng những thứ Đức nêu.**
+Ba gói kia có sẵn: thu phóng 80–120%, `Choose Folder`, nối/ngắt ghép cặp, mẫu tên tệp, hàng đợi.
+Udin đang có: cửa Bridge · hồ sơ ghế · năng lực · sổ hoạt động · tiến độ · danh sách tab.
 
-## Bốn tính năng Đức nêu — phân loại, và một ngã ba phải chốt
+## Sáu chặng, chạy liền — mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
 
-| | tính năng | nằm ở tệp nào | method Bridge mới? | mang về Scouter? |
-|---|---|---|---|---|
-| **U1** | **Zoom UI** (chữ bảng bên to/nhỏ) | `sidepanel.css` + `.js` | **không** | có |
-| **U2** | **Zoom web** (thu phóng trang) | `sidepanel.js` → `chrome.tabs.setZoom` | **không** — Chrome API gọi thẳng từ bảng bên | có |
-| **U3** | **Check kết nối** | `sidepanel.js` | **không** — gọi lại đường đã có | có |
-| **U4** | **Chọn thư mục ra** | **NGÃ BA ↓** | tuỳ đường | tuỳ đường |
+**U0 · ĐO `chrome.tabs.setZoom` trên ghế thật.** Một lượt gọi, không viết mã.
+*Đóng khi:* biết chắc có cần `tabs` không. *Vì sao đứng đầu:* nó quyết định `U2` có phải đụng
+manifest không, và đụng manifest là đụng hợp đồng quyền.
 
-**U2 có một thứ phải ĐO TRƯỚC KHI VIẾT:** `chrome.tabs.setZoom` cần quyền `tabs`, **hoặc** host
-permission của chính tab đó là đủ. Udin có `vinfast.udinbv.com` nhưng **không** có `tabs`
-(`duc-auto-gemini` có). Đo bằng một lượt gọi thật; nếu thiếu thì thêm `tabs` vào manifest là **nới
-quyền** → nói ra, đừng thêm lặng lẽ.
+**U1 · Zoom UI** — chữ bảng bên to/nhỏ. Một biến CSS trên `:root` + một khoá `chrome.storage.local`
++ hàng nút 80…120%, mẫu: `duc-auto-gemini/v0.2.0/sidepanel.js` khoá `dac_ui_zoom`.
+*Đóng khi:* phép ghim DOM canh hàng nút tồn tại và khoá lưu đúng tên (mẫu `sidepanel-dom-smoke.mjs`
+bên Scouter) · cỡ chữ sống qua một lượt đóng/mở bảng bên.
 
-### Ngã ba `U4` — chỗ duy nhất tôi không tự quyết được
+**U2 · Zoom web** — thu phóng trang Udin. `chrome.tabs.setZoom` gọi thẳng từ bảng bên, **không qua
+Bridge**, nên không có method mới.
+*Đóng khi:* đặt 120% rồi `chrome.tabs.getZoom` đọc lại đúng 1.2 (sai số 0,01, mẫu `ZOOM_EPSILON`
+bên Gemini) · nút bị **khoá lại kèm lý do** khi không có tab Udin nào — *"nút zoom hỏng" không
+chẩn đoán được từ xa nếu nó chỉ im lặng*.
 
-Ảnh Udin đi xuống đĩa qua **máy chủ Bridge** (`file.write`), và máy chủ khoá cứng một **vùng ghi**
-— nó còn **từ chối khởi động** nếu vùng ghi chứa tệp ghép cặp. Ba gói `duc-auto-*` thì đi đường
-khác hẳn: `window.showDirectoryPicker()`, trình duyệt ghi thẳng, **không qua máy chủ**.
+**U3 · Check kết nối** — một nút chạy đúng sáu bước của `kiem-cai-dat.mjs` **từ trong bảng bên**.
+*Đóng khi:* tắt máy chủ rồi bấm thì nó nói đúng *"Bridge chưa chạy"*, không nói *"lỗi"*.
+*Cái bẫy đã biết, đừng vấp lại:* bước ① phải hỏi `bridge.sessions`, **KHÔNG** hỏi `system.ping` —
+ping đi tới extension nên nó chết vì đúng cái nó định chẩn đoán (`G-91`).
 
-| | đường | được | mất |
-|---|---|---|---|
-| **⒜** | Ô nhập **thư mục con** dưới vùng ghi | rẻ nhất, giữ NGUYÊN mọi chốt an toàn của máy chủ | không chọn được ổ đĩa khác |
-| **⒝** | `showDirectoryPicker` như `duc-auto-*` | Đức chọn bất kỳ thư mục nào, giống hệt ba gói kia | **bỏ qua hẳn máy chủ Bridge** — mất chốt vùng-ghi, và ảnh không còn đi qua đường đã được ghim |
-| **⒞** | Nút mở thư mục + đổi `--root` lúc bật máy chủ | đã chạy được rồi, chỉ thiếu UI | phải tắt/bật lại máy chủ |
+**U4 · Thư mục ra theo project/job.** Ba việc nhỏ, không việc nào cần method mới:
+ · `e2e.mjs --du-an "<tên>"` → ảnh vào `<vùng-ghi>/<tên>/<lượt-chạy>/`. Không đưa `--du-an` thì
+   giữ nguyên hình dạng hôm nay, để lượt chạy cũ không gãy.
+ · sau lượt chạy, in **đường dẫn đầy đủ**, và `--mo` thì mở luôn thư mục bằng `explorer.exe`.
+ · `START-BRIDGE_Udin-Optic.ps1` đọc **vùng ghi** từ một tệp cấu hình cạnh nó nếu có; không có thì
+   dùng `anh-ra` như cũ. Đây là chỗ Đức đổi sang ổ `D:` bằng một dòng.
+*Đóng khi:* một lượt E2E thật ghi vào **đúng** thư mục project vừa đặt, kiểm bằng **ĐĨA** · tên
+project có ký tự lạ (`..`, `/`, dấu tiếng Việt) **bị từ chối chứ không bị lặng lẽ đổi** · suite gói
+xanh.
 
-**Tôi khuyên ⒜ + ⒞**, và không phải vì lười: đường ⒝ vứt bỏ đúng lớp bảo vệ mà `T21` vừa chứng
-minh là chạy được. Nhưng nếu Đức muốn cảm giác *"bấm một nút, hiện hộp thoại Windows"* thì đó là
-⒝ và tôi làm — **nói một câu là chốt**.
+**→ ĐIỂM DỪNG ①: Đức nạp lại extension một lần.** Gộp `U1 U2 U3 U4` vào đúng một lượt nạp. Sau đó
+AI chạy một lượt E2E thật để nghiệm thu cả bốn.
 
-## Các chặng, mỗi chặng DỪNG ĐƯỢC và KIỂM ĐƯỢC
+**U5 · Mang về Scouter, rồi ĐÓNG `v1`.** Chỉ mang thứ **đã dùng thật** ở Udin. `U1` `U3` gần như
+chép thẳng; `U2` phải xem lại vì Scouter mở `<all_urls>` còn Udin một trang; `U4` sang Scouter là
+tuỳ — Scouter không sinh ảnh.
+*Đóng khi:* suite hai bên xanh · `npm run scouter:mutation` **0 sống sót** · cổng XANH TOÀN BỘ.
 
-**U0 · Đo `chrome.tabs.setZoom` trên ghế thật.** Một lượt gọi. *Đóng khi:* biết chắc cần hay
-không cần thêm quyền `tabs`. *Vì sao đứng đầu:* nó quyết định `U2` có phải đụng manifest không, và
-đụng manifest là nới quyền.
-
-**U1 · Zoom UI.** Một biến CSS trên `:root` + một khoá `chrome.storage.local` + hàng nút 80…120%.
-*Đóng khi:* đổi cỡ ăn ngay, sống qua một lượt đóng/mở bảng bên, và có phép ghim đọc DOM canh hàng
-nút tồn tại (mẫu: `sidepanel-dom-smoke.mjs` bên Scouter).
-
-**U2 · Zoom web.** Theo kết quả `U0`. *Đóng khi:* bấm 120% thì `scout.view` **đọc ra** thu phóng
-đã đổi — kiểm bằng trang, không bằng lời báo của nút (cùng kỷ luật `G-73`).
-
-**U3 · Check kết nối.** Một nút chạy đúng sáu bước của `kiem-cai-dat.mjs` **nhưng từ trong bảng
-bên**. *Đóng khi:* rút máy chủ ra thì nó nói đúng *"Bridge chưa chạy"*, không nói *"lỗi"*.
-*Cái bẫy đã biết:* bước ① phải hỏi `bridge.sessions`, KHÔNG hỏi `system.ping` — `G-91`.
-
-**U4 · Chọn thư mục ra.** Chờ Đức chốt ngã ba. *Đóng khi:* một lượt E2E ghi vào đúng thư mục vừa
-chọn, kiểm bằng ĐĨA.
-
-**U5 · Mang về Scouter, rồi ĐÓNG `v1`.** Chỉ mang **thứ đã dùng thật ở Udin**. `U1` `U3` gần như
-chép thẳng; `U2` phải xem lại vì Scouter mở `<all_urls>` còn Udin một trang. *Đóng khi:* suite hai
-bên xanh · bộ đột biến Scouter 0 sống sót · cổng XANH TOÀN BỘ · rồi Đức ký `Scouter v1`.
+**→ ĐIỂM DỪNG ②: Đức ký `Scouter v1`.** Đây là tuyên bố phiên bản, và nó là chữ ký của Đức chứ
+không phải một lượt chạy xanh.
 
 ## Thứ KHÔNG làm trong chuỗi này
 
 **Đừng chép cả 650 dòng bảng bên của `duc-auto-*` sang.** Phần lớn là hàng đợi job và checkpoint —
-Udin không có hai thứ đó. Chép về là mang theo mã chết, đúng bệnh mà `bridge-core` vừa cắt bỏ 12
-lệnh để tránh.
+Udin không có hai thứ đó. Chép về là mang theo mã chết, đúng bệnh mà `bridge-core` vừa cắt 12 lệnh
+để tránh.
 
-**`T29` (`scout.upload` → `W8`) vẫn là việc của Scouter**, không phải của chuỗi này: nó cần một
-method Bridge mới. Nó đứng SAU `U5`, hoặc chạy song song ở một phiên khác.
+**`T29` (`scout.upload` → `W8`) là việc của Scouter**, không phải của chuỗi này: nó cần một method
+Bridge mới. Nó đứng SAU `U5`, hoặc chạy ở một phiên khác.
+
+**Đừng mở lại `showDirectoryPicker`.** Lý do đã ghi ở ⓪b.

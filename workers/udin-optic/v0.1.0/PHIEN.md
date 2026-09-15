@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Chuoi U0..U5 o CHUOI-VIEC.md. BAT DAU O U0: do chrome.tabs.setZoom tren ghe that — no quyet dinh U2 co phai dung manifest khong. Roi U1 Zoom UI va U3 Check ket noi: ca hai khong can method Bridge moi nen lam duoc ngay. U4 cho Duc chot nga ba."
-- human_action: "MOT cau chot cho U4 — chon thu muc ra: (a)+(c) giu nguyen chot an toan cua may chu Bridge (toi khuyen), hay (b) hop thoai Windows that nhung bo qua may chu. Chi tiet: CHUOI-VIEC.md muc Nga ba U4. @Đức:chốt"
+- next_step: "Chuoi U0..U5 o CHUOI-VIEC.md, chot 15/09 de CHAY MOT MACH. Bat dau U0: do chrome.tabs.setZoom tren ghe that (mot luot goi, khong viet ma) — no quyet dinh U2 co phai them quyen tabs khong. Roi U1 Zoom UI, U2 Zoom web, U3 Check ket noi, U4 thu muc theo project. Khong chang nao can method Bridge moi, nen khong chang nao phai dung hoi."
+- human_action: "không"

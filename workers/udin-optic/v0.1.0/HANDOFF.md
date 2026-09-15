@@ -228,3 +228,32 @@ minh là chạy được. Tôi khuyên đường thư-mục-con, và nói rõ đ
 
 Chuỗi `U0..U5` ở `CHUOI-VIEC.md`. **`U0` đứng đầu và nó chỉ là một lượt đo**: `chrome.tabs.setZoom`
 có cần quyền `tabs` không — vì thêm quyền là **nới quyền**, không phải một dòng khai báo (`G-94`).
+
+## 2026-09-15i · `claude-scouter-udine` — chốt `U4`, và câu trả lời của Đức giết đường `showDirectoryPicker`
+
+Đức 15/09: *"Tôi phải chọn folder, hoặc AI local tạo thư mục và chọn cho tôi. Vì các project, job
+khác nhau sẽ có kết xuất khác nhau."*
+
+**Nhu cầu thật là tách kết xuất theo project/job — KHÔNG phải ghi vào ổ đĩa bất kỳ.** Hai thứ đó
+khác nhau, và chỉ thứ hai mới đòi bỏ máy chủ Bridge. Tôi đã suýt hỏi nhầm câu: bản hỏi đầu tiên
+viết bằng chữ của máy và Đức trả lời *"tôi chưa hiểu câu hỏi?"* — **lỗi hệ thống, không phải lỗi
+người đọc**. Hỏi lại bằng một câu duy nhất (*"anh có cần ổ đĩa khác không?"*) thì ra ngay đáp án.
+
+**Chốt: hai tầng, mỗi tầng một nhịp đổi.** Vùng ghi (`--root`) là thiết lập của MÁY, Đức đặt một
+lần, đổi sang ổ `D:` bằng một dòng cấu hình. Thư mục con là `<du-an>/<lượt-chạy>`, **AI đặt theo
+từng job**. Cả hai vẫn nằm sau máy chủ Bridge → giữ nguyên chốt *"vùng ghi không chứa tệp ghép
+cặp"* và trần tệp.
+
+**`showDirectoryPicker` CHẾT**, lý do ghi vào `CHUOI-VIEC.md` ⓪b để đừng ai mở lại: nó vứt bỏ cả
+đường ghi đã có phép ghim (`scout.grab` + `file.write`) để đổi lấy một hộp thoại — trong khi nhu
+cầu thật đã được đáp bằng hai tầng trên.
+
+**Chuỗi `U0..U5` chốt để CHẠY MỘT MẠCH.** Ba quyết định lấy trước để nó không phải dừng:
+· `tabs` được phép thêm nếu `U0` đo ra là cần — Udin đã có `debugger` + `scout.targets` nên nó
+  **đã** đọc được URL mọi tab; `tabs` không mở cửa nào mới. Vẫn phải sửa khối ⑵ (hợp đồng quyền).
+· `U2` **không** được thêm `scout.view` để tự kiểm — đo 15/09: nó không nằm trong 12 method, thêm
+  lại là thêm method và chuỗi sẽ dừng. Kiểm bằng `chrome.tabs.getZoom`, **và nói thẳng giới hạn**:
+  chứng minh Chrome nhận lệnh, không chứng minh trang vẽ lại.
+· Nạp lại extension gộp đúng **một** lần, sau `U4`.
+
+Còn đúng **hai điểm dừng**, cả hai ở cuối: Đức nạp lại extension, rồi Đức ký `Scouter v1`.
