@@ -38,10 +38,10 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-scouter-udine",
+      "owner": "claude-bridge-read",
       "ai": null,
-      "claimed_at": "2026-09-15T14:09:07.007Z",
-      "task": "T21 chang (4): sinh lai trang tong",
+      "claimed_at": "2026-09-15T14:46:03.163Z",
+      "task": "mot dong ban do AGENTS.md muc 8",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -50,11 +50,11 @@
       "tra_khi_chua_day": null
     },
     "_docs": {
-      "owner": null,
+      "owner": "claude-bridge-read",
       "ai": null,
-      "claimed_at": "2026-09-14T17:31:39.684Z",
-      "task": "ghi HANDOFF goc",
-      "released_at": "2026-09-14T17:45:25.979Z",
+      "claimed_at": "2026-09-15T14:46:03.019Z",
+      "task": "ADR-0037 + protocols/BRIDGE-READ.md",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "b894b293ef38d687"
+  "_fingerprint": "29f903c9fe23a4c6"
 }

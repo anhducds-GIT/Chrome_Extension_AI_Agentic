@@ -126,13 +126,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T21 chang (1)(2)(3) XONG 15/09. Udin Optic nay song o workers/udin-optic — goi rieng, extension rieng, 12 lenh, quyen hep ve mot trang. Suite Scouter con 31 xanh va KHONG con Udin. Chang KE TIEP la (4) PHEP KIEM THAT: sinh tep ghep cap rieng cho udin-optic, bat may chu Bridge cua goi do, nap extension moi vao Chrome, chay e2e that voi prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH — ve sau moi la ve chung minh.",
+      "next_step": "T21 chang (4) DONG 15/09: goi udin-optic chay tron E2E bon chang TU EXTENSION CUA CHINH NO, 4 anh xuong dia, VA `git status workers/duc-scouter` SACH. Con lai chang (5) don so. Sau do T21 dong va nac Scouter v1 moi co nghia — vi luc ay no duoc CHUNG MINH chu khong duoc tuyen bo.",
       "human_action": "Chang (4) sap can Duc: nap extension Udin Optic moi vao Chrome (Load unpacked thu muc workers/udin-optic/v0.1.0) va bat cong tac Cho phep bam va go o bang ben CUA GOI DO. AI se bao khi may chu va tep ghep cap da san sang. @Đức:bấm",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Scouter vua bi tach mot mieng: Udin Optic ra goi rieng. Phep kiem dong T21 la hai ve — 4 chang Udin DAT, VA Scouter SACH khong phai sua mot dong. Hai chang dau cua lo trinh deu bi do lai va deu SAI: (1) gop transport ve _shared khong lam duoc vi no chay trong Chrome (G-92); (2) gia tach goi khong phai transport+bridge-core ma cong them ~2.100 dong may bam/go vi hnx-fetch — cai thuoc toi dung — KHONG co quyen debugger (G-93). Duc duoc dua con so truoc khi lam va chot van tach, vi Scouter con doi nhieu va UI Udin se doi theo usecase. Bay gio bay tep chep bi ghim so tung byte. Dong dau Scouter v1 van DE LAI cho toi khi chang (4) xong."
+      "open_item": "Cau \\\"Scouter la bo do nghe chung\\\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
     },
     {
       "id": "hnx-fetch",
@@ -154,13 +154,13 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "T21 chang (4). Extension DA NAP va DANG NOI — do qua day: 12 method, seed udin-optic-v0.1, protocol udin-optic.bridge. May chu bat bang START-BRIDGE_Udin-Optic.cmd o nha chung. Con lai: Duc NAP LAI extension de an ban moi (icon chu U + background de lai system.ping), bat cong tac Cho phep bam va go, roi AI chay e2e that voi prompt CHUA DUNG BAO GIO.",
-      "human_action": "Nap extension Udin Optic vao Chrome: chrome://extensions, Load unpacked, chon thu muc workers/udin-optic/v0.1.0. Mo bang ben, chon tep ghep cap trong thu muc Chrome Extension Bridge/udin-optic/, roi bat cong tac Cho phep bam va go. May chu Bridge va tep ghep cap DA SAN SANG. @Đức:bấm",
+      "next_step": "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi.",
+      "human_action": "không",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Goi vua ra doi 15/09, tach khoi duc-scouter theo T21. Duc chot 15/09 luot hai, SAU khi do duoc rang tach ra la chep lai ~2.100 dong may bam/go: \\\"Vi sau nay Scouter se con thay doi nhieu, ngoai ra UI cua Udin Extension cung se bi thay doi cho phu hop usecase, do do tach rieng se hop ly hon.\\\" Bay gio: 7 phep ghim xanh, tu vung dong o 12 lenh (Scouter 24), quyen hep ve dung mot trang thay vi <all_urls>. CHUA tung chay that tu extension nay — do la chang (4)."
+      "open_item": "CHANG (4) DONG 15/09: bon anh that xuong dia tu chinh extension nay (786.870 / 959.068 / 964.148 / 943.476 byte, dau tep RIFF...WEBP hop le), W4 doc dung cau tra loi cho prompt vua gui. VA `git status workers/duc-scouter` SACH — mot extension khac chay tron mot viec that tren ma cua Scouter ma khong bat Scouter sua mot dong. Cau \\\"Scouter la bo do nghe chung\\\" khong con la loi khai. Con lai chi la don so."
     }
   ],
   "active_work": [
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T21 chang (1)(2)(3) XONG 15/09. Udin Optic nay song o workers/udin-optic — goi rieng, extension rieng, 12 lenh, quyen hep ve mot trang. Suite Scouter con 31 xanh va KHONG con Udin. Chang KE TIEP la (4) PHEP KIEM THAT: sinh tep ghep cap rieng cho udin-optic, bat may chu Bridge cua goi do, nap extension moi vao Chrome, chay e2e that voi prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va `git status workers/duc-scouter` SACH — ve sau moi la ve chung minh.",
+      "title": "T21 chang (4) DONG 15/09: goi udin-optic chay tron E2E bon chang TU EXTENSION CUA CHINH NO, 4 anh xuong dia, VA `git status workers/duc-scouter` SACH. Con lai chang (5) don so. Sau do T21 dong va nac Scouter v1 moi co nghia — vi luc ay no duoc CHUNG MINH chu khong duoc tuyen bo.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "T21 chang (4). Extension DA NAP va DANG NOI — do qua day: 12 method, seed udin-optic-v0.1, protocol udin-optic.bridge. May chu bat bang START-BRIDGE_Udin-Optic.cmd o nha chung. Con lai: Duc NAP LAI extension de an ban moi (icon chu U + background de lai system.ping), bat cong tac Cho phep bam va go, roi AI chay e2e that voi prompt CHUA DUNG BAO GIO.",
+      "title": "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi.",
       "rank": 5,
       "claim": null
     }
