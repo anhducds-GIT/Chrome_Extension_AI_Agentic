@@ -120,4 +120,31 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     "transport là tệp CHÉP — một tên gói trong đó sẽ theo bản chép sang gói tiếp theo");
 }
 
-console.log("  · be-mat-hep: 5 khối xanh");
+/* ---- ⑹ BỐN TỆP RIÊNG PHẢI TỰ KHAI TÊN MÌNH, không mang tên Scouter ---------
+ * Lượt chạy thử đầu tiên của máy chủ in ra `"Scouter Bridge nghe ở 127.0.0.1:32152"` — đúng
+ * cổng của Udin, đúng tệp ghép cặp của Udin, mà tự xưng là Scouter. Không hỏng chức năng, nhưng
+ * đó là **cách một bản chép nói dối**: người bật máy chủ đọc đúng dòng đó để biết mình vừa bật
+ * cái gì. Gói `duc-scouter` từng phải viết hẳn một dòng README để giải thích cùng triệu chứng
+ * (máy chủ của nó in tên `duc-auto-chatgpt`). Chữa một lần, rồi ghim lại.
+ *
+ * Chỉ soi phần MÃ, và bỏ luôn các dòng `from "..."`: đường dẫn sang tệp chép BẮT BUỘC mang tên
+ * `scouter-*` vì đó là tên tệp thật. Văn xuôi cũng được phép nhắc Scouter — mọi lời giải thích
+ * *"chép từ Scouter"* đều nằm trong ghi chú, và một bộ dò khớp chính văn của mình thì vô dụng. */
+{
+  const RIENG = ["bridge/udin-optic-host.mjs", "scripts/bridge-core.mjs", "background.js"];
+  for (const ten of RIENG) {
+    const ma = doc(goc, ...ten.split("/"))
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/from\s+"[^"]*"/g, "")
+      /* `ScouterEngine` là TÊN LỚP do `scouter-engine.js` xuất ra, và tệp đó chép NGUYÊN VĂN
+       * (khối ⑷ băm nó). Đổi tên lớp là làm gãy phép so byte để đẹp một chữ — không đáng.
+       * Tên tệp và tên export của bản chép được giữ, chỗ cấm là chỗ gói TỰ KHAI TÊN MÌNH. */
+      .replace(/ScouterEngine/g, "");
+    assert.ok(!/scouter/i.test(ma),
+      `${ten} còn tự xưng Scouter trong phần mã — người bật máy chủ đọc đúng dòng đó để biết mình vừa bật cái gì`);
+  }
+  assert.ok(!/scouter/i.test(doc(goc, "manifest.json")), "manifest không được mang tên gói khác");
+}
+
+console.log("  · be-mat-hep: 6 khối xanh");

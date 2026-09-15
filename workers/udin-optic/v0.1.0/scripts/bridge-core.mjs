@@ -54,12 +54,12 @@ export const ERROR_DEFINITIONS = Object.freeze({
    * kia không phân biệt được "nút không bấm được" với "anh chưa mở khoá", và sẽ đi sửa nhầm chỗ. */
   WRITE_BLOCKED: { retryable: false, message: "The write path is closed; no input was dispatched." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
-  INTERNAL_ERROR: { retryable: false, message: "The scouter could not complete the request." }
+  INTERNAL_ERROR: { retryable: false, message: "The extension could not complete the request." }
 });
 
 export class BridgeProtocolError extends Error {
   constructor(code, message, details) {
-    if (!Object.hasOwn(ERROR_DEFINITIONS, code)) throw new TypeError(`Unknown scouter bridge error code '${code}'.`);
+    if (!Object.hasOwn(ERROR_DEFINITIONS, code)) throw new TypeError(`Unknown Udin Optic bridge error code '${code}'.`);
     const definition = ERROR_DEFINITIONS[code];
     super(message || definition.message);
     this.name = "BridgeProtocolError";
@@ -258,7 +258,7 @@ function registryEntry(values) {
 const METHOD_ENTRIES = [
   registryEntry({
     name: "session.hello", read_only: true, deadline_ms: 10000,
-    description: "Negotiate protocol version and report the scouter session identity.",
+    description: "Negotiate protocol version and report the Udin Optic session identity.",
     params_schema: { supported_versions: "positive_integer[]" },
     params_validator: (raw) => {
       const params = objectParams(raw, ["supported_versions"]);
@@ -269,12 +269,12 @@ const METHOD_ENTRIES = [
   }),
   registryEntry({
     name: "system.capabilities", read_only: true, deadline_ms: 10000,
-    description: "Describe the fixed method vocabulary of this scouter seed.",
+    description: "Describe the fixed method vocabulary of this Udin Optic extension.",
     params_schema: {}, params_validator: noParams
   }),
   registryEntry({
     name: "system.ping", read_only: true, deadline_ms: 10000,
-    description: "Report that the scouter service worker is awake.",
+    description: "Report that the Udin Optic service worker is awake.",
     params_schema: {}, params_validator: noParams
   }),
   registryEntry({
@@ -619,7 +619,7 @@ export function createDispatcher(options = {}) {
    * không ai nối tay là lỗi lập trình, và phát hiện nó lúc nạp service worker rẻ hơn nhiều so
    * với phát hiện nó lúc AI đang chờ trả lời. */
   const missing = METHOD_NAMES.filter((name) => typeof handlers[name] !== "function");
-  if (missing.length) throw new TypeError(`Scouter dispatcher is missing handlers for: ${missing.join(", ")}.`);
+  if (missing.length) throw new TypeError(`Udin Optic dispatcher is missing handlers for: ${missing.join(", ")}.`);
 
   return async function dispatch(input) {
     let request = null;

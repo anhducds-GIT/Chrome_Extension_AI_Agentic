@@ -65,7 +65,7 @@ function xuLyTaiCho(method, p, root, port) {
   switch (method) {
     case "host.capabilities":
       return {
-        host: "scouter-bridge-host",
+        host: "udin-optic-bridge-host",
         protocol: PROTOCOL,
         port,
         write_root: root,
@@ -93,7 +93,7 @@ function xuLyTaiCho(method, p, root, port) {
  * @param {object} o.pairing  tệp ghép cặp
  * @param {string} o.root     vùng ghi — đường dẫn TUYỆT ĐỐI, do người khởi động khai
  */
-export function createScouterBridge({ pairing, root, ...conLai } = {}) {
+export function createUdinBridge({ pairing, root, ...conLai } = {}) {
   const daKiem = validatePairing(pairing);
   const gocThat = canhVungGhi(root);
 
@@ -122,9 +122,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToP
     process.exit(2);
   }
   const pairing = JSON.parse(fs.readFileSync(duongGhepCap, "utf8"));
-  const may = createScouterBridge({ pairing, root: path.resolve(goc) });
+  const may = createUdinBridge({ pairing, root: path.resolve(goc) });
   await may.start();
-  process.stdout.write(`Scouter Bridge nghe ở 127.0.0.1:${pairing.port} · vùng ghi: ${path.resolve(goc)}\n`);
+  process.stdout.write(`Udin Optic Bridge nghe ở 127.0.0.1:${pairing.port} · vùng ghi: ${path.resolve(goc)}\n`);
   const dong = async () => { await may.stop(); process.exit(0); };
   process.on("SIGINT", dong);
   process.on("SIGTERM", dong);
