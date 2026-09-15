@@ -81,21 +81,19 @@ Udin đang có: cửa Bridge · hồ sơ ghế · năng lực · sổ hoạt đ�
 *Đóng khi:* biết chắc có cần `tabs` không. *Vì sao đứng đầu:* nó quyết định `U2` có phải đụng
 manifest không, và đụng manifest là đụng hợp đồng quyền.
 
-**U1 · Zoom UI** — chữ bảng bên to/nhỏ. Một biến CSS trên `:root` + một khoá `chrome.storage.local`
+**U1 · Zoom UI — ✅ XONG 16/09.** — chữ bảng bên to/nhỏ. Một biến CSS trên `:root` + một khoá `chrome.storage.local`
 + hàng nút 80…120%, mẫu: `duc-auto-gemini/v0.2.0/sidepanel.js` khoá `dac_ui_zoom`.
 *Đóng khi:* phép ghim DOM canh hàng nút tồn tại và khoá lưu đúng tên (mẫu `sidepanel-dom-smoke.mjs`
 bên Scouter) · cỡ chữ sống qua một lượt đóng/mở bảng bên.
 
-**U2 · Zoom web** — thu phóng trang Udin. `chrome.tabs.setZoom` gọi thẳng từ bảng bên, **không qua
+**U2 · Zoom web — ✅ XONG 16/09, không đụng manifest.** — thu phóng trang Udin. `chrome.tabs.setZoom` gọi thẳng từ bảng bên, **không qua
 Bridge**, nên không có method mới.
 *Đóng khi:* đặt 120% rồi `chrome.tabs.getZoom` đọc lại đúng 1.2 (sai số 0,01, mẫu `ZOOM_EPSILON`
 bên Gemini) · nút bị **khoá lại kèm lý do** khi không có tab Udin nào — *"nút zoom hỏng" không
 chẩn đoán được từ xa nếu nó chỉ im lặng*.
 
-**U3 · Check kết nối** — một nút chạy đúng sáu bước của `kiem-cai-dat.mjs` **từ trong bảng bên**.
-*Đóng khi:* tắt máy chủ rồi bấm thì nó nói đúng *"Bridge chưa chạy"*, không nói *"lỗi"*.
-*Cái bẫy đã biết, đừng vấp lại:* bước ① phải hỏi `bridge.sessions`, **KHÔNG** hỏi `system.ping` —
-ping đi tới extension nên nó chết vì đúng cái nó định chẩn đoán (`G-91`).
+**U3 · Check kết nối — ✅ XONG 16/09, nhưng KHÁC bản đã viết ở đây.**
+Chặng này viết là *"chạy đúng sáu bước của `kiem-cai-dat.mjs`, bước ① hỏi `bridge.sessions`"*. **Đo 16/09: không làm được** — extension chỉ TRẢ LỜI, nó không phát đi được một yêu cầu nào ra dây (`G-96`). Nên bộ kiểm hỏi cùng những câu ấy **từ phía bên kia**, năm bước, trong `scripts/kiem-nhanh.mjs`. Tiêu chí đóng giữ nguyên và đã đạt: tắt máy chủ rồi bấm thì nó nói *"chưa nối được máy chủ Bridge"* kèm đúng tệp cần chạy, **khác hẳn** câu *"chưa chọn tệp ghép cặp"*.
 
 **U4 · Thư mục ra theo project/job.** Ba việc nhỏ, không việc nào cần method mới:
  · `e2e.mjs --du-an "<tên>"` → ảnh vào `<vùng-ghi>/<tên>/<lượt-chạy>/`. Không đưa `--du-an` thì

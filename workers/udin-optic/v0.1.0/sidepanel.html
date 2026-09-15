@@ -127,6 +127,18 @@
           <p class="mo">Chọn tệp ghép cặp do bộ cài Bridge tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
         </div>
 
+        <!-- KIỂM TRA KẾT NỐI. Đặt ngay DƯỚI khối ghép cặp, không đặt cuối thẻ: đây là việc Đức làm
+             ngay sau khi chọn tệp ghép cặp, nên nó phải nằm đúng chỗ mắt vừa rời khỏi. -->
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>Kiểm tra kết nối</h2>
+            <button id="kiem-chay" type="button">Kiểm tra</button>
+          </div>
+          <p class="mo">Năm bước, dừng ở bước hỏng đầu tiên. Mỗi bước hỏng nói luôn việc cần làm tiếp.</p>
+          <p id="kiem-ket" class="mo" aria-live="polite">Chưa kiểm lần nào.</p>
+          <ul id="kiem-list" class="kiem-list"></ul>
+        </div>
+
         <!-- HỒ SƠ GHẾ. Bản trước CỐ Ý tránh chữ "Profile ID" dù Đức hỏi bằng tên đó, lý do là
              ở đây có HAI thứ — một cái máy sinh không sửa được, một cái Đức gõ — và gộp chúng
              dưới một nhãn thì lúc đổi tên người ta tưởng mình đang đổi cả số.

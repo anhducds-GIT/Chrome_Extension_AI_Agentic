@@ -22,6 +22,7 @@ import { JOURNAL_CONSTANTS, nanSo, tenMien, tinhTienDo } from "./scripts/scouter
 import { validatePairing, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
 import { KHOA_ZOOM_UI, chuanHoaZoomUi, trungMuc, xetTabDangXem, MIEN_UDIN } from "./scripts/zoom-core.mjs";
+import { kiemNhanh } from "./scripts/kiem-nhanh.mjs";
 
 const engine = new ScouterEngine();
 const $ = (chon) => document.querySelector(chon);
@@ -580,6 +581,72 @@ for (const nut of nutZoomWeb()) {
 try { chrome.tabs?.onActivated?.addListener(() => { veZoomWeb(); }); } catch { /* tiện nghi, bỏ qua */ }
 
 veZoomWeb();
+
+/* ---- KIỂM TRA KẾT NỐI -----------------------------------------------------
+ * Năm phép dò THẬT bơm vào `kiemNhanh`. Bản thân `kiemNhanh` không biết `chrome` là gì,
+ * nên phép ghim gọi được hàm thật thay vì dò chữ trong file này.
+ *
+ * Bước ④ dùng ĐÚNG đường dò mà AI dùng (`engine.runProbe("query")`), không phải một
+ * đường tắt riêng cho nút này: một bộ chẩn đoán đi đường khác với việc thật thì nó xanh
+ * trong khi việc thật đang hỏng. */
+const PHEP_DO_KIEM = {
+  day: async () => {
+    const kho = await chrome.storage.local.get([TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]);
+    return kho?.[TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]?.status ?? "unpaired";
+  },
+  nangLuc: async () => capabilities(),
+  quetTab: async () => engine.scanTargets(),
+  doTrang: async (t) => {
+    /* DỰNG target ĐÚNG NHƯ `resolveTarget` của `scouter-seed-core.mjs`: `runProbe` đọc
+       `target.id ?? target.targetId` và `target.attached`. Bản đầu của chỗ này gọi
+       `runProbe("query", {...})` — sai cả chữ ký (target đứng TRƯỚC) lẫn tên phép dò
+       (`dom.query`, không phải `query`), và nó sẽ lặng lẽ trả `PROBE_UNKNOWN`. */
+    const target = { id: t.targetId, targetId: t.targetId, attached: Boolean(t.attached) };
+    const kq = await engine.runProbe(target, "dom.query", { selector: "body", limit: 1 });
+    /* Phép dò thất bại trả về `{ ok:false, code, detail }` chứ KHÔNG ném. Ném ra ở đây để
+       bước ④ bắt được và hiện đúng lý do, thay vì đọc `undefined` thành "không đọc được". */
+    if (!kq || kq.ok !== true) throw new Error(`${kq?.code || "PROBE_FAILED"}: ${kq?.detail || "phép dò không chạy"}`);
+    return kq.data?.matchCount;
+  },
+  congTac: async () => readWriteGateState(chrome)
+};
+
+function veKiem(ket) {
+  const hop = $("#kiem-list");
+  hop.replaceChildren();
+  for (const b of ket.buoc) {
+    const muc = document.createElement("li");
+    const dong = dat("div", "kiem-dong");
+    dong.append(
+      dat("span", `kiem-dau ${b.dat ? "dat" : "hong"}`, b.dat ? "ĐẠT" : "HỎNG"),
+      dat("span", "kiem-ten", b.ten)
+    );
+    muc.append(dong, dat("div", "kiem-noi", b.noi));
+    /* Dòng "làm gì tiếp" chỉ hiện khi có việc phải làm. Hiện luôn thì nó thành nền,
+       và lúc thật sự cần đọc thì mắt đã học được cách bỏ qua nó. */
+    if (b.lamGi) muc.append(dat("div", "kiem-lamgi", b.lamGi));
+    hop.append(muc);
+  }
+  $("#kiem-ket").textContent = ket.dat
+    ? "BẢN CÀI CHẠY ĐƯỢC."
+    : "CÓ BƯỚC HỎNG — làm theo dòng đóng khung rồi bấm lại.";
+}
+
+$("#kiem-chay").addEventListener("click", async () => {
+  const nut = $("#kiem-chay");
+  nut.disabled = true;
+  $("#kiem-ket").textContent = "Đang kiểm…";
+  $("#kiem-list").replaceChildren();
+  try {
+    veKiem(await kiemNhanh(PHEP_DO_KIEM, { mien: MIEN_UDIN }));
+  } catch (loi) {
+    /* KHÔNG CHẠY ĐƯỢC khác hẳn KHÔNG ĐẠT — gộp hai cái là báo sai cho Đức. */
+    $("#kiem-ket").textContent = `KHÔNG CHẠY ĐƯỢC: ${loi?.message || loi}`;
+  } finally {
+    nut.disabled = false;
+  }
+});
+
 veNangLuc();
 veBridge().then(veSo);
 veTenGhe();

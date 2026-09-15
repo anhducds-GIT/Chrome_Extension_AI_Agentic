@@ -96,6 +96,23 @@ p { margin: 0; }
 .zoom-nut { padding: 2px 6px; font-size: 10.5px; border-radius: 999px; }
 .zoom-nut.chon { border-color: var(--xanh); color: var(--xanh); background: var(--xanh-nen); }
 
+/* ---- KIỂM TRA KẾT NỐI ---------------------------------------------------
+ * Dòng "làm gì tiếp" phải ĐỌC ĐƯỢC, không phải chú thích mờ bên lề: nó là thứ Đức cần
+ * nhất khi có một bước đỏ. Nền nhạt + viền trái để mắt bám vào đó trước. */
+.kiem-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.kiem-list li { display: flex; flex-direction: column; gap: 2px; }
+.kiem-dong { display: flex; align-items: baseline; gap: 6px; }
+.kiem-dau { font-weight: 700; font-size: 11px; white-space: nowrap; }
+.kiem-dau.dat { color: var(--luc); }
+.kiem-dau.hong { color: var(--do); }
+.kiem-ten { font-weight: 600; font-size: 11.5px; }
+.kiem-noi { color: var(--mo); font-size: 11px; overflow-wrap: anywhere; }
+.kiem-lamgi {
+  font-size: 11px; color: var(--chu); background: var(--do-nen);
+  border-left: 3px solid var(--do); padding: 5px 7px; border-radius: 0 4px 4px 0;
+}
+
+
 
 /* ---- CÔNG TẮC -------------------------------------------------------------
  * MÀU KHÔNG ĐƯỢC LỘN. Bản vẽ v1 tô thẻ này nền hồng đỏ ở trạng thái TẮT — mà TẮT là trạng thái
