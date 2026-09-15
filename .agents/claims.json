@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-bridge-read",
       "ai": null,
-      "claimed_at": "2026-09-15T14:46:03.163Z",
-      "task": "mot dong ban do AGENTS.md muc 8",
+      "claimed_at": "2026-09-15T15:04:08.572Z",
+      "task": "sua dong ban do theo nap moi",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -52,8 +52,8 @@
     "_docs": {
       "owner": "claude-bridge-read",
       "ai": null,
-      "claimed_at": "2026-09-15T14:46:03.019Z",
-      "task": "ADR-0037 + protocols/BRIDGE-READ.md",
+      "claimed_at": "2026-09-15T15:04:08.480Z",
+      "task": "sua nap doc ve 2x3000",
       "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "29f903c9fe23a4c6"
+  "_fingerprint": "b95267002dd62218"
 }
