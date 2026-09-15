@@ -840,3 +840,10 @@ Một thứ đáng ghi lại cho lane sau: cổng bắt đúng một lỗi **đ�
 `udin-optic` — `human_action` có việc thật (Đức phải nạp lại extension) nhưng **không có dấu**
 `@Đức` nào, nên việc đó sẽ rơi khỏi bảng *Đức cần làm* **một cách im lặng** (`N-29`). Đã gắn
 `@Đức:bấm`. Đây đúng là loại lỗi không ai tự thấy: cả hai đầu đều *trông như* đúng.
+
+## 2026-09-16b · Bảng máy sinh theo HEAD sau `U5`
+
+Việc thật ở `workers/udin-optic/` và `workers/duc-scouter/` (chặng `U5`: mang cỡ chữ,
+thu phóng trang và nút *Kiểm tra kết nối* về Scouter). Ở gốc repo phiên này chỉ **sinh lại ba bảng
+máy sinh** và thêm hai lệnh vào `package.json` (`scouter:bang-ben`, `udin:bang-ben`).
+Không đổi một dòng luật, một dòng `scripts/` hay `tests/` nào ở tầng gốc.

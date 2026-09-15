@@ -312,3 +312,22 @@ xanh (12 · 33), đột biến Scouter **14/14 giết được, 0 sống sót**.
 
 **ĐỨNG Ở ĐIỂM DỪNG ①.** Đức nạp lại **cả hai** tiện ích (Udin Optic và Duc Scouter — cả hai đều
 có UI mới), rồi AI chạy một lượt E2E thật để nghiệm thu `U4` bằng ĐĨA.
+
+## 2026-09-16c · Một lỗ hổng cả suite không nhìn thấy: bảng bên có NẠP ĐƯỢC không
+
+Mọi phép ghim của bảng bên chạy trong `node:vm`: chúng **trích một khối** rồi chạy khối đó. Nghĩa
+là `sidepanel.js` **đầy đủ chưa bao giờ chạy trong một trình duyệt thật**. Một `import` sai đường,
+một `id` gõ nhầm, một lỗi cú pháp ở khối không ai trích — cả ba **lọt qua toàn bộ suite**, rồi hiện
+ra dưới dạng một **bảng bên trắng trơn**. Và nó hỏng IM LẶNG: MV3 không báo gì, trang vẫn tải.
+
+`duc-scouter/v0.1.0/scripts/do-bang-ben.mjs` bịt chỗ đó: Chrome sạch → nạp chính thư mục gói → mở
+`sidepanel.html` → nghe console → hỏi ba câu (lỗi console · `id` JS gọi có trong HTML không ·
+mã có **thật sự chạy** không). Câu thứ ba đo bằng một **dấu vết mã phải để lại trên DOM**, không đo
+`document.readyState` — trạng thái đó vẫn *"complete"* khi mọi script đã chết.
+
+Đo cả hai gói: **0 lỗi console, 0 `id` thiếu, mã chạy, 6 nút phóng to / 12 thẻ**. Phép đo có
+răng (đột biến 2 lượt, 2 chết): đổi tên một `id` → bắt đúng `id` đó kèm dòng ném `TypeError`;
+`import` một file không tồn tại → bắt `ERR_FILE_NOT_FOUND` kèm *"mã KHÔNG chạy"*.
+
+Nửa **tĩnh** (kiểm `id`) vào thẳng suite nhanh ở cả hai gói vì nó không cần Chrome — *cái gì phải
+nhớ mới chạy thì sẽ có lúc quên*. Nửa **sống**: `npm run scouter:bang-ben` · `npm run udin:bang-ben`.
