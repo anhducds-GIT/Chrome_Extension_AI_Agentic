@@ -177,6 +177,7 @@
 
 | cần biết | dùng | tốn |
 |---|---|---|
+| bảng bên có **nạp được** không — lỗi console, `id` thiếu, mã có chạy thật không | `npm run scouter:bang-ben` · `npm run udin:bang-ben` | ~15s mỗi gói, Chrome riêng |
 | `setZoom`/`getZoom` có chạy khi manifest KHÔNG khai `tabs` không (`G-95`) | `npm run udin:zoom-probe` | ~30s, Chrome riêng |
 | lõi ghi có bấm/gõ **tới trang** không, ngoài trình duyệt của Đức | `npm run scouter:action-probe` | ~30s, Chrome riêng |
 | một bản sửa của lõi có gây lỗi không | chép lõi cũ bằng `git show <commit>:…/scouter-actions-core.mjs` vào thư mục tạm cạnh bản chép của phép đo, chạy ở đó | ~30s |

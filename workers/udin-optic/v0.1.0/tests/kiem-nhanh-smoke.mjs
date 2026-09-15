@@ -224,4 +224,23 @@ for (const id of ["kiem-chay", "kiem-ket", "kiem-list"]) {
 assert.match(html, /aria-live="polite"[^>]*>|id="kiem-ket"[^>]*aria-live="polite"/,
   "dòng kết luận phải `aria-live` — nó đổi sau khi bấm, và trình đọc màn hình cần biết");
 
+/* ═══ ⓒ MỌI `id` BẢNG BÊN GỌI ĐỀU PHẢI CÓ TRONG HTML ════════════════
+ * `$("#x").addEventListener(…)` trên một `id` không có sẽ ném `TypeError` và **giết mọi dòng phía
+ * sau** — tức một nút mới gõ nhầm tên làm hỏng cả những nút đã chạy tốt. MV3 không báo gì: trang
+ * vẫn tải, chỉ có mã là không chạy, và người ngồi trước nó chỉ thấy một bảng trắng.
+ *
+ * Đây là nửa TĨNH, chạy không cần Chrome nên nó nằm trong suite nhanh. Nửa SỐNG — nạp gói vào
+ * một Chrome sạch rồi nghe console — ở `duc-scouter/v0.1.0/scripts/do-bang-ben.mjs`, chạy bằng
+ * `npm run scouter:bang-ben` hoặc `npm run udin:bang-ben`. */
+{
+  const idGoi = new Set();
+  for (const mm of nguon.matchAll(/\$\(\s*["'`]#([A-Za-z0-9_-]+)["'`]\s*\)/g)) idGoi.add(mm[1]);
+  for (const mm of nguon.matchAll(/getElementById\(\s*["'`]([A-Za-z0-9_-]+)["'`]\s*\)/g)) idGoi.add(mm[1]);
+  assert.ok(idGoi.size > 10, "không rút được `id` nào từ `sidepanel.js` — neo hỏng thì khối này mất răng mà vẫn xanh");
+  const idCo = new Set([...html.matchAll(/\sid="([A-Za-z0-9_-]+)"/g)].map((mm) => mm[1]));
+  const thieu = [...idGoi].filter((id) => !idCo.has(id)).sort();
+  assert.deepEqual(thieu, [],
+    `bảng bên gọi những id KHÔNG có trong HTML: ${thieu.join(", ")} — mỗi cái là một \`TypeError\` giết phần còn lại của file`);
+}
+
 console.log("kiem-nhanh-smoke: OK");
