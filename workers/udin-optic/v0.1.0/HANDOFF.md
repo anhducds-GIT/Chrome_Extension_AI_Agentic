@@ -87,3 +87,30 @@ số `NEN` rồi chạy lại; đó là một dòng.
 
 `make-icons.mjs` vào nhóm **tệp CỐ Ý KHÁC** (luật gói ⑷) — không bị ghim so byte với Scouter, vì
 đây đúng là chỗ gói này được phép khác.
+
+## 2026-09-15d · `claude-scouter-udine` — bộ khởi động, và cái tên sai chui qua được cả khối ⑹
+
+**Thiếu bộ khởi động.** Đức hỏi *"bật máy chủ ở đâu?"* và chỉ vào
+`START-BRIDGE_HNX-Fetch.cmd`. Quy ước có sẵn ở `.repo-structure.json` (`START-BRIDGE_<Tên>.cmd`
++ `.ps1` trong nhà chung), tôi chỉ đưa Đức một lệnh `node` dài. Nay có đủ:
+`Chay-may-chu-Udin.cmd` (kéo-thả, trong repo) và `START-BRIDGE_Udin-Optic.cmd/.ps1` (nhà chung).
+Đã **chạy thật** — máy chủ lên cổng 32152, chạy ẩn, ghi log cạnh tệp ghép cặp.
+
+**Và lượt chạy thật ấy phát hiện cái tên sai thứ HAI.** Hỏi `system.ping` qua dây, nhận:
+`{"scouter":"online","seed":"scouter-seed-v0.1"}`. Khối ⑹ vừa viết lúc sáng **không bắt được**,
+vì nó soi mã của ba tệp RIÊNG — còn chuỗi này nằm trong `scouter-seed-core.mjs`, tệp **chép
+nguyên văn**. Bài học: một bộ dò chỉ canh được vùng nó soi, và tôi đã chọn vùng theo *chỗ tôi
+vừa sửa* chứ không theo *chỗ câu trả lời đi ra*.
+
+`system.ping` là thứ ĐẦU TIÊN người ta gọi để biết mình đang nói chuyện với ghế nào.
+
+**Chữa ở đâu, và vì sao không chữa ở chỗ hỏng.** Sửa thẳng `scouter-seed-core.mjs` thì phải khai
+`CO_Y_KHAC` và **mất phép so từng byte trên đúng tệp chứa CÁI PHANH**. Đổi một lớp bảo vệ lấy hai
+chuỗi chữ là cái giá tồi. Nên `background.js` **đè** `session.hello` và `system.ping` — cùng chỗ
+với `worker_id`, cùng lý do (`G9`): tên gói là hiểu biết riêng, nó không vào tệp chép.
+
+Khối ⑺ canh cái đè còn nguyên, **và canh hai chỗ khai tên phải KHỚP NHAU** (`background.js` ↔
+`bridge-core.mjs`) — một ghế hai tên thì `bridge.sessions` mất nghĩa. Đột biến tay chết.
+
+**Đo được, không phải suy:** extension Udin Optic **đã nạp và đang nối** — `system.capabilities`
+qua dây trả **12 method**, `seed: udin-optic-v0.1`, `protocol: udin-optic.bridge`.

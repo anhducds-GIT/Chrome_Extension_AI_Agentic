@@ -24,13 +24,47 @@ import { createJournal } from "./scripts/scouter-journal-core.mjs";
 import { createSeedHandlers, setWriteGate } from "./scripts/scouter-seed-core.mjs";
 import { createTransport } from "./scripts/scouter-transport-loopback.mjs";
 
-const handlers = createSeedHandlers({
+const handlersGoc = createSeedHandlers({
   engine: new ScouterEngine(),
   chromeApi: chrome,
   BridgeProtocolError,
   negotiateVersion,
   capabilities
 });
+
+/* ---- GÓI NÀY TỰ KHAI TÊN MÌNH, ở ĐÂY chứ không ở trong lõi ----------------
+ * `scripts/scouter-seed-core.mjs` là tệp chép NGUYÊN VĂN, và nó gõ cứng `"scouter-seed-v0.1"`
+ * vào `session.hello` và `system.ping`. Đo thật 15/09 trên máy chủ của chính gói này:
+ * `system.ping` trả `{"scouter":"online","seed":"scouter-seed-v0.1"}` — đúng cổng Udin, đúng
+ * extension Udin, **tự xưng là Scouter**.
+ *
+ * Đó không phải chuyện thẩm mỹ: `system.ping` là thứ ĐẦU TIÊN người ta gọi để biết mình đang
+ * nói chuyện với ghế nào, và bộ kiểm cài đặt in thẳng `seed` ra màn hình.
+ *
+ * Hai đường chữa, và đường kia SAI: sửa thẳng `scouter-seed-core.mjs` thì phải khai nó vào
+ * `CO_Y_KHAC` và **mất phép so từng byte trên đúng tệp chứa CÁI PHANH**. Đổi một lớp bảo vệ lấy
+ * hai chuỗi chữ là một cái giá tồi.
+ *
+ * Nên danh tính khai ở LỚP NỐI DÂY — cùng chỗ với `worker_id`, cùng lý do (`G9`): tên gói là
+ * hiểu biết riêng của một chỗ, nó không vào tệp dùng chung hay tệp chép.
+ *
+ * `capabilities()` thì KHÔNG cần đụng: nó đến từ `scripts/bridge-core.mjs`, tệp riêng, và đã
+ * khai `seed: "udin-optic-v0.1"`. */
+const SEED_CUA_GOI = "udin-optic-v0.1";
+
+const handlers = {
+  ...handlersGoc,
+  async "session.hello"(params) {
+    return { ...(await handlersGoc["session.hello"](params)), seed: SEED_CUA_GOI };
+  },
+  async "system.ping"() {
+    /* Dựng thẳng phong bì trả lời thay vì lọc bớt phong bì của bản gốc, và cố ý: bản gốc trả
+     * một khoá mang TÊN GÓI KHÁC, mà một khoá như thế trên dây là đúng cái nhầm lẫn khối này
+     * sinh ra để chặn. Vẫn gọi bản gốc để giữ nguyên tác dụng phụ và nguồn thời gian. */
+    const goc = await handlersGoc["system.ping"]();
+    return { udin_optic: "online", seed: SEED_CUA_GOI, server_time: goc.server_time };
+  }
+};
 
 /* ---- SỔ CÔNG VIỆC — cửa sổ của Đức nhìn vào việc AI đang làm (07/09) ------
  * Bọc `dispatch` chứ không sửa nó: sổ đứng NGOÀI đường đi của phong bì, nên một cuốn sổ hỏng

@@ -147,4 +147,30 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
   assert.ok(!/scouter/i.test(doc(goc, "manifest.json")), "manifest không được mang tên gói khác");
 }
 
-console.log("  · be-mat-hep: 6 khối xanh");
+/* ---- ⑺ `system.ping` và `session.hello` PHẢI được đè ở lớp nối dây ---------
+ * `scripts/scouter-seed-core.mjs` là tệp chép NGUYÊN VĂN và nó gõ cứng `"scouter-seed-v0.1"`
+ * vào hai handler đó. Đo thật 15/09 trên máy chủ của chính gói này: `system.ping` trả
+ * `{"scouter":"online","seed":"scouter-seed-v0.1"}`. Đúng cổng Udin, đúng extension Udin, **tự
+ * xưng là Scouter** — và `system.ping` là thứ ĐẦU TIÊN người ta gọi để biết mình đang nói
+ * chuyện với ghế nào.
+ *
+ * Đường chữa SAI là sửa thẳng tệp chép: nó buộc phải khai `CO_Y_KHAC` và **mất phép so từng
+ * byte trên đúng tệp chứa CÁI PHANH**. Đổi một lớp bảo vệ lấy hai chuỗi chữ là cái giá tồi.
+ *
+ * Khối này canh cái đè đó còn nguyên, và canh HAI CHỖ KHAI TÊN PHẢI KHỚP NHAU — `background.js`
+ * nói một tên, `bridge-core.mjs` nói một tên, và không có gì bắt chúng bằng nhau ngoài đây. */
+{
+  const bg = doc(goc, "background.js");
+  assert.match(bg, /const handlersGoc = createSeedHandlers\(/,
+    "phải giữ bản gốc lại dưới một tên khác thì mới đè lên được");
+  for (const ten of ["session.hello", "system.ping"]) {
+    assert.ok(bg.includes(`async "${ten}"(`),
+      `\`${ten}\` phải được đè ở background.js, nếu không gói tự xưng là Scouter trên dây`);
+  }
+  const khai = /SEED_CUA_GOI = "([^"]+)"/.exec(bg);
+  assert.ok(khai, "background.js phải khai tên seed thành một hằng số đọc được");
+  assert.equal(khai[1], capabilities().seed,
+    "background.js và bridge-core.mjs đang khai HAI tên seed khác nhau — một ghế hai tên thì `bridge.sessions` mất nghĩa");
+}
+
+console.log("  · be-mat-hep: 7 khối xanh");

@@ -8,7 +8,7 @@
 Extension Chrome cục bộ chạy việc sinh ảnh trên `vinfast.udinbv.com`: vượt màn chờ → gửi prompt
 → đợi ảnh mới → lấy ảnh về đĩa. Tách khỏi `duc-scouter` ngày 15/09 (`T21`).
 
-## Luật vàng — sáu điều riêng của gói này, đừng đảo lại
+## Luật vàng — bảy điều riêng của gói này, đừng đảo lại
 
 **⑴ Từ vựng ĐÓNG ở mười hai lệnh.** `session.hello` · `system.capabilities` · `system.ping` ·
 `scout.targets` · `scout.query` · `scout.text` · `scout.wait` · `scout.click` · `scout.type` ·
@@ -41,7 +41,13 @@ gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệ
 trả `TARGET_AMBIGUOUS`; khai lệch tên hai đầu thì "im lặng" — `hnx-fetch` mất một buổi vì đúng
 chuyện đó ngày 08/09.
 
-**⑹ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, gõ cứng trong
+**⑹ Gói TỰ KHAI TÊN MÌNH ở lớp nối dây, không ở tệp chép.**
+`scouter-seed-core.mjs` gõ cứng `"scouter-seed-v0.1"` vào `session.hello` và `system.ping`, nên
+`background.js` **đè** hai handler đó. Đừng sửa tệp chép để "cho gọn" — làm thế là mất phép so
+từng byte trên đúng tệp chứa cái phanh. Khối ⑺ của `be-mat-hep-smoke.mjs` canh cả cái đè lẫn việc
+`background.js` và `bridge-core.mjs` phải khai **cùng một** tên seed.
+
+**⑺ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, gõ cứng trong
 mã, chỉ tay Đức mở lại được. Phím phanh là `Ctrl+Shift+U` — **khác Scouter cố ý**: hai extension
 xin cùng một tổ hợp thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phanh lúc bảng
 bên đóng.
@@ -57,6 +63,7 @@ bên đóng.
 | `scripts/bridge-core.mjs` | **RIÊNG** — từ vựng 12 lệnh, giao thức `udin-optic.bridge` |
 | `sidepanel.html` · `sidepanel.js` · `sidepanel.css` | **RIÊNG** — bảng bên; chỗ Đức sẽ đổi theo usecase |
 | `bridge/udin-optic-host.mjs` | **RIÊNG** — vỏ mỏng trên lõi `../../_shared/bridge-host/` |
+| `bridge/Chay-may-chu-Udin.cmd` | **RIÊNG** — kéo-thả tệp ghép cặp vào đây là máy chủ chạy |
 | `scouter-engine.js` | chép NGUYÊN VĂN từ Scouter — bơm `chrome.debugger` vào hai lõi |
 | `scripts/scouter-probes.mjs` | chép NGUYÊN VĂN — bốn phép dò chỉ đọc |
 | `scripts/scouter-actions-core.mjs` | chép NGUYÊN VĂN — **hành động GHI**: bấm, gõ như tay người |
