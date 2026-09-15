@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1).",
+      "next_step": "U0..U5 XONG 16/09 — ma da xong ca chuoi. DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic VA tren Duc Scouter (ca hai deu co UI moi), roi dong/mo lai bang ben. Sau do AI chay mot luot E2E that de nghiem thu U4 bang DIA. DIEM DUNG (2): Duc ky Scouter v1.",
       "human_action": "@Đức:bấm — nap lai extension MOT lan. chrome://extensions > Udin Optic > Nap lai, roi dong va mo lai bang ben. Gop cho ca U1 U2 U3 U4.",
       "priority_rank": 5,
       "superseded_by": null,
@@ -209,7 +209,7 @@
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "U0..U4 XONG 16/09 (do quyen zoom, Zoom UI, Zoom web, nut Kiem tra ket noi, thu muc theo project). DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic — GOP ca bon vao dung mot luot nap. Sau do AI chay mot luot E2E that de nghiem thu, roi sang U5 (mang U1+U3 ve Scouter, dong v1).",
+      "title": "U0..U5 XONG 16/09 — ma da xong ca chuoi. DIEM DUNG (1): Duc vao chrome://extensions bam Nap lai tren Udin Optic VA tren Duc Scouter (ca hai deu co UI moi), roi dong/mo lai bang ben. Sau do AI chay mot luot E2E that de nghiem thu U4 bang DIA. DIEM DUNG (2): Duc ky Scouter v1.",
       "rank": 5,
       "claim": null
     }
