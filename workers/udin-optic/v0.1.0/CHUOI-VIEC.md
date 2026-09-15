@@ -96,16 +96,18 @@ chẩn đoán được từ xa nếu nó chỉ im lặng*.
 Chặng này viết là *"chạy đúng sáu bước của `kiem-cai-dat.mjs`, bước ① hỏi `bridge.sessions`"*. **Đo 16/09: không làm được** — extension chỉ TRẢ LỜI, nó không phát đi được một yêu cầu nào ra dây (`G-96`). Nên bộ kiểm hỏi cùng những câu ấy **từ phía bên kia**, năm bước, trong `scripts/kiem-nhanh.mjs`. Tiêu chí đóng giữ nguyên và đã đạt: tắt máy chủ rồi bấm thì nó nói *"chưa nối được máy chủ Bridge"* kèm đúng tệp cần chạy, **khác hẳn** câu *"chưa chọn tệp ghép cặp"*.
 
 **U4 · Thư mục ra theo project/job — ✅ MÃ XONG 16/09, chờ một lượt E2E thật để nghiệm thu.**
- ·  → ảnh vào . Không đưa
-    thì giữ nguyên hình dạng cũ, nên lượt chạy cũ không gãy.
- · cuối lượt in **đường dẫn đầy đủ**;  mở luôn thư mục bằng .
- · **Bộ khởi động thật là , KHÔNG phải **
-   như chặng này viết — tệp đó không tồn tại. Nay  đọc vùng ghi theo thứ tự:
-   *tham số thứ 2* › * cạnh tệp ghép cặp* › **. Đức đổi sang ổ  bằng
-   đúng một dòng trong tệp đó, và tệp đó nằm **ngoài repo** nên git không đụng tới.
-*Đã đạt:* tên có , , , dấu tiếng Việt, dấu cách, tên cấm của Windows (, …),
-dấu chấm cuối, quá dài — **bị từ chối kèm lý do riêng, và đỏ khi CHƯA gọi một lệnh nào** (chưa tốn
-credit). *Còn chờ:* một lượt E2E thật kiểm bằng ĐĨA.
+ · `e2e.mjs --du-an "<tên>"` → ảnh vào `<vùng-ghi>/udin-optic/<tên>/<lượt-chạy>/`.
+   Không đưa `--du-an` thì giữ nguyên hình dạng cũ, nên lượt chạy cũ không gãy.
+ · cuối lượt in **đường dẫn đầy đủ**; `--mo` mở luôn thư mục bằng `explorer.exe`.
+ · **Bộ khởi động thật là `bridge/Chay-may-chu-Udin.cmd`, KHÔNG phải `START-BRIDGE_Udin-Optic.ps1`**
+   như chặng này viết — tệp đó không tồn tại. Nay `.cmd` đọc vùng ghi theo thứ tự:
+   *tham số thứ 2* › *`vung-ghi.txt` cạnh tệp ghép cặp* › *`anh-ra`*.
+   Đức đổi sang ổ `D:` bằng đúng một dòng trong tệp đó, và tệp đó nằm **ngoài repo**
+   nên git không đụng tới và mỗi máy một đường khác nhau.
+*Đã đạt:* tên chứa `..`, `/`, `\`, dấu tiếng Việt, dấu cách, tên cấm của
+Windows (`CON`, `NUL`, `COM1`…), dấu chấm cuối, khoảng trắng đầu/cuối, quá dài — **bị từ chối
+kèm lý do RIÊNG cho từng loại, và đỏ khi CHƯA gọi một lệnh nào** — tức chưa tốn credit.
+*Còn chờ:* một lượt E2E thật kiểm bằng ĐĨA.
 
 **→ ĐIỂM DỪNG ①: Đức nạp lại extension một lần.** Gộp `U1 U2 U3 U4` vào đúng một lượt nạp. Sau đó
 AI chạy một lượt E2E thật để nghiệm thu cả bốn.
