@@ -114,9 +114,10 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | Hỏi làm gì TRƯỚC | `ROADMAP.md` (thứ tự) · `what-next.mjs` (trạng thái sống) |
 | Thêm/vận hành extension · đặt tệp ghép cặp hay vùng ghi Bridge | `PLATFORM.md`. **Đừng tự chọn chỗ** — `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>` |
 | Lấy dữ liệu HNX | `workers/hnx-fetch/PROTOCOL.md` — gói này **không có quyền `debugger`** |
+| **Đọc hội thoại GPT/Gemini qua Bridge (`chat.read`) để reasoning** | `docs/protocols/BRIDGE-READ.md` — mặc định `limit 2 × max_chars 6000`; **mọi lần leo thang là gửi lại TỪ ĐẦU**, trần tổng 20.000 ký tự/câu hỏi. **Đừng lấy `BUDGET: xxx w` của GPT làm nắp đọc** (ADR-0037) |
 | Sửa bộ chuẩn hay gói Assistant | **KHÔNG CÒN Ở ĐÂY** — `Ark_Repo_Harness` (ADR-0001) |
 | **Trạng thái repo lúc MỞ PHIÊN — đang ở đâu, việc kế** | [STATUS.md](STATUS.md) — một trang, khai bằng tay; bảng đọc frontmatter của nó |
-| **Thêm một luật, hay xem luật nào đang hiệu lực về một chủ đề** | `npm run luat` — bộ biên dịch luật, khung 1.8.0 |
+| **Thêm một luật, hay xem luật nào đang hiệu lực về một chủ đề** | `npm run luat` — bộ biên dịch luật, khung 1.8.0. Sổ cái là `docs/adr/` — **khai cả thư mục**, nên ADR mới không phải thêm dòng bản đồ nữa |
 | **Cãi một luật — tìm sự cố sinh ra nó** | [docs/VI-SAO-LUAT.md](docs/VI-SAO-LUAT.md) |
 | **Bản đồ file đầy đủ (kèm vì sao · có gì bên trong)** | [docs/BAN-DO-CHI-TIET.md](docs/BAN-DO-CHI-TIET.md) |
 | **Tra một thuật ngữ** (gate · claim · lane · fail-closed…) | [docs/LEGEND.md](docs/LEGEND.md) |

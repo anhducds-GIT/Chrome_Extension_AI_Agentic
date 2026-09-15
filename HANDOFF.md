@@ -777,3 +777,23 @@ Nên `hnx-fetch` xanh được là vì nó **không** nằm trong danh sách sin
 **Nhiễu đo cần biết, KHÔNG phải lỗi repo:** `rule-compile` đang đếm cả
 `.claude/worktrees/<...>/` — worktree của một phiên nền chạy song song — nên "quyết định mồ côi"
 nhảy từ 3 lên 167. Số thật vẫn là 3, và nó trở lại khi worktree kia được dọn. Đừng "sửa" nó.
+
+## 2026-09-15 · `claude-bridge-read` — luật đọc DOM qua Bridge
+
+Đức hỏi tôi có đọc được hội thoại GPT không. Đọc được, qua **Bridge của chính repo này**
+(ghế `anhducds`, `chat-read`) — không phải qua browser của Claude, cái đó không có cookie.
+
+Chốt thành [ADR-0037](docs/adr/0037-nap-doc-dom-dat-bang-tham-so-do-duoc.md), thi hành ở
+[docs/protocols/BRIDGE-READ.md](docs/protocols/BRIDGE-READ.md): mặc định
+`limit 2 x max_chars 6000`, tăng một lần, trần tổng 20.000 ký tự một câu hỏi.
+Lý do gọn: **đọc lại là gửi lại từ đầu**, nên đọc dè đắt hơn đọc đủ.
+
+Hai chỗ cổng bắt tôi, đã sửa: sửa tay `.agents/claims.json` làm vỡ niêm phong (có sẵn
+`scripts/claim.mjs`, tôi không tra trước); và `docs/adr/` **chưa từng được khai** trong Bản
+đồ file nên mọi ADR mới đều vấp — khai cả thư mục một lần thay vì thêm dòng mỗi lần.
+
+**CẦN ĐỨC:** ⒜ bảng budget 6 mode phải dán vào rule GPT bên kia mới có hiệu lực. ⒝ vùng
+`_docs` còn **1 commit chưa đẩy của lane trước** — lượt push tới phải `--carry`.
+
+**CHƯA ĐO:** DOM ChatGPT có giữ hết mọi lượt với hội thoại dài không. Một lệnh là ra:
+mở chat dài, `chat-read`, đọc `matched`.
