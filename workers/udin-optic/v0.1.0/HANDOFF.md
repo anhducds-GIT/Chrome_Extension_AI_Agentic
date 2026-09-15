@@ -286,3 +286,29 @@ pastel** · chặng `U4` chỉ vào `START-BRIDGE_Udin-Optic.ps1`, **tệp đó 
 
 **ĐIỂM DỪNG ①.** Đức: `chrome://extensions` › Udin Optic › **Nạp lại**, rồi đóng và mở lại bảng
 bên. Một lượt nạp cho cả bốn chặng. Sau đó AI chạy E2E thật để nghiệm thu `U4` bằng ĐĨA.
+
+## 2026-09-16b · `U5` + một lời khai sai của tôi về bộ khởi động
+
+**TÔI NÓI SAI VỚI ĐỨC.** Tôi báo `START-BRIDGE_Udin-Optic.ps1` *không tồn tại*. **Nó có** — nằm
+**ngoài repo**, trong nhà chung của Bridge, và nó chính là thứ Đức bấm. Lệnh tìm của tôi chỉ quét
+trong repo. Hậu quả thật: `U4` vá vào **nhầm tệp**, và tạo ra **hai bản của một luật** — bản
+quan trọng hơn thì git không thấy. **Bài học:** hạ tầng của gói này **không nằm trọn trong repo** —
+tệp ghép cặp, bộ khởi động, vùng ghi đều ở ngoài, **cố ý**. Trước khi khai một tệp là *không
+tồn tại*, phải tìm cả nhà chung của Bridge.
+
+Chữa đúng gốc: luật về hẳn `bridge/vung-ghi.mjs` **trong repo** — thứ tự `--root` ›
+`vung-ghi.txt` cạnh tệp ghép cặp › `anh-ra`. Cả hai bộ khởi động chỉ còn gọi vào. Máy chủ
+**nói ra vùng ghi lấy TỪ ĐÂU**, không chỉ nói nó ở đâu — Đức sửa tệp cấu hình rồi bật lại mà thấy
+đường cũ thì câu đó là thứ duy nhất nói cho anh ấy biết tệp có được đọc hay không.
+
+Phép ghim `vung-ghi-smoke.mjs` bắt một lỗi thật: **ổ gốc `C:\` lọt qua phép canh trùm** —
+`path.resolve("C:/")` trả về `C:\` nên nối thêm một dấu gạch thành hai, không khớp đường nào.
+Dùng cả ổ đĩa làm vùng ghi thì tệp ghép cặp nằm dưới nó, tức token đọc được qua dây.
+Đo **khởi động thật** bốn kiểu cấu hình; cả bốn ra đúng một dòng đọc được, không ra stack trace.
+
+**`U5` xong.** Hai lõi (`zoom-core` · `kiem-nhanh`) làm **trung tính với gói** rồi chép sang
+Scouter và **vào bảng so từng byte** (7 → 9 cặp). Từ nay **bản gốc ở bên Scouter**. Suite hai bên
+xanh (12 · 33), đột biến Scouter **14/14 giết được, 0 sống sót**.
+
+**ĐỨNG Ở ĐIỂM DỪNG ①.** Đức nạp lại **cả hai** tiện ích (Udin Optic và Duc Scouter — cả hai đều
+có UI mới), rồi AI chạy một lượt E2E thật để nghiệm thu `U4` bằng ĐĨA.

@@ -1686,3 +1686,25 @@ nó ĐỌC được `url` của mọi tab, tức cái khoá tự nhiên của Ud
 `keepalive`, `rpc_response`. Nên bảng bên — cả của Udin lẫn của Scouter — **không gọi được**
 `bridge.sessions` hay bất kỳ method nào của máy chủ. Điều này giới hạn mọi bộ chẩn đoán chạy
 trong bảng bên, kể cả bản sẽ mang về Scouter ở `U5`.
+
+## 2026-09-16b · `U5`: bảng bên nhận cỡ chữ, thu phóng trang, nút *Kiểm tra kết nối*
+
+Ba thứ này làm ở `udin-optic` trước (Đức đảo thứ tự 15/09: *làm ở B rồi apply vào Scout*), nay
+mang về. Hai lõi mới — `scripts/zoom-core.mjs` và `scripts/kiem-nhanh.mjs` — **là bản gốc**,
+gói `udin-optic` giữ bản chép bị so từng byte. Sửa ở ĐÂY rồi chép sang, đừng làm ngược.
+
+Cả hai đã được làm **trung tính với gói**: không tên gói, không tên miền, không số lệnh, không
+câu chỉ dẫn riêng — tất cả vào bằng **tham số** từ `sidepanel.js` (`G9`).
+
+**MỘT KHÁC BIỆT THẬT, đừng “sửa cho giống nhau”.** Scouter truyền `null` làm tên miền, Udin
+truyền tên miền của nó. `G-95` đo: `chrome.tabs.setZoom` **không** bị `host_permissions`
+chặn, nên lớp an toàn của Udin là việc Chrome **giấu** `tab.url` của tab ngoài quyền. Scouter
+mở `<all_urls>` nên nó đọc được url của **mọi** tab — **cái khoá ấy không tồn tại ở đây**. Thứ
+còn lại: chỉ thu phóng trang `http(s)`, và chỉ tab ĐANG XEM trong chính cửa sổ này. Đừng nới thêm.
+
+Cũng ghi lại cho lần sau: `G-96` — **bảng bên không gọi được method nào của máy chủ**.
+Extension chỉ TRẢ LỜI; ba loại khung duy nhất nó gửi ra dây là `auth`, `keepalive`,
+`rpc_response`. Nên `kiem-nhanh.mjs` hỏi cùng những câu của `kiem-cai-dat.mjs` nhưng
+**từ phía extension**, năm bước — không phải sáu, và không phải vì cắt bớt.
+
+Suite 33 xanh · `npm run scouter:mutation` **14/14, 0 sống sót**. Còn chờ Đức nạp lại tiện ích.
