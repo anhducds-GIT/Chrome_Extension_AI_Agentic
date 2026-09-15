@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh ngày 2026-09-15. Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh ngày 2026-09-16. Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 3 đơn vị cùng khai `priority_rank: 1` (`_root` · `workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
-2. **Phiên gần nhất** — 2026-09-15 · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-16 · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 
@@ -22,7 +22,7 @@ Trang được sinh ngày 2026-09-15. Đây là lúc sinh trang, **KHÔNG phải
 | Duc Auto GG Flow Video | 0.1.0 | building | 21 | 104 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10. | [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md) |
 | Duc Scouter (seed v0.1) | 0.1.0 | building | 0 | 25 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin. | [STATUS](workers/duc-scouter/v0.1.0/STATUS.md) |
 | HNX Fetch | 0.1.0 | active | 0 | 5 | 2026-09-08 @ `7cb9f76` — Chạy thật trọn vòng qua chính extension trong Chrome: ping trả đúng tên gói, bảng năng lực nhìn từ ngoài dây đúng bốn lệnh, scout.fetch lấy trang thật status 200, ngân sách trừ đúng, một lượt tai-ket-qua.mjs đầy đủ 0 hỏng ([bằng chứng](workers/hnx-fetch/v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md)) | CÓ (8 commit) | Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh extension nữa. Sổ nợ RỖNG. Việc còn lại chỉ là chạy mỗi ngày một lượt. | [STATUS](workers/hnx-fetch/v0.1.0/STATUS.md) |
-| Udin Optic (v0.1) | 0.1.0 | building | 0 | 3 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1. Dong y, dung ADR-0007. Duong ranh lam no an toan: 4 tep CO Y KHAC chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai — sua chung o Udin truoc la lam gay phep so byte tren dung tep chua CAI PHANH. Phep thu mot cau truoc moi viec: co can mot method Bridge MOI khong? | [STATUS](workers/udin-optic/v0.1.0/STATUS.md) |
+| Udin Optic (v0.1) | 0.1.0 | building | 0 | 3 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? U4 da chot: thu muc ra chia HAI TANG — vung ghi la thiet lap cua may (Duc dat mot lan, doi duoc sang o D bang mot dong cau hinh), thu muc con la <du-an>/<luot-chay> do AI dat theo tung job. Ca hai VAN nam sau may chu Bridge, nen giu nguyen chot vung-ghi. Duong showDirectoryPicker cua ba goi duc-auto-* CHET — no vut bo ca duong ghi da co phep ghim de doi lay mot hop thoai. CON DUNG HAI DIEM, ca hai o cuoi: (1) Duc nap lai extension MOT lan sau U4; (2) Duc ky Scouter v1 sau U5. | [STATUS](workers/udin-optic/v0.1.0/STATUS.md) |
 
 ## D · Sức khoẻ điều hướng [ĐO]
 
