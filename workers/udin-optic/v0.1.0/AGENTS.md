@@ -70,6 +70,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `scripts/scouter-seed-core.mjs` | chép NGUYÊN VĂN — handler + **CÁI PHANH** (trần 200 lượt mỗi lần mở) |
 | `scripts/scouter-transport-loopback.mjs` | chép NGUYÊN VĂN — dây WebSocket, bắt tay hai chiều |
 | `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
+| `bridge/vung-ghi.mjs` | **RIÊNG** — VÙNG GHI nằm ở đâu. MỘT luật cho **cả hai** bộ khởi động, và một trong hai bộ nằm NGOÀI repo |
 | `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
 | `scripts/make-icons.mjs` | **RIÊNG** — sinh bộ icon chữ **U**. Icon là MÃ NGUỒN, không phải cục nhị phân mồ côi |
 | `scripts/zoom-core.mjs` | **RIÊNG** — lõi thuần của hai hàng nút phóng to. Tách ra để phép ghim **gọi được hàm thật** thay vì dò chữ trong `sidepanel.js` |
@@ -81,6 +82,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `icons/icon-128.png` | biểu tượng, máy sinh |
 | `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
 | `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
+| `tests/vung-ghi-smoke.mjs` | thứ tự `--root` › `vung-ghi.txt` › `anh-ra` · vùng ghi không được trùm lên tệp ghép cặp · bộ khởi động không được giữ bản riêng của luật |
 | `tests/zoom-smoke.mjs` | hai hàng nút phóng to: lõi thuần · ghim tĩnh HTML/CSS · **chạy khối thật trong** `node:vm` |
 | `tests/kiem-nhanh-smoke.mjs` | nút *Kiểm tra kết nối*: năm bước · từng câu *“làm gì tiếp”* · `engine` giả **áp đúng chữ ký** |
 | `tests/run-all.mjs` | suite của gói; cổng đóng phiên TỰ TÌM tệp này theo hình dạng |

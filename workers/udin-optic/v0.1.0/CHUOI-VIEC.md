@@ -99,14 +99,27 @@ Chặng này viết là *"chạy đúng sáu bước của `kiem-cai-dat.mjs`, b
  · `e2e.mjs --du-an "<tên>"` → ảnh vào `<vùng-ghi>/udin-optic/<tên>/<lượt-chạy>/`.
    Không đưa `--du-an` thì giữ nguyên hình dạng cũ, nên lượt chạy cũ không gãy.
  · cuối lượt in **đường dẫn đầy đủ**; `--mo` mở luôn thư mục bằng `explorer.exe`.
- · **Bộ khởi động thật là `bridge/Chay-may-chu-Udin.cmd`, KHÔNG phải `START-BRIDGE_Udin-Optic.ps1`**
-   như chặng này viết — tệp đó không tồn tại. Nay `.cmd` đọc vùng ghi theo thứ tự:
-   *tham số thứ 2* › *`vung-ghi.txt` cạnh tệp ghép cặp* › *`anh-ra`*.
-   Đức đổi sang ổ `D:` bằng đúng một dòng trong tệp đó, và tệp đó nằm **ngoài repo**
-   nên git không đụng tới và mỗi máy một đường khác nhau.
-*Đã đạt:* tên chứa `..`, `/`, `\`, dấu tiếng Việt, dấu cách, tên cấm của
+ · **Vùng ghi: MỘT luật, ở `bridge/vung-ghi.mjs`** — thứ tự `--root` › `vung-ghi.txt`
+   cạnh tệp ghép cặp › `anh-ra`. Đức đổi sang ổ `D:` bằng đúng một dòng trong
+   `vung-ghi.txt`, tệp đó nằm **ngoài repo** nên git không đụng tới.
+
+> **SỮA MỘT LửI KHAI SAI CỦA CHÍNH TÔI (16/09).** Tôi báo với Đức rằng
+> `START-BRIDGE_Udin-Optic.ps1` *không tồn tại*. **Nó có** — nó nằm **ngoài repo**, tại
+> `C:\WORKING ZONE\Chrome Extension Bridge\udin-optic\`, và nó chính là thứ Đức bấm. Lệnh tìm
+> của tôi chỉ quét trong repo nên không thấy, và tôi đã kết luận từ một lượt tìm hẹp hơn câu hỏi.
+> Hậu quả thật: bản `U4` đầu tiên vá vào **nhầm tệp** — vào bộ kéo-thả trong repo, không
+> vào bộ Đức dùng. **Bài học đặt thẳng vào đây:** hạ tầng của một gói **không nằm trọn trong
+> repo** — tệp ghép cặp, bộ khởi động và vùng ghi đều ở ngoài, **cố ý**. Trước khi khai một
+> tệp là *không tồn tại*, phải tìm cả **nhà chung của Bridge**, không chỉ tìm trong kho mã.
+>
+> Và sửa đúng gốc chứ không chỉ vá thêm một bản nữa: luật về hẳn `bridge/vung-ghi.mjs`
+> trong repo, **hai** bộ khởi động chỉ còn gọi vào. Một bản của luật nằm ngoài repo là một bản
+> git không thấy và không phép ghim nào canh được.
+
+*Đã đạt:* tên project chứa `..`, `/`, `\`, dấu tiếng Việt, dấu cách, tên cấm của
 Windows (`CON`, `NUL`, `COM1`…), dấu chấm cuối, khoảng trắng đầu/cuối, quá dài — **bị từ chối
-kèm lý do RIÊNG cho từng loại, và đỏ khi CHƯA gọi một lệnh nào** — tức chưa tốn credit.
+kèm lý do RIÊNG, và đỏ khi CHƯA gọi một lệnh nào** (chưa tốn credit) · máy chủ **khởi động thật**
+bốn kiểu cấu hình, mỗi kiểu ra đúng một dòng đọc được, không ra stack trace.
 *Còn chờ:* một lượt E2E thật kiểm bằng ĐĨA.
 
 **→ ĐIỂM DỪNG ①: Đức nạp lại extension một lần.** Gộp `U1 U2 U3 U4` vào đúng một lượt nạp. Sau đó

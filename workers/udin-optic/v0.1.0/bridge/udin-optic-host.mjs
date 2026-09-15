@@ -13,13 +13,17 @@
  * trả `TARGET_AMBIGUOUS` — đúng chuyện đã xảy ra 08/09.
  *
  * Chạy:
- *   node workers/udin-optic/v0.1.0/bridge/udin-optic-host.mjs --pairing <tệp.json> --root <thư-mục-ghi>
+ *   node workers/udin-optic/v0.1.0/bridge/udin-optic-host.mjs --pairing <tệp.json> [--root <thư-mục-ghi>]
+ *
+ * Bỏ `--root` thì vùng ghi do `vung-ghi.mjs` quyết định: `vung-ghi.txt` cạnh tệp ghép cặp, rồi
+ * đến `anh-ra`. MỘT luật, một chỗ — hai bộ khởi động chỉ gọi vào, không giữ bản riêng.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBridgeHostCore, MAX_ENVELOPE_BYTES, validatePairing } from "../../../_shared/bridge-host/bridge-host-core.mjs";
+import { timVungGhi, canhTrumLenNhau } from "./vung-ghi.mjs";
 import { docFile, FileError, ghiFile, lietKe, MAX_FILE_BYTES } from "./file-core.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -115,16 +119,32 @@ function thamSo(ten) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
   const duongGhepCap = thamSo("--pairing");
-  const goc = thamSo("--root");
-  if (!duongGhepCap || !goc) {
-    process.stderr.write("Dùng: node bridge/udin-optic-host.mjs --pairing <tệp> --root <thư-mục>\n");
+  if (!duongGhepCap) {
+    process.stderr.write("Dùng: node bridge/udin-optic-host.mjs --pairing <tệp> [--root <thư-mục>]\n");
     process.stderr.write("  --root là VÙNG GHI. Mọi lượt file.* bị nhốt trong đó; lệnh trên dây không nới ra được.\n");
+    process.stderr.write("  Bỏ --root thì máy chủ tự tìm: vung-ghi.txt cạnh tệp ghép cặp, rồi đến anh-ra.\n");
     process.exit(2);
   }
+  /* Vùng ghi do MỘT luật quyết định, nằm ở `vung-ghi.mjs` — xem đầu file đó để biết vì sao
+   * nó không được nằm trong bộ khởi động. */
   const pairing = JSON.parse(fs.readFileSync(duongGhepCap, "utf8"));
-  const may = createUdinBridge({ pairing, root: path.resolve(goc) });
+  let chon;
+  try {
+    chon = timVungGhi({ duongGhepCap, root: thamSo("--root") });
+    canhTrumLenNhau({ duongGhepCap, vungGhi: chon.duong });
+    if (!fs.existsSync(chon.duong)) fs.mkdirSync(chon.duong, { recursive: true });
+  } catch (loi) {
+    /* Một dòng, không phải một bức tường stack trace. Đây đúng lúc Đức vừa gõ sai một dòng
+     * trong `vung-ghi.txt` và cần biết mình sai ở đâu — stack trace của Node không nói điều đó. */
+    process.stderr.write(`KHÔNG BẬT ĐƯỢC MÁY CHỦ: ${loi?.message || loi}
+`);
+    process.exit(2);
+  }
+  const may = createUdinBridge({ pairing, root: chon.duong });
   await may.start();
-  process.stdout.write(`Udin Optic Bridge nghe ở 127.0.0.1:${pairing.port} · vùng ghi: ${path.resolve(goc)}\n`);
+  /* NÓI RA vùng ghi LẤY TỪ ĐÂU, không chỉ nói nó ở đâu: Đức sửa `vung-ghi.txt` rồi bật lại mà
+   * thấy đường cũ thì câu này là thứ duy nhất nói cho anh ấy biết tệp đó có được đọc hay không. */
+  process.stdout.write(`Udin Optic Bridge nghe ở 127.0.0.1:${pairing.port} · vùng ghi: ${chon.duong} (lấy từ ${chon.tu})\n`);
   const dong = async () => { await may.stop(); process.exit(0); };
   process.on("SIGINT", dong);
   process.on("SIGTERM", dong);
