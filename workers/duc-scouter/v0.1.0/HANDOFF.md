@@ -1636,3 +1636,26 @@ bucket S3 riêng. Scouter không bao giờ gặp vì nó mở `<all_urls>`.
 thật **đều không thấy** — vì không cái nào gọi ra ngoài internet. Nên với bất kỳ gói nào sinh ra
 từ seed này: *thu hẹp `host_permissions` là một thay đổi HÀNH VI, không phải một dòng khai báo*,
 và thứ duy nhất đo được nó là một lượt chạy thật.
+
+## 2026-09-15g · `claude-scouter-udine` — **`T21` chặng ④ ĐÓNG: Scouter vừa bị bắt chứng minh và đã qua**
+
+Gói `udin-optic` chạy trọn E2E bốn chặng **từ extension của chính nó** — giao thức riêng, tệp
+ghép cặp riêng, 12 method thay vì 24, quyền hẹp về một trang thay vì `<all_urls>`. 4 ảnh xuống
+đĩa, kiểm bằng kích thước thật và đầu tệp `RIFF…WEBP`.
+
+**Điều đáng ghi vào sổ của SCOUTER không phải bốn cái ảnh, mà là `git status workers/duc-scouter`
+SẠCH.** Từ 08/09 tới hôm qua, câu *"Scouter là bộ đồ nghề chung"* là một **lời khai**: Udin sống
+trong `pilots/` của chính Scouter nên không có gì ép hai bên rời nhau. Hôm nay có: một extension
+khác chạy trọn một việc thật trên mã này **mà không bắt nó sửa một dòng**.
+
+**Cái giá, đo được:** ~2.100 dòng máy bấm/gõ bị chép sang gói mới (`G-93`), và bảy tệp chép nay
+bị ghim so **từng byte** — một bản vá an toàn làm ở đây **phải** tới được đó, hoặc suite bên kia
+đỏ.
+
+**Và một bài học của seed, không của gói Udin** (`G-94`): thu hẹp `host_permissions` là một thay
+đổi **hành vi**. `scout.grab` gọi `fetch` trong service worker, nên tên miền không khai thì CORS
+chặn — và ảnh Udin nằm trên S3 chứ không trên trang làm việc. Bảy phép ghim, suite gốc xanh, và
+một máy chủ chạy thật đều không thấy, vì không cái nào gọi ra ngoài internet. **Gói nào sinh ra
+từ seed này mà thu quyền lại thì phải có một lượt chạy live trước khi tin.**
+
+Còn lại của `T21`: chặng ⑤ — dọn sổ.

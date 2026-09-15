@@ -88,5 +88,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "T21 chang (4). Extension DA NAP va DANG NOI — do qua day: 12 method, seed udin-optic-v0.1, protocol udin-optic.bridge. May chu bat bang START-BRIDGE_Udin-Optic.cmd o nha chung. Con lai: Duc NAP LAI extension de an ban moi (icon chu U + background de lai system.ping), bat cong tac Cho phep bam va go, roi AI chay e2e that voi prompt CHUA DUNG BAO GIO."
-- human_action: "Nap extension Udin Optic vao Chrome: chrome://extensions, Load unpacked, chon thu muc workers/udin-optic/v0.1.0. Mo bang ben, chon tep ghep cap trong thu muc Chrome Extension Bridge/udin-optic/, roi bat cong tac Cho phep bam va go. May chu Bridge va tep ghep cap DA SAN SANG. @Đức:bấm"
+- next_step: "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi."
+- human_action: "không"

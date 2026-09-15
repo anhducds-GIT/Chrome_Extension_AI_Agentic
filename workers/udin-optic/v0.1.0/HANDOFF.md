@@ -145,3 +145,25 @@ lời cho *"việc nào cần nó"*. Dòng thứ tư phải trả lời được
 
 **Chưa đóng chặng ④.** Đức phải **nạp lại extension** để manifest mới ăn, rồi chạy lại với một
 prompt mới nữa — URL ký của lượt vừa rồi hết hạn sau **900 giây** (`S-24`), nên không vớt lại được.
+
+## 2026-09-15f · `claude-scouter-udine` — **CHẶNG ④ ĐÓNG: bốn ảnh xuống đĩa từ extension RIÊNG**
+
+Prompt *"a copper watering can among five lavender stems"* (chưa dùng bao giờ). **Bốn chặng ĐẠT:**
+
+| | |
+|---|---|
+| W1 vượt màn chờ | ĐẠT |
+| W2 gửi prompt | ĐẠT |
+| W3 lấy ảnh | **4/4 xuống đĩa** — 786.870 · 959.068 · 964.148 · 943.476 byte, mỗi ảnh **3 khúc** |
+| W4 đọc trả lời | ĐẠT — 192 ký tự, và **nói đúng về prompt vừa gửi** (*"the copper watering can among the lavender"*) |
+
+Kiểm bằng đĩa chứ không bằng lời báo của lệnh: bốn tệp có thật, đầu tệp `RIFF…WEBP` hợp lệ.
+
+**Vế thứ hai, và nó mới là vế chứng minh:** `git status workers/duc-scouter` **SẠCH**. Một
+extension khác chạy trọn một việc thật **trên mã của Scouter mà không bắt Scouter sửa một dòng**.
+Từ hôm nay câu *"Scouter là bộ đồ nghề chung"* không còn là lời khai — nó **đã bị bắt chứng minh
+và đã qua**.
+
+**Chặng ④ cần đúng hai lượt chạy live để đóng**, và lượt đầu không phí: nó đẻ ra `G-94` (ảnh nằm
+trên S3, không trên trang làm việc), thứ mà bảy phép ghim + suite gốc + máy chủ chạy thật đều
+không thấy.

@@ -719,11 +719,19 @@ chiều duy nhất không hẹp lại được, và là lý do bảy tệp kia p
 Sang `workers/udin-optic/tu-dong/`, chỉ đổi dòng `import` và đường dẫn trong ghi chú. Suite
 Scouter còn **31 xanh và không còn Udin**; suite gói mới **7 xanh**.
 
-**④ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI.**
-Ghép cặp bằng **tệp riêng, cổng riêng** (`tao-tep-ghep-cap.mjs --goi udin-optic`), nạp extension
-mới, chạy E2E thật trên Udin với prompt **chưa dùng bao giờ**.
-*Đóng khi:* 4 chặng ĐẠT **và `git status workers/duc-scouter` SẠCH**. Hai vế, và vế sau mới là vế
-chứng minh — ĐẠT mà phải sửa Scouter một dòng thì việc tách **chưa thành**.
+**④ PHÉP KIỂM THẬT — lượt chạy live TỪ EXTENSION MỚI. ✅ ĐÓNG 15/09.**
+Prompt *"a copper watering can among five lavender stems"*. **Bốn chặng ĐẠT**, và W3 đưa **4/4
+ảnh xuống đĩa** (786.870 · 959.068 · 964.148 · 943.476 byte, đầu tệp `RIFF…WEBP` hợp lệ) — kiểm
+bằng đĩa, không bằng lời báo của lệnh. W4 đọc đúng câu trả lời **cho prompt vừa gửi**.
+
+**Và vế thứ hai ĐẠT: `git status workers/duc-scouter` SẠCH.** Một extension khác chạy trọn một
+việc thật **trên mã của Scouter mà không bắt Scouter sửa một dòng**. Câu *"Scouter là bộ đồ nghề
+chung"* từ hôm nay không còn là lời khai.
+
+*Cần đúng hai lượt live để đóng, và lượt đầu không phí:* nó đẻ ra `G-94` — ảnh Udin nằm trên một
+bucket S3 chứ không trên trang làm việc, nên `host_permissions` vừa thu hẹp làm `scout.grab` chết
+với `Failed to fetch`. **Bảy phép ghim + suite gốc xanh + máy chủ chạy thật đều không thấy**, vì
+không cái nào gọi ra ngoài internet.
 
 **⑤ Dọn sổ.**
 `CAPABILITIES.md` · bảng theo dõi đầu file này · `DASHBOARD` · `HANDOFF` **hai bên** · `npm test`
