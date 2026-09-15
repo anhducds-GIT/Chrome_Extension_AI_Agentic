@@ -154,13 +154,13 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi.",
-      "human_action": "không",
+      "next_step": "Chuoi U0..U5 o CHUOI-VIEC.md. BAT DAU O U0: do chrome.tabs.setZoom tren ghe that — no quyet dinh U2 co phai dung manifest khong. Roi U1 Zoom UI va U3 Check ket noi: ca hai khong can method Bridge moi nen lam duoc ngay. U4 cho Duc chot nga ba.",
+      "human_action": "MOT cau chot cho U4 — chon thu muc ra: (a)+(c) giu nguyen chot an toan cua may chu Bridge (toi khuyen), hay (b) hop thoai Windows that nhung bo qua may chu. Chi tiet: CHUOI-VIEC.md muc Nga ba U4. @Đức:chốt",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "CHANG (4) DONG 15/09: bon anh that xuong dia tu chinh extension nay (786.870 / 959.068 / 964.148 / 943.476 byte, dau tep RIFF...WEBP hop le), W4 doc dung cau tra loi cho prompt vua gui. VA `git status workers/duc-scouter` SACH — mot extension khac chay tron mot viec that tren ma cua Scouter ma khong bat Scouter sua mot dong. Cau \\\"Scouter la bo do nghe chung\\\" khong con la loi khai. Con lai chi la don so."
+      "open_item": "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1. Dong y, dung ADR-0007. Duong ranh lam no an toan: 4 tep CO Y KHAC chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai — sua chung o Udin truoc la lam gay phep so byte tren dung tep chua CAI PHANH. Phep thu mot cau truoc moi viec: co can mot method Bridge MOI khong?"
     }
   ],
   "active_work": [
@@ -209,7 +209,7 @@
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "T21 chang (5) — don so, chang cuoi. CAPABILITIES + bang theo doi cua Scouter + DASHBOARD + TRIALS. Sau do T21 DONG. Viec that su ke tiep cua goi nay: W5..W8 (cac nang luc con thieu cua Udin) va giao dien bang ben rieng theo usecase — Duc chot 15/09 rang UI se doi.",
+      "title": "Chuoi U0..U5 o CHUOI-VIEC.md. BAT DAU O U0: do chrome.tabs.setZoom tren ghe that — no quyet dinh U2 co phai dung manifest khong. Roi U1 Zoom UI va U3 Check ket noi: ca hai khong can method Bridge moi nen lam duoc ngay. U4 cho Duc chot nga ba.",
       "rank": 5,
       "claim": null
     }
