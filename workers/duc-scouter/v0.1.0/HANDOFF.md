@@ -1727,3 +1727,26 @@ răng (đột biến 2 lượt, 2 chết): đổi tên một `id` → bắt đú
 
 Nửa **tĩnh** (kiểm `id`) vào thẳng suite nhanh ở cả hai gói vì nó không cần Chrome — *cái gì phải
 nhớ mới chạy thì sẽ có lúc quên*. Nửa **sống**: `npm run scouter:bang-ben` · `npm run udin:bang-ben`.
+
+## 2026-09-16d · `S-26` đóng — và hai đường hoá ra **không có chốt nào**
+
+Con đột biến `M5` khai `soLan: 3` và bộ đo thay **tất cả** các chỗ khớp. Nên chỉ cần **một**
+phép ghim — của `dom.query` — đỏ là nó được khai *“giết được”*. Tách làm ba, lượt đầu tiên:
+`M5a` (`dom.text`) và `M5c` (`dom.wait`) **SỐNG SÓT**, bộ đo tự in *“chốt này chỉ là bình luận”*.
+Tức **14/14 xanh của mọi lượt trước đó là màu xanh giả cho hai trong ba đường**.
+
+**Bài học rộng hơn ba phép dò này:** một con đột biến thay NHIỀU chỗ cùng lúc là một con đột
+biến **không phân biệt được hai nhánh** — nó báo đạt cho cả những chỗ trống không.
+
+Chữa: chốt `POISON` riêng cho `dom.text` và `dom.wait` (khối ③c) · mở lượt quét *“không
+method nào ngoài danh sách tới được trang”* từ **4 lên 9** phép dò, neo vào `PROBE_NAMES` thật ·
+trang giả học thêm ba method còn thiếu. **16/16 giết được, 0 sống sót.**
+
+**MỘT QUYẾT ĐỊNH VỀ BỀ MẶT AN TOÀN, Đức đọc lại giúm:** mở lượt quét lên 9 phép dò thì lộ ra
+`Page.getLayoutMetrics` **không nằm trong danh sách method được phép tới trang**, dù `page.shot`
+và `page.view` **đã gửi nó từ lâu** — lớp bảo vệ ấy vốn không phủ hai phép dò đó. Tôi **khai nó
+vào**, kèm lý do viết thẳng trong mã: nó là **getter thuần** (trả số đo khung nhìn và cỡ trang,
+không đổi một byte nào của trang), cùng họ với `Page.captureScreenshot` đã ở trong danh sách.
+Đây **không phải nới quyền để làm cổng xanh** — mã đã gửi nó từ trước, việc mở lượt quét chỉ làm
+chuyện đó **hiện ra**. Nhưng nó vẫn là một dòng thêm vào lớp bảo vệ, nên nó được viết ra chứ
+không lặng lẽ. Chi tiết ở `G-97`.
