@@ -29,7 +29,16 @@ const READ_ONLY_EXPECTED = new Set([
    * cái đó chính là ranh giới đọc/điều-khiển mà file này canh. */
   "Accessibility.enable",
   "Accessibility.getFullAXTree",
-  "Page.captureScreenshot"
+  "Page.captureScreenshot",
+  /* `Page.getLayoutMetrics` vào danh sách ngày 16/09, và **không phải để làm một cổng xanh lại**.
+   * `page.shot` và `page.view` **đã gửi nó từ lâu**; lượt quét ở khối ⑤ chỉ phủ bốn phép dò đầu
+   * nên chưa bao giờ nhìn thấy hai phép dò đó. Tức lớp bảo vệ này **vốn đã không phủ chúng**,
+   * và việc mở rộng lượt quét là thứ làm chuyện đó hiện ra.
+   *
+   * Nó đủ điều kiện vào đây vì nó là **getter thuần**: trả về số đo khung nhìn và cỡ trang,
+   * không đổi một byte nào của trang — cùng họ với `Page.captureScreenshot` ở ngay trên.
+   * Đây là một quyết định về BỀ MẶT AN TOÀN, nên nó được viết ra chứ không lặng lẽ thêm vào. */
+  "Page.getLayoutMetrics"
 ]);
 
 /* Method GHI — không cái nào được lọt qua cổng. */
@@ -114,6 +123,24 @@ function makeFakePage({ matchCount = 3, sauThat = Infinity } = {}) {
       if (depth > 0) root.children = [childTree(depth - 1, 2, sauThat - 1)];
       return { root };
     }
+    /* Ba method dưới đây thêm 16/09 để lượt quét ở khối ⑤ chạy được CẢ `a11y.tree`, `page.shot`
+     * và `page.view`. Trước đó trang giả không hiểu chúng, nên ba phép dò ấy **chưa bao giờ đi
+     * qua cổng đó** — và một trang giả thiếu method đọc y hệt một phép dò đã được kiểm. */
+    if (method === "Accessibility.enable") return {};
+    if (method === "Accessibility.getFullAXTree") {
+      return { nodes: [
+        { nodeId: "1", ignored: false, role: { value: "button" }, name: { value: "Nút số 1" } },
+        { nodeId: "2", ignored: true, role: { value: "generic" }, name: { value: "" } }
+      ] };
+    }
+    if (method === "Page.getLayoutMetrics") {
+      return {
+        cssLayoutViewport: { pageX: 0, pageY: 0, clientWidth: 1280, clientHeight: 720 },
+        cssVisualViewport: { pageX: 0, pageY: 0, clientWidth: 1280, clientHeight: 720, scale: 1, zoom: 1 },
+        cssContentSize: { width: 1280, height: 4000 }
+      };
+    }
+    if (method === "Page.captureScreenshot") return { data: "aVZCT1JytoJQ==" };
     if (method === "DOM.querySelectorAll") {
       if (params.selector === POISON) {
         const err = new Error("DOM Error while querying");
@@ -225,6 +252,39 @@ const FAKE_TARGETS = [
   }
 }
 
+/* ---- ③c `dom.text` và `dom.wait` — CÙNG cái chốt ấy, cho TỪNG đường một ------
+ * `S-26`, đóng 16/09. Hai phép dò này ra đời bằng cách **dùng lại** đường của `dom.query`,
+ * và chúng đã được coi là “có chốt” suốt từ đó — nhưng chỉ vì con đột biến `M5` cũ thay cả **ba**
+ * chỗ cùng lúc, nên một mình khối ③b (chỉ dò `dom.query`) đủ làm nó đỏ. Tách `M5` làm ba con
+ * rồi chạy lại: **`M5a` và `M5c` SỐNG SÓT** — hai đường này không hề có chốt nào.
+ *
+ * Bài học, và nó rộng hơn hai phép dò này: **một con đột biến thay nhiều chỗ cùng lúc là một
+ * con đột biến KHÔNG PHÂN BIỆT ĐƯỢC hai nhánh** — nó báo “giết được” cho cả những chỗ trống không. */
+{
+  for (const [ten, params] of [
+    ["dom.text", { selector: POISON }],
+    /* `timeoutMs`/`pollMs` ở mức nhỏ nhất: selector độc chết ngay ở lượt hỏi đầu, nhưng nếu
+       một bản sửa nào đó nuốt lỗi thì phép ghim phải thức dậy, không treo một phút. */
+    ["dom.wait", { selector: POISON, timeoutMs: 100, pollMs: 100 }]
+  ]) {
+    const page = makeFakePage();
+    const res = await runProbe(ten, { sendRaw: page.sendRaw }, params);
+    assert.equal(res.ok, false, `${ten}: selector độc phải chết`);
+    assert.equal(res.code, "SELECTOR_INVALID", `${ten}: và chết như một selector CSS SAI`);
+
+    const carriers = page.seen.filter((c) => JSON.stringify(c.params).includes("doSomething"));
+    assert.equal(carriers.length, 1, `${ten}: chuỗi độc chỉ được xuất hiện đúng một lần`);
+    assert.equal(carriers[0].method, "DOM.querySelectorAll", `${ten}: và phải đi qua đường hỏi DOM`);
+    assert.equal(carriers[0].params.selector, POISON, `${ten}: chỉ ở vị trí tham số \`selector\`, nguyên văn`);
+    assert.deepEqual(Object.keys(carriers[0].params).sort(), ["nodeId", "selector"],
+      `${ten}: không tham số nào khác được chở theo`);
+    assert.deepEqual(page.writes, [], `${ten}: không một lệnh ghi nào được phát ra`);
+    for (const call of page.seen) {
+      assert.ok(!call.method.startsWith("Runtime."), `${ten} lộ đường chạy mã: ${call.method}`);
+    }
+  }
+}
+
 /* ---- ④ dom.tree — độ sâu N kèm thuộc tính (lỗ ⑵ của brief) -------------- */
 {
   const page = makeFakePage();
@@ -304,14 +364,36 @@ const FAKE_TARGETS = [
   }
 
   /* Và trên đường đi thật của cả bốn phép dò: không method nào ngoài danh sách. */
-  const page = makeFakePage();
+  /* `matchCount: 1` — `dom.text` từ chối một selector khớp nhiều phần tử, và lượt quét này cần
+   * mọi phép dò ĐI ĐẾN CÙNG đường thật, không dừng ở một lỗi tham số. */
+  const page = makeFakePage({ matchCount: 1 });
   const deps = { sendRaw: page.sendRaw, targetId: "T1", listTargets: async () => FAKE_TARGETS };
-  const runs = [
-    await runProbe("targets.list", deps),
-    await runProbe("page.snapshot", deps),
-    await runProbe("dom.query", deps, { selector: "button" }),
-    await runProbe("dom.tree", deps)
-  ];
+  /* Quét **MỌI** phép dò chạy được với trang giả, không chỉ bốn cái đầu tiên (`S-26`).
+   * Danh sách cũ dừng ở bốn, nên sáu phép dò mở thêm sau đó **chưa bao giờ đi qua cổng này** —
+   * và một danh sách gõ tay thì lần sau lại quên tiếp. Neo vào `PROBE_NAMES` thật: thêm một
+   * phép dò mà quên khai tham số ở đây thì khối này ĐỎ ngay. */
+  const THAM_SO_QUET = {
+    "targets.list": {},
+    "page.snapshot": {},
+    "dom.query": { selector: "button" },
+    "dom.tree": {},
+    "dom.text": { selector: "button" },
+    "dom.wait": { selector: "button", timeoutMs: 100, pollMs: 100 },
+    "a11y.tree": {},
+    "page.shot": {},
+    "page.view": {},
+    /* `network.watch` KHÔNG quét được ở đây: nó cần `subscribe`, mà trang giả này không
+       có kênh sự kiện. Khai ra bằng `null` chứ không bỏ lặng lẽ — một cái tên thiếu trong
+       bảng này đọc y hệt một cái tên đã được quét. */
+    "network.watch": null
+  };
+  assert.deepEqual(Object.keys(THAM_SO_QUET).sort(), [...PROBE_NAMES].sort(),
+    "bảng tham số quét phải phủ ĐÚNG từ vựng phép dò thật — thêm một phép dò thì phải khai ở đây");
+  const runs = [];
+  for (const [ten, ps] of Object.entries(THAM_SO_QUET)) {
+    if (ps === null) continue;
+    runs.push(await runProbe(ten, deps, ps));
+  }
   for (const run of runs) {
     assert.equal(run.ok, true, `${run.probe}: ${run.detail}`);
     for (const call of run.cdp) {

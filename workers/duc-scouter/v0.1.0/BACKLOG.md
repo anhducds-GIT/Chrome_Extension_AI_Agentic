@@ -35,10 +35,12 @@
   POC-1, tự khai "giữ nguyên văn"), `HANDOFF.md`, `docs/GIA-THUYET.md`, brief và audit — viết lại
   ghi chép có ngày tháng là sửa lịch sử. Bản đồ file ở `AGENTS.md` có dòng chỉ tên cũ sang tên mới.
 
-- **S-26** · Con đột biến `M5` của `scouter-probes-mutation-check.mjs` nay giết **ba** chỗ cùng
-  lúc (`dom.query` · `dom.text` · `dom.wait` dùng chung một đường đã có chốt). Nghĩa là một phép
-  ghim chỉ phủ `dom.query` vẫn đủ làm nó đỏ, và hai phép dò kia **chưa chắc có chốt riêng**.
-  · **đóng khi:** tách `M5` làm ba con, mỗi con một chỗ, và cả ba vẫn bị giết.
+- ~~**S-26**~~ · **ĐÓNG 16/09.** Tách `M5` làm ba con (`M5a` `M5b` `M5c`), mỗi con
+  neo vào MỘT chỗ. Lượt chạy đầu tiên sau khi tách: **`M5a` và `M5c` SỐNG SÓT** — đúng điều mục
+  này nghi ngờ: `dom.text` và `dom.wait` **không hề có chốt nào**, con `M5` cũ đang che hai
+  lỗ. Đã dựng chốt riêng cho cả hai (khối ③c) và **mở lượt quét khối ⑤ từ 4 lên 9 phép dò**,
+  neo vào `PROBE_NAMES` thật nên lần sau thêm phép dò mà quên khai là ĐỎ ngay. Nay **16/16 giết
+  được, 0 sống sót**. Chi tiết: `G-97`.
 
 - **S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**, chứ không
   chờ xác nhận khung đã rời socket. Muốn chắc thì transport phải có móc "đã gửi xong".

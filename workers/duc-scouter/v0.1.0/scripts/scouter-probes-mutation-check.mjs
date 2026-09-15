@@ -47,20 +47,38 @@ const MUTANTS = [
     thay: "      if (false && banned.has(paramKey)) {",
     soLan: 1
   },
+    /* ---- M5a · M5b · M5c: **MỘT con cho MỘT chỗ** (`S-26`, đóng 16/09) ------------------
+   * Bản cũ là MỘT con với `soLan: 3`: nó thay cả ba chỗ cùng lúc. Mà `mutation-runner` dùng
+   * `split().join()` — thay TẤT CẢ — nên chỉ cần **một** phép ghim (của `dom.query`) đỏ là con đó
+   * bị khai là "giết được", trong khi `dom.text` và `dom.wait` **chưa chắc có chốt riêng nào**.
+   * Đó đúng là một phép ghim không phân biệt được hai nhánh.
+   *
+   * Nay mỗi con neo vào MỘT chỗ duy nhất, bằng cách kéo mỏ neo lên tới một dòng riêng của chính
+   * phép dò đó. Mỏ neo dài hơn là cố ý: mã đổi thì `demSoLan` kêu **MỎ NEO HỎNG** chứ không lặng
+   * lẽ trượt sang một chỗ khác. Ba con cùng một phép thay: dựng biểu thức `Runtime.evaluate`
+   * bằng NỐI CHUỖI từ selector của người gọi. */
   {
-    ma: "M5",
-    ten: "NỐI CHUỖI: dựng biểu thức Runtime.evaluate từ selector của người gọi",
-    /* BA chỗ, không phải một: `dom.text` (08/09) và `dom.wait` (12/09) ra đời bằng cách DÙNG
-     * LẠI đúng đường đã có chốt của `dom.query`, nên mỏ neo khớp thêm mỗi lần một phép dò mới
-     * mượn đường. Đó là tin TỐT — nó nghĩa là cả ba đi chung một cửa. Con này giết cả ba cùng
-     * lúc; muốn từng chỗ một chốt riêng thì phải tách làm ba con, ghi ở BACKLOG `S-26`. */
-    tim: '      found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector });',
-    thay:
-      '      const expr = "document.querySelectorAll(\'" + selector + "\').length";\n' +
-      '      found = { nodeIds: [], evaluated: await send("Runtime.evaluate", { expression: expr }) };',
-    soLan: 3
+    ma: "M5a",
+    ten: "NỐI CHUỖI → Runtime.evaluate, riêng `dom.text`",
+    tim: "      throw new ProbeError(\"SELECTOR_REQUIRED\", \"dom.text cần tham số `selector` là chuỗi không rỗng.\");\n    }\n    if (selector.length > MAX_SELECTOR_LENGTH) {\n      throw new ProbeError(\"SELECTOR_TOO_LONG\", `Selector dài quá ${MAX_SELECTOR_LENGTH} ký tự.`);\n    }\n\n    await send(\"DOM.enable\", {});\n    const doc = await send(\"DOM.getDocument\", { depth: 0, pierce: false });\n    const root = doc?.root;\n    if (!root?.nodeId) throw new ProbeError(\"NO_DOCUMENT\", \"Target không trả về document nào.\");\n\n    let found;\n    try {\n      found = await send(\"DOM.querySelectorAll\", { nodeId: root.nodeId, selector });",
+    thay: "      throw new ProbeError(\"SELECTOR_REQUIRED\", \"dom.text cần tham số `selector` là chuỗi không rỗng.\");\n    }\n    if (selector.length > MAX_SELECTOR_LENGTH) {\n      throw new ProbeError(\"SELECTOR_TOO_LONG\", `Selector dài quá ${MAX_SELECTOR_LENGTH} ký tự.`);\n    }\n\n    await send(\"DOM.enable\", {});\n    const doc = await send(\"DOM.getDocument\", { depth: 0, pierce: false });\n    const root = doc?.root;\n    if (!root?.nodeId) throw new ProbeError(\"NO_DOCUMENT\", \"Target không trả về document nào.\");\n\n    let found;\n    try {\n      const expr = \"document.querySelectorAll('\" + selector + \"').length\";\n      found = { nodeIds: [], evaluated: await send(\"Runtime.evaluate\", { expression: expr }) };",
+    soLan: 1
   },
   {
+    ma: "M5b",
+    ten: "NỐI CHUỖI → Runtime.evaluate, riêng `dom.query`",
+    tim: "    const limit = readIndex(params.limit, DEFAULT_PAGE_LIMIT, \"limit\", 1, MAX_PAGE_LIMIT);\n\n    await send(\"DOM.enable\", {});\n    const doc = await send(\"DOM.getDocument\", { depth: 0, pierce: false });\n    const root = doc?.root;\n    if (!root?.nodeId) throw new ProbeError(\"NO_DOCUMENT\", \"Target không trả về document nào.\");\n\n    let found;\n    try {\n      found = await send(\"DOM.querySelectorAll\", { nodeId: root.nodeId, selector });",
+    thay: "    const limit = readIndex(params.limit, DEFAULT_PAGE_LIMIT, \"limit\", 1, MAX_PAGE_LIMIT);\n\n    await send(\"DOM.enable\", {});\n    const doc = await send(\"DOM.getDocument\", { depth: 0, pierce: false });\n    const root = doc?.root;\n    if (!root?.nodeId) throw new ProbeError(\"NO_DOCUMENT\", \"Target không trả về document nào.\");\n\n    let found;\n    try {\n      const expr = \"document.querySelectorAll('\" + selector + \"').length\";\n      found = { nodeIds: [], evaluated: await send(\"Runtime.evaluate\", { expression: expr }) };",
+    soLan: 1
+  },
+  {
+    ma: "M5c",
+    ten: "NỐI CHUỖI → Runtime.evaluate, riêng `dom.wait`",
+    tim: "      let found;\n      try {\n        found = await send(\"DOM.querySelectorAll\", { nodeId: root.nodeId, selector });",
+    thay: "      let found;\n      try {\n        const expr = \"document.querySelectorAll('\" + selector + \"').length\";\n        found = { nodeIds: [], evaluated: await send(\"Runtime.evaluate\", { expression: expr }) };",
+    soLan: 1
+  },
+{
     ma: "M6",
     ten: "Thêm một đường GHI vào giữa page.snapshot (sửa thuộc tính DOM)",
     tim: '    const found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: INTERACTIVE_SELECTOR });',
