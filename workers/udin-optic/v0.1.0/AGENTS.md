@@ -73,14 +73,14 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `bridge/vung-ghi.mjs` | **RIÊNG** — VÙNG GHI nằm ở đâu. MỘT luật cho **cả hai** bộ khởi động, và một trong hai bộ nằm NGOÀI repo |
 | `bridge/file-core.mjs` | chép NGUYÊN VĂN — `file.*` chạy ở máy chủ, không ở extension |
 | `scripts/make-icons.mjs` | **RIÊNG** — sinh bộ icon chữ **U**. Icon là MÃ NGUỒN, không phải cục nhị phân mồ côi |
-| `scripts/zoom-core.mjs` | **RIÊNG** — lõi thuần của hai hàng nút phóng to. Tách ra để phép ghim **gọi được hàm thật** thay vì dò chữ trong `sidepanel.js` |
-| `scripts/kiem-nhanh.mjs` | **RIÊNG** — năm bước "Kiểm tra kết nối" chạy từ trong bảng bên. KHÔNG đụng `chrome`/`document`, nên phép ghim gọi được hàm thật |
+| `scripts/zoom-core.mjs` | chép NGUYÊN VĂN từ Scouter — lõi thuần của hai hàng nút phóng to |
+| `scripts/kiem-nhanh.mjs` | chép NGUYÊN VĂN — năm bước *Kiểm tra kết nối* từ trong bảng bên |
 | `scripts/do-quyen-zoom.mjs` | **RIÊNG** — phép đo `U0`: `setZoom` có đòi quyền `tabs` không. Chrome sạch, không đụng ghế Đức (`G-95`) |
 | `icons/icon-16.png` | biểu tượng, **máy sinh** — đừng sửa tay, chạy lại `make-icons.mjs` |
 | `icons/icon-32.png` | biểu tượng, máy sinh |
 | `icons/icon-48.png` | biểu tượng, máy sinh |
 | `icons/icon-128.png` | biểu tượng, máy sinh |
-| `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · bảy tệp chép |
+| `tests/be-mat-hep-smoke.mjs` | **bề mặt hẹp**: từ vựng · quyền · giao thức hai đầu · chín tệp chép |
 | `tests/bridge-pairing-path-static.mjs` | bảng bên hiện ĐÚNG đường tệp ghép cặp của gói này |
 | `tests/vung-ghi-smoke.mjs` | thứ tự `--root` › `vung-ghi.txt` › `anh-ra` · vùng ghi không được trùm lên tệp ghép cặp · bộ khởi động không được giữ bản riêng của luật |
 | `tests/zoom-smoke.mjs` | hai hàng nút phóng to: lõi thuần · ghim tĩnh HTML/CSS · **chạy khối thật trong** `node:vm` |

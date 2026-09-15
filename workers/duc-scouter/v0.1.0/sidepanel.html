@@ -16,6 +16,25 @@
           <span id="bridge-badge" class="huy-hieu">Đang đọc…</span>
         </div>
         <p class="mo">Quan sát trang · báo cáo qua Bridge · tự nạp lại mình.</p>
+        <!-- ĐẶT Ở HEADER, không đặt trong thẻ "Hệ thống": Đức chỉnh cỡ chữ đúng lúc đang
+             đọc không ra, và bắt đi tìm sang thẻ khác để chỉnh là bắt đọc thêm một màn nữa. -->
+        <div class="zoom-hang" role="group" aria-label="Cỡ chữ bảng bên">
+          <span class="mo">Cỡ chữ</span>
+          <button class="zoom-nut" type="button" data-ui-zoom="1">100%</button>
+          <button class="zoom-nut" type="button" data-ui-zoom="1.1">110%</button>
+          <button class="zoom-nut" type="button" data-ui-zoom="1.2">120%</button>
+        </div>
+        <!-- THU PHÓNG TRANG. Ba nút này ship ở trạng thái **TẮT**, và đó là cố ý: chúng chỉ được
+             bật sau khi đọc được một tab Udin thật. Ship ở trạng thái BẬT thì một đột biến xoá
+             lượt mở khoá vẫn xanh — bài học đã trả giá ở gói Gemini. -->
+        <div class="zoom-hang" id="zoom-web-nhom" role="group" aria-label="Thu phóng trang Udin">
+          <span class="mo">Trang web</span>
+          <button class="zoom-nut" type="button" data-web-zoom="0.8" disabled>80%</button>
+          <button class="zoom-nut" type="button" data-web-zoom="0.9" disabled>90%</button>
+          <button class="zoom-nut" type="button" data-web-zoom="1" disabled>100%</button>
+        </div>
+      </header>
+
       </header>
 
       <!-- CÔNG TẮC. Cố ý KHÔNG gọi là "phanh": công tắc này BẬT thì Scouter được ghi, nên
@@ -108,6 +127,18 @@
             <button id="bridge-pairing-path-copy" type="button" data-bridge-pairing-path="C:\WORKING ZONE\Chrome Extension Bridge\duc-scouter\duc-scouter-bridge-pairing-v1.json">Sao chép đường dẫn JSON</button>
           </div>
           <p class="mo">Chọn tệp ghép cặp do bộ cài Bridge tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
+        </div>
+
+        <!-- KIỂM TRA KẾT NỐI. Đặt ngay DƯỚI khối ghép cặp, không đặt cuối thẻ: đây là việc Đức làm
+             ngay sau khi chọn tệp ghép cặp, nên nó phải nằm đúng chỗ mắt vừa rời khỏi. -->
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>Kiểm tra kết nối</h2>
+            <button id="kiem-chay" type="button">Kiểm tra</button>
+          </div>
+          <p class="mo">Năm bước, dừng ở bước hỏng đầu tiên. Mỗi bước hỏng nói luôn việc cần làm tiếp.</p>
+          <p id="kiem-ket" class="mo" aria-live="polite">Chưa kiểm lần nào.</p>
+          <ul id="kiem-list" class="kiem-list"></ul>
         </div>
 
         <!-- HỒ SƠ GHẾ. Bản trước CỐ Ý tránh chữ "Profile ID" dù Đức hỏi bằng tên đó, lý do là

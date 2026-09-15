@@ -92,7 +92,7 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
  * Khối này KHÔNG cấm hai bản khác nhau — nó cấm chúng khác nhau MÀ KHÔNG AI BIẾT. Muốn khác
  * thật thì khai vào `CO_Y_KHAC` kèm lý do, và lúc đó nó là một quyết định có chữ ký.
  *
- * Vì sao đúng năm tệp này: chúng là **bộ máy gắn debugger, tổng hợp phím chuột, và CÁI PHANH**
+ * Vì sao năm tệp đầu: chúng là **bộ máy gắn debugger, tổng hợp phím chuột, và CÁI PHANH**
  * (trần 200 lượt mỗi lần mở khoá, mặc định TẮT, chỉ tay người bật). Một bản vá an toàn làm ở
  * Scouter phải tới được đây, và đây là sợi dây duy nhất bắt nó phải tới.
  *
@@ -108,7 +108,17 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     ["scripts/scouter-seed-core.mjs", "scripts/scouter-seed-core.mjs"],
     ["scripts/scouter-transport-loopback.mjs", "scripts/scouter-transport-loopback.mjs"],
     ["scripts/scouter-journal-core.mjs", "scripts/scouter-journal-core.mjs"],
-    ["bridge/file-core.mjs", "bridge/file-core.mjs"]
+    ["bridge/file-core.mjs", "bridge/file-core.mjs"],
+    /* HAI TỆP NÀY SINH RA Ở ĐÂY rồi mới sang Scouter (`U5`, 16/09) — ngược chiều năm tệp trên.
+     * Nhưng từ nay **bản gốc là bản bên Scouter**, và đó không phải một lựa chọn tuỳ tiện:
+     * Scouter là bộ đồ nghề chung, nên mọi bản chép phải chỉ về cùng một chỗ. Muốn sửa thì
+     * sửa bên Scouter rồi chép sang đây, y như năm tệp trên.
+     *
+     * Cả hai đã được làm TRUNG TÍNH VỚI GÓI để chép được: không tên gói, không tên miền,
+     * không số lệnh, không câu chỉ dẫn riêng — tất cả đi vào bằng THAM SỐ từ `sidepanel.js`
+     * (`G9`: một chuỗi gõ cứng trong tệp chép sẽ theo bản chép sang gói tiếp theo). */
+    ["scripts/zoom-core.mjs", "scripts/zoom-core.mjs"],
+    ["scripts/kiem-nhanh.mjs", "scripts/kiem-nhanh.mjs"]
   ];
   const bam = (p) => createHash("sha256").update(fs.readFileSync(p)).digest("hex").slice(0, 16);
 

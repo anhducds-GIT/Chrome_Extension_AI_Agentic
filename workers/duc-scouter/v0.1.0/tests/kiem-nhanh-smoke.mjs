@@ -1,5 +1,9 @@
 /* kiem-nhanh-smoke.mjs — phép ghim của nút "Kiểm tra kết nối" (`U3`).
  *
+ * File này là bản chép của gói kia, **khác đúng dòng `import` bảng lệnh** — hai gói đặt
+ * tên file lõi khác nhau. Hai file nó kiểm — `zoom-core.mjs` và `kiem-nhanh.mjs` — thì giống
+ * **từng byte** giữa hai gói, và có phép ghim canh.
+ *
  * HAI TẦNG:
  *   ⓐ gọi `kiemNhanh()` THẬT với năm phép dò giả — đo được từng bước, từng câu "làm gì tiếp".
  *   ⓑ trích khối `PHEP_DO_KIEM` THẬT ra khỏi `sidepanel.js` rồi chạy nó với một `engine` giả
@@ -15,7 +19,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { kiemNhanh } from "../scripts/kiem-nhanh.mjs";
 import { PROBE_NAMES } from "../scripts/scouter-probes.mjs";
-import { capabilities } from "../scripts/bridge-core.mjs";
+import { capabilities } from "../scripts/scouter-bridge-core.mjs";
 
 const goc = new URL("../", import.meta.url);
 const nguon = fs.readFileSync(new URL("sidepanel.js", goc), "utf8");

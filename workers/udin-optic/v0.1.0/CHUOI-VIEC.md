@@ -15,13 +15,13 @@
 — *mỗi nấc mở bằng một VIỆC THẬT chứ không bằng một danh sách*. Udin có việc thật; Scouter là bộ
 đồ nghề. Làm ở Udin trước thì Scouter **chỉ nhận thứ đã sống sót qua một lượt dùng thật**.
 
-**Chiều đi KHÔNG tự do — đây là chỗ dễ hỏng nhất của cả chuỗi.** Gói này có **bảy tệp chép bị ghim
+**Chiều đi KHÔNG tự do — đây là chỗ dễ hỏng nhất của cả chuỗi.** Gói này có **chín tệp chép bị ghim
 so từng byte** (`AGENTS.md` ⑶), trong đó có **cái phanh**.
 
 | việc đụng tới | làm ở đâu TRƯỚC | vì sao |
 |---|---|---|
 | `sidepanel.*` · `manifest.json` · `bridge-core.mjs` · `background.js` · `tu-dong/*` | **Udin** → mang về Scouter | không tệp nào bị ghim; đây đúng chỗ Đức nói UI sẽ đổi |
-| 7 tệp chép (`probes` · `actions-core` · `seed-core` · `transport` · `engine` · `journal` · `file-core`) | **Scouter** → chép xuống Udin | sửa ở Udin trước là **làm gãy phép so byte trên đúng tệp chứa cái phanh** |
+| 9 tệp chép (`probes` · `actions-core` · `seed-core` · `transport` · `engine` · `journal` · `file-core` · **`zoom-core`** · **`kiem-nhanh`**) | **Scouter** → chép xuống Udin | sửa ở Udin trước là **làm gãy phép so byte trên đúng tệp chứa cái phanh** |
 
 **Phép thử một câu, chạy trước MỖI việc:** *cái này có cần một method Bridge MỚI không?*
 · **Không** → làm ở Udin, chạy tiếp, đừng hỏi. · **Có** → dừng, vì thêm method là đổi luật an toàn
@@ -125,10 +125,24 @@ bốn kiểu cấu hình, mỗi kiểu ra đúng một dòng đọc được, kh
 **→ ĐIỂM DỪNG ①: Đức nạp lại extension một lần.** Gộp `U1 U2 U3 U4` vào đúng một lượt nạp. Sau đó
 AI chạy một lượt E2E thật để nghiệm thu cả bốn.
 
-**U5 · Mang về Scouter, rồi ĐÓNG `v1`.** Chỉ mang thứ **đã dùng thật** ở Udin. `U1` `U3` gần như
-chép thẳng; `U2` phải xem lại vì Scouter mở `<all_urls>` còn Udin một trang; `U4` sang Scouter là
-tuỳ — Scouter không sinh ảnh.
-*Đóng khi:* suite hai bên xanh · `npm run scouter:mutation` **0 sống sót** · cổng XANH TOÀN BỘ.
+**U5 · Mang về Scouter — ✅ MÃ XONG 16/09.**
+Mang `U1` (cỡ chữ) · `U2` (thu phóng trang) · `U3` (nút *Kiểm tra kết nối*). `U4` **không mang**: Scouter không sinh ảnh, nên nó không có kết xuất để chia theo project.
+
+Hai lõi — `scripts/zoom-core.mjs` và `scripts/kiem-nhanh.mjs` — được làm **trung tính với gói**
+(không tên gói, không tên miền, không số lệnh, không câu chỉ dẫn riêng — tất cả vào bằng **tham số**),
+rồi chép nguyên văn và **vào bảng so từng byte**. Từ nay **bản gốc là bản bên Scouter**, dù chúng
+sinh ra ở đây — Scouter là bộ đồ nghề chung, mọi bản chép phải chỉ về cùng một chỗ.
+
+> **MỘT KHÁC BIỆT THẬT, ĐỪNG “SỬA” NÓ CHO GIỐNG NHAU.** Udin truyền tên miền vào `xetTabDangXem`;
+> Scouter truyền `null`. Lý do nằm ở `G-95`: lớp an toàn của Udin là việc Chrome **giấu** `tab.url`
+> của tab ngoài quyền. Scouter mở `<all_urls>` nên nó đọc được url của **mọi** tab — cái khoá ấy
+> **không tồn tại ở bên đó**. Thứ còn lại cho Scouter: chỉ thu phóng trang `http(s)`, và chỉ tab
+> ĐANG XEM trong chính cửa sổ đó. **Đừng nới thêm**, và đừng chép câu chặn của Udin sang đó rồi
+> tưởng mình đã có cùng một lớp bảo vệ.
+
+*Đã đạt:* suite hai bên xanh (Udin 12 · Scouter 33) · `npm run scouter:mutation` **14/14 giết được,
+0 sống sót** · phép so từng byte phủ cả hai lõi mới (đo bằng một đột biến thử: ĐỎ).
+*Còn chờ:* cổng XANH TOÀN BỘ, rồi đến chữ ký của Đức.
 
 **→ ĐIỂM DỪNG ②: Đức ký `Scouter v1`.** Đây là tuyên bố phiên bản, và nó là chữ ký của Đức chứ
 không phải một lượt chạy xanh.

@@ -21,7 +21,7 @@ import { capabilities } from "./scripts/bridge-core.mjs";
 import { JOURNAL_CONSTANTS, nanSo, tenMien, tinhTienDo } from "./scripts/scouter-journal-core.mjs";
 import { validatePairing, sanitizeInstanceLabel, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
-import { KHOA_ZOOM_UI, chuanHoaZoomUi, trungMuc, xetTabDangXem, MIEN_UDIN } from "./scripts/zoom-core.mjs";
+import { KHOA_ZOOM_UI, chuanHoaZoomUi, trungMuc, xetTabDangXem } from "./scripts/zoom-core.mjs";
 import { kiemNhanh } from "./scripts/kiem-nhanh.mjs";
 
 const engine = new ScouterEngine();
@@ -477,7 +477,7 @@ const nutZoomUi = () => Array.from(document.querySelectorAll(".zoom-nut[data-ui-
 
 function apZoomUi(muc) {
   const chon = chuanHoaZoomUi(muc);
-  document.documentElement.style.setProperty("--udin-ui-zoom", String(chon));
+  document.documentElement.style.setProperty("--zoom-chu", String(chon));
   for (const nut of nutZoomUi()) doLop(nut, "chon", Number(nut.dataset.uiZoom) === chon);
   return chon;
 }
@@ -516,6 +516,12 @@ khoiPhucZoomUi();
  * GIỚI HẠN, nói thẳng: `getZoom` chứng minh **Chrome đã nhận lệnh thu phóng**, nó KHÔNG
  * chứng minh **trang đã vẽ lại**. Muốn chứng minh điều thứ hai thì phải đo trong trang, mà
  * `scout.view` không nằm trong 12 lệnh của gói này. Với một nút giao diện thì thế là đủ. */
+/* TÊN MIỀN CỦA GÓI NÀY — đặt ở đây chứ không ở `zoom-core.mjs`, vì file đó bị so từng byte
+ * với bản bên gói kia. Gói mở `<all_urls>` truyền `null` vào chỗ này.
+ * KHÔNG suy ra từ `host_permissions`: danh sách đó còn có bucket ảnh và `127.0.0.1`, mà nút thu
+ * phóng chỉ nói về **trang làm việc**. */
+const MIEN_LAM_VIEC = "vinfast.udinbv.com";
+
 const nutZoomWeb = () => Array.from(document.querySelectorAll(".zoom-nut[data-web-zoom]"));
 const NHOM_ZOOM_WEB = "Thu phóng trang Udin";
 
@@ -545,7 +551,7 @@ async function tabUdinDangXem() {
   let tab = null;
   try { [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); }
   catch (loi) { return { dung: false, vi: `không đọc được tab đang xem (${loi?.message || loi})`, tab: null }; }
-  return { ...xetTabDangXem(tab, MIEN_UDIN), tab };
+  return { ...xetTabDangXem(tab, MIEN_LAM_VIEC), tab };
 }
 
 async function veZoomWeb() {
@@ -638,7 +644,13 @@ $("#kiem-chay").addEventListener("click", async () => {
   $("#kiem-ket").textContent = "Đang kiểm…";
   $("#kiem-list").replaceChildren();
   try {
-    veKiem(await kiemNhanh(PHEP_DO_KIEM, { mien: MIEN_UDIN }));
+    veKiem(await kiemNhanh(PHEP_DO_KIEM, {
+      mien: MIEN_LAM_VIEC,
+      /* Số lệnh đếm từ bảng lệnh THẬT, không gõ tay — hai con số gõ ở hai chỗ thì sớm muộn lệch. */
+      soMethod: capabilities().methods.length,
+      tenGoi: "udin-optic",
+      cachBatMayChu: "Chạy `START-BRIDGE_Udin-Optic.cmd` trong thư mục ghép cặp"
+    }));
   } catch (loi) {
     /* KHÔNG CHẠY ĐƯỢC khác hẳn KHÔNG ĐẠT — gộp hai cái là báo sai cho Đức. */
     $("#kiem-ket").textContent = `KHÔNG CHẠY ĐƯỢC: ${loi?.message || loi}`;

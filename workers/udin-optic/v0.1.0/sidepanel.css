@@ -22,7 +22,7 @@
 
   /* Cỡ chữ bảng bên. Đặt ở `:root` chứ không ở `main`, vì JS ghi biến này lên
      `documentElement` — một chỗ đọc, một chỗ ghi, không lệch nhau được. */
-  --udin-ui-zoom: 1;
+  --zoom-chu: 1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,7 +53,7 @@ body {
 
 /* `zoom` chứ không `transform: scale`: `zoom` làm lại bố cục nên chữ xuống dòng lại cho vừa
    khung hẹp, còn `scale` chỉ phóng to ảnh đã vẽ nên nó tràn ngang. */
-main { padding: 10px; display: flex; flex-direction: column; gap: 8px; zoom: var(--udin-ui-zoom); }
+main { padding: 10px; display: flex; flex-direction: column; gap: 8px; zoom: var(--zoom-chu); }
 
 h1 { font-size: 15px; margin: 0; letter-spacing: -0.01em; }
 h2 { font-size: 13px; margin: 0; }
