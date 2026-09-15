@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T20:06:02.612Z",
-      "task": "T21 chang (2): khai vung so huu workers/udin-optic",
+      "claimed_at": "2026-09-15T02:32:07.194Z",
+      "task": "T21 chang (4): sinh lai trang tong theo HEAD",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "2797ca2e66e2a283"
+  "_fingerprint": "83ea7da0cf37f5c7"
 }
