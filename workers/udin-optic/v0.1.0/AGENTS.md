@@ -21,12 +21,10 @@ lại được bằng một dòng cờ. Thêm một lệnh là **đổi luật a
 trang bất kỳ; gói này không. Nới dòng đó là xoá sạch chỗ hẹp hơn duy nhất khiến việc chép
 ~2.100 dòng máy bấm/gõ là đáng. `be-mat-hep-smoke.mjs` khối ⑵ canh nó.
 
-**⑶ BẢY TỆP CHÉP PHẢI CÒN GIỐNG SCOUTER.** `scouter-engine.js` · `scouter-probes.mjs` ·
-`scouter-actions-core.mjs` · `scouter-seed-core.mjs` · `scouter-transport-loopback.mjs` ·
-`scouter-journal-core.mjs` · `bridge/file-core.mjs`. Đó là bộ máy gắn debugger, tổng hợp phím
-chuột, và **cái phanh**. Khối ⑷ băm từng tệp và **đỏ khi lệch**. Muốn khác thật thì khai vào
-`CO_Y_KHAC` kèm lý do — không có đường thứ ba. Tên tệp **giữ nguyên tiền tố `scouter-`** cố ý:
-nó nói ra xuất xứ, và làm phép so byte không cần bảng đổi tên.
+**⑶ BẢY TỆP CHÉP PHẢI CÒN GIỐNG SCOUTER** (bảng `CẶP` ở khối ⑷ của `be-mat-hep-smoke.mjs` liệt
+kê đủ). Đó là bộ máy gắn debugger, tổng hợp phím chuột, và **cái phanh**. Khối ⑷ băm từng tệp và
+**đỏ khi lệch**; muốn khác thật thì khai `CO_Y_KHAC` kèm lý do — không có đường thứ ba. Tên tệp
+giữ tiền tố `scouter-` cố ý: nó nói ra xuất xứ, và phép so byte khỏi cần bảng đổi tên.
 
 **⑷ Năm tệp CỐ Ý khác và được phép đổi tự do:** `scripts/bridge-core.mjs` (chỗ gói hẹp lại) ·
 `manifest.json` · `sidepanel.*` · `background.js` · `scripts/make-icons.mjs`. Đức chốt 15/09 rằng
@@ -36,21 +34,18 @@ Icon là chữ **U** trên nền vàng, Đức chốt 15/09. Nó sinh bằng `ma
 tệp PNG vào: PNG là nhị phân, `git diff` không đọc được, và ba tháng nữa không ai biết nó vẽ bằng
 gì. Sửa icon = sửa hằng số rồi chạy lại, **đừng sửa tay tệp PNG**.
 
-**⑸ Tệp ghép cặp RIÊNG, cổng RIÊNG, giao thức RIÊNG.** `udin-optic.bridge`, sinh bằng
-`tao-tep-ghep-cap.mjs --goi udin-optic`. Dùng chung với Scouter thì mọi lượt gọi không nêu đích
-trả `TARGET_AMBIGUOUS`; khai lệch tên hai đầu thì "im lặng" — `hnx-fetch` mất một buổi vì đúng
-chuyện đó ngày 08/09.
+**⑸ Tệp ghép cặp RIÊNG, cổng RIÊNG, giao thức RIÊNG** (`udin-optic.bridge`). Dùng chung với
+Scouter thì mọi lượt gọi không nêu đích trả `TARGET_AMBIGUOUS`; khai lệch tên hai đầu thì "im
+lặng" — `hnx-fetch` mất một buổi vì đúng chuyện đó ngày 08/09.
 
-**⑹ Gói TỰ KHAI TÊN MÌNH ở lớp nối dây, không ở tệp chép.**
-`scouter-seed-core.mjs` gõ cứng `"scouter-seed-v0.1"` vào `session.hello` và `system.ping`, nên
-`background.js` **đè** hai handler đó. Đừng sửa tệp chép để "cho gọn" — làm thế là mất phép so
-từng byte trên đúng tệp chứa cái phanh. Khối ⑺ của `be-mat-hep-smoke.mjs` canh cả cái đè lẫn việc
-`background.js` và `bridge-core.mjs` phải khai **cùng một** tên seed.
+**⑹ Gói TỰ KHAI TÊN MÌNH ở lớp nối dây, không ở tệp chép.** `scouter-seed-core.mjs` gõ cứng
+`"scouter-seed-v0.1"` vào `session.hello` và `system.ping`, nên `background.js` **đè** hai handler
+đó. Đừng sửa tệp chép cho gọn — mất phép so byte trên đúng tệp chứa cái phanh. Khối ⑺ canh cái đè
+và canh hai chỗ khai tên phải KHỚP nhau.
 
-**⑺ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, gõ cứng trong
-mã, chỉ tay Đức mở lại được. Phím phanh là `Ctrl+Shift+U` — **khác Scouter cố ý**: hai extension
-xin cùng một tổ hợp thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phanh lúc bảng
-bên đóng.
+**⑺ Cái phanh không được đụng.** Công tắc mặc định TẮT, trần 200 lượt mỗi lần bật, chỉ tay Đức
+mở lại được. Phím phanh `Ctrl+Shift+U` — **khác Scouter cố ý**: hai extension xin cùng một tổ hợp
+thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phanh lúc bảng bên đóng.
 
 ## Bản đồ file
 

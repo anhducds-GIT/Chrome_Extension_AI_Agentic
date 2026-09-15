@@ -5,7 +5,7 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "T21 chang (4) — PHEP KIEM THAT. AI da lam xong phan cua minh: tep ghep cap rieng da sinh (cong 32152, nam ngoai repo), vung ghi da tao, va MAY CHU BRIDGE DA CHAY THAT mot luot — vo host mong tren loi _shared dung day. Con lai chi Duc lam duoc: nap workers/udin-optic/v0.1.0 vao Chrome (Load unpacked), chon tep ghep cap o bang ben, bat cong tac Cho phep bam va go. Roi chay e2e that voi mot prompt CHUA DUNG BAO GIO. Dong khi 4 chang DAT va git status workers/duc-scouter SACH."
+next_step: "T21 chang (4). Extension DA NAP va DANG NOI — do qua day: 12 method, seed udin-optic-v0.1, protocol udin-optic.bridge. May chu bat bang START-BRIDGE_Udin-Optic.cmd o nha chung. Con lai: Duc NAP LAI extension de an ban moi (icon chu U + background de lai system.ping), bat cong tac Cho phep bam va go, roi AI chay e2e that voi prompt CHUA DUNG BAO GIO."
 human_action: "Nap extension Udin Optic vao Chrome: chrome://extensions, Load unpacked, chon thu muc workers/udin-optic/v0.1.0. Mo bang ben, chon tep ghep cap trong thu muc Chrome Extension Bridge/udin-optic/, roi bat cong tac Cho phep bam va go. May chu Bridge va tep ghep cap DA SAN SANG. @Đức:bấm"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 current_focus: "Goi vua ra doi 15/09, tach khoi duc-scouter theo T21. Duc chot 15/09 luot hai, SAU khi do duoc rang tach ra la chep lai ~2.100 dong may bam/go: \"Vi sau nay Scouter se con thay doi nhieu, ngoai ra UI cua Udin Extension cung se bi thay doi cho phu hop usecase, do do tach rieng se hop ly hon.\" Bay gio: 7 phep ghim xanh, tu vung dong o 12 lenh (Scouter 24), quyen hep ve dung mot trang thay vi <all_urls>. CHUA tung chay that tu extension nay — do la chang (4)."
