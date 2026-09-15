@@ -40,8 +40,8 @@
     "_root": {
       "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-15T10:13:26.258Z",
-      "task": "T21: sinh lai trang tong sau khi them bo khoi dong",
+      "claimed_at": "2026-09-15T14:09:07.007Z",
+      "task": "T21 chang (4): sinh lai trang tong",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "528193141e68bf7d"
+  "_fingerprint": "b894b293ef38d687"
 }
