@@ -67,3 +67,23 @@ byte để đẹp một chữ. Lượt đột biến tay (in lại `Scouter Brid
 
 **Còn lại của chặng ④, và chỉ Đức làm được:** nạp `workers/udin-optic/v0.1.0` vào Chrome, chọn
 tệp ghép cặp ở bảng bên, bật công tắc. Máy chủ và tệp ghép cặp **đã sẵn sàng**.
+
+## 2026-09-15c · `claude-scouter-udine` — icon chữ **U**, và nó là mã nguồn chứ không phải bốn tệp PNG
+
+Đức chốt đổi icon thành chữ **U**. Chép bộ sinh của Scouter (`make-icons.mjs`) và đổi **đúng
+phần vẽ chữ**: hai cột dọc + một nửa vành khuyên dưới nối chúng lại. Phần đóng gói PNG, khử răng
+cưa 4×4, và nền vuông bo góc giữ nguyên từng dòng.
+
+**Vì sao vẫn là một bộ sinh.** PNG là nhị phân: `git diff` không đọc được, không ai sửa lại được,
+và ba tháng nữa không ai biết nó vẽ bằng gì. Sửa icon = sửa hằng số rồi chạy lại — **đừng sửa tay
+tệp PNG**, lượt chạy sau sẽ ghi đè.
+
+**Không dùng phông chữ**, cùng lý do như Scouter: phông có ở máy này chưa chắc có ở máy khác, và
+một icon đổi hình theo máy là một icon không kiểm được.
+
+Nền giữ nguyên tông vàng hổ phách. Hai extension vì thế cùng màu, khác chữ (`S` và `U`) — đọc
+được ở 16px, đã xem thử cả 48px lẫn 16px trước khi ghi tệp. Muốn phân biệt mạnh hơn thì đổi hằng
+số `NEN` rồi chạy lại; đó là một dòng.
+
+`make-icons.mjs` vào nhóm **tệp CỐ Ý KHÁC** (luật gói ⑷) — không bị ghim so byte với Scouter, vì
+đây đúng là chỗ gói này được phép khác.
