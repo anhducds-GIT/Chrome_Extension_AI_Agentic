@@ -114,3 +114,34 @@ Khối ⑺ canh cái đè còn nguyên, **và canh hai chỗ khai tên phải KH
 
 **Đo được, không phải suy:** extension Udin Optic **đã nạp và đang nối** — `system.capabilities`
 qua dây trả **12 method**, `seed: udin-optic-v0.1`, `protocol: udin-optic.bridge`.
+
+## 2026-09-15e · `claude-scouter-udine` — lượt live đầu tiên: W1 W2 ĐẠT, W3 chết vì **chính chỗ gói hẹp lại**
+
+**Lượt chạy thật đầu tiên từ extension mới** (prompt *"a teal ceramic teapot beside three green
+pears"*, chưa dùng bao giờ). W1 vượt màn chờ **ĐẠT**, W2 gửi prompt **ĐẠT** — Udin nhận và sinh
+ảnh. W3 chết:
+
+```
+scout.grab hỏng: ACTION_FAILED — Không tải được tệp của
+'https://optic-canvas-cache-vinfast.s3.us-east-1.amazonaws.com/…webp': Failed to fetch
+```
+
+**Nguyên nhân không phải mã, mà là `manifest.json`.** `scout.grab` gọi `fetch` **trong service
+worker** (`scouter-seed-core.mjs` — tải cả tệp rồi mã hoá một khúc, vì header `Range` giết
+service worker, `G-62`). Một tên miền không khai trong `host_permissions` thì lượt fetch đó bị
+CORS chặn, và thông điệp duy nhất còn lại là `Failed to fetch`.
+
+Ảnh Udin **không nằm trên `vinfast.udinbv.com`** — chúng nằm trên một bucket S3 riêng. Scouter
+không bao giờ gặp chuyện này vì nó mở `<all_urls>`.
+
+**Đây chính là cái giá của việc thu hẹp quyền, và chỉ một lượt chạy live phát hiện được.** Bảy
+phép ghim, một suite gốc xanh, và một máy chủ chạy thật đều không thấy: không cái nào gọi ra
+ngoài internet.
+
+**Chữa bằng đúng MỘT dòng, hẹp nhất có thể:** thêm `optic-canvas-cache-vinfast.s3.us-east-1
+.amazonaws.com` — một bucket có tên, không phải `s3.amazonaws.com/*`, càng không phải `<all_urls>`.
+Khối ⑵ so `deepEqual` nên **thêm một tên miền cũng đỏ**; nay mỗi dòng trong danh sách kèm câu trả
+lời cho *"việc nào cần nó"*. Dòng thứ tư phải trả lời được câu đó trước.
+
+**Chưa đóng chặng ④.** Đức phải **nạp lại extension** để manifest mới ăn, rồi chạy lại với một
+prompt mới nữa — URL ký của lượt vừa rồi hết hạn sau **900 giây** (`S-24`), nên không vớt lại được.

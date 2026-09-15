@@ -53,7 +53,21 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
  * đi lý do duy nhất khiến việc chép ~2.100 dòng máy bấm/gõ là đáng. */
 {
   const mf = JSON.parse(doc(goc, "manifest.json"));
-  assert.deepEqual(mf.host_permissions, ["https://vinfast.udinbv.com/*", "http://127.0.0.1/*"]);
+  /* Danh sách này là HỢP ĐỒNG, không phải một gợi ý: so `deepEqual` nên **thêm** một tên miền
+   * cũng đỏ, y như nới ra `<all_urls>`. Mỗi dòng phải trả lời được câu *"việc nào cần nó"*:
+   *   · `vinfast.udinbv.com` — trang làm việc.
+   *   · `optic-canvas-cache-vinfast.s3…` — **nơi ảnh kết quả THẬT SỰ nằm**. Thêm 15/09 sau lượt
+   *     chạy live đầu tiên: W1 và W2 ĐẠT, W3 chết với `Failed to fetch`. Nguyên nhân không phải
+   *     mã: `scout.grab` gọi `fetch` TRONG SERVICE WORKER, nên một tên miền không khai là CORS
+   *     chặn. Scouter không bao giờ gặp vì nó mở `<all_urls>` — tức lượt chạy live này là chỗ
+   *     DUY NHẤT phát hiện được cái giá của việc thu hẹp quyền.
+   *   · `127.0.0.1` — máy chủ Bridge.
+   * Thêm dòng thứ tư thì phải trả lời được câu đó trước. */
+  assert.deepEqual(mf.host_permissions, [
+    "https://vinfast.udinbv.com/*",
+    "https://optic-canvas-cache-vinfast.s3.us-east-1.amazonaws.com/*",
+    "http://127.0.0.1/*"
+  ]);
   assert.ok(!JSON.stringify(mf.host_permissions).includes("all_urls"),
     "`<all_urls>` ở đây là xoá sạch chỗ hẹp hơn duy nhất của gói so với Scouter");
   assert.deepEqual([...mf.permissions].sort(), ["alarms", "debugger", "sidePanel", "storage"]);

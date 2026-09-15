@@ -5,7 +5,7 @@
   "description": "Chay viec sinh anh tren Udin: gui prompt, cho, roi lay anh ve dia. Chi cham dung mot trang.",
   "minimum_chrome_version": "120",
   "permissions": ["debugger", "storage", "alarms", "sidePanel"],
-  "host_permissions": ["https://vinfast.udinbv.com/*", "http://127.0.0.1/*"],
+  "host_permissions": ["https://vinfast.udinbv.com/*", "https://optic-canvas-cache-vinfast.s3.us-east-1.amazonaws.com/*", "http://127.0.0.1/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
