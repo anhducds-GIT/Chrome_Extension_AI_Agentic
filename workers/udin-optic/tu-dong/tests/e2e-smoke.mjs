@@ -23,6 +23,10 @@ function lam({ nhan = true, traLoiMoi = true, jpgHong = false } = {}) {
      * ghim này — bỏ qua nó bằng `boQuaJpg` thì thứ tự chặng không còn được canh. */
     if (method === "host.capabilities") return { write_root: "C:/vung-ghi-gia" };
     if (method === "scout.query") {
+      /* Dấu "agent đang nghĩ" — `docTraLoi` hỏi chúng TRƯỚC mọi ứng viên từ 17/09.
+       * Trang giả này dựng ca agent ĐÃ đáp, nên cả ba đều 0. */
+      if (p.selector.endsWith(".status-spinner") || p.selector.endsWith(".thinking-text")
+          || p.selector.endsWith(".agent-status-indicator")) return { data: { matchCount: 0, items: [], hasMore: false } };
       if (p.selector === ".concurrency-overlay") return q(0);
       if (p.selector === SEL.anhKetQua) return q(trang.anh.length, trang.anh.map((src) => ({ attributes: { src } })), false);
       /* Ứng viên selector mà `lay-anh` dựng để chỉ ĐÚNG MỘT nút ảnh. Trang giả này không có

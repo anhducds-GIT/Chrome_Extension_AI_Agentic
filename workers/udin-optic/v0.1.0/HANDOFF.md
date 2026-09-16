@@ -875,3 +875,32 @@ dữ liệu để kết luận nguyên nhân — **không đoán**.
 **Sổ sách:** `STATUS.md` và `CHUOI-VIEC.md` của gói đang khai trạng thái cũ, nay sửa: **cả hai
 điểm dừng ĐÃ QUA** (Đức nạp lại 17/09; `Scouter v1` ký ở ADR-0008), `U0`–`U5` đóng trọn, `R2`/`R3`
 parked theo phạm vi Đức khoanh.
+
+## 2026-09-17d · `claude-scouter-udine` — `W4` từng đọc một DÒNG TRẠNG THÁI ra như câu trả lời
+
+**Tìm ra nhờ một lượt Udin treo**, không nhờ nghĩ ra. Udin đứng ở *"Thinking ahead…"* hơn 15
+phút; tôi hỏi `docTraLoi` cho biết trang đang thế nào, và **nó trả về đúng chuỗi ấy như một câu
+trả lời**.
+
+**Cơ chế.** Lúc agent đang nghĩ, tin nhắn cuối **không có** `.markdown-content` — đo được nó chỉ
+chứa `.agent-status-indicator` · `.status-spinner` · `.thinking-text`. Hai ứng viên hẹp trượt, và
+**lưới an toàn thứ ba** (`.agent-message-item:last-child`, dựng cho ngày trang đổi lớp trong)
+nuốt trọn dòng trạng thái.
+
+**Vì sao đắt hơn nó trông.** `W4` có một chốt `khacVoi` để chặn việc đọc lại câu của lượt TRƯỚC.
+Một dòng trạng thái thì **khác câu trước thật** — nên nó đi lọt qua đúng cái chốt sinh ra để bắt
+nó, và lượt chạy được đóng dấu ĐẠT với một câu trả lời chưa bao giờ tồn tại. Cùng họ với
+`plateau-is-not-a-finish`: thứ trông như kết quả, ở đúng chỗ kết quả, mà không phải kết quả.
+
+**Vá:** `DAU_DANG_NGHI` — ba dấu hỏi **TRƯỚC** mọi ứng viên; thấy dấu nào thì TỪ CHỐI và không
+đọc chữ lần nào. Đặt sau vòng ứng viên là vô nghĩa, lưới an toàn đã trả chữ ra mất rồi.
+**Đo lại trên trang thật:** `W4` nay từ chối đúng, kèm câu nói rõ agent còn đang nghĩ.
+
+**Một con đột biến sống sót và nó tố PHÉP GHIM, không tố mã:** khối ⓛ duyệt chính
+`DAU_DANG_NGHI`, nên gỡ bớt một dấu khỏi bảng chỉ làm vòng chạy ít hơn — xanh y hệt. Nay bảng
+được khai **thẳng bằng chữ** trong phép ghim. `5/5` đột biến.
+
+**Vòng bảy chặng CHƯA đóng lại được sau đợt này** — hai lượt liên tiếp không ra ảnh vì lý do nằm
+ở Udin (lượt một agent tự trả *"Done!"* không sinh gì; lượt hai treo ở *đang chạy* >20 phút, lưới
+kết quả đứng yên ở 16). Vòng **không nói dối** ở cả hai: nó báo *"chạy xong nhưng không có ảnh
+mới"* và *"VẪN ĐANG CHẠY sau 902s — chưa hỏng, chỉ là chưa xong"*, và giữ đường `--noi-lai`.

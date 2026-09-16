@@ -40,6 +40,25 @@ export const UNG_VIEN = Object.freeze([
   ".agent-message-item:last-child",
 ]);
 
+/* DẤU "AGENT ĐANG NGHĨ", và nó phải được hỏi TRƯỚC mọi ứng viên trên.
+ *
+ * Đo 17/09, trên một lượt Udin treo 15 phút: lúc agent đang nghĩ, tin nhắn cuối **không có**
+ * `.markdown-content` — nó chỉ chứa `.agent-status-indicator` · `.status-spinner` ·
+ * `.thinking-text`. Hai ứng viên hẹp trượt, và **lưới an toàn thứ ba nuốt trọn dòng trạng thái**:
+ * `docTraLoi` trả về `"Thinking ahead..."` như thể đó là câu Udin trả lời.
+ *
+ * Vì sao đó là ca đắt: `W4` so với `khacVoi` để chặn việc đọc lại câu của lượt TRƯỚC. Một dòng
+ * trạng thái thì **khác câu trước thật**, nên nó đi lọt qua đúng cái chốt sinh ra để bắt nó —
+ * và lượt chạy được đóng dấu ĐẠT với một câu trả lời chưa bao giờ tồn tại.
+ *
+ * Lưới an toàn rộng là thứ tốt; thứ phải thêm là một câu hỏi *"cái ta sắp đọc có phải câu trả
+ * lời không"* đứng trước nó. */
+export const DAU_DANG_NGHI = Object.freeze([
+  ".agent-message-item:last-child .status-spinner",
+  ".agent-message-item:last-child .thinking-text",
+  ".agent-message-item:last-child .agent-status-indicator",
+]);
+
 /**
  * @param {object}  [tuyChon]
  * @param {string}  [tuyChon.khacVoi]  câu trả lời ĐỌC ĐƯỢC TRƯỚC lượt gửi. Đưa vào thì hàm này
@@ -50,6 +69,19 @@ export const UNG_VIEN = Object.freeze([
 export async function docTraLoi(tuyChon = {}) {
   const goi = tuyChon.goi || goiThat;
   const tab = tuyChon.tab || (await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon));
+
+  /* Hỏi TRƯỚC: tin nhắn cuối có phải một dòng trạng thái không. Đặt sau vòng ứng viên thì lưới
+   * an toàn đã trả chữ ra mất rồi. */
+  for (const dau of DAU_DANG_NGHI) {
+    const d = (await goi("scout.query", { target_id: tab, selector: dau, limit: 1 }, tuyChon)).data;
+    if (d.matchCount > 0) {
+      throw new Error(
+        `Tin nhắn cuối của Udin đang là một DÒNG TRẠNG THÁI, không phải câu trả lời (thấy '${dau}'). ` +
+        "Agent còn đang nghĩ. Đọc tiếp thì lưới an toàn sẽ trả ra chữ của cái vòng quay — và chữ ấy " +
+        "KHÁC câu của lượt trước, nên nó lọt qua đúng phép kiểm `khacVoi` sinh ra để bắt nó. Chờ rồi đọc lại.",
+      );
+    }
+  }
 
   const daThu = [];
   for (const selector of UNG_VIEN) {

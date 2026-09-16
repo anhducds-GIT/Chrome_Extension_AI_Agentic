@@ -60,6 +60,10 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
       return { action: "input.tha", data: { selector: p.selector, path: p.path, files: 1 } };
     }
     if (method === "scout.query") {
+      /* Dấu "agent đang nghĩ" — `docTraLoi` hỏi chúng TRƯỚC mọi ứng viên từ 17/09.
+       * Trang giả này dựng ca agent ĐÃ đáp, nên cả ba đều 0. */
+      if (p.selector.endsWith(".status-spinner") || p.selector.endsWith(".thinking-text")
+          || p.selector.endsWith(".agent-status-indicator")) return { data: { matchCount: 0, items: [], hasMore: false } };
       const sel = p.selector;
       if (sel === ".concurrency-overlay") return q(0);
       if (sel === ".agent-message-item:last-child .markdown-content") return q(1);
