@@ -851,3 +851,27 @@ Thêm hai ghim: hộp thiếu mã → đỏ; hai hộp **cùng một mã** → �
 
 **CHƯA làm:** chưa chạy sống ca ⒝ sau đợt này — cần Đức nạp lại extension một lần (lõi đọc đổi).
 `S-31` (Udin không tự nạp lại được) là thứ bắt ta phải dừng ở đây, và nó vẫn mở.
+
+## 2026-09-17c · `claude-scouter-udine` — chạy sống sau khi nạp lại: đo được độ trễ thả, và một câu đỏ thiếu số
+
+**Đức nạp lại extension 17/09.** Lõi đọc mới thông: canvas khai **20 chỗ đặt, 20 mã riêng biệt**
+— trong khi đường `src` cũ chỉ thấy 15 chuỗi khác nhau (một ảnh nằm 5 chỗ gộp làm một, hai ảnh
+thả trùng 200 ký tự đầu gộp làm một). Danh tính nay trỏ đúng CHỖ ĐẶT.
+
+**Đo độ trễ thả, vì một lượt chạy báo đỏ nhầm nguyên nhân.** Thả xong, ảnh hiện trên canvas sau
+**3,6s** và **3,2s** (nhịp đo 500ms). Vòng đang chờ tới **17s**, tức dư gấp năm — nên lượt đỏ ấy
+**không phải trang chậm**. Đức tự khai: *"tôi vừa miss click"*. Bài học không nằm ở trần chờ mà
+ở **câu báo**: nó nói *"trang chưa nhận"* mà không nói **đã chờ bao lâu**, nên "trang chậm" và
+"có người vừa chạm vào trang" đọc y hệt nhau — và ta đi sửa nhầm chỗ. Nay câu đỏ chở số giây,
+kèm thứ tự kiểm bắt đầu bằng *"có ai vừa chạm vào trang không"*. Có ghim riêng cho con số ấy.
+
+**Còn một vết CHƯA đóng, và nó thuộc về Udin chứ không thuộc về gói này:** hai lượt chạy liên
+tiếp sau đó đều không ra ảnh — lượt một Udin trả *"Done! What would you like to do next?"* mà
+không sinh gì (chế độ **Agent** đang bật, đã đọc lại trên trang, nên đó là agent tự quyết); lượt
+hai treo ở trạng thái *đang chạy* quá 10 phút với lưới kết quả đứng yên ở 16. Vòng **không nói
+dối** ở cả hai ca: nó báo *"chạy xong nhưng không có ảnh mới"* và giữ đường `--noi-lai`. Chưa đủ
+dữ liệu để kết luận nguyên nhân — **không đoán**.
+
+**Sổ sách:** `STATUS.md` và `CHUOI-VIEC.md` của gói đang khai trạng thái cũ, nay sửa: **cả hai
+điểm dừng ĐÃ QUA** (Đức nạp lại 17/09; `Scouter v1` ký ở ADR-0008), `U0`–`U5` đóng trọn, `R2`/`R3`
+parked theo phạm vi Đức khoanh.

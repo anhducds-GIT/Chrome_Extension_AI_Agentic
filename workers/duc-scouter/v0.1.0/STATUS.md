@@ -9,7 +9,7 @@ last_verified_how: "Live 16/09: mot luot E2E that tren trang Udin (prompt moi, -
 evidence_ref: workers/duc-scouter/v0.1.0/docs/TRIALS.md
 owner: claude
 priority_rank: 4
-next_step: "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai)."
+next_step: "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang cac lenh cua seed. Be mat GHI da BOT mot method 17/09: Page.setInterceptFileChooserDialog go cung duong mo_bang cua input.upload (WRITE_CDP_METHODS 17 -> 16), vi input.tha lam cung viec ma khong di qua hop thoai nao. Be mat DOC them dung mot thuoc tinh: data-image-id (ADR-0009). Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 PARKED, mo lai khi Duc goi."
 human_action: "khong"
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."

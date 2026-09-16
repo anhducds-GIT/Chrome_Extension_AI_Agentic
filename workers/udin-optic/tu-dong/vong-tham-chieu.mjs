@@ -63,6 +63,7 @@ export async function thaLenCanvas(duong, tuyChon = {}) {
   const tab = await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon);
 
   const truoc = await idTrenCanvas(tuyChon);
+  const t0 = (tuyChon.dongHo ?? Date.now)();
   const ra = await goi("scout.tha", { target_id: tab, selector: NOI_THA, path: duong }, tuyChon);
 
   for (let i = 0; i < (tuyChon.soNhip ?? 24); i++) {
@@ -76,9 +77,16 @@ export async function thaLenCanvas(duong, tuyChon = {}) {
       );
     }
   }
+  /* CÂU NÀY PHẢI CHỞ SỐ GIÂY ĐÃ CHỜ, và đó là một bài học chứ không phải trang trí: đo 17/09,
+   * ảnh thả vào hiện sau **3,2–3,6 giây**, tức trần dưới đây dư gấp năm. Nên một lượt đỏ ở đây
+   * gần như chắc chắn KHÔNG phải trang chậm — nó là trang bị chạm vào giữa chừng, hoặc thả
+   * trượt. Không in số giây thì hai nguyên nhân ấy đọc y hệt nhau, và ta đi sửa nhầm chỗ. */
+  const doiMs = (tuyChon.dongHo ?? Date.now)() - t0;
   throw new Error(
-    `Đã bắn đủ chuỗi kéo-thả cho '${duong}' (lệnh báo ${ra?.data?.files ?? "?"} tệp) mà canvas KHÔNG mọc thêm chỗ đặt nào — ` +
-    "trang chưa nhận; chưa gửi prompt. Kiểm: tệp có nằm trong vùng ghi không, và trang đã vẽ xong chưa.",
+    `Đã bắn đủ chuỗi kéo-thả cho '${duong}' (lệnh báo ${ra?.data?.files ?? "?"} tệp) và chờ ${(doiMs / 1000).toFixed(1)}s ` +
+    "mà canvas KHÔNG mọc thêm chỗ đặt nào — chưa gửi prompt. Đo 17/09: ảnh thả vào hiện sau 3,2–3,6s, " +
+    "nên chờ chừng này mà không thấy thì thường KHÔNG phải trang chậm. Kiểm theo thứ tự: có ai vừa chạm vào " +
+    "trang/cửa sổ không · tệp có nằm trong vùng ghi không · trang đã vẽ xong chưa.",
   );
 }
 

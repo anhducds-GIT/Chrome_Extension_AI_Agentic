@@ -2279,3 +2279,13 @@ trị, `data-secret` vẫn chỉ ra tên. `19/19` đột biến, 0 sống sót.
 **Kèm theo, ngoài repo:** `START-BRIDGE_Scouter.ps1` nay nhận `-KhoiDongLai` như bộ của Udin —
 dừng tiến trình đang giữ cổng rồi bật lại, chỉ dừng tiến trình tên `node`. Chạy thật
 `31424 → 1928`, cùng cổng `32151`.
+
+## 2026-09-17c · `claude-scouter-udine` — `STATUS.md` khai lại bề mặt sau hai lượt đổi
+
+Bề mặt **GHI bớt một** method (`Page.setInterceptFileChooserDialog`, 17 → 16) và bề mặt **ĐỌC
+thêm đúng một** thuộc tính (`data-image-id`, ADR-0009) trong cùng một ngày. `next_step` cũ vẫn
+trỏ `R2`/`R3`; Đức khoanh phạm vi 17/09 nên cả hai **parked**, và dòng ấy nay nói thế.
+
+Đáng ghi lại vì nó ngược chiều thói quen của gói này: danh sách method GHI **chưa bao giờ ngắn
+lại** trước hôm nay. Lý do nó ngắn được là có một đường khác làm cùng việc mà không mang theo
+cái hiểm của nó — không phải vì ta siết cho đẹp.

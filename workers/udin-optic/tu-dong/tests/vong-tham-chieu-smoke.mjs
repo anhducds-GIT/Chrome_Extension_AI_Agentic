@@ -171,7 +171,16 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
 { const t = lam({ thaHong: true });
   await assert.rejects(() => vongThamChieu("style @1 onto @2", { ...t, anh: ["a.png", "b.png"] }), /canvas KHÔNG mọc thêm chỗ đặt nào/);
   assert.equal(soLan(t.nk, "scout.chon"), 0);
-  assert.equal(soLan(t.nk, "scout.type"), 0); }
+  assert.equal(soLan(t.nk, "scout.type"), 0);
+  /* Câu đỏ phải chở SỐ GIÂY đã chờ. Đo 17/09: ảnh thả vào hiện sau 3,2–3,6s, tức trần dư gấp
+   * năm — nên một lượt đỏ ở đây gần như chắc chắn không phải "trang chậm". Thiếu con số thì
+   * "trang chậm" và "có người vừa chạm vào trang" đọc y hệt nhau, và ta đi sửa nhầm chỗ. */
+  const u = lam({ thaHong: true, dongHo: () => 0 });
+  let nhip = 0;
+  await assert.rejects(
+    () => vongThamChieu("a lone study of @1", { ...u, anh: ["a.png"], dongHo: () => (nhip += 1000) }),
+    /chờ \d+\.\d+s/,
+  ); }
 
 // ⓓ một lượt thả mà canvas mọc thêm HAI ảnh → ĐỎ: không biết ảnh nào là của lượt này.
 //    Đây là ca mà "lấy ảnh mới nhất" sẽ đoán bừa và trỏ nhầm tham chiếu mà không báo gì.

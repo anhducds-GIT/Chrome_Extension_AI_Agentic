@@ -149,8 +149,26 @@ sinh ra ở đây — Scouter là bộ đồ nghề chung, mọi bản chép ph�
 0 sống sót** · phép so từng byte phủ cả hai lõi mới (đo bằng một đột biến thử: ĐỎ).
 *Còn chờ:* cổng XANH TOÀN BỘ, rồi đến chữ ký của Đức.
 
-**→ ĐIỂM DỪNG ②: Đức ký `Scouter v1`.** Đây là tuyên bố phiên bản, và nó là chữ ký của Đức chứ
-không phải một lượt chạy xanh.
+**→ ĐIỂM DỪNG ② — ✅ QUA.** Đức ký `Scouter v1`, ghi ở
+[ADR-0008](../../duc-scouter/v0.1.0/docs/adr/0008-duc-ky-scouter-v1.md). **Chuỗi `U0`–`U5` đóng
+trọn; không còn điểm dừng nào của chuỗi này.**
+
+## Sau chuỗi — việc 17/09, Đức khoanh phạm vi
+
+> *"Tôi chỉ muốn bạn tập trung vào hoàn thiện extension Udin thôi, tránh lan man."*
+
+`R2` và `R3` **PARKED** (cả hai phục vụ Scouter, không phải Udin). Bốn mép đã khép trong ngày:
+
+| | việc | chốt |
+|---|---|---|
+| ① | **Gỡ hẳn lối bật hộp thoại.** `vong-style.mjs` xoá (Đức chốt); đường `mo_bang` và `Page.setInterceptFileChooserDialog` gỡ — `WRITE_CDP_METHODS` **17 → 16** | Không còn đường nào làm hộp thoại `Open` nhảy lên màn hình Đức. Đo **0/14** và **0/11** lần đếm |
+| ② | **Một lệnh bật lại máy chủ Bridge**: `-KhoiDongLai` (cả Udin lẫn Scouter) | Sửa `bridge/*.mjs` là khởi động lại một TIẾN TRÌNH, không phải nạp lại extension — 16/09 mất một lượt vì chỗ này |
+| ③ | **`W4` vào vòng** — bảy chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG → W4` | Câu trả lời đọc TRƯỚC lượt gửi rồi đối chiếu; `W4` đứng CUỐI nên đọc đỏ không làm mất ảnh |
+| ④ | **Danh tính ảnh canvas → `data-image-id`** ([ADR-0009](../../duc-scouter/v0.1.0/docs/adr/0009-doc-duoc-data-image-id.md)) | `src` bị cắt ở 200 ký tự và Udin mã hoá lại ảnh thả vào, nên **hai ảnh khác hẳn nhau cho ra hai chuỗi y hệt** |
+
+**Còn mở, và nó CẦN ĐỨC CHỐT chứ không phải cần thêm thời gian:** `S-31` — Udin không tự nạp lại
+được (`scout.reload` cắt ở `T21`). Mỗi lần sửa mã extension đều phải nhờ Đức bấm một lần. Mở lại
+là **thêm một method Bridge**, tức đổi luật an toàn.
 
 ## Thứ KHÔNG làm trong chuỗi này
 

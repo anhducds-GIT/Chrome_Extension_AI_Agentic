@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai)."
+- next_step: "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED."
 - human_action: "khong"
