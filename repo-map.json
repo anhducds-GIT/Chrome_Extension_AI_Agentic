@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "PHAN NANG LUC XONG: bang W cua Udin 8/8, khong con hang CHAN, E2E DAT -> Udin MASTERED. Duong ghi khong con lenh nao noi doi. ROADMAP MOI o khoi SAU COMPACT dau CHUOI-VIEC.md: (1) R1 — MOT lenh chay tron vong viec that cua Duc (lay anh Udin da tao, dua nguoc vao, xin style khac); moi manh da co, chua ai noi lai. (2) R2 — khep vong tu cai tien lan hai voi bo day du. (3) R3 — TRANG THU HAI khac loai, phep do duy nhat tra loi cau seed co dung lai duoc khong. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
+      "next_step": "PHAN NANG LUC XONG (bang W cua Udin 8/8, Udin MASTERED). Dang lam R1 o khoi SAU COMPACT dau CHUOI-VIEC.md: MA XONG, VONG SONG CHUA KHEP — ket o cho Udin DAY CHO, khong phai o ma. Doi Udin rong cho roi chay mot luot vong-style.mjs voi prompt moi. Sau do: (2) R2 khep vong tu cai tien lan hai voi bo day du. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "W8 CHAY THAT 16/09: dua nguoc mot anh Udin tu sinh vao lai Udin, KHONG mot cu bam nao cua nguoi, hop thoai he dieu hanh khong hien len. Bang W du 8/8 -> MASTERED. Viec ke: R1 o CHUOI-VIEC.md ben Scouter — mot lenh chay tron vong: chon anh luot truoc -> upload -> go prompt style moi -> gui -> cho -> tai anh moi ve. Kiem da dinh kem bang PILL tren trang, dung tin lenh tra ve.",
+      "next_step": "R1 (vong-style.mjs) MA XONG, VONG SONG CHUA KHEP. Mot lenh noi tron vong: chon anh luot truoc -> dinh kem -> prompt style moi -> gui -> cho -> anh moi ve dia -> JPG. 16 khoi ghim, 16 dot bien 0 song sot. Con thieu dung MOT luot chay SONG: luot thu toi 16/09 dung o chang dinh kem vi UDIN DAY CHO (.concurrency-overlay khong tat) — ly do ngoai repo. Doi Udin rong cho roi chay vong-style.mjs voi prompt moi, co --xoa-pill-cu.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "PHAN NANG LUC XONG: bang W cua Udin 8/8, khong con hang CHAN, E2E DAT -> Udin MASTERED. Duong ghi khong con lenh nao noi doi. ROADMAP MOI o khoi SAU COMPACT dau CHUOI-VIEC.md: (1) R1 — MOT lenh chay tron vong viec that cua Duc (lay anh Udin da tao, dua nguoc vao, xin style khac); moi manh da co, chua ai noi lai. (2) R2 — khep vong tu cai tien lan hai voi bo day du. (3) R3 — TRANG THU HAI khac loai, phep do duy nhat tra loi cau seed co dung lai duoc khong. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
+      "title": "PHAN NANG LUC XONG (bang W cua Udin 8/8, Udin MASTERED). Dang lam R1 o khoi SAU COMPACT dau CHUOI-VIEC.md: MA XONG, VONG SONG CHUA KHEP — ket o cho Udin DAY CHO, khong phai o ma. Doi Udin rong cho roi chay mot luot vong-style.mjs voi prompt moi. Sau do: (2) R2 khep vong tu cai tien lan hai voi bo day du. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "W8 CHAY THAT 16/09: dua nguoc mot anh Udin tu sinh vao lai Udin, KHONG mot cu bam nao cua nguoi, hop thoai he dieu hanh khong hien len. Bang W du 8/8 -> MASTERED. Viec ke: R1 o CHUOI-VIEC.md ben Scouter — mot lenh chay tron vong: chon anh luot truoc -> upload -> go prompt style moi -> gui -> cho -> tai anh moi ve. Kiem da dinh kem bang PILL tren trang, dung tin lenh tra ve.",
+      "title": "R1 (vong-style.mjs) MA XONG, VONG SONG CHUA KHEP. Mot lenh noi tron vong: chon anh luot truoc -> dinh kem -> prompt style moi -> gui -> cho -> anh moi ve dia -> JPG. 16 khoi ghim, 16 dot bien 0 song sot. Con thieu dung MOT luot chay SONG: luot thu toi 16/09 dung o chang dinh kem vi UDIN DAY CHO (.concurrency-overlay khong tat) — ly do ngoai repo. Doi Udin rong cho roi chay vong-style.mjs voi prompt moi, co --xoa-pill-cu.",
       "rank": 5,
       "claim": null
     }
