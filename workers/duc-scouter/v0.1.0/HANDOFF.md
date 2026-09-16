@@ -1837,3 +1837,27 @@ bấm trần → `da_kiem: false` kèm câu khai. Cả ba đúng như phép ghim
 còn nguyên. Không lệnh nào gãy.
 
 Còn lại: **đúng một chữ ký của Đức cho `v1`**. Không còn việc kỹ thuật nào đang chờ.
+
+## 2026-09-16h · ĐỨC KÝ `v1`
+
+Chữ ký ở [ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md). `manifest.json` khai `1.0.0`;
+`STATUS` chuyển `building` → `active`.
+
+**THƯ MỤC KHÔNG ĐỔI TÊN, và đây là chỗ đáng đọc kỹ.** `v0.1.0` là một **đường dẫn**, không
+phải một phiên bản: nó nằm trong **mười** phép ghim so từng byte, trong `package.json`, và trong
+bộ khởi động **ngoài repo** mà Đức bấm. Đổi nó là bắt Đức gỡ và nạp lại extension để lấy một cái
+tên đẹp hơn. Repo đã có tiền lệ: `duc-auto-chatgpt/v0.1.0` khai `manifest 0.3.0`, và không
+phép kiểm nào so hai thứ.
+
+**ADR viết ra CẢ HAI VẾ, và vế thứ hai mới là vế giữ giá trị chữ ký:** năm điều `v1` hứa, và
+**bốn điều nó KHÔNG hứa** — cú bấm trần không hứa trang đã phản ứng · không phải ô nào cũng đọc
+lại được · `scout.clear` **chưa** vào đường tự kiểm · không chạy trên máy Mac. Một bản `v1`
+chỉ liệt kê điều hay ho là một bản `v1` sẽ bị người sau tin quá mức.
+
+**Một món nợ được khai ra chứ không giấu đi:** `S-27` — `scout.clear` vẫn chỉ kể việc mình
+làm. Không chặn `v1` vì người gọi thật duy nhất (`gui-prompt.mjs`) **đã tự kiểm bằng trang**,
+nên không ai đang tin lời khai của nó. Máy móc để chữa thì đã sẵn.
+
+**Việc kế, và nó do chính `S1`/`S2` mở khoá:** `T35` (`W6` đưa ảnh vào canvas) từng bị
+đặt sau **vì nó là một cú bấm mà không có cách nào biết nó chạy hay không**. Nay `scout.click`
+có `wait_for`. `T29` (`scout.upload`) vẫn cần một method Bridge MỚI → vẫn phải hỏi Đức.

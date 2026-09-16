@@ -2,11 +2,11 @@
 schema: extension-status/v2
 id: duc-scouter
 name: Duc Scouter
-lifecycle: building
+lifecycle: active
 owner: claude
 priority_rank: 4
-next_step: "S1 S2 S3 XONG va da nghiem thu TREN DAY THAT 16/09. scout.type doc lai o nhap (khop / lech thi nem WRITE_NOT_OBSERVED / khong doc duoc thi khai that); scout.click khai da_kiem:false va nhan wait_for de kiem duoc — ca ba nhanh do tren day that, dung. Tu vung khong doi (24/12). Gia cua luot doc lai: ~390ms moi lenh go tren trang Udin, doi chung scout.query tran 15ms — RE, nen khong can mo them method CDP nao. E2E that 4/4. CON DUNG MOT VIEC: Duc ky Scouter v1."
-human_action: "@Đức:chốt — ky Scouter v1. Da nap lai, da mo khoa, E2E that da chay va dat. Khong con viec ky thuat nao dang cho."
+next_step: "SCOUTER v1 — Duc ky 16/09 (ADR-0008 cua goi). manifest khai 1.0.0; thu muc van la v0.1.0 vi do la mot DUONG DAN, khong phai mot phien ban (muoi phep ghim so tung byte, package.json, va bo khoi dong ngoai repo deu dung ten do). v1 hua NAM dieu va KHONG hua BON dieu — doc ADR-0008. Viec ke duoc mo khoa boi chinh S1/S2: T35 (W6 dua anh vao canvas) tung bi dat sau vi no la mot cu bam ma khong co cach nao biet no chay hay khong; nay scout.click co wait_for. Con T29 (scout.upload) van can mot method Bridge MOI nen van phai hoi Duc."
+human_action: "khong"
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."

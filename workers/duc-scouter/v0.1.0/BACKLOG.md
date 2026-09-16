@@ -42,6 +42,17 @@
   neo vào `PROBE_NAMES` thật nên lần sau thêm phép dò mà quên khai là ĐỎ ngay. Nay **16/16 giết
   được, 0 sống sót**. Chi tiết: `G-97`.
 
+- **S-27** · `scout.clear` **chưa vào đường tự kiểm**. `S1` cho `scout.type` đọc lại ô nhập,
+  nhưng `scout.clear` vẫn chỉ **kể việc mình làm** — `steps: ["Ctrl+A","Delete"]` — đúng hình
+  dạng mà `S-22` mô tả. Máy móc thì rẻ: cùng cặp `nhanDangO`/`docO` đã có, chỉ đổi phép
+  phán từ *“chữ tăng thêm”* sang *“ô còn rỗng”*. **Vì sao vẫn để nợ:** `ADR-0008` (`v1`) khai
+  thẳng chỗ này ở mục *KHÔNG hứa gì*, và người gọi thật duy nhất hôm nay — `gui-prompt.mjs`
+  — **đã tự kiểm bằng trang** (nút Send phải khoá lại), nên không ai đang tin lời khai của nó.
+  **[ĐỌC]** `ACTIONS["input.clear"]` ở `scripts/scouter-actions-core.mjs` và khối `S1`
+  ở `scripts/scouter-seed-core.mjs`.
+  · **đóng khi:** `scout.clear` trả `da_kiem` theo cùng ba trạng thái của `S1`, một con đột
+  biến *“bỏ lượt đọc lại”* bị giết, và mục *KHÔNG hứa gì* của `ADR-0008` bớt đi dòng ấy.
+
 - **S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**, chứ không
   chờ xác nhận khung đã rời socket. Muốn chắc thì transport phải có móc "đã gửi xong".
   **[ĐỌC]** `RELOAD_DELAY_MS` trong `scripts/scouter-seed-core.mjs`.

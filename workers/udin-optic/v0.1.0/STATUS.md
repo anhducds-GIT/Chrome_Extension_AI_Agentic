@@ -5,8 +5,8 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1."
-human_action: "@Đức:chốt — ky Scouter v1 (viec o goi duc-scouter). Goi nay khong con viec nao dang cho."
+next_step: "S3 XONG va da nghiem thu bang DIA 16/09; Scouter da duoc Duc ky v1 nen ban chep o goi nay dang dung tren mot nen da chot. Viec ke cua goi: T35 — W6 dua anh vao canvas — nay LAM DUOC vi scout.click da co wait_for, tuc cu bam co mot moc de doi chieu. Truoc S2 thi khong co cach nao biet cu bam do chay hay khong, va do dung la ly do T35 bi dat sau."
+human_action: "khong"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
 current_focus: "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."

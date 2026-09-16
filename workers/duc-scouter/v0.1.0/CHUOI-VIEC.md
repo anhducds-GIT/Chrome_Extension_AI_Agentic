@@ -85,10 +85,10 @@ của Udin nhận hai mã lỗi và `wait_for`. **Suite hai bên xanh · đột 
 > 4 tệp mở đầu `FF D8 FF`, cỡ khớp **từng byte** với báo cáo · 4 bản `.webp` gốc còn nguyên.
 > Trên chính lượt đó `scout.type` trả `da_kiem: true` qua đường trợ năng.
 
-**S4 · RỒI MỚI ký `v1` — 🛑 ĐIỂM DỪNG DUY NHẤT, chỉ còn chữ ký.** Đức đã nạp lại và mở
-khoá; lượt E2E thật đã chạy xong và **đạt**. Ba nhánh của `S2` cũng đã đo trên dây thật:
-bấm có mốc → `da_kiem: true` · mốc không tới → **`CLICK_NOT_OBSERVED`** · bấm trần → tự khai
-chưa kiểm. **Không còn việc kỹ thuật nào đang chờ** — chỉ còn Đức tuyên bố `v1`.
+**S4 · ✅ ĐỨC KÝ `v1` — 16/09. Chuỗi đóng.** `manifest.json` khai `1.0.0`, `STATUS`
+chuyển sang `active`. Chữ ký đứng ở [ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md), và nó ghi
+**năm điều `v1` hứa** cùng **bốn điều nó KHÔNG hứa** — đọc mục thứ hai trước khi dựng gói mới.
+Thư mục vẫn là `v0.1.0`: tên thư mục là một **đường dẫn**, không phải một phiên bản.
 
 ### ĐẶT SAU, có lý do
 

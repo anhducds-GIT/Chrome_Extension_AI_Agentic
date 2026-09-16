@@ -401,3 +401,17 @@ Trang canvas nặng **không** làm đường này đắt như tôi lo.
 
 **E2E** (`--du-an "s1-nghiem-thu"`, prompt mới): W1→W2→W3→JPG→W4 trọn vẹn · 4 tệp JPEG thật,
 cỡ khớp từng byte · `.webp` gốc còn nguyên · thư mục dự án mới sinh đúng chỗ.
+
+## 2026-09-16i · Nền dưới chân gói này đã được ký `v1`
+
+Đức ký `Scouter v1` ngày 16/09 ([ADR-0008] bên gói đó). Gói này chép **mười** tệp từ nền ấy,
+nên nó thừa hưởng cả năm lời hứa — và cả **bốn điều nền ấy KHÔNG hứa**. Đọc mục thứ hai trước
+khi dựa vào một lệnh nào.
+
+Chỗ chạm gói này rõ nhất: `scout.clear` **chưa** vào đường tự kiểm (nợ `S-27` bên Scouter).
+`gui-prompt.mjs` không bị ảnh hưởng vì nó **đã tự kiểm bằng trang** — sau lượt xoá nó đòi nút
+Send phải khoá lại. Đừng bỏ vòng kiểm đó chỉ vì đường ghi nay đã tự kiểm: hai chỗ đó kiểm hai
+lệnh khác nhau.
+
+**Việc kế của gói: `T35` — `W6` đưa ảnh vào canvas.** Nó bị đặt sau vì nó là **một cú bấm**
+mà trước `S2` thì không có cách nào biết nó chạy hay không. Nay đưa `wait_for` là có mốc.

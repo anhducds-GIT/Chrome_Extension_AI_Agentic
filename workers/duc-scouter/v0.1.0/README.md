@@ -1,12 +1,17 @@
-# Duc Scouter — bản nền v0.1
+# Duc Scouter — **`v1`**, Đức ký 16/09
 
 Một extension Chrome **cục bộ**, dùng riêng. Nó không tự động hoá một trang cụ thể nào. Việc của
 nó là: **dò một trang · báo cáo cho AI qua Bridge · tự nạp lại chính nó** khi AI đã ghi code mới
 xuống đĩa. Đó là vòng tự cải tiến mô tả ở [ADR-0009](../../../docs/adr/0007-scouter.md).
 
-Phạm vi lượt này dừng ở `SEED v0.1`, 25 mục năng lực, chốt ở
-[ADR-0010](../../../docs/adr/0007-scouter.md). Không đi tiếp lên `SEED v1` nếu
-chưa có một ADR mới.
+> **`v1` — [ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md), 16/09.** Điều kiện *“không đi tiếp
+> lên `SEED v1` nếu chưa có một ADR mới”* ([ADR-0010](../../../docs/adr/0007-scouter.md)) đã
+> được thoả: ADR-0008 là ADR đó. Nó ghi **năm điều `v1` hứa** và **bốn điều nó KHÔNG hứa** —
+> **đọc mục thứ hai trước** khi dựng một gói mới trên nền này.
+>
+> Thư mục vẫn tên `v0.1.0`, cố ý: tên thư mục là một **đường dẫn** (mười phép ghim so từng
+> byte, `package.json`, và bộ khởi động ngoài repo đều dùng nó), không phải một phiên bản.
+> `manifest.json` mới là chỗ khai phiên bản, và nó khai `1.0.0`.
 
 ## Cài và chạy
 
