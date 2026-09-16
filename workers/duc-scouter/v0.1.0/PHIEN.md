@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10."
-- human_action: "khong"
+- next_step: "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang."
+- human_action: "D4 — chot cho/khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10."

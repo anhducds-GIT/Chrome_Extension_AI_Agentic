@@ -53,14 +53,24 @@ Và nó lật một cột: hàng `W5` khai cần `O3` (`scout.a11y`), **lệnh g
 vì ai nới phép kiểm). Món ngoài dự tính: **ô mật khẩu kiểm được ở lượt xoá**, dù không kiểm
 được ở lượt gõ.
 
-**③ 🛑 `T29` / `W8` — `scout.upload`. ĐÂY LÀ CHỖ PHẢI HỎI ĐỨC, và là dòng năng lực CUỐI
-CÙNG của danh sách đóng băng.** Nó cần method CDP mới `DOM.setFileInputFiles` → **đổi luật
-an toàn**. Đã có sẵn thiết kế: chỉ nhận **đường dẫn tương đối**, và **máy chủ Bridge** ghép nó vào
-vùng ghi rồi mới chuyển xuống — chỉ máy chủ biết vùng ghi ở đâu nên chỉ nó kiểm được đường dẫn có
-chui ra ngoài không. Scouter có host riêng nên việc này **không** đụng lõi dùng chung.
-**Nó mở khoá luôn ba mục `Image`/`Video`/`3D Model` của menu `W6`.**
+**③ 🛑 `T29` / `W8` — `scout.upload`. VIỆC DUY NHẤT CÒN LẠI, và nó chờ ĐỨC.**
+Gói quyết định đã viết xong 16/09 ở mục **`D4`** của chính file này — đọc mục đó, trả lời một
+chữ. Rút gọn: phần nguy hiểm nhất **đã có sẵn** (`trongGoc` của `bridge/file-core.mjs` chặn
+đường tuyệt đối · `C:x.txt` · `..` · liên kết mềm trỏ ra ngoài), nên chỉ còn **một** dòng phải
+hỏi: thêm `DOM.setFileInputFiles` vào `WRITE_CDP_METHODS`. Cái mới về rủi ro là **hướng đi của
+byte** — lần đầu có đường từ đĩa ra một trang web. Nó mở khoá `W8` và ba mục
+`Image`/`Video`/`3D Model` của menu `W6`.
 
-**④ Dọn sổ: `T21` chặng ⑤ · `S-04` · `T6` · `T10`.** Không cái nào chặn cái nào.
+**~~④ Dọn sổ~~ XONG 16/09**, trừ một mục:
+· ~~`T21` chặng ⑤~~ — sáu mục của danh sách dọn nhà đều đã xong, kiểm từng cái 16/09.
+· ~~`S-04`~~ — đóng bằng số đo: **7 lượt reload thật, 0 lượt mất phản hồi**, khứ hồi 11–17 ms
+  trên trần 250 ms.
+· ~~`T6`~~ — đóng bằng đường ⒝ và một phép đếm: **0 chỗ gọi `scout.network`** trong cả repo.
+· **`T10` (`S-21`) CÒN MỞ, và nó chặn bởi một thứ rất rẻ.** Phép thử rẻ nhất (đưa tab ra sau)
+  **đã chết** từ `G-41`; hai giả thuyết còn lại cần một **tab nháp** để gắn/nhả debugger lên
+  đó. Tối 16/09 mọi tab đang mở đều là việc thật của Đức, nên không đụng cái nào. **Anh mở
+  giúp MỘT tab trắng là làm được** — hoặc mở `N8` (`Target.createTarget`), nhưng đừng mở một
+  method CDP cho việc này khi một tab trắng là đủ.
 
 ### Hai thứ ĐỪNG làm lại
 
@@ -189,7 +199,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | **XONG + CHẠY THẬT 14/09** — `doc-tra-loi.mjs`, nay là chặng thứ tư của E2E. Đọc đúng câu trả lời cho prompt vừa gửi (`G-76`) |
 | **T35** | ~~`W6` đưa một ảnh vào canvas~~ → **thêm một KHUNG vào canvas** | — | **XONG + CHẠY THẬT 16/09** — `them-khung.mjs`, 8 → 9 khung. **Hai tiền đề của chính dòng này bị lật:** thao tác *“đưa ảnh lên canvas”* **không tồn tại** (ảnh kết quả đã ở trên canvas), và `S-22` **không** bít nó — cú bấm tới trang bốn lần liên tiếp hôm nay. 6 đột biến tay, giết được hết |
 | **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | **XONG + CHẠY THẬT 14/09** — cờ `xoaOCu` trong `gui-prompt.mjs`; **lời từ chối cũ giữ nguyên làm mặc định** (`G-77`) |
-| **T29** | `scout.upload` (`I9`) → `W8` | — | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng |
+| **T29** | `scout.upload` (`I9`) → `W8` | 🛑 **`D4` — chờ Đức chốt** | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng. Gói quyết định viết xong 16/09 ở mục `D4`: phần đường dẫn **đã có sẵn** (`trongGoc` của `file-core.mjs`, chặn cả bốn dạng vượt rào), nên chỉ còn **một** dòng phải hỏi — thêm `DOM.setFileInputFiles` vào `WRITE_CDP_METHODS` |
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
 | **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
 | **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
@@ -465,6 +475,73 @@ hình học, nguyên nhân CHƯA BIẾT. Cả hai đường đã fail-closed và
 method, trong khi T2 còn cần lõi đọc biết hộp của phần tử nằm ở đâu. Phải quay lại hỏi Đức giữa
 chừng (D1b). Bài học: khi một việc nói *"dùng cùng phép hỏi của việc kia"*, đếm lại **cả** số
 method mỗi bên cần, đừng cho rằng hai bên cần y hệt nhau.
+
+## D4 · Đức chốt — mở `DOM.setFileInputFiles` để làm `T29` / `W8`  ⟵ 🛑 **ĐANG CHỜ ANH**
+
+> **Câu hỏi, đúng một câu:** cho Scouter thêm **một** method CDP — `DOM.setFileInputFiles` — vào
+> danh sách của lõi GHI, để nó đưa được một tệp **từ vùng ghi Bridge** vào một ô `<input type=file>`
+> trên trang?
+>
+> **Đây là dòng năng lực CUỐI CÙNG của danh sách đóng băng.** Gật thì `W8` chạy được và ba mục
+> `Image` / `Video` / `3D Model` của menu *Add to canvas* mở ra. Lắc thì mọi thứ khác vẫn đứng.
+
+### Thứ đã làm sẵn, để câu trả lời của anh chỉ còn là một chữ
+
+Đo 16/09: **phần nguy hiểm nhất của việc này ĐÃ CÓ SẴN và đã được ghim từ lâu.** Kế hoạch cũ viết
+*“máy chủ Bridge ghép đường dẫn vào vùng ghi rồi mới chuyển xuống”* như một thứ phải xây. Nó không
+phải — `trongGoc(root, rel)` ở `bridge/file-core.mjs` đang làm đúng thế cho `file.write` từ 07/09,
+và nó chặn cả bốn dạng vượt rào:
+
+| dạng | bị chặn bởi |
+|---|---|
+| `C:\Users\...\passwords.txt` (tuyệt đối) | `path.isAbsolute` |
+| `C:x.txt` (tương đối theo Ổ ĐĨA — `isAbsolute` trả `false`!) | phép kiểm `/^[A-Za-z]:/` riêng |
+| `../../bi-mat.txt` | `path.relative`, **không** phải `startsWith` |
+| một liên kết mềm NẰM TRONG vùng ghi trỏ ra ngoài | `realpathSync` trên tổ tiên có thật gần nhất |
+
+Nên `T29` **không cần viết một dòng đường dẫn nào**. Nó còn lại đúng ba mảnh, và chỉ mảnh đầu là
+thứ phải hỏi anh.
+
+### Đổi đúng những gì
+
+| | đổi gì | có phải luật an toàn không |
+|---|---|---|
+| ① | thêm `"DOM.setFileInputFiles"` vào `WRITE_CDP_METHODS` | **CÓ — đây là câu hỏi** |
+| ② | thêm method `scout.upload` (từ vựng **24 → 25**, hợp đồng `deepEqual` đổi) | đi kèm ①, không có ① thì ② vô nghĩa |
+| ③ | máy chủ gọi `trongGoc(root, rel)` rồi chuyển đường tuyệt đối xuống | **không** — dùng lại thứ đã có |
+
+Scouter có **Bridge host riêng**, nên việc này **không đụng lõi dùng chung** của ba gói `duc-auto-*`.
+Gói `udin-optic` khai 12 method và sẽ **không** nhận `scout.upload` trừ khi có một câu chốt riêng.
+
+### Cái gì thật sự MỚI về mặt rủi ro — nói thẳng, đừng để anh phải đoán
+
+**Không phải chuyện “lộ file”.** `file.read` đã đọc được mọi tệp dưới vùng ghi từ 07/09, nên
+`scout.upload` **không mở thêm một byte nào** cho người gọi.
+
+**Cái mới là HƯỚNG ĐI của byte.** `file.read` trả tệp về cho người gọi — tức về máy này.
+`scout.upload` đặt tệp vào tay **một trang web**, và trang web thì gửi nó đi đâu là việc của nó.
+Nói gọn: đây là lần đầu Scouter có một đường **từ đĩa ra Internet**.
+
+**Thứ thu hẹp nó lại, và chúng có thật chứ không phải lời hứa:**
+
+- **Chỉ đọc được vùng ghi**, mà vùng ghi là `…\Chrome Extension Bridge\duc-scouter\du-lieu` —
+  một thư mục con dành riêng. Ổ đĩa còn lại không chạm tới được.
+- **Tệp ghép cặp (có token) KHÔNG nằm trong vùng ghi**, và máy chủ **từ chối khởi động** nếu ai
+  trỏ vùng ghi vào thư mục đang giữ nó. Chốt ấy đã có sẵn, không phải thêm cho việc này.
+- **Vẫn qua cái phanh**: `scout.upload` là lệnh GHI, nên nó cần công tắc của anh và tiêu trần 200.
+- **Selector phải khớp đúng MỘT `<input type=file>`**; khớp 0, khớp nhiều, hoặc khớp một thẻ khác
+  thì từ chối — không đoán.
+
+### Nếu anh lắc đầu
+
+Không có gì hỏng. `W8` ở lại `CHẶN`, ba mục cần tệp của menu *Add to canvas* ở lại từ chối theo
+rủi ro, và bảng `W` dừng ở **7/8**. Mọi việc khác đã đóng. Đây là một cánh cửa để mở khi cần,
+không phải một chỗ đang rò.
+
+· **đóng khi:** anh trả lời. **@Đức:chốt**
+· **đóng thế nào nếu ĐƯỢC:** `..`, đường tuyệt đối và `C:x.txt` bị từ chối **ở máy chủ** (đã có
+phép ghim, thêm phép ghim cho đường mới) · phần tử không phải `<input type=file>` thì từ chối ·
+**một lượt chạy thật** đưa được một ảnh từ vùng ghi vào trang.
 
 ## D1 · Đức chốt — mở khoá T1 và T2  ⟵ *đã chốt: ĐƯỢC*
 

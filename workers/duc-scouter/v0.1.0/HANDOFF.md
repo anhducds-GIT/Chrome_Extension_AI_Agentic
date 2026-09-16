@@ -1902,3 +1902,33 @@ chặn bởi `Y`"* nào, bỏ mười phút đo `Y`. Hai lần liền nó rẻ h
 
 **Bảng `W` nay 7/8 ĐẠT.** Còn đúng `W8` — `T29` `scout.upload`, **dòng năng lực cuối cùng**, cần
 `DOM.setFileInputFiles` nên là một **thay đổi luật an toàn**: chỗ đó phải hỏi Đức.
+
+## 2026-09-16 · `claude-scouter-udine` — `S-27` nghiệm thu THẬT, `S-04`+`T6` đóng bằng số đo, và một lỗ ghim
+
+**Nghiệm thu `S-27` suýt không chạy được, và đường ra hoá ra nằm trong chính gói.** Extension Udin
+**cố ý** không có `scout.reload` nên nó không tự nạp lại được. Nhưng Scouter thì có — bật máy chủ
+Bridge của Scouter lên thì ghế `Dummy_Scout` nối vào ngay, `scout.reload` nó, và nó chạy mã mới.
+
+**Kết quả, trên trang Udin thật qua dây thật — cả ba nhánh:** xoá ô đang có 14 ký tự →
+`da_kiem: true`, *“hai phím đã tới trang và ô đã sạch”* · xoá lại ô đã rỗng → `da_kiem: true`
+nhưng **câu KHÁC**: *“vốn đã rỗng — KHÔNG chứng minh hai phím đã tới trang”* · nhánh ĐỎ
+(`CLEAR_NOT_OBSERVED`) trên Chrome sạch với ô `readonly`. Ô prompt trả về rỗng như lúc gặp.
+
+**MỘT LỖ GHIM, và nó ở đúng khe mà thiết kế bỏ trống.** `tu-kiem-ghi.mjs` là tệp **chép từng
+byte**, nên mã lỗi mới sang Udin ngay. Nhưng `bridge-core.mjs` của Udin **CỐ Ý KHÁC** nên không
+bảng `CẶP` nào chạm tới — nó **không được khai** `CLEAR_NOT_OBSERVED`, và **suite vẫn xanh trọn
+vẹn**. Lượt xoá thất bại đầu tiên bên Udin sẽ ném `TypeError` thay vì một mã có tên. Đã khai, và
+đã bắc một khối ghim qua đúng khe ấy (`be-mat-hep` ⑻): mọi hằng `MA_*` mà phần phán dùng chung
+export ra đều phải dựng được `BridgeProtocolError` ở gói này. Kiểm hai chiều — bỏ mã đi thì đỏ.
+
+**Bài học: *“chép thì ghim, khác thì không”* để hở đúng chỗ một thứ ở tệp CHÉP cần được khai ở
+tệp KHÁC.** Không bảng `CẶP` nào bắc qua khe đó, vì `CẶP` chỉ so tệp với tệp.
+
+**`do-doc-lai.mjs` thêm ô `readonly`** — hàng DUY NHẤT chờ một nhánh ĐỎ. Trước đó bốn ô đều ghi
+được, nên một bản `xetXoaSach` **luôn nói có** sẽ xanh qua cả bốn.
+
+**`S-04` đóng bằng số:** 7 lượt reload thật, **0 mất phản hồi**, khứ hồi 11,1–17,1 ms trên trần
+250 ms — và khứ hồi là chặn TRÊN của thời gian khung rời socket.
+**`T6`/`S-20` đóng bằng đường ⒝:** đếm được **0 chỗ gọi `scout.network`** trong cả repo.
+
+**Còn đúng một việc, và nó chờ Đức: `D4`** — mở `DOM.setFileInputFiles` cho `T29`/`W8`.

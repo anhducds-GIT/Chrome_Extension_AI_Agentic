@@ -470,3 +470,27 @@ không sửa mã cho vừa phép ghim — và `E16` chết.
 **`S-22` bị đổ oan lần thứ hai trong một ngày.** `W6` hôm qua, `W5` hôm nay: **hai hàng liên
 tiếp** hoãn vì một lý do sai, và không ai đi kiểm lại lý do hoãn. Đã ghi thành khối cảnh báo ở
 `CHUOI-VIEC.md` của Scouter: **một lý do hoãn cũng là một lời khai, phải đi đo lại.**
+
+## 2026-09-16 · `claude-scouter-udine` — `S-27` sang gói này, và một mã lỗi suýt lọt
+
+**`scout.clear` của gói này nay tự kiểm** — bản chép từng byte của `tu-kiem-ghi.mjs` và
+`scouter-seed-core.mjs`, `bridge-core.mjs` khai thêm `CLEAR_NOT_OBSERVED`.
+
+**Chỗ suýt lọt, ghi kỹ vì nó là một khe của chính kiến trúc.** `tu-kiem-ghi.mjs` nằm trong bảng
+`CẶP` nên mã lỗi mới sang đây ngay. `bridge-core.mjs` thì **CỐ Ý KHÁC** — đúng như `T21` đã
+chốt — nên **không** phép so byte nào nhắc nó, và nó thiếu mã ấy trong khi **suite xanh trọn
+vẹn**. Lượt xoá thất bại đầu tiên sẽ dựng `BridgeProtocolError("CLEAR_NOT_OBSERVED")`, mà chỗ
+dựng từ chối mã lạ → `TypeError`, không phải một mã có tên. Hỏng to tiếng, nhưng **chỉ ở nhánh
+thất bại** — nhánh không lượt chạy bình thường nào đi qua.
+
+**Đã bắc khối ⑻ vào `be-mat-hep-smoke.mjs`** qua đúng khe ấy: đọc mọi hằng `MA_*` mà
+`tu-kiem-ghi.mjs` export ra (đọc, **không gõ lại danh sách** — gõ lại là dựng bản thứ hai của
+cùng một sự thật, và lần sau lại không ai sửa), rồi đòi mỗi mã phải dựng được
+`BridgeProtocolError` ở gói này. Kiểm hai chiều: bỏ mã khỏi `ERROR_DEFINITIONS` thì khối ⑻ đỏ.
+
+**CHƯA chạy thật TỪ extension này.** Gói này **cố ý** không có `scout.reload` nên nó không tự nạp
+lại được — cần Đức nạp lại một lần. Bằng chứng gián tiếp thì mạnh: chính ô
+`textarea.agent-textarea` của trang Udin đã chạy thật **cả ba nhánh** ngày 16/09 qua ghế Scouter,
+và phần mã bên dưới là bản chép từng byte có phép ghim canh.
+
+**Bảng `W` nay 7/8**, còn `W8` — chờ `D4` bên Scouter.

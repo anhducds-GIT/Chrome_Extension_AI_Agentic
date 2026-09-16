@@ -5,8 +5,8 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "W5 XONG + CHAY THAT 16/09: chon-che-do.mjs, Agent->Manual Gen->Agent, 15 dot bien tay giet duoc het. Bang W nay 7/8 DAT, con dung W8. Cot Can cua hang W5 khai SAI (O3 scout.a11y — lenh goi nay khong co tren day) va da gach tai cho o CAPABILITIES.md. Viec ke KHONG o goi nay: S-27 (scout.clear vao duong tu kiem) ben Scouter, roi T29/W8 scout.upload — cho ay PHAI HOI DUC vi can method CDP moi."
-human_action: "khong"
+next_step: "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter)."
+human_action: "@Đức:bấm — nap lai extension Udin MOT lan de scout.clear tu kiem chay tu chinh goi nay. Khong gap: khong lenh nao hong, chi la lenh xoa van bao dat theo kieu cu cho toi luc do."
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
 current_focus: "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."

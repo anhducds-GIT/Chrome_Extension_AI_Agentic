@@ -9,8 +9,8 @@ last_verified_how: "Live 16/09: mot luot E2E that tren trang Udin (prompt moi, -
 evidence_ref: workers/duc-scouter/v0.1.0/docs/TRIALS.md
 owner: claude
 priority_rank: 4
-next_step: "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10."
-human_action: "khong"
+next_step: "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang."
+human_action: "@Đức:chốt — D4: cho hay khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
