@@ -2139,3 +2139,23 @@ và nó phải có phép kiểm điểm bấm y như hai chỗ kia.
 
 **Giá phải nói rõ:** Shift+click lên một thẻ liên kết **mở cửa sổ mới**. Nó chỉ bắn sau cổng
 selector (khớp đúng một) và phép kiểm điểm bấm.
+
+
+## 16/09 (khuya) — `scout.chon` chạy thật, và một con đột biến chỉ ra mã thừa
+
+**Chạy thật trên canvas Udin** (chi tiết ở HANDOFF của gói ấy): Shift+click hai ảnh theo thứ tự,
+**đọc ngược từ trang** ra `"1"` và `"2"`, đúng hai ảnh đã xin. Method thứ 25 lên dây sau một lượt
+nạp lại extension.
+
+**Phép kiểm điểm bấm của lõi ghi vừa làm đúng việc của nó trên đồ thật:** canvas Udin là một mặt
+phẳng kéo được, nên một nửa số ảnh nằm ngoài khung nhìn. Lượt bấm đầu tiên ngã ở toạ độ `y = -100`
+với *"No node found at given location"* — **chặn một cú bấm mù** thay vì bắn vào chỗ không ai biết.
+
+**Một chỗ câu báo lỗi nói sai nguyên nhân, ghi ra chứ không sửa vội:** câu ấy gắn thêm đoạn về
+`S-21` (*"target rơi vào trạng thái này thì `scout.shot` cũng hỏng"*), nhưng ca hôm nay không phải
+`S-21` — toạ độ âm là do phần tử nằm ngoài khung nhìn, một chuyện hẳn khác. Một chẩn đoán sai có
+thẩm quyền đắt hơn một ô trống; ai sửa quanh đó thì tách hai ca này ra.
+
+**Và một con đột biến sống sót chỉ ra MÃ THỪA, không phải ghim hở:** phép đếm huy hiệu trong từng
+hộp chỉ nói lại điều `scout.text` đã bảo đảm (ADR-0006 — từ chối mọi selector khớp ≠ 1). Đường
+đúng là **xoá mã**, không phải đi ghim một thứ không làm gì.
