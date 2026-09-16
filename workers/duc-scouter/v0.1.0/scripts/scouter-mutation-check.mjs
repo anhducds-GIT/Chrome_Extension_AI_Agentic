@@ -1470,38 +1470,20 @@ BATCHES.push({
       soLan: 1
     },
     {
-      ma: "U10",
-      ten: "BẤM TRƯỚC RỒI MỚI CHẶN — hộp thoại hệ điều hành dựng lên màn hình Đức",
-      /* NEO PHẢI GỒM CẢ CÚ BẤM. Bản đầu chỉ dời dòng chặn xuống trong `try` — vẫn đứng TRƯỚC
-       * `clickAt`, tức không đảo gì cả, và con đột biến sống sót vì CHÍNH NÓ viết sai chứ không
-       * vì phép ghim yếu. Một con đột biến không làm đúng việc nó khai là một lỗ trong bộ đo. */
-      tim: '  await send("Page.setInterceptFileChooserDialog", { enabled: true });' + NL + "  try {" + NL
-        + "    await clickAt(send, diem, readNutChuot(undefined), 1);",
-      thay: "  try {" + NL + "    await clickAt(send, diem, readNutChuot(undefined), 1);" + NL
-        + '    await send("Page.setInterceptFileChooserDialog", { enabled: true });',
-      soLan: 1
-    },
-    {
-      ma: "U11",
-      ten: "Để QUÊN CÁI CHẶN Ở TRẠNG THÁI BẬT — Chrome của Đức nuốt mọi hộp thoại chọn tệp",
-      tim: "  } finally {" + NL
-        + "    /* KHÔNG có `catch` ở đây: một lượt tắt hỏng phải nổi lên cho người gọi thấy, vì hậu quả của",
-      thay: "  } finally { if (false) {" + NL
-        + "    /* KHÔNG có `catch` ở đây: một lượt tắt hỏng phải nổi lên cho người gọi thấy, vì hậu quả của",
-      soLan: 1
-    },
-    {
-      ma: "U12",
-      ten: "Đổ file vào ô ĐẦU TIÊN thay vì ô MỚI hiện ra sau cú bấm",
-      tim: "      moi = nay.filter((id) => !truoc.includes(id));",
-      thay: "      moi = nay.slice(0, 1);",
-      soLan: 1
-    },
-    {
       ma: "U6",
       ten: "Ch\u1edf \u0111\u01b0\u1eddng TUY\u1ec6T \u0110\u1ed0I ra k\u1ebft qu\u1ea3 \u2014 v\u00f9ng ghi c\u1ee7a \u0110\u1ee9c v\u00e0o nh\u1eadt k\u00fd",
       tim: '    return { ...ketQua, path: typeof params.path === "string" ? params.path : null, files: 1 };',
       thay: "    return { ...ketQua, path: duong, files: 1 };",
+      soLan: 1
+    },
+    {
+      /* Thay ch\u1ed7 c\u1ee7a `U10`/`U11`/`U12` \u2014 ba con canh \u0111\u01b0\u1eddng `mo_bang`, g\u1ee1 17/09 c\u00f9ng v\u1edbi n\u00f3.
+       * Con n\u00e0y canh chi\u1ec1u NG\u01af\u1ee2C L\u1ea0I: m\u1ed9t method GHI l\u1eb7ng l\u1ebd quay l\u1ea1i danh s\u00e1ch. \u0110\u00f3 l\u00e0 ki\u1ec3u
+       * th\u00eam d\u1ec5 l\u1ecdt nh\u1ea5t, v\u00ec n\u00f3 kh\u00f4ng l\u00e0m g\u00e3y g\u00ec c\u1ea3 \u2014 n\u00f3 ch\u1ec9 m\u1edf l\u1ea1i m\u1ed9t c\u1eeda. */
+      ma: "U13",
+      ten: "L\u00e9n tr\u1ea3 `Page.setInterceptFileChooserDialog` v\u1ec1 WRITE_CDP_METHODS",
+      tim: '  "Input.dispatchDragEvent",',
+      thay: '  "Page.setInterceptFileChooserDialog",' + NL + '  "Input.dispatchDragEvent",',
       soLan: 1
     }
   ]

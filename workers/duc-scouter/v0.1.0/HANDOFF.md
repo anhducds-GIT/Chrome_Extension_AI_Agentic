@@ -2221,3 +2221,32 @@ trang cũ.
 **Hai lệnh mở hôm qua và hôm nay đều đã chạy thật:** `scout.chon` (Shift+click, thứ tự `@N`) và
 `scout.tha` (kéo-thả, bỏ hẳn hộp thoại). Cả hai khai `da_kiem: false` và người gọi đếm lại trên
 trang — đúng khuôn hẹp của cả seed.
+
+## 2026-09-17 · `claude-scouter-udine` — `input.upload` bỏ đường `mo_bang`; một method GHI rời danh sách
+
+**Việc nằm ở gói `udin-optic`** (Đức khoanh phạm vi *"tập trung hoàn thiện Udin, tránh lan man"*);
+đây là phần chạm vào tệp của gói này, nhật ký đầy đủ ở HANDOFF của Udin.
+
+`input.upload` nay có **một** đường: `selector` trỏ vào một `<input type=file>` ĐÃ CÓ trên trang.
+Đường `mo_bang` — bấm một nút để trang dựng ô ấy ra — **gỡ hẳn**, cùng với hàm `taiLenQuaNutMo`,
+hai hằng `UPLOAD_CHO_MS`/`UPLOAD_NHIP_MS`, và **`Page.setInterceptFileChooserDialog` rời
+`WRITE_CDP_METHODS` (17 → 16)**.
+
+**Đây là lần đầu danh sách ấy NGẮN lại, nên nói rõ vì sao nó không phải một lượt nới ngược.**
+Method ấy không hỏng — nó chạy đúng như khai, và phép đo 16/09 vẫn đúng từng chữ. Nhưng nó vào
+danh sách để phục vụ đúng một người gọi, và người gọi ấy vừa chết: `input.tha` (kéo-thả) làm cùng
+việc mà **không đi qua hộp thoại chọn tệp nào cả**, theo cấu tạo chứ không nhờ đi chặn. Cái giá
+ta đang trả cho method ấy là hiểm **để quên nó BẬT** — lúc ấy hộp thoại mà chính Đức mở cũng im
+lặng không hiện, không một thông báo nào chỉ về đây. Trả giá đó cho một người gọi không còn tồn
+tại là trả không. Mở lại = đổi luật an toàn = hỏi Đức.
+
+**Ghim và đột biến đi theo, không lỏng ra chỗ nào.** `tests/tai-len-smoke.mjs`: ba khối của
+`mo_bang` (⑦⑧⑨) xoá, thêm một khối canh **chiều ngược** — khai `mo_bang` nay phải trả
+`SELECTOR_REQUIRED`, và **không một lượt `Page.setInterceptFileChooserDialog` nào được bắn**; vế
+sau mới là vế đắt. Khối ① đổi từ *"phải có trong danh sách"* thành *"phải KHÔNG có"*, số đếm
+17 → 16. Ba con đột biến `U10`/`U11`/`U12` xoá theo mã chúng canh; thêm `U13` canh đúng cái chỗ
+dễ lọt nhất — một method GHI **lén quay lại** danh sách, thứ không làm gãy gì cả vì nó chỉ mở
+một cửa. `179/179` giết được, 0 sống sót.
+
+Bảng năng lực: hàng `W8` gạch tại chỗ hợp đồng cũ (`NO_FILE_CHOOSER`, `UPLOAD_MODE_UNCLEAR`,
+trình tự chặn–bấm–tắt) và viết hợp đồng mới bên dưới, không xoá chữ cũ.

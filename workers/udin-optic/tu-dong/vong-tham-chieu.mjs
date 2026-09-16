@@ -34,6 +34,7 @@ import { goi as goiThat, timTab as timTabThat } from "./goi-bridge.mjs";
 import { quaManCho, URL_UDIN } from "./qua-man-cho.mjs";
 import { guiPrompt } from "./gui-prompt.mjs";
 import { layAnh } from "./lay-anh.mjs";
+import { docTraLoi } from "./doc-tra-loi.mjs";
 import { doiSangJpg } from "./doi-sang-jpg.mjs";
 import { kiemTenDuAn, duongDayDu } from "./thu-muc-du-an.mjs";
 import { anhTrenCanvas, chonTheoThuTu, kiemPromptThamChieu, hopCuaAnh } from "./chon-tham-chieu.mjs";
@@ -121,6 +122,12 @@ export async function vongThamChieu(prompt, tuyChon = {}) {
   const chon = await chonTheoThuTu(nguon.map((n) => n.src), tuyChon);
   chang.push({ chang: "CHON", thuTuKiemDuoc: chon.thuTuKiemDuoc, daChon: chon.daChon.map((x) => x.so) });
 
+  /* Câu trả lời ĐANG có trên trang, đọc TRƯỚC khi gửi — `W4` ở cuối từ chối nếu chữ không đổi.
+   * *Có chữ* không bao giờ là *có chữ MỚI*, y hệt lý do W2 đếm ảnh theo `src` chứ không theo số
+   * lượng. Trang sạch thì chưa có tin nhắn agent nào và `docTraLoi` ném đúng theo thiết kế —
+   * đó là `null`, không phải lỗi. */
+  const chuTruoc = await docTraLoi(tuyChon).then((k) => k.chu, () => null);
+
   const gui = await guiPrompt(prompt, tuyChon);
   chang.push({ chang: "W2", ...gui });
   const w3 = await layAnh(gui.src, tuyChon);
@@ -131,6 +138,11 @@ export async function vongThamChieu(prompt, tuyChon = {}) {
     chang.push({ chang: "JPG", so: jpg.so, thuMuc: jpg.thuMuc });
   }
 
+  /* `W4` đứng CUỐI, sau lượt ảnh đã về đĩa — nên một chặng `W4` đỏ không bao giờ làm mất ảnh.
+   * Vẫn để nó ném: một câu trả lời sai còn tệ hơn không có câu nào. */
+  const w4 = await docTraLoi({ ...tuyChon, khacVoi: chuTruoc ?? undefined });
+  chang.push({ chang: "W4", ...w4 });
+
   let vungGhi = null;
   try {
     const hc = await goi("host.capabilities", {}, tuyChon);
@@ -138,7 +150,7 @@ export async function vongThamChieu(prompt, tuyChon = {}) {
   } catch { /* tiện nghi, không phải một chặng */ }
 
   return {
-    prompt, chang, thuMuc: w3.thuMuc,
+    prompt, chang, thuMuc: w3.thuMuc, traLoi: w4.chu,
     thuMucDayDu: vungGhi ? duongDayDu(vungGhi, w3.thuMuc) : null,
     thamChieu: chon.daChon.map((x) => ({ so: x.so, src: x.src })),
   };
@@ -166,6 +178,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
       console.log(JSON.stringify(k, null, 2));
       console.log("");
       for (const t of k.thamChieu) console.log(`@${t.so}  ${t.src.slice(-46)}`);
+      if (k.traLoi) console.log(`UDIN NÓI: ${k.traLoi}`);
       if (k.thuMucDayDu) {
         console.log(`ẢNH RA: ${k.thuMucDayDu}`);
         if (doi.includes("--mo") && process.platform === "win32") {

@@ -794,3 +794,31 @@ của luật *đổi prompt mỗi lượt*: nay nó để **nhận diện ảnh 
 nhau. Prompt đặc trưng là một **dụng cụ đo**, không phải trang trí.
 
 11 khối ghim · 9 đột biến, 0 sống sót. Suite gói **18/18**.
+
+## 2026-09-17 · `claude-scouter-udine` — gỡ lối bật hộp thoại, một lệnh bật lại máy chủ, `W4` vào vòng
+
+**Việc.** Đức khoanh phạm vi: *"chỉ tập trung hoàn thiện extension Udin, tránh lan man"*. `R2`/`R3`
+(phục vụ Scouter) **parked**. Ba mép của Udin khép nốt.
+
+**① Không còn lối nào bật hộp thoại `Open` lên màn hình Đức.** `tu-dong/vong-style.mjs` **XOÁ**
+(Đức chốt): nó làm đúng việc `vong-tham-chieu.mjs` làm, nhưng đính kèm bằng `scout.upload
+--mo-bang` và không có `@1`/`@2` — giữ hai lệnh chạy vòng là giữ một ngày có người chạy nhầm bản
+cũ. Kéo theo ở gói `duc-scouter`: đường `mo_bang` gỡ, `Page.setInterceptFileChooserDialog` rời
+`WRITE_CDP_METHODS` (**17 → 16**). Lý do đầy đủ ở HANDOFF của `duc-scouter` cùng ngày. Bảng lỗi
+Bridge của gói này mất theo hai mã `NO_FILE_CHOOSER` và `UPLOAD_MODE_UNCLEAR`.
+
+**② Bật lại máy chủ bằng MỘT lệnh.** `START-BRIDGE_Udin-Optic.ps1 -KhoiDongLai` dừng tiến trình
+đang giữ cổng rồi bật lại, và **chỉ dừng tiến trình tên `node`** — cổng bị thứ khác chiếm thì đó
+không phải máy chủ này. Không có cờ thì vẫn tự thoát như cũ, nhưng nay in ra câu chỉ đường. Chạy
+thật: `26468 → 34572 → 18308`, cùng cổng `32152`. Nhớ vì sao cần: sửa `bridge/*.mjs` là khởi động
+lại một TIẾN TRÌNH, không phải nạp lại extension — 16/09 mất một lượt vì chỗ này.
+
+**③ `W4` vào vòng.** `vong-tham-chieu.mjs` nay bảy chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG →
+W4`. Câu trả lời đọc TRƯỚC lượt gửi rồi truyền vào `khacVoi`, nên *có chữ* không bị đọc thành *có
+chữ MỚI*. `W4` đứng CUỐI, sau lượt ghi đĩa — một chặng đọc đỏ không bao giờ làm mất ảnh đã tải.
+
+**Đo.** Suite 36/36 + 17/17 · đột biến 179/179 + 17/17 · vòng tham chiếu 11/11 (thêm hai con canh
+`W4`). Ghim `tai-len-smoke` còn 8 khối.
+
+**CHƯA làm:** Đức chưa nạp lại extension sau đợt này, nên chưa có lượt chạy thật nào của vòng bảy
+chặng. `S-31` (Udin không tự nạp lại được) vẫn mở.

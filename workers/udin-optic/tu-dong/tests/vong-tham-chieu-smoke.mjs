@@ -15,15 +15,19 @@ const CU = "https://cdn.udin/persistent/img/1111-aaa.webp";
 const CU2 = "https://cdn.udin/persistent/img/2222-bbb.webp";
 const THA1 = "https://cdn.udin/persistent/img/9001-tha.webp";
 const THA2 = "https://cdn.udin/persistent/img/9002-tha.webp";
+/* Hai câu trả lời PHẢI khác nhau: ca hỏng đắt nhất của `W4` là đọc lại câu của lượt TRƯỚC
+ * rồi khai là câu của lượt NÀY, và chỉ một cặp chuỗi khác nhau mới phân biệt được hai nhánh. */
+const CHU_CU = "cau tra loi cua luot TRUOC";
+const CHU_MOI = "cau tra loi cua luot NAY";
 
 /**
  * @param moiMoiLuotTha `src` canvas mọc ra sau MỖI lượt thả, theo thứ tự
  * @param thaHong lượt thả không làm canvas mọc thêm gì
  * @param thaThua một lượt thả làm canvas mọc thêm HAI ảnh
  */
-function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false, thaThua = false } = {}) {
+function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false, thaThua = false, traLoiMoi = true } = {}) {
   const nk = [];
-  const trang = { canvas: [...canvas], chon: [], chu: "", chay: false, vong: 0, ketQua: [] };
+  const trang = { canvas: [...canvas], chon: [], chu: "", chay: false, vong: 0, ketQua: [], traLoi: CHU_CU };
   let luotTha = 0;
   const q = (n, items = [], hasMore = false) => ({ data: { matchCount: n, items, hasMore } });
   const tienTo = (sel) => {
@@ -47,6 +51,7 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
     if (method === "scout.query") {
       const sel = p.selector;
       if (sel === ".concurrency-overlay") return q(0);
+      if (sel === ".agent-message-item:last-child .markdown-content") return q(1);
       if (sel === SEL_CHON.anh) {
         return { data: { matchCount: trang.canvas.length, hasMore: false,
                          items: trang.canvas.map((src) => ({ attributes: { src: src + "…" } })) } };
@@ -79,6 +84,10 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
       return { data: { satisfied: true } };
     }
     if (method === "scout.text") {
+      if (p.selector === ".agent-message-item:last-child .markdown-content") {
+        return { data: { selector: p.selector, matchCount: 1, text: trang.traLoi,
+                         chars: trang.traLoi.length, truncated: false, maxChars: 5000 } };
+      }
       const p2 = tienTo(p.selector);
       const so = p2 === null ? null : soCua(trang.canvas.find((s) => s.startsWith(p2)));
       if (so === null) throw new Error("SELECTOR_AMBIGUOUS " + p.selector);
@@ -93,7 +102,13 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
       return { action: "input.chon", data: {} };
     }
     if (method === "scout.type") { trang.chu += p.text; return { data: { typed: p.text.length } }; }
-    if (method === "scout.click") { trang.chay = true; trang.vong = 1; trang.chu = ""; return { data: {} }; }
+    if (method === "scout.click") {
+      trang.chay = true; trang.vong = 1; trang.chu = "";
+      /* `traLoiMoi: false` dựng đúng ca agent ra ảnh mà KHÔNG viết câu mới — trang vẫn "xong",
+       * W3 vẫn có ảnh, và chỉ `W4` nhìn ra là câu chữ vẫn là câu của lượt trước. */
+      if (traLoiMoi) trang.traLoi = CHU_MOI;
+      return { data: {} };
+    }
     if (method === "scout.grab") {
       const m = p.selector.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/);
       const h = trang.ketQua.filter((s) => m && s.startsWith(m[1]));
@@ -114,7 +129,9 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
 // ⓐ vòng đầy đủ: thả hai ảnh → chọn đúng thứ tự → gửi → ảnh mới về đĩa
 { const t = lam();
   const k = await vongThamChieu("apply the style of @1 to @2", { ...t, anh: ["udin-optic/vao/a.png", "udin-optic/vao/b.png"] });
-  assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "NGUON", "CHON", "W2", "W3", "JPG"]);
+  assert.deepEqual(k.chang.map((c) => c.chang), ["W1", "NGUON", "CHON", "W2", "W3", "JPG", "W4"]);
+  /* `W4` phải trả câu MỚI, không phải câu đang có trên trang lúc bắt đầu. */
+  assert.equal(k.traLoi, CHU_MOI);
   assert.deepEqual(k.thamChieu.map((x) => x.so), [1, 2]);
   /* Thứ tự `@N` phải theo thứ tự người gọi đưa `--anh`, không theo thứ tự nào khác. */
   assert.equal(k.thamChieu[0].src, THA1);
@@ -180,5 +197,15 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
   assert.equal(k.src, THA1, "danh tính học bằng phần chênh của canvas, tên tệp không dính dáng gì");
   assert.equal(k.canvasTruoc, 2);
   assert.equal(k.canvasSau, 3); }
+
+// ⓛ agent ra ảnh mà KHÔNG viết câu mới → `W4` ĐỎ, và ảnh của lượt này VẪN nằm trên đĩa
+/* Đây là ca hỏng đắt nhất của `W4` và nó không báo lỗi ở đâu khác: trang vẫn "xong", `W3` vẫn
+ * có ảnh, chỉ mỗi câu chữ là câu của lượt TRƯỚC. Vế thứ hai quan trọng ngang vế đầu — `W4`
+ * đứng sau lượt ghi đĩa đúng để một chặng đọc đỏ không bao giờ làm mất ảnh đã tải về. */
+{ const t = lam({ traLoiMoi: false });
+  await assert.rejects(
+    () => vongThamChieu("a dusk-lit cathedral in @1 rendered onto @2", { ...t, anh: ["udin-optic/vao/a.png", "udin-optic/vao/b.png"] }),
+  );
+  assert.equal(t.nk.filter((g) => g.method === "file.write").length, 1, "W4 đỏ không được làm mất ảnh đã ghi"); }
 
 console.log("vong-tham-chieu-smoke: OK");

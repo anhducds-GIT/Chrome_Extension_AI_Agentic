@@ -44,9 +44,17 @@ Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout
 ### Việc còn lại, theo đúng thứ tự nên làm
 
 **① `R1` — MỘT LỆNH chạy trọn vòng việc thật. XONG TRỌN 17/09, HẾT VẾT.**
-`vong-tham-chieu.mjs` chạy sáu chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG`, có `@1` / `@2` đọc ngược
-từ huy hiệu trên trang, và **không một cú Cancel nào** — `scout.tha` (kéo-thả) thay `scout.upload`
-ở mọi lượt đưa ảnh từ ngoài. Chạy thật 17/09: 4 ảnh mới về đĩa.
+`vong-tham-chieu.mjs` chạy **bảy** chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG → W4`, có `@1` / `@2`
+đọc ngược từ huy hiệu trên trang, và **không một cú Cancel nào** — `scout.tha` (kéo-thả) thay
+`scout.upload` ở mọi lượt đưa ảnh từ ngoài. Chạy thật 17/09: 4 ảnh mới về đĩa.
+
+**17/09 khép nốt ba mép** (Đức: *“tập trung hoàn thiện extension Udin, tránh lan man”*):
+① `vong-style.mjs` **XOÁ** (Đức chốt) và đường `mo_bang` + `Page.setInterceptFileChooserDialog`
+**GỠ** — không còn lối nào bật được hộp thoại lên màn hình Đức, `WRITE_CDP_METHODS` 17 → 16.
+② bộ khởi động Udin nhận `-KhoiDongLai`: **một lệnh** dừng máy chủ cũ rồi bật lại, vì sửa
+`bridge\*.mjs` là khởi động lại một TIẾN TRÌNH chứ không phải nạp lại extension.
+③ `W4` (đọc câu Udin viết) **vào vòng**, đứng sau lượt ghi đĩa nên đọc đỏ không làm mất ảnh.
+
 Bản cũ của mục này giữ lại bên dưới vì nó ghi ba giả định bị lật:
 
 ~~**① `R1` — ĐÃ KHÉP 16/09 tối, CÒN MỘT VẾT.**~~
@@ -79,8 +87,9 @@ when other users finish their sessions.”*. Đo: **~25 phút** và **6 lượt 
 nhau một phút đều không tắt được nó, nên **đừng bấm thêm — chỉ có đợi**. Làm tiếp:
 
 ```
-UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-style.mjs "<một prompt CHƯA DÙNG BAO GIỜ>" \
-                                                   --du-an xe-dien-2026 --xoa-pill-cu --mo
+# ~~vong-style.mjs~~ — TEP NAY DA XOA 17/09 (Duc chot). Duong thay the, lam duoc moi thu no lam:
+UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-tham-chieu.mjs "<prompt CHUA DUNG BAO GIO> @1" \
+                                --anh canvas:<mau src> --du-an xe-dien-2026 --bo-chon-cu --mo
 ```
 
 Đợt đo ấy đổi ba chỗ trong chính thiết kế, và cả ba đều là giả định của tôi bị lật:
