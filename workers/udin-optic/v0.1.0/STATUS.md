@@ -5,7 +5,7 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du."
+next_step: "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai)."
 human_action: "khong"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"

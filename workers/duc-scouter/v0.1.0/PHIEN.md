@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "Input.dispatchDragEvent (method CDP thu 17) DA MO va DO XONG — input.tha bo han hop thoai chon tep thay vi di chan no. Cho Duc NAP LAI EXTENSION roi chay thu tren canvas that. scout.tha len day CHI o goi Udin, y nhu scout.upload. Page.setInterceptFileChooserDialog van con do nhung khong con nam tren duong di chinh."
+- next_step: "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai)."
 - human_action: "khong"

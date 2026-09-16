@@ -43,7 +43,13 @@ Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout
 
 ### Việc còn lại, theo đúng thứ tự nên làm
 
-**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. ĐÃ KHÉP 16/09 tối, CÒN MỘT VẾT.**
+**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. XONG TRỌN 17/09, HẾT VẾT.**
+`vong-tham-chieu.mjs` chạy sáu chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG`, có `@1` / `@2` đọc ngược
+từ huy hiệu trên trang, và **không một cú Cancel nào** — `scout.tha` (kéo-thả) thay `scout.upload`
+ở mọi lượt đưa ảnh từ ngoài. Chạy thật 17/09: 4 ảnh mới về đĩa.
+Bản cũ của mục này giữ lại bên dưới vì nó ghi ba giả định bị lật:
+
+~~**① `R1` — ĐÃ KHÉP 16/09 tối, CÒN MỘT VẾT.**~~
 `tu-dong/vong-style.mjs` đã có, nối đúng các chặng đã ĐẠT: chọn ảnh lượt trước → đính kèm →
 prompt style mới → gửi → chờ → ảnh mới về đĩa → JPG. **16 khối ghim · 16 đột biến, 0 sống sót ·
 lượt chọn ảnh chạy thật trên vùng ghi.** Không mở method nào mới.

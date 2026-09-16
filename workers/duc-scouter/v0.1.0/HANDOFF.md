@@ -2209,3 +2209,15 @@ bật từ 16:43, và triệu chứng là `INVALID_PARAMS` trông như lỗi mã
 **Máy chủ từ chối ĐÚNG lúc phải từ chối** — nó trả *"trường này do MÁY CHỦ đặt … extension KHÔNG
 tự ghép, và không lùi về `path`"* thay vì đoán lấy một đường dẫn. Một lời từ chối đọc được ở đúng
 chỗ đã chỉ thẳng ra nguyên nhân trong một lượt.
+
+
+## 17/09 — seed đủ dùng cho một vòng việc thật, không sửa một dòng nào của nó
+
+`vong-tham-chieu.mjs` (gói Udin) chạy trọn vòng của Đức bằng **bốn lệnh của seed và không lệnh
+nào khác**: `scout.tha` · `scout.chon` · `scout.type`/`scout.click` · `scout.grab`. Không một dòng
+nào của lõi phải sửa cho lượt này — đúng điều kiện `R2`/`R3` sinh ra để đo, chỉ là đo trên chính
+trang cũ.
+
+**Hai lệnh mở hôm qua và hôm nay đều đã chạy thật:** `scout.chon` (Shift+click, thứ tự `@N`) và
+`scout.tha` (kéo-thả, bỏ hẳn hộp thoại). Cả hai khai `da_kiem: false` và người gọi đếm lại trên
+trang — đúng khuôn hẹp của cả seed.

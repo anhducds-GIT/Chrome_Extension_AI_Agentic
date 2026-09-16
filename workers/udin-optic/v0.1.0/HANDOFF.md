@@ -770,3 +770,27 @@ tự ghép, và không lùi về `path`"* — thay vì đoán lấy một đư�
 
 **Bật lại máy chủ:** `START-BRIDGE_Udin-Optic.ps1` ở Bridge home. Nó **tự thoát nếu cổng đã có
 người nghe**, nên phải tắt tiến trình cũ trước (`Stop-Process`), rồi mới chạy launcher.
+
+
+## 17/09 — VÒNG THAM CHIẾU trọn vẹn: `@1` / `@2` chạy thật, không một cú Cancel
+
+**Một lệnh, sáu chặng:** `W1 → NGUỒN → CHỌN → W2 → W3 → JPG`. Thứ tự tham chiếu **đọc ngược từ
+huy hiệu trên trang** — `@1 = …2u4vdq`, `@2 = …jvw125`, đúng hai ảnh đã xin. Prompt *"apply the
+style of @1 to @2, ultramarine-and-gold Art Nouveau, peacock feather borders"* → **4 ảnh mới** về
+đĩa, đã đổi JPG. Thư mục `tham-chieu-17-09/2026-09-16T17-18-02-909Z`.
+
+**`vong-tham-chieu.mjs` làm cả hai ca Đức nêu bằng một đường**, khác nhau đúng một chỗ:
+`--anh canvas:<mẩu src>` cho ảnh Udin tự sinh (đã sẵn trên canvas), `--anh <đường vùng ghi>` cho
+ảnh của Đức từ ngoài (thả vào bằng `scout.tha`). Thứ tự `@N` theo thứ tự `--anh`.
+
+**Danh tính ảnh vừa thả học bằng PHẦN CHÊNH của canvas, không bằng tên tệp.** Canvas giữ một bản
+KHÁC của cùng tấm ảnh (`persistent/…/img/…` so với `ephemeral/…/generated/batch-…`, khớp **0/8**
+theo tên), nên một phép đối chiếu theo tên sẽ khớp 0 ở MỌI lượt — và cái sai ấy đọc y hệt *"trang
+chưa nhận ảnh"*. Một lượt thả mà canvas mọc thêm **≠ 1** ảnh thì **TỪ CHỐI**: *"lấy ảnh mới nhất"*
+ở đó là đoán bừa, và nó trỏ nhầm tham chiếu mà không báo gì.
+
+**Đức bỏ ràng buộc credit 17/09** — *"tạo ảnh không tốn credit… đừng hesitate"* — và đổi luôn lý do
+của luật *đổi prompt mỗi lượt*: nay nó để **nhận diện ảnh vừa tạo** trên một canvas đầy ảnh na ná
+nhau. Prompt đặc trưng là một **dụng cụ đo**, không phải trang trí.
+
+11 khối ghim · 9 đột biến, 0 sống sót. Suite gói **18/18**.
