@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Input.dispatchDragEvent (method CDP thu 17) DA MO va DO XONG — input.tha bo han hop thoai chon tep thay vi di chan no. Cho Duc NAP LAI EXTENSION roi chay thu tren canvas that. scout.tha len day CHI o goi Udin, y nhu scout.upload. Page.setInterceptFileChooserDialog van con do nhung khong con nam tren duong di chinh.",
+      "next_step": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai).",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du.",
+      "next_step": "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai).",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Input.dispatchDragEvent (method CDP thu 17) DA MO va DO XONG — input.tha bo han hop thoai chon tep thay vi di chan no. Cho Duc NAP LAI EXTENSION roi chay thu tren canvas that. scout.tha len day CHI o goi Udin, y nhu scout.upload. Page.setInterceptFileChooserDialog van con do nhung khong con nam tren duong di chinh.",
+      "title": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai).",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du.",
+      "title": "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai).",
       "rank": 5,
       "claim": null
     }
