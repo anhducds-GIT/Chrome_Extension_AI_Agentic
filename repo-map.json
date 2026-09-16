@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai).",
+      "next_step": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang cac lenh cua seed. Be mat GHI da BOT mot method 17/09: Page.setInterceptFileChooserDialog go cung duong mo_bang cua input.upload (WRITE_CDP_METHODS 17 -> 16), vi input.tha lam cung viec ma khong di qua hop thoai nao. Be mat DOC them dung mot thuoc tinh: data-image-id (ADR-0009). Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 PARKED, mo lai khi Duc goi.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,13 +154,13 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai).",
+      "next_step": "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."
+      "open_item": "CA HAI DIEM DUNG DA QUA: (1) Duc nap lai extension — XONG 17/09; (2) Duc ky Scouter v1 — XONG, ADR-0008. Duong ranh giu nguyen: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? Con mo: S-31 — Udin khong tu nap lai duoc (scout.reload bi cat o T21), nen moi lan sua ma extension deu phai nho Duc bam mot lan; mo lai la THEM MOT METHOD, tuc phai Duc chot. HAI LOI KHAI CUA LO TRINH DA BI BAC BO 16/09: (a) G-95 setZoom khong doi quyen tabs; (b) G-96 bang ben khong goi duoc bridge.sessions."
     }
   ],
   "active_work": [
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang bon lenh cua seed. scout.chon va scout.tha deu da chay that. Viec ke: R2 (khep vong tu cai tien lan hai voi bo day du) va R3 (TRANG THU HAI khac loai).",
+      "title": "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang cac lenh cua seed. Be mat GHI da BOT mot method 17/09: Page.setInterceptFileChooserDialog go cung duong mo_bang cua input.upload (WRITE_CDP_METHODS 17 -> 16), vi input.tha lam cung viec ma khong di qua hop thoai nao. Be mat DOC them dung mot thuoc tinh: data-image-id (ADR-0009). Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 PARKED, mo lai khi Duc goi.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "VONG THAM CHIEU XONG TRON 17/09: vong-tham-chieu.mjs chay sau chang, @1/@2 doc nguoc tu huy hieu tren trang, 4 anh moi ve dia, KHONG mot cu Cancel nao. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha). Viec ke: R2 (khep vong tu cai tien lan hai) va R3 (TRANG THU HAI khac loai).",
+      "title": "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED.",
       "rank": 5,
       "claim": null
     }
