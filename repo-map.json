@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "PHAN NANG LUC XONG (bang W cua Udin 8/8, Udin MASTERED). Dang lam R1 o khoi SAU COMPACT dau CHUOI-VIEC.md: MA XONG, VONG SONG CHUA KHEP — ket o cho Udin DAY CHO, khong phai o ma. Doi Udin rong cho roi chay mot luot vong-style.mjs voi prompt moi. Sau do: (2) R2 khep vong tu cai tien lan hai voi bo day du. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
+      "next_step": "R1 DA KHEP VONG 16/09 toi (chi tiet o STATUS goi udin-optic). CON MOT VET: chang dinh kem van bat hop thoai Open cua Windows tren may Duc. Ba gia thuyet da do tren Chrome ho so trong va DEU TRUOT (tat chan som / trang bam tre / thieu Page.enable) — khac biet nam o duong chrome.debugger cua extension, chua do duoc. Sau do: (2) R2 khep vong tu cai tien lan hai. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "R1 (vong-style.mjs) MA XONG, VONG SONG CHUA KHEP. Mot lenh noi tron vong: chon anh luot truoc -> dinh kem -> prompt style moi -> gui -> cho -> anh moi ve dia -> JPG. 16 khoi ghim, 16 dot bien 0 song sot. Con thieu dung MOT luot chay SONG: luot thu toi 16/09 dung o chang dinh kem vi UDIN DAY CHO (.concurrency-overlay khong tat) — ly do ngoai repo. Doi Udin rong cho roi chay vong-style.mjs voi prompt moi, co --xoa-pill-cu.",
+      "next_step": "R1 DA KHEP VONG 16/09 toi: vong-style.mjs chay song tron vong, 4 anh moi ve dia (xe-dien-2026/2026-09-16T13-51-37-688Z), canvas 2->7. CON MOT VET: chang dinh kem VAN bat hop thoai Open cua Windows va Duc phai bam Cancel — luot tai len van thanh cong du co hop thoai, nen no hong kieu IM LANG. Cau 'hop thoai khong hien' o hang W8 la SAI, da gach tai cho. Duong DAN da do va DONG (Udin chi nhan paste noi bo canvas). Viec ke: do duong chrome.debugger cua extension.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "PHAN NANG LUC XONG (bang W cua Udin 8/8, Udin MASTERED). Dang lam R1 o khoi SAU COMPACT dau CHUOI-VIEC.md: MA XONG, VONG SONG CHUA KHEP — ket o cho Udin DAY CHO, khong phai o ma. Doi Udin rong cho roi chay mot luot vong-style.mjs voi prompt moi. Sau do: (2) R2 khep vong tu cai tien lan hai voi bo day du. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
+      "title": "R1 DA KHEP VONG 16/09 toi (chi tiet o STATUS goi udin-optic). CON MOT VET: chang dinh kem van bat hop thoai Open cua Windows tren may Duc. Ba gia thuyet da do tren Chrome ho so trong va DEU TRUOT (tat chan som / trang bam tre / thieu Page.enable) — khac biet nam o duong chrome.debugger cua extension, chua do duoc. Sau do: (2) R2 khep vong tu cai tien lan hai. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "R1 (vong-style.mjs) MA XONG, VONG SONG CHUA KHEP. Mot lenh noi tron vong: chon anh luot truoc -> dinh kem -> prompt style moi -> gui -> cho -> anh moi ve dia -> JPG. 16 khoi ghim, 16 dot bien 0 song sot. Con thieu dung MOT luot chay SONG: luot thu toi 16/09 dung o chang dinh kem vi UDIN DAY CHO (.concurrency-overlay khong tat) — ly do ngoai repo. Doi Udin rong cho roi chay vong-style.mjs voi prompt moi, co --xoa-pill-cu.",
+      "title": "R1 DA KHEP VONG 16/09 toi: vong-style.mjs chay song tron vong, 4 anh moi ve dia (xe-dien-2026/2026-09-16T13-51-37-688Z), canvas 2->7. CON MOT VET: chang dinh kem VAN bat hop thoai Open cua Windows va Duc phai bam Cancel — luot tai len van thanh cong du co hop thoai, nen no hong kieu IM LANG. Cau 'hop thoai khong hien' o hang W8 la SAI, da gach tai cho. Duong DAN da do va DONG (Udin chi nhan paste noi bo canvas). Viec ke: do duong chrome.debugger cua extension.",
       "rank": 5,
       "claim": null
     }
