@@ -80,6 +80,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `scripts/scouter-probes.mjs` | **Tám phép dò read-only** (đếm lại, đừng tin số: `node -e "import('./scripts/scouter-probes.mjs').then(m=>console.log(m.PROBE_NAMES.length))"`), thuần logic. Ranh giới đọc / điều khiển nằm ở danh sách CDP: **`Page.captureScreenshot` CÓ, `Page.navigate` KHÔNG** |
 | `scripts/scouter-bridge-core.mjs` | Giao thức + **từ vựng method cố định** + điều phối. Không biết `chrome` là gì |
 | `scripts/scouter-seed-core.mjs` | Bốn khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **ba hành động ghi (S-01)** |
+| `scripts/tu-kiem-ghi.mjs` | **ĐƯỜNG GHI TỰ KIỂM** (`S1`/`S2`) — phần PHÁN: khớp · lệch (ném) · không đọc được (khai thật). Thuần logic, **tệp chép** sang Udin |
 | `scripts/scouter-actions-core.mjs` | **Đường GHI** — bấm và gõ như tay người. Danh sách CDP riêng, bốn chốt riêng |
 | `scripts/scouter-transport-loopback.mjs` | Dây WebSocket tới `127.0.0.1`, **bắt tay hai chiều** |
 | `bridge/file-core.mjs` | **Tầng ba của [ADR-0009](../../../docs/adr/0007-scouter.md)** — ghi ghi chép xuống đĩa. **Chỗ nguy hiểm nhất của cả gói.** Cố ý **KHÔNG có đường xoá/đổi tên**, và phép ghim cưỡng chế điều đó |
@@ -90,6 +91,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `tests/` | Phép ghim của gói. **Mỗi phép tự khai ở docblock đầu file nó** — tra bằng `grep -l "S-05" tests/*.mjs`. Chạy hết: `tests/run-all.mjs` (gốc repo chỉ gọi file này) |
 | `scripts/mutation-runner.mjs` · `*-mutation-check.mjs` · `*-probe.mjs` · `scouter-bridge-live-check.mjs` | Bộ máy **đột biến kiểm** và các **phép đo** (① tin cậy cú bấm · ② hành động có thật · nối thử máy chủ Bridge THẬT). `mutation-runner` có **hai lớp chống nhiễm độc mã nguồn**: khoá file và nhật ký hồi phục trên đĩa — bắt tín hiệu KHÔNG đủ, Windows không có tín hiệu thật |
 | `scripts/do-bang-ben.mjs` | **BẢNG BÊN CÓ NẠP ĐƯỢC KHÔNG** — nạp gói vào Chrome sạch, nghe console, đếm `id` thiếu, đo xem mã có THẬT SỰ chạy không. Chạy được cho **cả hai gói** |
+| `scripts/do-doc-lai.mjs` | **PHÉP ĐO ③** — gõ xong thì đọc lại được bằng đường nào, trên bốn loại ô nhập. Chrome sạch, không tốn credit |
 | `scripts/zoom-core.mjs` | lõi thuần của hai hàng nút phóng to. **BẢN GỐC** — gói `udin-optic` giữ một bản chép bị so từng byte. Không được gõ cứng tên gói hay tên miền |
 | `scripts/kiem-nhanh.mjs` | năm bước *Kiểm tra kết nối* chạy **từ trong bảng bên**. **BẢN GỐC**, có bản chép bên `udin-optic`. Khác `kiem-cai-dat.mjs`: file đó đứng ở phía **máy chủ** và hỏi `bridge.sessions`; bảng bên **không hỏi được** máy chủ (`G-96`) nên nó hỏi từ phía kia |
 | `tests/zoom-smoke.mjs` | hai hàng nút phóng to: lõi thuần · ghim tĩnh HTML/CSS · chạy khối thật trong `node:vm` |

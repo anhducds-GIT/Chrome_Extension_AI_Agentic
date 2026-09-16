@@ -68,6 +68,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `scripts/scouter-probes.mjs` | chép NGUYÊN VĂN — bốn phép dò chỉ đọc |
 | `scripts/scouter-actions-core.mjs` | chép NGUYÊN VĂN — **hành động GHI**: bấm, gõ như tay người |
 | `scripts/scouter-seed-core.mjs` | chép NGUYÊN VĂN — handler + **CÁI PHANH** (trần 200 lượt mỗi lần mở) |
+| `scripts/tu-kiem-ghi.mjs` | chép NGUYÊN VĂN — phần PHÁN của đường ghi tự kiểm (`S1`/`S2`) |
 | `scripts/scouter-transport-loopback.mjs` | chép NGUYÊN VĂN — dây WebSocket, bắt tay hai chiều |
 | `scripts/scouter-journal-core.mjs` | chép NGUYÊN VĂN — sổ công việc |
 | `bridge/vung-ghi.mjs` | **RIÊNG** — VÙNG GHI nằm ở đâu. MỘT luật cho **cả hai** bộ khởi động, và một trong hai bộ nằm NGOÀI repo |

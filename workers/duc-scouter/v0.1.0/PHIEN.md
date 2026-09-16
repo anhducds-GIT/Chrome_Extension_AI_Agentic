@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "Duc chot 16/09: SUA TRUOC ROI KY. Chuoi S1..S4 o dau CHUOI-VIEC.md, chay mot mach S1->S3, con dung mot diem dung o cuoi la chu ky v1. S1: scout.type doc lai o nhap sau khi go — khop / lech thi NEM / khong doc duoc thi khai that. S2: scout.click khai da_kiem:false, them tham so cho_doi de kiem duoc. S3: mang sang Udin + mot luot E2E that. Khong chang nao them method Bridge."
-- human_action: "khong"
+- next_step: "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go: khop -> da_kiem true; lech -> nem WRITE_NOT_OBSERVED; khong doc duoc -> khai that. scout.click khai da_kiem:false, nhan them wait_for de kiem duoc. Tu vung KHONG doi (24/12). Do tren Chrome 153: <input>/<textarea> doc ra RONG qua dom.text, contenteditable thi doc duoc — chon duong doc theo TEN THE. 17 dot bien moi giet duoc het. CON MOT DIEM DUNG (S4): nap lai + mo khoa ghi, AI chay E2E that, roi ky v1."
+- human_action: "@Đức:bấm — nap lai CA HAI extension roi mo khoa ghi de AI chay mot luot E2E that. Xong luot do thi @Đức:chốt — ky Scouter v1."
