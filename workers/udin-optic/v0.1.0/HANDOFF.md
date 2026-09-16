@@ -696,3 +696,29 @@ chưa xảy ra.
 **Một con đột biến sống sót chỉ ra MÃ THỪA, không phải ghim hở:** phép đếm huy hiệu trong từng hộp
 chỉ nói lại điều `scout.text` đã bảo đảm (từ chối mọi selector khớp ≠ 1). Xoá nó, thay vì đi ghim
 một thứ không làm gì. 15 khối ghim · 15 đột biến, 0 sống sót.
+
+
+## 16/09 (khuya) — kiểm tính năng chèn ảnh, và một phép đo bỏ bớt cả một chặng
+
+**Đức xin kiểm đường chèn/đính kèm TRƯỚC khi làm tiếp.** Đúng thứ tự, và nó đáng: phép đo bỏ được
+cả một chặng khỏi vòng việc thật.
+
+**Bảng `+` có ĐÚNG BỐN mục:** `Frame` · `Image` · `Video` · `3D Model`. Không có ô chọn tệp nào
+nằm sẵn trong DOM, không có vùng thả nào khai bằng class.
+
+**Điều quan trọng nhất: ẢNH UDIN TỰ SINH RA TỰ VÀO CANVAS.** Đo thật ở lượt `R1`: canvas **2 → 7**
+ngay sau một lượt sinh 4 ảnh (4 ảnh sinh + 1 ảnh tải lên). Nên vòng *"lấy ảnh Udin đã tạo, đưa
+vào, xin style khác"* — đúng câu Đức nói 16/09 — **không cần tải lên lần nào**. Và vì không tải
+lên thì **không có hộp thoại nào bật ra**: cái nợ ⓶ biến mất khỏi đường đi chính.
+
+**Nhưng ĐỪNG đối chiếu bằng TÊN.** Ảnh trên canvas mang URL `persistent/…/img/<mốc>-<mã>.webp`,
+còn ảnh trong khung chat mang `ephemeral/…/generated/batch-…webp` — đo: **khớp 0/8**. Canvas giữ
+một bản KHÁC của cùng tấm ảnh. Đường đúng là **chụp tập `src` của canvas TRƯỚC và SAU rồi lấy
+phần chênh** (`anhTrenCanvas()` đã trả về đúng tập ấy).
+
+**Pill tham chiếu do lượt CHỌN sinh ra, không phải lượt tải lên.** Sau khi chỉ Shift+click hai ảnh
+canvas, `.pill-thumb-clear` đếm ra **2**. Nên con số `vong-style.mjs` đang canh thật ra là *"có
+mấy ảnh đang làm tham chiếu"* — vẫn đúng việc, nhưng tên gọi trong đầu tôi thì sai.
+
+**Tải lên chỉ còn cần cho MỘT việc:** đưa ảnh từ NGOÀI vào (ảnh chụp của Đức). Đó cũng là đường
+duy nhất bật hộp thoại `Open`.
