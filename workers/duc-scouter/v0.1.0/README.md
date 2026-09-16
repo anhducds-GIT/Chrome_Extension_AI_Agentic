@@ -205,6 +205,30 @@ phép đo chứ không từ tiện tay:
 Đọc `kiem_noi` cả khi ĐẠT: nó nói ô có thật sự chứa gì trước đó không. Xoá một ô **vốn đã rỗng**
 thì trạng thái đích vẫn đạt, nhưng lượt ấy **không** chứng minh hai phím đã tới trang.
 
+## Khi một tab THÔI trả lời câu hỏi hình học — cách nhận ra trong 5 giây
+
+Có lúc một tab đang chạy ngon bỗng từ chối mọi lượt bấm bằng `CLICK_HIT_TEST_FAILED`, và
+`scout.wait usable` trả `blockedBy: "no_hit_test"`. **Đừng đi tìm một hộp thoại che màn hình —
+thường là không có cái nào.** Đo 16/09 (`npm run scouter:hinh-hoc`) tìm ra nguyên nhân: **tiến
+trình vẽ trang của tab đó đã chết hoặc bị thay**.
+
+**Hai hình dạng hỏng khác nhau, và chữa bằng hai cách khác nhau.** Phân biệt chỉ mất một lượt
+`scout.shot`:
+
+| dấu hiệu | là chuyện gì | chữa thế nào |
+|---|---|---|
+| **hỏi-điểm hỏng VÀ `scout.shot` cũng hỏng** (0 byte hoặc `Internal error`) | tiến trình vẽ trang **đã chết** — cả tab là một cái xác | **`scout.navigate`** lại chính URL đó. Đo được: sau một lượt, cả ba câu hỏi trả lời bình thường ngay |
+| **chỉ `DOM.getBoxModel` hỏng** (`Could not find node with given id`) mà `scout.shot` **vẫn ra ảnh** | trang đã đổi (điều hướng, dựng lại) nên **nodeId cũ hết nghĩa** | **hỏi lại selector**, đừng điều hướng. Điều hướng ở đây là đập cả trang để chữa một con số cũ |
+
+**Phép đo, để ai sửa biết nó dựa trên gì.** Chrome riêng, hồ sơ trống, giết tiến trình vẽ trang
+bằng `Page.crash` rồi hỏi lại ba câu: hỏi-điểm **hết hạn không trả lời**, ảnh chụp trả
+`Internal error`, hộp cũng hết hạn — rồi **một lượt điều hướng làm cả ba lành lại**. Đó đúng là
+hình dạng `S-21` đã ghi ngày 12/09 mà không ai hiểu vì sao.
+
+**Giả thuyết đã chết, đừng đo lại nếu không có số mới:** *tab không đang được vẽ* (`G-41`) và
+*một lượt gắn debugger hỏng để lại target dở dang* — cái sau chết ngày 16/09: gắn hai phiên rồi
+nhả một cái, hình học **không hề hấn gì**.
+
 ## Thứ Scouter KHÔNG nghe được: lưu lượng do CHÍNH NÓ gây ra
 
 **`scout.network` không nghe được lượt gọi mạng mà chính `scout.click` vừa bắn ra**, và đây là

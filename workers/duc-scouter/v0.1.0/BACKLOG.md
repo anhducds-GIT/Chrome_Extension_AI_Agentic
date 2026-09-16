@@ -626,7 +626,35 @@ gọi làm cả hai dưới một lần gắn, hoặc gói chấp nhận giới 
 **Đừng chữa bằng cách bỏ gắn-rồi-nhả** — đó là nới một lớp bảo vệ để lấy tiện lợi.
 · **đã đóng 16/09 bằng vế thứ hai** — xem khối ở đầu mục này.
 
-## MỞ · S-21 (2026-09-12, `claude-scouter-udine`) — một target thỉnh thoảng KHÔNG trả lời được câu hỏi hình học
+## ĐÓNG · S-21 (2026-09-12 → 16/09, `claude-scouter-udine`) — một target thỉnh thoảng KHÔNG trả lời được câu hỏi hình học
+
+**TÁI HIỆN ĐƯỢC CÓ CHỦ Ý 16/09** — `npm run scouter:hinh-hoc`, Chrome riêng hồ sơ trống.
+Giết tiến trình vẽ trang bằng `Page.crash` rồi hỏi lại ba câu: hỏi-điểm **hết hạn không trả
+lời** · ảnh chụp `Internal error` · hộp cũng hết hạn. Rồi **một lượt điều hướng làm cả ba lành
+lại ngay** — đúng câu mà mục này đã ghi ngày 12/09 mà chưa ai giải thích được.
+
+**Ba giả thuyết, nay còn một.**
+⒜ *tab không đang được vẽ* — chết từ `G-41`.
+⒝ *một lượt gắn debugger hỏng để lại target dở dang* — **chết 16/09**: gắn hai phiên lên cùng
+  target rồi nhả một cái, hình học không hề hấn gì (khối `E4`).
+⒞ *renderer bị thay giữa chừng* — **ĐÚNG**, và nó là cơ chế sinh ra đủ cả ba triệu chứng.
+
+**Một chỗ KHÔNG khớp, ghi ra chứ không lờ đi.** Ngày 12/09 Chrome **trả lời** `-32000 No node
+found at given location`; ở phép tái hiện thì nó **không trả lời gì cả**. Nghĩa là hai trạng
+thái hơi khác: renderer **chết hẳn** thì im lặng, renderer **bị thay** thì vẫn trả lời nhưng
+bằng một bảng nodeId mới. Cả hai đều là ⒞, và cả hai chữa bằng một lượt điều hướng.
+
+**Đóng bằng vế thứ hai của điều kiện đóng: ghi vào `README.md` kèm cách nhận ra.** Mục *"Khi một
+tab THÔI trả lời câu hỏi hình học"* có bảng phân biệt hai hình dạng hỏng — và phân biệt ấy đáng
+giá: **chỉ `DOM.getBoxModel` hỏng mà ảnh chụp vẫn ra** thì đó là **nodeId cũ**, chữa bằng hỏi lại
+selector, không phải bằng điều hướng. Gộp hai cái lại là đẩy người sửa đi đập cả trang để chữa
+một con số cũ.
+
+**Không vá, cố ý.** Không có gì để vá: một tiến trình vẽ trang đã chết thì không phép dò nào cứu
+được. Cả hai đường đã fail-closed và nói đúng *"Chrome không trả lời được"* từ 12/09. Thứ thiếu
+là **cách nhận ra**, và đó là thứ vừa được ghi.
+
+<!-- nguyên văn lời khai lúc mở, giữ để đối chiếu -->
 
 **Chưa biết nguyên nhân, và ghi ra đúng ở mức đó.** Một chẩn đoán sai mà nghe có thẩm quyền thì
 đắt hơn một ô trống.
@@ -655,6 +683,9 @@ thu nhỏ, Chrome cho tab ngủ) · ⒝ một lượt gắn debugger hỏng đ�
 · **đóng khi:** tái hiện được có chủ ý ít nhất một lần (đưa tab ra sau rồi hỏi lại là phép thử
 rẻ nhất), rồi hoặc vá, hoặc ghi vào `README.md` như một giới hạn đã biết kèm cách nhận ra nó.
 **Đừng đóng bằng cách đoán** — mục này tồn tại chính vì chưa ai đo được nguyên nhân.
+· **đã đóng 16/09 — tái hiện được, KHÔNG đoán.** Xem khối ở đầu mục. Phép thử *"đưa tab ra sau"*
+mà dòng này gợi ý thì **sai hướng** — nó chính là giả thuyết ⒜ đã chết từ `G-41`; thứ tái hiện
+được là giết tiến trình vẽ trang.
 
 ## MỞ · S-22 (2026-09-12, `claude-scouter-udine`) — lượt bấm và lượt gõ báo ĐẠT trong khi trang không hề nhận
 

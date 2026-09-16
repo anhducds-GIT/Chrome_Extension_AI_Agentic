@@ -65,11 +65,12 @@ phần đường dẫn đã xây và đã ghim, còn lại một dòng khai meth
 · ~~`S-04`~~ — đóng bằng số đo: **7 lượt reload thật, 0 lượt mất phản hồi**, khứ hồi 11–17 ms
   trên trần 250 ms.
 · ~~`T6`~~ — đóng bằng đường ⒝ và một phép đếm: **0 chỗ gọi `scout.network`** trong cả repo.
-· **`T10` (`S-21`) CÒN MỞ, và nó chặn bởi một thứ rất rẻ.** Phép thử rẻ nhất (đưa tab ra sau)
-  **đã chết** từ `G-41`; hai giả thuyết còn lại cần một **tab nháp** để gắn/nhả debugger lên
-  đó. Tối 16/09 mọi tab đang mở đều là việc thật của Đức, nên không đụng cái nào. **Anh mở
-  giúp MỘT tab trắng là làm được** — hoặc mở `N8` (`Target.createTarget`), nhưng đừng mở một
-  method CDP cho việc này khi một tab trắng là đủ.
+· ~~**`T10` (`S-21`) CÒN MỞ**, chặn bởi việc thiếu một **tab nháp**~~ — **ĐÓNG 16/09, và lời
+  khai trên SAI ở chỗ quan trọng nhất: nó không hề cần tab của Đức.** Phép đo tự dựng một
+  Chrome riêng hồ sơ trống (`scripts/chrome-do.mjs`), nơi nó được phép giết tiến trình vẽ
+  trang — thứ không bao giờ làm được trên tab thật. **Tôi đã đi xin một thứ mà mình tự làm
+  được**, và cái giá là một vòng hỏi-đáp với Đức. Trước khi xin người ta một điều kiện, hỏi
+  xem điều kiện ấy có tự dựng được không.
 
 ### Hai thứ ĐỪNG làm lại
 
@@ -208,7 +209,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T21** | **Tách Udin thành EXTENSION riêng** | — | **CHẶNG ①②③④ ĐÓNG 15/09.** Gói `workers/udin-optic/` sống riêng: 12 method, quyền một trang, 4 ảnh xuống đĩa từ extension của chính nó, **và `git status workers/duc-scouter` SẠCH**. Còn chặng ⑤ dọn sổ |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
 | **T6** | `S-20` — nghe mạng trong lúc bấm | ~~T7 cho biết có thật cần không~~ | **ĐÓNG 16/09 bằng đường ⒝** — chấp nhận giới hạn, ghi thẳng vào `README.md`. Đóng bằng một **phép đếm**: **0 chỗ gọi `scout.network`** trong cả repo (mọi chỗ khớp là chính nơi định nghĩa nó); `T7` khép, `T21` tách xong, bảy `W` ĐẠT — đều không cần nó. Đường ⒜ vẫn nằm sẵn ở mục `T6` cho ngày có việc thật |
-| **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
+| **T10** | `S-21` — target không trả lời câu hỏi hình học | — | **ĐÓNG 16/09 — TÁI HIỆN ĐƯỢC.** `npm run scouter:hinh-hoc` giết tiến trình vẽ trang bằng `Page.crash` → hỏi-điểm và ảnh chụp cùng chết, **một lượt điều hướng làm cả ba lành lại** — đúng hình dạng 12/09. Giả thuyết ⒝ cũng chết (gắn hai phiên rồi nhả một: hình học không hề hấn). Còn ⒞ *renderer bị thay*, và nó đúng. Cách nhận ra đã vào `README.md`, kèm phân biệt với ca **nodeId cũ** — ca đó chữa bằng hỏi lại selector, không phải điều hướng |
 | ~~T13 T15 T22 T18 T17~~ | grab · E2E · quá-giờ · `scout.text` · ghim bảng | — | **XONG 14/09** |
 | ~~T14 D3 D2 T12 T1–T4 T11~~ | `S-22` · `scout.focus` · tên ghế · `scout.fetch` · `S-16`…`S-19` `S-23` | — | **đóng 12–14/09** |
 

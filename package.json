@@ -54,6 +54,7 @@
     "test:chet": "node tests/build-dashboard-smoke.mjs && node tests/build-overview-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node tests/claim-smoke.mjs && node tests/dau-vet-vung-smoke.mjs && node tests/frozen-suite-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/what-next-smoke.mjs",
     "scouter:bang-ben": "node workers/duc-scouter/v0.1.0/scripts/do-bang-ben.mjs",
     "scouter:doc-lai": "node workers/duc-scouter/v0.1.0/scripts/do-doc-lai.mjs",
+    "scouter:hinh-hoc": "node workers/duc-scouter/v0.1.0/scripts/do-hinh-hoc.mjs",
     "udin:bang-ben": "node workers/duc-scouter/v0.1.0/scripts/do-bang-ben.mjs workers/udin-optic/v0.1.0",
     "udin:zoom-probe": "node workers/udin-optic/v0.1.0/scripts/do-quyen-zoom.mjs",
     "udin:test": "node workers/udin-optic/v0.1.0/tests/run-all.mjs"

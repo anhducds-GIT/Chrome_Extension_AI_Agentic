@@ -34,11 +34,11 @@
  * Mã thoát: 0 = ĐẠT · 1 = KHÔNG ĐẠT · 2 = phép đo KHÔNG CHẠY ĐƯỢC (khác hẳn "không đạt").
  */
 
-import { spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync, existsSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
+
+/* Phần mở Chrome sạch + ống điều khiển nay ở `chrome-do.mjs`, dùng chung với `do-hinh-hoc.mjs`
+ * (`T10`). Chép nó sang file thứ hai là dựng hai cách mở Chrome để đo trong cùng một repo. */
+import { moChromeSach, choTrang } from "./chrome-do.mjs";
 
 import { runAction } from "./scouter-actions-core.mjs";
 import { runProbe } from "./scouter-probes.mjs";
@@ -77,48 +77,6 @@ const CHO_DOI = [
   { sel: "#e", ten: "<input readonly>", cach: "a11y", daKiem: null, nemGo: MA_KHONG_QUAN_SAT, xoaKiem: null, chonemXoa: MA_XOA_KHONG_SACH }
 ];
 
-function timChrome() {
-  for (const c of [
-    process.env.CHROME_PATH,
-    join("C:", "Program Files", "Google", "Chrome", "Application", "chrome.exe"),
-    join("C:", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe"),
-    "/usr/bin/google-chrome",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-  ].filter(Boolean)) if (existsSync(c)) return c;
-  return null;
-}
-
-class OngCdp {
-  constructor(con) {
-    this.ghi = con.stdio[3];
-    this.so = 0;
-    this.cho = new Map();
-    let dem = Buffer.alloc(0);
-    con.stdio[4].on("data", (mieng) => {
-      dem = Buffer.concat([dem, mieng]);
-      for (let cat = dem.indexOf(0); cat !== -1; cat = dem.indexOf(0)) {
-        const tho = dem.subarray(0, cat).toString("utf8");
-        dem = dem.subarray(cat + 1);
-        let tin;
-        try { tin = JSON.parse(tho); } catch { continue; }
-        if (tin.method) continue;
-        const o = this.cho.get(tin.id);
-        if (!o) continue;
-        this.cho.delete(tin.id);
-        if (tin.error) o.reject(new Error(JSON.stringify(tin.error)));
-        else o.resolve(tin.result);
-      }
-    });
-  }
-  gui(method, params = {}, sessionId) {
-    const id = ++this.so;
-    this.ghi.write(JSON.stringify(sessionId ? { id, method, params, sessionId } : { id, method, params }) + "\0");
-    return new Promise((res, rej) => this.cho.set(id, { resolve: res, reject: rej }));
-  }
-}
-
-const nghi = (ms) => new Promise((r) => setTimeout(r, ms));
-
 /* Đúng cặp `nhanDangO` + `docO` của `scouter-seed-core.mjs`, viết lại ở đây vì file kia sống
  * trong extension và cần `ScouterEngine`. Chép LOGIC, không chép mã: chỗ này là dụng cụ đo,
  * và một dụng cụ đo dùng chung mã với vật bị đo thì nó chỉ tin lời khai của vật bị đo. */
@@ -147,33 +105,13 @@ async function doc(sendRaw, selector, cach, nut) {
 }
 
 async function do_() {
-  const chrome = timChrome();
-  if (!chrome) throw new Error("Không tìm thấy Chrome. Đặt biến môi trường CHROME_PATH rồi chạy lại.");
-  const goc = mkdtempSync(join(tmpdir(), "do-doc-lai-"));
-  writeFileSync(join(goc, "trang.html"), TRANG, "utf8");
-  const con = spawn(chrome, [
-    "--remote-debugging-pipe",
-    `--user-data-dir=${join(goc, "hoso")}`,
-    "--no-first-run", "--no-default-browser-check",
-    pathToFileURL(join(goc, "trang.html")).href
-  ], { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const may = await moChromeSach({ html: TRANG, ten: "do-doc-lai" });
+  const { cdp } = may;
 
   try {
-    const cdp = new OngCdp(con);
-    let ban = null;
-    for (let i = 0; i < 80 && !ban; i += 1) {
-      try { ban = await cdp.gui("Browser.getVersion"); } catch { await nghi(250); }
-    }
-    if (!ban) throw new Error("Chrome không trả lời qua ống điều khiển.");
-
     /* Chờ trang thật sự có mặt, đừng đoán bằng một lượt ngủ: `Target.getTargets` là câu hỏi
      * đúng, và hỏi lại vài nhịp rẻ hơn nhiều so với một phép đo thỉnh thoảng hỏng vì máy chậm. */
-    let dich = null;
-    for (let i = 0; i < 40 && !dich; i += 1) {
-      const ds = (await cdp.gui("Target.getTargets")).targetInfos.filter((t) => t.type === "page");
-      const trang = ds.find((t) => t.url.startsWith("file:"));
-      if (trang) dich = trang.targetId; else await nghi(250);
-    }
+    const dich = await choTrang(cdp);
     if (!dich) throw new Error("Không thấy tab nào mở trang thử.");
     const phien = (await cdp.gui("Target.attachToTarget", { targetId: dich, flatten: true })).sessionId;
     const sendRaw = (m, p) => cdp.gui(m, p, phien);
@@ -204,10 +142,9 @@ async function do_() {
       dong.push({ ...mong, cachDung: mong.cach, the: o?.the ?? null, cach, goOk: go.ok, phan, nem,
         xoaOk: xoa.ok, phanXoa, nemXoa, giaSauXoa: sauXoa.gia });
     }
-    return { chrome: ban.product, dong };
+    return { chrome: may.ban.product, dong };
   } finally {
-    con.kill();
-    setTimeout(() => { try { rmSync(goc, { recursive: true, force: true }); } catch { /* thư mục tạm */ } }, 800);
+    may.dong();
   }
 }
 
