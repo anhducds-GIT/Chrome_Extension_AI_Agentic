@@ -103,45 +103,9 @@
       "released_at": null
     }
   },
-  "_fingerprint": "942fab19d3da3607",
+  "_fingerprint": "86d5823a31211bcd",
   "tam": {
-    "workers/duc-scouter/v0.1.0/scripts/do-tai-len.mjs": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T09:46:35.515Z"
-    },
-    "workers/duc-scouter/v0.1.0/AGENTS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T09:49:35.652Z"
-    },
-    "workers/udin-optic/v0.1.0/AGENTS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T09:49:35.652Z"
-    },
-    "workers/duc-scouter/v0.1.0/HANDOFF.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
-    "workers/udin-optic/v0.1.0/HANDOFF.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
-    "workers/duc-scouter/v0.1.0/docs/CAPABILITIES.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
-    "workers/duc-scouter/v0.1.0/STATUS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
-    "workers/udin-optic/v0.1.0/STATUS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
     "workers/duc-scouter/v0.1.0/CHUOI-VIEC.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:02:29.720Z"
-    },
-    "HANDOFF.md": {
       "owner": "claude-scouter-udine",
       "luc": "2026-09-16T10:02:29.720Z"
     }

@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "HET VIEC MO. Dem 16/09 dong: S-27 (scout.clear tu kiem — chay that ca ba nhanh tu CA HAI goi) · S-04 · T6 · T21 chang 5. D4 chot: CHUA MO DOM.setFileInputFiles — dem duoc 0 viec dang chay can dua tep vao trang, va W8 von ngoai danh sach bat buoc. MOC MO: ngay Duc can dua mot ANH THAM CHIEU vao Udin. CON MO duy nhat: T10/S-21, chi can MOT TAB TRANG de gan/nha debugger len."
-- human_action: "khong"
+- next_step: "T29 XONG phan NANG LUC: scout.upload co that, chay that tren Chrome sach (dung ten, dung 54 byte, dung o selector chi). Phat hien ngoai tai lieu CDP: Chrome NHAN ca duong dan KHONG TON TAI va gan mot tep rong 0 byte ma khong bao loi — nen may chu phai statSync. NHUNG W8 VAN CHAN boi mot ly do MOI: trang Udin KHONG co input[type=file] nao, ca khi menu Add to canvas mo. Duong do an toan can Page.setInterceptFileChooserDialog — mot cau hoi nua cho Duc. T10 dong cung ngay."
+- human_action: "@Đức:chốt — W8 vap mot tien de moi (trang Udin khong co o chon tep). Doc muc W8 o docs/CAPABILITIES.md. Cau hoi: cho mo Page.setInterceptFileChooserDialog de DO an toan xem Udin mo cai gi khi bam Image, khong dung hop thoai len man hinh anh?"

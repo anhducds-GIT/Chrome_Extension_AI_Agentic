@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "scout.clear tu kiem DA CHAY THAT TU CHINH GOI NAY 16/09 sau khi Duc nap lai: o co 15 ky tu -> da_kiem true (hai phim da toi trang); xoa lai o da rong -> da_kiem true nhung CAU KHAC. Duong ghi cua goi khong con lenh nao noi doi. Bang W: 7/8; W8 HOAN CO CHU Y (D4 ben Scouter, moc mo la ngay Duc can dua anh tham chieu vao Udin)."
-- human_action: "khong"
+- next_step: "scout.upload len day (12->13). Lop bao ve chay that: .., duong tuyet doi, C:x.txt deu bi MAY CHU chan, khong cai nao cham toi extension. CAN DUC NAP LAI extension Udin mot lan de lenh nay song tren day. W8 VAN CHAN: trang khong co input[type=file] nao."
+- human_action: "@Đức:bấm — nap lai extension Udin mot lan (goi nay co y khong co scout.reload). May chu Bridge da duoc khoi dong lai voi ma moi roi."
