@@ -34,6 +34,12 @@
  * khác nhau. */
 export const MA_KHONG_QUAN_SAT = "WRITE_NOT_OBSERVED";
 
+/* Mã lỗi của nhánh "xoá mà ô vẫn còn chữ" (`S-27`). Tách khỏi `WRITE_NOT_OBSERVED` vì hai
+ * chuyện khác nhau và cách chữa khác nhau: một bên là *chữ không tới được ô*, bên này là
+ * *chữ không rời khỏi ô*. Gộp chung thì người ở đầu dây kia phải đọc câu văn mới biết mình
+ * đang gặp cái nào. */
+export const MA_XOA_KHONG_SACH = "CLEAR_NOT_OBSERVED";
+
 export class TuKiemError extends Error {
   constructor(code, message) {
     super(message);
@@ -136,6 +142,74 @@ export function xetDocLai({ daGo, truoc, sau, cach }) {
     `Đã gõ ${daGo.length} ký tự, nhưng đọc lại bằng ${ten} thì chuỗi đó vẫn xuất hiện ` +
     `${sauLan} lần — y như trước khi gõ (${truocLan}). Trang KHÔNG nhận lượt gõ này. ` +
     "Đừng nới hạn chờ rồi đọc lại tới khi khớp: hạn chờ không phải nguyên nhân (`S-22`).");
+}
+
+/**
+ * Phán một lượt XOÁ ô nhập (`S-27`), từ hai bản đọc cùng một ô.
+ *
+ * ─── VÌ SAO LUẬT Ở ĐÂY ĐƠN GIẢN HƠN `xetDocLai`, VÀ ĐÓ KHÔNG PHẢI NỚI TAY ───
+ * *"Ô có rỗng không"* là một trạng thái **tuyệt đối**; *"ô có chứa chuỗi vừa gõ không"* thì
+ * không — chuỗi ấy có thể vốn đã nằm sẵn ở đó, nên `xetDocLai` buộc phải ĐẾM. Ở đây không có
+ * cái bẫy tương ứng: một ô rỗng là rỗng, không ai "rỗng sẵn hộ" nó theo nghĩa làm sai kết luận.
+ *
+ * ─── HAI PHÉP ĐO 16/09 ĐỔI HẲN HAI NHÁNH SO VỚI `xetDocLai` ─────────────────
+ * Chrome sạch, bốn loại ô, gõ rồi xoá rồi đọc lại (`scripts/do-doc-lai.mjs`):
+ *
+ *   ⑴ **Ô rỗng đọc ra ĐÚNG chuỗi rỗng `""`** trên cả bốn loại — không khoảng trắng thừa,
+ *      không mẩu `<br>` sót trong ô `contenteditable`. Nên phép so là `=== ""`, không phải
+ *      một phép `trim` đoán chừng.
+ *   ⑵ **Ô che nội dung KHÔNG còn là trạng thái thứ ba ở đây.** Với `xetDocLai`, `type="password"`
+ *      trả dấu che nên không đối chiếu được — đó là cả lý do nhánh `laChe` ra đời. Nhưng sau khi
+ *      XOÁ, chính ô ấy đọc ra `""` y như mọi ô khác; còn chữ thì nó trả dấu che, tức **vẫn còn
+ *      chữ** — một câu trả lời rõ ràng, không phải một ô mù. Vậy `scout.clear` **kiểm được trên
+ *      ô mật khẩu, trong khi `scout.type` thì không.**
+ *
+ * ─── VÌ SAO KHÔNG CÓ NHÁNH "BẢN ĐỌC BỊ CẮT" ────────────────────────────────
+ * `xetDocLai` phải có nhánh đó: chữ vừa gõ có thể nằm ngoài phần bị cắt, nên cắt = chưa biết.
+ * Ở đây thì ngược — một bản đọc BỊ CẮT theo định nghĩa là một bản đọc **có chữ**, tức ô KHÔNG
+ * rỗng, tức đã trả lời xong. Cùng một lá cờ `cat`, hai ý nghĩa, vì hai câu hỏi khác nhau.
+ *
+ * @param {object} a
+ * @param {object} a.truoc  { docDuoc, gia, cat } — bản đọc TRƯỚC khi xoá
+ * @param {object} a.sau    { docDuoc, gia, cat } — bản đọc SAU khi xoá
+ * @param {string} a.cach   tên đường đọc đã dùng ("dom.text" | "a11y")
+ * @returns {{da_kiem: boolean, kiem_bang: string|null, kiem_noi: string}}
+ * @throws  {TuKiemError} mã `CLEAR_NOT_OBSERVED` khi đọc lại được mà ô vẫn còn chữ
+ */
+export function xetXoaSach({ truoc, sau, cach }) {
+  const t = chuanBanDoc(truoc);
+  const s = chuanBanDoc(sau);
+  const ten = typeof cach === "string" && cach !== "" ? cach : "không rõ";
+
+  /* ① KHÔNG ĐỌC LẠI ĐƯỢC — khai thẳng. Chỉ đòi bản đọc SAU: bản trước chỉ làm câu giải thích
+   *    giàu hơn, nó không tham gia vào phép phán. */
+  if (!s.docDuoc) {
+    return chuaKiem(`Không đọc lại được ô nhập bằng ${ten} sau khi xoá. Hai phím đã bắn đi, ` +
+      "nhưng KHÔNG có bằng chứng ô đã sạch.");
+  }
+
+  /* ② CÒN CHỮ — ném. Kể cả chữ ấy là dấu che: dấu che nghĩa là CÒN NỘI DUNG (xem phép đo ⑵). */
+  if (s.gia !== "") {
+    throw new TuKiemError(MA_XOA_KHONG_SACH,
+      `Đã bắn Ctrl+A rồi Delete, nhưng đọc lại bằng ${ten} thì ô vẫn còn ${s.gia.length} ký tự` +
+      `${laChe(s.gia) ? " (ô che nội dung — dấu che nghĩa là CÒN chữ, không phải không đọc được)" : ""}. ` +
+      "Ô CHƯA sạch. Đừng gõ đè lên: `scout.type` không xoá ô, nên lượt gõ sau sẽ dính vào phần còn lại.");
+  }
+
+  /* ③ RỖNG. Hai câu khác nhau, và khác biệt này KHÔNG phải để cho đẹp: nếu trước đó ô vốn đã
+   *    rỗng thì lượt này xác nhận TRẠNG THÁI, nhưng không chứng minh được hai phím có tới trang
+   *    hay không — ô rỗng vẫn rỗng dù lệnh có chạy hay không. Người gọi nào đang dùng lượt xoá
+   *    để thử đường ghi thì phải đọc được câu đó, chứ không chỉ thấy `da_kiem: true`. */
+  const goc = { da_kiem: true, kiem_bang: ten, kiem_noi: "" };
+  if (t.docDuoc && t.gia !== "") {
+    goc.kiem_noi = `Đọc lại bằng ${ten}: ô có ${t.gia.length} ký tự trước khi xoá và rỗng sau ` +
+      "khi xoá — hai phím đã tới trang và ô đã sạch.";
+    return goc;
+  }
+  goc.kiem_noi = `Đọc lại bằng ${ten}: ô rỗng sau khi xoá, nhưng ` +
+    `${t.docDuoc ? "nó VỐN ĐÃ rỗng trước lệnh" : "không đọc được ô trước lệnh"} — ` +
+    "lượt này xác nhận TRẠNG THÁI của ô, KHÔNG chứng minh hai phím đã tới trang.";
+  return goc;
 }
 
 function chuaKiem(noi) {

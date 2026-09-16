@@ -1407,6 +1407,56 @@ BATCHES.push({
   ]
 });
 
+/* ---- `S-27`: `scout.clear` VÀO ĐƯỜNG TỰ KIỂM. Tới sáng 16/09 đây là lệnh ghi CUỐI CÙNG
+   còn fail-open: nó trả `steps: ["Ctrl+A","Delete"]`, và trả **y hệt** như thế khi ô vốn đã rỗng.
+   Những con dưới đây canh ba chỗ khác nhau, và hai chỗ đầu mới là chỗ dễ viết sai:
+   ① nhánh *"ô vốn đã rỗng"* phải nói MỘT CÂU KHÁC — trạng thái đạt, nhưng không chứng minh
+     được hai phím đã tới trang;
+   ② dấu che và bản đọc cụt ở đây là *CÒN CHỮ*, không phải *không đọc được* — ngược hẳn
+     `xetDocLai`, và chép nhầm luật từ bên kia sang là mở lại đúng cửa fail-open vừa đóng. */
+BATCHES.push({
+  ten: "GHI TỰ KIỂM — lượt XOÁ (phần phán)",
+  target: path.join(ROOT, "scripts", "tu-kiem-ghi.mjs"),
+  pin: PIN_TU_KIEM,
+  mutants: [
+    {
+      ma: "TK18",
+      ten: "Ô còn chữ vẫn báo ĐẠT — đúng hành vi fail-open mà `S-27` sinh ra để đóng",
+      tim: '  if (s.gia !== "") {',
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK19",
+      ten: "Bản đọc CỤT bị xếp thành 'chưa kiểm được' — một ô RÕ RÀNG còn chữ thành một ô mù",
+      tim: '  if (s.gia !== "") {',
+      thay: '  if (s.gia !== "" && !s.cat) {',
+      soLan: 1
+    },
+    {
+      ma: "TK20",
+      ten: "Hai nhánh nói chung một câu — 'ô vốn đã rỗng' đọc y như 'hai phím đã tới trang'",
+      tim: '  if (t.docDuoc && t.gia !== "") {',
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK21",
+      ten: "Bỏ nhánh KHÔNG ĐỌC ĐƯỢC — không có bằng chứng bị đổi thành đã xoá sạch",
+      tim: "  if (!s.docDuoc) {",
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK22",
+      ten: "Câu lỗi nín luôn việc ô đang che — người sửa tưởng đó là một ô không đọc được",
+      tim: '${laChe(s.gia) ? " (ô che nội dung — dấu che nghĩa là CÒN chữ, không phải không đọc được)" : ""}',
+      thay: "",
+      soLan: 1
+    }
+  ]
+});
+
 BATCHES.push({
   ten: "GHI TỰ KIỂM — đường nối ở seed",
   target: path.join(ROOT, "scripts", "scouter-seed-core.mjs"),
@@ -1415,22 +1465,74 @@ BATCHES.push({
     {
       ma: "TK8",
       ten: "Bỏ lượt đọc TRƯỚC khi gõ — chỉ còn phép 'có chứa', và phép ấy xanh giả",
-      tim: "      const truoc = await docO(target, params.selector, cach, nut);",
-      thay: "      const truoc = { docDuoc: false, gia: \"\", cat: false };",
+      tim: "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.type",',
+      thay: "      const truoc = { docDuoc: false, gia: \"\", cat: false };" + NL + NL
+        + '      const ra = await runAction("scout.type",',
       soLan: 1
     },
     {
       ma: "TK9",
       ten: "Bỏ lượt đọc SAU khi gõ — quay đúng về hành vi cũ: báo đạt cho việc chưa xảy ra",
-      tim: "      const sau = await docO(target, params.selector, cach, nut);",
-      thay: "      const sau = { docDuoc: false, gia: \"\", cat: false };",
+      tim: "      const sau = await docO(target, params.selector, cach, nut);" + NL
+        + "      /* `xetDocLai` NÉM ở nhánh lệch.",
+      thay: "      const sau = { docDuoc: false, gia: \"\", cat: false };" + NL
+        + "      /* `xetDocLai` NÉM ở nhánh lệch.",
       soLan: 1
     },
     {
       ma: "TK10",
       ten: "Chọn đường đọc bằng cách MÒ chứ không theo tên thẻ — `<input>` đọc mãi ra rỗng",
-      tim: "      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? \"a11y\" : \"dom.text\";",
-      thay: "      const cach = \"dom.text\";",
+      tim: "      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? \"a11y\" : \"dom.text\";" + NL
+        + "      const nut = o ? o.backendNodeId : null;" + NL
+        + "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.type",',
+      thay: "      const cach = \"dom.text\";" + NL
+        + "      const nut = o ? o.backendNodeId : null;" + NL
+        + "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.type",',
+      soLan: 1
+    },
+    {
+      ma: "TK23",
+      ten: "Lượt XOÁ bỏ bản đọc TRƯỚC — câu 'ô có N ký tự trước khi xoá' thành một câu bịa",
+      tim: "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.clear",',
+      thay: "      const truoc = { docDuoc: false, gia: \"\", cat: false };" + NL + NL
+        + '      const ra = await runAction("scout.clear",',
+      soLan: 1
+    },
+    {
+      ma: "TK24",
+      ten: "Lượt XOÁ bỏ bản đọc SAU — quay đúng về lệnh chỉ kể việc mình làm",
+      tim: "      const sau = await docO(target, params.selector, cach, nut);" + NL
+        + "      let phan;" + NL
+        + "      try {" + NL
+        + "        phan = xetXoaSach({ truoc, sau, cach });",
+      thay: "      const sau = { docDuoc: false, gia: \"\", cat: false };" + NL
+        + "      let phan;" + NL
+        + "      try {" + NL
+        + "        phan = xetXoaSach({ truoc, sau, cach });",
+      soLan: 1
+    },
+    {
+      ma: "TK25",
+      ten: "Lượt XOÁ chọn đường đọc bằng cách MÒ — `<input>` đọc mãi ra rỗng nên luôn 'rỗng sẵn'",
+      tim: "      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? \"a11y\" : \"dom.text\";" + NL
+        + "      const nut = o ? o.backendNodeId : null;" + NL
+        + "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.clear",',
+      thay: "      const cach = \"dom.text\";" + NL
+        + "      const nut = o ? o.backendNodeId : null;" + NL
+        + "      const truoc = await docO(target, params.selector, cach, nut);" + NL + NL
+        + '      const ra = await runAction("scout.clear",',
+      soLan: 1
+    },
+    {
+      ma: "TK26",
+      ten: "Ô chưa sạch mà không ném: bọc thành phong bì ĐẠT chở một cái cờ buồn",
+      tim: "        if (error?.code === MA_XOA_KHONG_SACH) {",
+      thay: "        if (false) {",
       soLan: 1
     },
     {

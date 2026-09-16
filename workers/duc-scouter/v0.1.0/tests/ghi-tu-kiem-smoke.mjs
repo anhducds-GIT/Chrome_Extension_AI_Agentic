@@ -16,7 +16,10 @@ const tk = await import("../scripts/tu-kiem-ghi.mjs");
 const core = await import("../scripts/scouter-bridge-core.mjs");
 const { createSeedHandlers } = await import("../scripts/scouter-seed-core.mjs");
 
-const { demLan, laChe, xetDocLai, MA_KHONG_QUAN_SAT, CAU_BAM_KHONG_KIEM, TuKiemError } = tk;
+const {
+  demLan, laChe, xetDocLai, xetXoaSach,
+  MA_KHONG_QUAN_SAT, MA_XOA_KHONG_SACH, CAU_BAM_KHONG_KIEM, TuKiemError
+} = tk;
 
 const TARGET_ID = "TARGET-1";
 const BI_MAT = "mat-khau-that-su";
@@ -136,13 +139,17 @@ const BI_MAT = "mat-khau-that-su";
  * Engine giả dưới đây KHÔNG vọng lại tham số như engine giả của `scouter-bridge-smoke.mjs`:
  * nó giữ một trang có ba ô nhập và lượt gõ THẬT SỰ đổi nội dung ô. Không có trạng thái thì
  * không có cách nào phân biệt "đọc trước" với "đọc sau", mà đó chính là thứ cần ghim. */
-function makeTrang({ nhanChu = true, nhanBam = true } = {}) {
+function makeTrang({ nhanChu = true, nhanBam = true, nhanXoa = true, sanCo = null } = {}) {
   const o = {
     "#txt": { the: "INPUT", backendNodeId: 11, gia: "" },
     "#vung": { the: "TEXTAREA", backendNodeId: 12, gia: "" },
     "#giau": { the: "DIV", backendNodeId: 13, gia: "" },
     "#mk": { the: "INPUT", backendNodeId: 14, gia: "", che: true }
   };
+  /* `sanCo` nap san chu vao o TRUOC khi luot goi bat dau — can cho `S-27`: nhanh *"xoa bo di
+   * thu co that"* khac han nhanh *"o von da rong"*, va chi nhanh dau chung minh duoc hai phim
+   * da toi trang. Khong co no thi moi khoi xoa deu roi vao nhanh rong-san. */
+  if (sanCo) for (const [sel, chu] of Object.entries(sanCo)) o[sel].gia = chu;
   const calls = [];
   let hienSauBam = false;
   const engine = {
@@ -191,6 +198,10 @@ function makeTrang({ nhanChu = true, nhanBam = true } = {}) {
       if (name === "input.type") {
         const mot = o[params.selector];
         if (mot && nhanChu) mot.gia += params.text;
+      }
+      if (name === "input.clear") {
+        const mot = o[params.selector];
+        if (mot && nhanXoa) mot.gia = "";
       }
       if (name === "input.click" && nhanBam) hienSauBam = true;
       return { ok: true, action: name, data: { selector: params.selector, typed: params.text?.length ?? 0 }, cdp: [] };
@@ -346,6 +357,130 @@ function dungSeed(tuyChon = {}) {
   /* Câu lỗi phải trỏ vào ĐÚNG trường sai, không phải vào `params.selector` lúc nào cũng đúng. */
   const sai = await goi(dispatch, "scout.click", { target_id: TARGET_ID, selector: "#nut", wait_for: "  " });
   assert.match(sai.error.message, /params\.wait_for/, "câu lỗi trỏ nhầm trường — người gọi sẽ đi sửa chỗ đang đúng");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  `S-27` — `scout.clear` VÀO ĐƯỜNG TỰ KIỂM
+ *  Tới sáng 16/09 đây là lệnh ghi CUỐI CÙNG còn fail-open: nó trả
+ *  `steps: ["Ctrl+A","Delete"]`, và trả **y hệt** như thế khi ô vốn đã rỗng.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- ⑬ `xetXoaSach` thuần: năm nhánh, năm câu --------------------------- */
+{
+  const co = (gia) => ({ docDuoc: true, gia, cat: false });
+  const khong = { docDuoc: false, gia: "", cat: false };
+
+  /* ⒜ xoá bỏ đi thứ có thật → ĐẠT, và câu khai phải NÓI RA là có thật. */
+  const a = xetXoaSach({ truoc: co("xin chao"), sau: co(""), cach: "a11y" });
+  assert.equal(a.da_kiem, true);
+  assert.equal(a.kiem_bang, "a11y");
+  assert.match(a.kiem_noi, /8 ký tự trước khi xoá/);
+  assert.match(a.kiem_noi, /hai phím đã tới trang/);
+  assert.ok(!a.kiem_noi.includes("xin chao"), "câu khai KHÔNG được chở nội dung ô ra ngoài");
+
+  /* ⒝ ĐÂY LÀ KHỐI ĐẮT NHẤT CỦA `S-27`, và nó ghim một chuyện tinh hơn `da_kiem`.
+   *    Ô vốn đã rỗng: trạng thái đích ĐẠT, nên `da_kiem: true` là đúng. Nhưng lượt này KHÔNG
+   *    chứng minh được hai phím có tới trang hay không — ô rỗng vẫn rỗng dù lệnh có chạy hay
+   *    không. Nếu câu khai không nói ra, người gọi nào dùng lượt xoá để thử đường ghi sẽ đọc
+   *    một màu xanh không có nghĩa. Phân biệt nằm ở CÂU CHỮ, nên phải ghim ở câu chữ. */
+  const b = xetXoaSach({ truoc: co(""), sau: co(""), cach: "a11y" });
+  assert.equal(b.da_kiem, true, "trạng thái đích đạt thật — đừng đổi thành false");
+  assert.match(b.kiem_noi, /VỐN ĐÃ rỗng/);
+  assert.match(b.kiem_noi, /KHÔNG chứng minh hai phím đã tới trang/,
+    "thiếu câu này thì hai nhánh khác hẳn nhau đọc ra y như nhau — đúng kiểu màu xanh giả S1 diệt");
+  assert.notEqual(a.kiem_noi, b.kiem_noi, "hai nhánh phải nói hai câu khác nhau");
+
+  /* ⒞ còn chữ → NÉM. */
+  assert.throws(() => xetXoaSach({ truoc: co("abcd"), sau: co("ab"), cach: "a11y" }),
+    (e) => e.code === MA_XOA_KHONG_SACH && /còn 2 ký tự/.test(e.message));
+
+  /* ⒟ không đọc lại được → khai thật, KHÔNG ném. */
+  const d = xetXoaSach({ truoc: co("abcd"), sau: khong, cach: "dom.text" });
+  assert.equal(d.da_kiem, false);
+  assert.equal(d.kiem_bang, null);
+  assert.match(d.kiem_noi, /Không đọc lại được/);
+
+  /* ⒠ đọc được SAU mà không đọc được TRƯỚC vẫn kết luận được: phép phán chỉ cần bản SAU. */
+  const e = xetXoaSach({ truoc: khong, sau: co(""), cach: "a11y" });
+  assert.equal(e.da_kiem, true);
+  assert.match(e.kiem_noi, /không đọc được ô trước lệnh/);
+}
+
+/* ---- ⑭ Ô CHE NỘI DUNG: hai phép phán trả lời NGƯỢC NHAU -----------------
+ * Đây là chỗ dễ chép nhầm luật từ `xetDocLai` sang nhất, nên nó có khối riêng.
+ * Đo 16/09 trên Chrome sạch: ô `password` sau khi XOÁ đọc ra `""`, y như mọi ô khác.
+ * Nên dấu che ở lượt xoá nghĩa là **CÒN CHỮ** — một câu trả lời, không phải một ô mù. */
+{
+  const che = { docDuoc: true, gia: "••••", cat: false };
+  const cheDay = { docDuoc: true, gia: "••••••", cat: false };
+
+  /* `xetDocLai` thấy dấu che thì KHAI CHƯA KIỂM — so chuỗi chấm với mật khẩu là buộc tội sai. */
+  const goPhan = xetDocLai({ daGo: BI_MAT, truoc: { docDuoc: true, gia: "", cat: false }, sau: che, cach: "a11y" });
+  assert.equal(goPhan.da_kiem, false, "tiền đề: lượt GÕ không kiểm được ô che");
+
+  /* `xetXoaSach` thấy đúng dấu che ấy thì NÉM — ô chưa sạch. Ngược hẳn, và đúng. */
+  assert.throws(() => xetXoaSach({ truoc: cheDay, sau: che, cach: "a11y" }),
+    (e) => e.code === MA_XOA_KHONG_SACH && /dấu che nghĩa là CÒN chữ/.test(e.message),
+    "chép nhánh `laChe` của xetDocLai sang đây là biến một ô ĐỌC ĐƯỢC thành một ô mù");
+
+  /* Và ô che đã xoá sạch thì ĐẠT — tức `scout.clear` kiểm được trên ô mật khẩu, trong khi
+   * `scout.type` thì không. Ghim cả hai vế để không ai nới nhầm chiều nào. */
+  const sach = xetXoaSach({ truoc: cheDay, sau: { docDuoc: true, gia: "", cat: false }, cach: "a11y" });
+  assert.equal(sach.da_kiem, true);
+}
+
+/* ---- ⑮ BẢN ĐỌC BỊ CẮT: cùng lá cờ `cat`, hai ý nghĩa --------------------
+ * `xetDocLai` phải khai *chưa kiểm* khi bản đọc cụt — chữ vừa gõ có thể nằm ngoài phần bị cắt.
+ * `xetXoaSach` thì không: một bản đọc BỊ CẮT theo định nghĩa là bản đọc CÓ CHỮ, tức ô chưa sạch.
+ * Nới nhánh này thành *chưa kiểm* là mở lại đúng cửa fail-open mà `S-27` sinh ra để đóng. */
+{
+  const cut = { docDuoc: true, gia: "con nguyen mot doan dai…", cat: true };
+  assert.throws(() => xetXoaSach({ truoc: { docDuoc: true, gia: "x", cat: false }, sau: cut, cach: "a11y" }),
+    (e) => e.code === MA_XOA_KHONG_SACH,
+    "bản đọc cụt mà vẫn có chữ thì ô CHƯA sạch — đó là câu trả lời, không phải một ô mù");
+
+  const phan = xetDocLai({ daGo: "khong co trong o", truoc: { docDuoc: true, gia: "", cat: false }, sau: cut, cach: "a11y" });
+  assert.equal(phan.da_kiem, false, "tiền đề: cùng lá cờ ấy, lượt GÕ thì khai chưa kiểm");
+}
+
+/* ---- ⑯ Đường nối ở seed-core: `scout.clear` ĐỌC LẠI THẬT ---------------- */
+{
+  /* ⒜ ô có chữ sẵn, xoá xong → ĐẠT, đi đúng đường trợ năng cho `<input>`. */
+  const a = dungSeed({ sanCo: { "#txt": "chu cu con day" } });
+  const ra = await goi(a.dispatch, "scout.clear", { target_id: TARGET_ID, selector: "#txt" });
+  assert.equal(ra.ok, true, JSON.stringify(ra.error || {}));
+  assert.equal(ra.result.da_kiem, true);
+  assert.equal(ra.result.kiem_bang, "a11y");
+  assert.match(ra.result.kiem_noi, /14 ký tự trước khi xoá/);
+  assert.equal(a.engine.calls.filter((c) => c.name === "dom.text").length, 0,
+    "`<input>` không nhả chữ qua dom.text — chọn đường theo TÊN THẺ, y như scout.type");
+
+  /* ⒝ THỨ TỰ: bản đọc TRƯỚC phải lấy TRƯỚC lượt xoá, nếu không thì câu *"ô có 14 ký tự trước
+   *    khi xoá"* là một câu bịa. */
+  const ten = a.engine.calls.map((c) => (c.ghi ? `GHI:${c.name}` : c.name));
+  const iGhi = ten.indexOf("GHI:input.clear");
+  assert.ok(iGhi > 0, "phải có lượt đọc TRƯỚC lượt xoá");
+  assert.ok(ten.slice(0, iGhi).includes("a11y.tree"), "không đọc trước thì không so được với gì");
+  assert.ok(ten.slice(iGhi).includes("a11y.tree"), "không đọc lại sau thì lệnh vẫn chỉ tự khai");
+
+  /* ⒞ ĐÂY LÀ NHÁNH `S-27` SINH RA ĐỂ DIỆT: hai phím bắn đi mà trang không xoá gì.
+   *    Bản CŨ trả `steps: ["Ctrl+A","Delete"]` và `ok: true` ở đúng chỗ này. */
+  const b = dungSeed({ sanCo: { "#txt": "chu cu con day" }, nhanXoa: false });
+  const rb = await goi(b.dispatch, "scout.clear", { target_id: TARGET_ID, selector: "#txt" });
+  assert.equal(rb.ok, false, "trang không xoá gì mà vẫn báo đạt — đây đúng lời nói dối cuối cùng của đường ghi");
+  assert.equal(rb.error.code, MA_XOA_KHONG_SACH);
+
+  /* ⒟ ô giàu (contenteditable) → `dom.text`, KHÔNG kéo cây trợ năng. Ca của Udin, phải rẻ. */
+  const c = dungSeed({ sanCo: { "#giau": "chu cu" } });
+  const rc = await goi(c.dispatch, "scout.clear", { target_id: TARGET_ID, selector: "#giau" });
+  assert.equal(rc.ok, true, JSON.stringify(rc.error || {}));
+  assert.equal(rc.result.kiem_bang, "dom.text");
+  assert.equal(c.engine.calls.filter((x) => x.name === "a11y.tree").length, 0);
+
+  /* ⒠ ba trường tự kiểm nằm ở TẦNG NGOÀI phong bì, cạnh `action`/`data` — KHÔNG trong `data`.
+   *    Ghim vì tôi đã đọc nhầm đúng chỗ này một lần và kết luận lệnh chưa tự kiểm. */
+  assert.equal(rc.result.data.da_kiem, undefined, "đừng dời ba trường này vào `data`");
+  assert.ok("action" in rc.result && "da_kiem" in rc.result);
 }
 
 console.log("ghi-tu-kiem smoke tests: PASS");

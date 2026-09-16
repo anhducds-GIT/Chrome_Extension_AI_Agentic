@@ -42,7 +42,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { runAction } from "./scouter-actions-core.mjs";
 import { runProbe } from "./scouter-probes.mjs";
-import { xetDocLai, MA_KHONG_QUAN_SAT } from "./tu-kiem-ghi.mjs";
+import { xetDocLai, xetXoaSach, MA_KHONG_QUAN_SAT, MA_XOA_KHONG_SACH } from "./tu-kiem-ghi.mjs";
 
 const CHU = "xin chao 123";
 const THE_GIU_CHU_RIENG = ["INPUT", "TEXTAREA"];
@@ -58,10 +58,14 @@ const TRANG = `<!doctype html><meta charset="utf-8"><title>do doc lai</title>
 /* Điều CHỜ ĐỢI ở từng ô. Khai ở đây, cạnh trang thử, để ai đọc báo cáo biết ngay chỗ nào là
  * "đúng như đã đo" và chỗ nào là bất ngờ. */
 const CHO_DOI = [
-  { sel: "#a", ten: "<input type=text>", cach: "a11y", daKiem: true },
-  { sel: "#b", ten: "<textarea>", cach: "a11y", daKiem: true },
-  { sel: "#c", ten: "<div contenteditable>", cach: "dom.text", daKiem: true },
-  { sel: "#d", ten: "<input type=password>", cach: "a11y", daKiem: false, vi: /che nội dung/ }
+  { sel: "#a", ten: "<input type=text>", cach: "a11y", daKiem: true, xoaKiem: true },
+  { sel: "#b", ten: "<textarea>", cach: "a11y", daKiem: true, xoaKiem: true },
+  { sel: "#c", ten: "<div contenteditable>", cach: "dom.text", daKiem: true, xoaKiem: true },
+  /* Ô mật khẩu là chỗ HAI phép phán trả lời KHÁC NHAU, và đó là cả lý do nó còn nằm ở đây:
+   * `xetDocLai` không đối chiếu được (dấu che) → `da_kiem: false`; `xetXoaSach` thì đối chiếu
+   * được, vì sau khi xoá ô ấy đọc ra `""` y như mọi ô khác → `da_kiem: true`. Một dòng bảng
+   * khai cả hai kỳ vọng thì không ai chép nhầm kỳ vọng của lệnh này sang lệnh kia. */
+  { sel: "#d", ten: "<input type=password>", cach: "a11y", daKiem: false, vi: /che nội dung/, xoaKiem: true }
 ];
 
 function timChrome() {
@@ -177,7 +181,19 @@ async function do_() {
       let phan = null;
       let nem = null;
       try { phan = xetDocLai({ daGo: CHU, truoc, sau, cach }); } catch (error) { nem = error; }
-      dong.push({ ...mong, cachDung: mong.cach, the: o?.the ?? null, cach, goOk: go.ok, phan, nem });
+
+      /* ---- LƯỢT XOÁ (`S-27`) ------------------------------------------------
+       * Chạy NGAY SAU lượt gõ, trên đúng ô ấy, nên `sau` của lượt gõ chính là bản đọc TRƯỚC của
+       * lượt xoá — không có lượt đọc thừa nào, và quan trọng hơn: ô chắc chắn ĐANG CÓ CHỮ, tức
+       * lượt này đo được nhánh *"xoá bỏ đi thứ có thật"*, không phải nhánh rỗng-sẵn vô thưởng. */
+      const xoa = await runAction("input.clear", { sendRaw }, { selector: mong.sel });
+      const sauXoa = await doc(sendRaw, mong.sel, cach, nut);
+      let phanXoa = null;
+      let nemXoa = null;
+      try { phanXoa = xetXoaSach({ truoc: sau, sau: sauXoa, cach }); } catch (error) { nemXoa = error; }
+
+      dong.push({ ...mong, cachDung: mong.cach, the: o?.the ?? null, cach, goOk: go.ok, phan, nem,
+        xoaOk: xoa.ok, phanXoa, nemXoa, giaSauXoa: sauXoa.gia });
     }
     return { chrome: ban.product, dong };
   } finally {
@@ -200,19 +216,33 @@ export function ketLuan(tho) {
       loi.push(`${d.ten}: da_kiem=${d.phan.da_kiem}, chờ ${d.daKiem} — ${d.phan.kiem_noi}`);
     }
     if (d.vi && !d.vi.test(d.phan.kiem_noi)) loi.push(`${d.ten}: câu khai không nói đúng lý do — ${d.phan.kiem_noi}`);
+
+    /* ---- chấm lượt XOÁ ---------------------------------------------------- */
+    if (!d.xoaOk) { loi.push(`${d.ten}: lượt xoá không chạy được`); continue; }
+    if (d.nemXoa) { loi.push(`${d.ten}: xoá rồi mà bị phán CÒN CHỮ (${d.nemXoa.code})`); continue; }
+    if (d.phanXoa.da_kiem !== d.xoaKiem) {
+      loi.push(`${d.ten}: xoá → da_kiem=${d.phanXoa.da_kiem}, chờ ${d.xoaKiem} — ${d.phanXoa.kiem_noi}`);
+    }
+    /* Con số THẬT mà cả `xetXoaSach` đứng lên: ô đã xoá đọc ra ĐÚNG chuỗi rỗng, không phải
+     * một chuỗi khoảng trắng. Ghim ở đây vì đây là chỗ DUY NHẤT hỏi được Chrome thật. */
+    if (d.giaSauXoa !== "") {
+      loi.push(`${d.ten}: ô đã xoá đọc ra ${JSON.stringify(d.giaSauXoa)}, đã đo 16/09 là "" — ` +
+        "phép so `=== \"\"` trong `xetXoaSach` đứng trên đúng con số này, đo lại trước khi nới nó");
+    }
   }
   return { dat: loi.length === 0, loi };
 }
 
 export function inRa(tho) {
-  const ra = [`PHÉP ĐO ĐỌC LẠI Ô NHẬP — Chrome ${tho.chrome}`, ""];
+  const ra = [`PHÉP ĐO ĐỌC LẠI Ô NHẬP (gõ `+"`S1`"+` · xoá `+"`S-27`"+`) — Chrome ${tho.chrome}`, ""];
   for (const d of tho.dong) {
     const noi = d.nem ? `LỆCH (${d.nem.code})` : `da_kiem=${d.phan.da_kiem} qua '${d.cach}'`;
-    ra.push(`   ${d.ten.padEnd(24)} thẻ ${String(d.the).padEnd(9)} → ${noi}`);
+    const noiXoa = d.nemXoa ? `CÒN CHỮ (${d.nemXoa.code})` : `da_kiem=${d.phanXoa?.da_kiem}`;
+    ra.push(`   ${d.ten.padEnd(24)} thẻ ${String(d.the).padEnd(9)} → gõ: ${noi.padEnd(30)} xoá: ${noiXoa}`);
   }
   const k = ketLuan(tho);
   ra.push("");
-  ra.push(k.dat ? "ĐẠT — bốn loại ô đều cho đúng câu trả lời đã đo." : "KHÔNG ĐẠT:");
+  ra.push(k.dat ? "ĐẠT — bốn loại ô đều cho đúng câu trả lời đã đo, cho CẢ lượt gõ lẫn lượt xoá." : "KHÔNG ĐẠT:");
   for (const l of k.loi) ra.push(`   · ${l}`);
   return ra.join("\n");
 }
@@ -229,4 +259,4 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   process.exit(ketLuan(tho).dat ? 0 : 1);
 }
 
-export { MA_KHONG_QUAN_SAT };
+export { MA_KHONG_QUAN_SAT, MA_XOA_KHONG_SACH };

@@ -20,7 +20,9 @@
 
 /* Phần THUẦN LOGIC của đường ghi tự kiểm (`S1`, `S2`). File này chỉ đi LẤY hai bản đọc rồi
  * đưa sang đó phán — chỗ phán không biết `chrome`, nên nó ghim được mà không cần trình duyệt. */
-import { xetDocLai, CAU_BAM_KHONG_KIEM, MA_KHONG_QUAN_SAT } from "./tu-kiem-ghi.mjs";
+import {
+  xetDocLai, xetXoaSach, CAU_BAM_KHONG_KIEM, MA_KHONG_QUAN_SAT, MA_XOA_KHONG_SACH
+} from "./tu-kiem-ghi.mjs";
 
 /* Trần nút khi kéo cây trợ năng để ĐỌC LẠI — đặt kịch trần của lõi đọc (`MAX_AX_NODES`), cố ý.
  * Trần mặc định 400 nút là con số hợp lý cho một người ĐANG ĐỌC trang; ở đây ta không đọc
@@ -594,12 +596,41 @@ export function createSeedHandlers(deps = {}) {
       return await runAction("scout.key", target, { selector: params.selector, key: params.key });
     },
 
-    /* `scout.clear` — xoá sạch một ô nhập (`I4`). GHI, nên nó chui qua phanh và trần 200 như
-     * `scout.type`. Chỉ nhận `selector`: phím và phím bổ trợ gõ cứng trong lõi ghi, người gọi
-     * không chạm tới — xem khối giải trình ở `input.clear`. */
+    /* `scout.clear` — XOÁ RỒI ĐỌC LẠI (`S-27`, 16/09). GHI, nên nó chui qua phanh và trần 200
+     * như `scout.type`. Chỉ nhận `selector`: phím và phím bổ trợ gõ cứng trong lõi ghi, người
+     * gọi không chạm tới — xem khối giải trình ở `input.clear`.
+     *
+     * Tới sáng 16/09 đây là lệnh ghi CUỐI CÙNG còn fail-open: nó trả `steps: ["Ctrl+A","Delete"]`
+     * — kể việc mình làm — và trả **y hệt** như thế khi ô vốn đã rỗng. `ADR-0008` khai thẳng nó
+     * ở mục *KHÔNG hứa gì*. Nay nó đi tìm bằng chứng, và dùng ĐÚNG cặp `nhanDangO`/`docO` của
+     * `scout.type`: một đường đọc, hai người dùng, không có bản thứ hai để lệch.
+     *
+     * KHÁC `scout.type` ở đúng một chỗ, và chỗ đó là phép phán: `xetDocLai` hỏi *"chữ có tăng
+     * thêm không"*, `xetXoaSach` hỏi *"ô có rỗng không"*. Vì sao câu thứ hai được phép đơn giản
+     * hơn — và vì sao ô mật khẩu kiểm được ở đây mà không kiểm được ở kia — viết ở
+     * `tu-kiem-ghi.mjs`, cạnh chính phép phán. */
     async "scout.clear"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runAction("scout.clear", target, { selector: params.selector });
+      const o = await nhanDangO(target, params.selector);
+      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? "a11y" : "dom.text";
+      const nut = o ? o.backendNodeId : null;
+      const truoc = await docO(target, params.selector, cach, nut);
+
+      const ra = await runAction("scout.clear", target, { selector: params.selector });
+
+      const sau = await docO(target, params.selector, cach, nut);
+      let phan;
+      try {
+        phan = xetXoaSach({ truoc, sau, cach });
+      } catch (error) {
+        if (error?.code === MA_XOA_KHONG_SACH) {
+          throw new BridgeProtocolError(MA_XOA_KHONG_SACH, error.message, { action: "input.clear" });
+        }
+        throw error;
+      }
+      /* BA TRƯỜNG NÀY NẰM Ở TẦNG NGOÀI phong bì, cạnh `action`/`data`, KHÔNG nằm trong `data`.
+       * Ghi ra đây vì đã có người (tôi) in `kq.data` rồi kết luận nhầm là lệnh chưa tự kiểm. */
+      return { ...ra, ...phan };
     },
 
     /* ---- LỆNH GỌI MẠNG (S-10) ------------------------------------------

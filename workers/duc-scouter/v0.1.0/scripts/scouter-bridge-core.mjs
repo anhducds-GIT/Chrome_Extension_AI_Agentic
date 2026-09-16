@@ -59,6 +59,10 @@ export const ERROR_DEFINITIONS = Object.freeze({
    * mà `S-16` đã ghi. Thử lại là quyết định của người gọi, sau khi họ nhìn lại trang. */
   WRITE_NOT_OBSERVED: { retryable: false, message: "Keys were dispatched but the field never showed them." },
   CLICK_NOT_OBSERVED: { retryable: false, message: "The click was dispatched but the expected change never happened." },
+  /* `retryable: false` DÙ một lượt xoá lặp lại là vô hại (xoá hai lần bằng xoá một lần) — và
+   * đây KHÔNG phải lý do của hai mã trên. Lý do ở đây khác: lượt thử lại bắn đúng hai phím vừa
+   * thất bại, nên nó không chữa được nguyên nhân nào, mà vẫn tiêu một suất của cái phanh. */
+  CLEAR_NOT_OBSERVED: { retryable: false, message: "Ctrl+A and Delete were dispatched but the field still has characters." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The scouter could not complete the request." }
 });
@@ -587,7 +591,7 @@ const METHOD_ENTRIES = [
   }),
   registryEntry({
     name: "scout.clear", read_only: false, deadline_ms: 30000,
-    description: "Clear one input/textarea with real keystrokes (Ctrl+A then Delete). The key and the modifier are hard-coded in the write core; no parameter can change them. Promises the keystrokes were sent, NOT that the field is now empty — verify by page state.",
+    description: "Clear one input/textarea with real keystrokes (Ctrl+A then Delete), then READ THE FIELD BACK and refuse to call it done while characters remain. The key and the modifier are hard-coded in the write core; no parameter can change them. Three outcomes, never two: da_kiem:true when the read-back shows the field empty; CLEAR_NOT_OBSERVED when characters are still there; da_kiem:false with a sentence when the field cannot be read back at all. Read kiem_noi even on success: it says whether the field actually held anything before, because clearing an already-empty field confirms the STATE without proving the keystrokes reached the page. Unlike scout.type this works on a password field: a masked value means characters REMAIN, which is an answer, not a blind spot.",
     params_schema: { target_id: "string", selector: "string" },
     params_validator: (raw) => {
       /* CỐ Ý chỉ hai trường. Một tham số `key` hay `modifiers` ở đây là mở lại đúng cửa mà
