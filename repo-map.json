@@ -126,8 +126,8 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T29 XONG. Duc chot mo Page.setInterceptFileChooserDialog sau khi DO: no chay khong can Page.enable, khong can kenh su kien, va o nhan file nam lai trong DOM khi hop thoai bi chan. scout.upload nay co hai duong: selector (o co san) va mo_bang (nut phai bam de trang dung o ra — ca Udin). Duong mo_bang CHAN truoc BAM sau TAT trong finally. 181/181 dot bien. CON THIEU dung mot luot nap lai extension Udin de chay that W8. No moi S-31: goi Udin khong tu nap lai duoc, hom nay ton 3 luot bam cua Duc.",
-      "human_action": "@Đức:bấm — nap lai extension Udin MOT lan nua (lan cuoi cua viec nay). Sau do W8 chay tu dong hoan toan: lay anh Udin da tao, dua nguoc vao, xin style khac.",
+      "next_step": "PHAN NANG LUC XONG: bang W cua Udin 8/8, khong con hang CHAN, E2E DAT -> Udin MASTERED. Duong ghi khong con lenh nao noi doi. ROADMAP MOI o khoi SAU COMPACT dau CHUOI-VIEC.md: (1) R1 — MOT lenh chay tron vong viec that cua Duc (lay anh Udin da tao, dua nguoc vao, xin style khac); moi manh da co, chua ai noi lai. (2) R2 — khep vong tu cai tien lan hai voi bo day du. (3) R3 — TRANG THU HAI khac loai, phep do duy nhat tra loi cau seed co dung lai duoc khong. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
+      "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": "2026-09-16",
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "scout.upload nay co them duong `mo_bang`: bam mot nut de trang dung o chon tep ra, CHAN hop thoai truoc nen no khong hien len man hinh Duc. Do la duong duy nhat chay duoc tren trang nay — o <input type=file> cua Udin duoc dung TAM roi xoa di. CHO MOT LUOT NAP LAI extension.",
-      "human_action": "@Đức:bấm — nap lai extension Udin mot lan nua, lan cuoi cua viec nay.",
+      "next_step": "W8 CHAY THAT 16/09: dua nguoc mot anh Udin tu sinh vao lai Udin, KHONG mot cu bam nao cua nguoi, hop thoai he dieu hanh khong hien len. Bang W du 8/8 -> MASTERED. Viec ke: R1 o CHUOI-VIEC.md ben Scouter — mot lenh chay tron vong: chon anh luot truoc -> upload -> go prompt style moi -> gui -> cho -> tai anh moi ve. Kiem da dinh kem bang PILL tren trang, dung tin lenh tra ve.",
+      "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T29 XONG. Duc chot mo Page.setInterceptFileChooserDialog sau khi DO: no chay khong can Page.enable, khong can kenh su kien, va o nhan file nam lai trong DOM khi hop thoai bi chan. scout.upload nay co hai duong: selector (o co san) va mo_bang (nut phai bam de trang dung o ra — ca Udin). Duong mo_bang CHAN truoc BAM sau TAT trong finally. 181/181 dot bien. CON THIEU dung mot luot nap lai extension Udin de chay that W8. No moi S-31: goi Udin khong tu nap lai duoc, hom nay ton 3 luot bam cua Duc.",
+      "title": "PHAN NANG LUC XONG: bang W cua Udin 8/8, khong con hang CHAN, E2E DAT -> Udin MASTERED. Duong ghi khong con lenh nao noi doi. ROADMAP MOI o khoi SAU COMPACT dau CHUOI-VIEC.md: (1) R1 — MOT lenh chay tron vong viec that cua Duc (lay anh Udin da tao, dua nguoc vao, xin style khac); moi manh da co, chua ai noi lai. (2) R2 — khep vong tu cai tien lan hai voi bo day du. (3) R3 — TRANG THU HAI khac loai, phep do duy nhat tra loi cau seed co dung lai duoc khong. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "scout.upload nay co them duong `mo_bang`: bam mot nut de trang dung o chon tep ra, CHAN hop thoai truoc nen no khong hien len man hinh Duc. Do la duong duy nhat chay duoc tren trang nay — o <input type=file> cua Udin duoc dung TAM roi xoa di. CHO MOT LUOT NAP LAI extension.",
+      "title": "W8 CHAY THAT 16/09: dua nguoc mot anh Udin tu sinh vao lai Udin, KHONG mot cu bam nao cua nguoi, hop thoai he dieu hanh khong hien len. Bang W du 8/8 -> MASTERED. Viec ke: R1 o CHUOI-VIEC.md ben Scouter — mot lenh chay tron vong: chon anh luot truoc -> upload -> go prompt style moi -> gui -> cho -> tai anh moi ve. Kiem da dinh kem bang PILL tren trang, dung tin lenh tra ve.",
       "rank": 5,
       "claim": null
     }
