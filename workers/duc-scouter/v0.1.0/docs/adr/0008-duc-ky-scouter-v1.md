@@ -47,8 +47,11 @@ repo** mà Đức bấm. Đổi nó là bắt Đức gỡ và nạp lại extens
   người gọi không đưa `wait_for` thì kết quả tự khai `da_kiem: false`. Đọc câu đó, đừng bỏ qua.
 - **Không hứa đọc lại được MỌI ô.** Ô che nội dung trả về dấu che; bản đọc quá dài bị cắt ở trần.
   Cả hai khai là *chưa kiểm được*, và người gọi phải tự quyết làm gì với câu đó.
-- **Không hứa `scout.clear` đã xoá sạch ô.** Lệnh đó **chưa** vào đường tự kiểm — nó vẫn chỉ kể
-  việc mình làm (`steps: ["Ctrl+A","Delete"]`). Nợ `S-27` ở `BACKLOG.md`.
+- ~~**Không hứa `scout.clear` đã xoá sạch ô.** Lệnh đó **chưa** vào đường tự kiểm — nó vẫn chỉ
+  kể việc mình làm (`steps: ["Ctrl+A","Delete"]`). Nợ `S-27` ở `BACKLOG.md`.~~
+  **GỠ 16/09 — `S-27` đóng.** `scout.clear` nay đọc lại ô và trả `da_kiem` theo đúng ba trạng
+  thái của lời hứa ⑵. Xem khối *“Sửa sau chữ ký”* ở cuối ADR này: dòng ấy gỡ đi vì `v1` nay
+  **hứa NHIỀU hơn** lúc ký, không phải vì ai nới một phép kiểm.
 - **Không hứa chạy trên máy Mac.** `scout.clear` gõ cứng `Ctrl+A`; trên macOS phím ấy là `Cmd+A`.
 
 ## Bằng chứng đứng sau chữ ký
@@ -70,3 +73,23 @@ true` (2 ms) · mốc không tới → `CLICK_NOT_OBSERVED` (1018 ms) · bấm t
   phải một bản vá. Nó cần một ADR mới và một chữ ký mới.
 - Mục **KHÔNG hứa gì** là nơi duy nhất được phép dài ra mà không cần chữ ký — thêm một giới hạn
   đã biết vào đó là nói thật hơn, không phải hứa ít đi.
+
+## Sửa sau chữ ký — 16/09, `S-27`
+
+**Một dòng rời khỏi mục *KHÔNG hứa gì*, và đây là lần đầu chuyện đó xảy ra.** Cần nói rõ nó có
+phải một chữ ký mới không, vì luật ở trên chỉ viết chiều ngược lại.
+
+**Không phải.** Hệ quả ở trên bắt một chữ ký mới khi bản vá **làm mất** một lời hứa ở mục *HỨA
+GÌ* — tức khi `v1` hứa **ít đi**. Ở đây ngược hẳn: lời hứa ⑵ (*đường ghi tự kiểm*) trước phủ hai
+lệnh, nay phủ **cả ba** lệnh ghi có ô nhập. Không lời hứa nào mất, không phép kiểm nào bị nới, và
+không method nào thêm — từ vựng vẫn **24**.
+
+**Nhưng nó vẫn là một thay đổi Đức nên biết**, vì nó đổi thứ một người gọi được phép trông cậy:
+từ hôm nay `scout.clear` **ĐỎ** (`CLEAR_NOT_OBSERVED`) khi ô còn chữ, ở chỗ trước kia nó im lặng
+báo đạt. Mã nào đang dựa vào cái im lặng ấy sẽ hỏng — và hỏng là đúng.
+
+**Một món ngoài dự tính, đo được chứ không suy ra:** `scout.clear` **kiểm được trên ô mật khẩu**,
+trong khi `scout.type` thì không. Lý do là ô che chỉ mù theo một chiều — nó không cho đối chiếu
+*“chữ vừa gõ có tới không”*, nhưng nó trả lời rất rõ *“ô còn chữ không”*: có dấu che tức là còn
+chữ, mà xoá sạch rồi thì nó đọc ra `""` y như mọi ô khác. Nên dòng *“không hứa đọc lại được MỌI
+ô”* ở trên **vẫn đứng nguyên cho `scout.type`**, và không còn đúng cho `scout.clear`.

@@ -47,9 +47,11 @@ Và nó lật một cột: hàng `W5` khai cần `O3` (`scout.a11y`), **lệnh g
 > là một lời khai, và nó cũng phải đi đo lại.** Trước khi tin dòng *“`X` bị chặn bởi `Y`”* nào
 > trong repo này, bỏ mười phút đo `Y`. Hai lần liền nó rẻ hơn cả việc làm.
 
-**② `S-27` — `scout.clear` vào đường tự kiểm.** Lệnh ghi CUỐI CÙNG còn fail-open; `ADR-0008`
-khai nó ở mục *KHÔNG hứa gì*. Máy móc đã sẵn: cùng cặp `nhanDangO`/`docO`, chỉ đổi phép
-phán từ *“chữ tăng thêm”* sang *“ô còn rỗng”*. Xong thì bớt được một dòng khỏi mục ấy.
+**~~② `S-27`~~ XONG 16/09** — `scout.clear` đọc lại ô, `CLEAR_NOT_OBSERVED` khi còn chữ.
+**Đường ghi nay KHÔNG còn lệnh nào fail-open.** Dòng ấy đã rời mục *KHÔNG hứa gì* của
+`ADR-0008` (xem khối *“Sửa sau chữ ký”* ở cuối ADR — gỡ được vì `v1` hứa NHIỀU hơn, không phải
+vì ai nới phép kiểm). Món ngoài dự tính: **ô mật khẩu kiểm được ở lượt xoá**, dù không kiểm
+được ở lượt gõ.
 
 **③ 🛑 `T29` / `W8` — `scout.upload`. ĐÂY LÀ CHỖ PHẢI HỎI ĐỨC, và là dòng năng lực CUỐI
 CÙNG của danh sách đóng băng.** Nó cần method CDP mới `DOM.setFileInputFiles` → **đổi luật
