@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "SCOUTER v1 da ky 16/09 (ADR-0008). T35/W6 XONG cung ngay, va no LAT HAI TIEN DE: thao tac 'dua anh ket qua vao canvas' KHONG TON TAI (anh da o tren canvas roi), va S-22 khong bit no. W6 nay la 'them mot KHUNG vao canvas', do that 8->9. LO TRINH CON LAI o khoi 'SAU COMPACT' dau CHUOI-VIEC.md: (1) W5 chon che do — re nhat, khong hoi ai; (2) S-27 scout.clear tu kiem; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen phai hoi Duc — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10."
+- next_step: "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10."
 - human_action: "khong"

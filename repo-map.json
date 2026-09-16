@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "SCOUTER v1 da ky 16/09 (ADR-0008). T35/W6 XONG cung ngay, va no LAT HAI TIEN DE: thao tac 'dua anh ket qua vao canvas' KHONG TON TAI (anh da o tren canvas roi), va S-22 khong bit no. W6 nay la 'them mot KHUNG vao canvas', do that 8->9. LO TRINH CON LAI o khoi 'SAU COMPACT' dau CHUOI-VIEC.md: (1) W5 chon che do — re nhat, khong hoi ai; (2) S-27 scout.clear tu kiem; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen phai hoi Duc — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
+      "next_step": "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "W6 XONG + CHAY THAT 16/09: them-khung.mjs, 8->9 khung, 6 dot bien tay giet duoc het. Tien de cu cua W6 sai va da gach tai cho. Viec ke cua goi: W5 (chon che do Agent/Manual Gen) — cung hinh dang W6, chep khuon them-khung.mjs va nho DEM trang thai truoc/sau chu dung tin moc mot minh. Ba muc Image/Video/3D Model cua menu Add to canvas cho T29 (scout.upload) ben Scouter.",
+      "next_step": "W5 XONG + CHAY THAT 16/09: chon-che-do.mjs, Agent->Manual Gen->Agent, 15 dot bien tay giet duoc het. Bang W nay 7/8 DAT, con dung W8. Cot Can cua hang W5 khai SAI (O3 scout.a11y — lenh goi nay khong co tren day) va da gach tai cho o CAPABILITIES.md. Viec ke KHONG o goi nay: S-27 (scout.clear vao duong tu kiem) ben Scouter, roi T29/W8 scout.upload — cho ay PHAI HOI DUC vi can method CDP moi.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "SCOUTER v1 da ky 16/09 (ADR-0008). T35/W6 XONG cung ngay, va no LAT HAI TIEN DE: thao tac 'dua anh ket qua vao canvas' KHONG TON TAI (anh da o tren canvas roi), va S-22 khong bit no. W6 nay la 'them mot KHUNG vao canvas', do that 8->9. LO TRINH CON LAI o khoi 'SAU COMPACT' dau CHUOI-VIEC.md: (1) W5 chon che do — re nhat, khong hoi ai; (2) S-27 scout.clear tu kiem; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen phai hoi Duc — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
+      "title": "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "W6 XONG + CHAY THAT 16/09: them-khung.mjs, 8->9 khung, 6 dot bien tay giet duoc het. Tien de cu cua W6 sai va da gach tai cho. Viec ke cua goi: W5 (chon che do Agent/Manual Gen) — cung hinh dang W6, chep khuon them-khung.mjs va nho DEM trang thai truoc/sau chu dung tin moc mot minh. Ba muc Image/Video/3D Model cua menu Add to canvas cho T29 (scout.upload) ben Scouter.",
+      "title": "W5 XONG + CHAY THAT 16/09: chon-che-do.mjs, Agent->Manual Gen->Agent, 15 dot bien tay giet duoc het. Bang W nay 7/8 DAT, con dung W8. Cot Can cua hang W5 khai SAI (O3 scout.a11y — lenh goi nay khong co tren day) va da gach tai cho o CAPABILITIES.md. Viec ke KHONG o goi nay: S-27 (scout.clear vao duong tu kiem) ben Scouter, roi T29/W8 scout.upload — cho ay PHAI HOI DUC vi can method CDP moi.",
       "rank": 5,
       "claim": null
     }
