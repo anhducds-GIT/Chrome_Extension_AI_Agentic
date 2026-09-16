@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "PHAN NANG LUC XONG: bang W cua Udin 8/8, khong con hang CHAN, E2E DAT -> Udin MASTERED. Duong ghi khong con lenh nao noi doi. ROADMAP MOI o khoi SAU COMPACT dau CHUOI-VIEC.md: (1) R1 — MOT lenh chay tron vong viec that cua Duc (lay anh Udin da tao, dua nguoc vao, xin style khac); moi manh da co, chua ai noi lai. (2) R2 — khep vong tu cai tien lan hai voi bo day du. (3) R3 — TRANG THU HAI khac loai, phep do duy nhat tra loi cau seed co dung lai duoc khong. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc."
+- next_step: "PHAN NANG LUC XONG (bang W cua Udin 8/8, Udin MASTERED). Dang lam R1 o khoi SAU COMPACT dau CHUOI-VIEC.md: MA XONG, VONG SONG CHUA KHEP — ket o cho Udin DAY CHO, khong phai o ma. Doi Udin rong cho roi chay mot luot vong-style.mjs voi prompt moi. Sau do: (2) R2 khep vong tu cai tien lan hai voi bo day du. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG. KHONG viec nao can hoi Duc."
 - human_action: "khong"

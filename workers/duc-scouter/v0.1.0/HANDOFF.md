@@ -2070,3 +2070,22 @@ dòng X-bị-chặn-bởi-Y mà chưa đo Y"*.
 đoạn tới là **dùng được**: `R1` một lệnh chạy trọn vòng việc thật của Đức · `R2` khép vòng tự
 cải tiến lần hai với bộ đầy đủ · `R3` trang thứ hai khác loại — phép đo duy nhất trả lời câu
 *"seed này dùng lại được không"*. **Không việc nào cần hỏi Đức.**
+
+
+## 16/09 (tối) — `R1`: phép kiểm mới bắt đúng thứ nó sinh ra để bắt
+
+**Việc nằm ở gói `udin-optic`** (`tu-dong/vong-style.mjs`, nhật ký đầy đủ ở HANDOFF của gói ấy).
+Ghi ở đây đúng phần thuộc về seed.
+
+**`scout.upload` trả `ok` và `files: 1` trong khi trang KHÔNG nhận ảnh nào.** Lệnh không nói dối
+— nó hứa đúng *đã bảo Chrome gắn file vào ô nhận*, và nó làm đúng thế. Cái nó không hứa là
+*trang đã nhận*. Vòng `R1` đếm lại trên trang nên nó **từ chối tiêu credit** cho một lượt mà ảnh
+tham chiếu chưa bao giờ đính kèm. Nếu tin `ok` thì lượt đó đã gửi, đã mất tiền, và ảnh trả về
+vẫn *trông hợp lý* nên không ai nhìn ra.
+
+**Và đây là ca `W8` — một hàng đã ĐẠT trong bảng `W` sáng cùng ngày.** Một lượt đo ĐẠT là một
+ĐIỂM, không phải một đường: nó chạy trên trang vừa nạp lại, chưa có ảnh đính kèm, Udin còn rỗng
+chỗ. Ghi thành luật ⑸ ở `CHUOI-VIEC.md`, và `TRIALS.md` có hàng riêng cho đợt đo.
+
+**Không đụng một dòng nào của seed.** `R1` chỉ nối các chặng đã ĐẠT — đúng điều kiện nó sinh ra
+để chứng minh.

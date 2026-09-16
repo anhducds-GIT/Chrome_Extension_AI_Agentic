@@ -570,6 +570,35 @@ hình Đức** · pill đính kèm **0 → 2**, nhãn `"1 Image"` · ô chọn t
 việc thật của Đức — chọn ảnh lượt trước → `scout.upload` → gõ prompt style mới → gửi → chờ →
 tải ảnh mới về. Mọi mảnh đã có và đã chạy thật **rời rạc**; chưa ai nối lại.
 
-**Cẩn thận đúng một chỗ khi làm `R1`:** *"đã đính kèm"* phải kiểm bằng **pill trên trang**
-(`[class*=agent-context-pill]` đếm TĂNG), **không tin lệnh trả về** — `scout.upload` hứa đúng
-*đã bảo Chrome gắn file vào ô*, không hứa trang đã nhận. Đúng bài học `S1`.
+**Cẩn thận đúng một chỗ khi làm `R1`:** *"đã đính kèm"* phải kiểm bằng **pill trên trang**,
+**không tin lệnh trả về** — `scout.upload` hứa đúng *đã bảo Chrome gắn file vào ô*, không hứa
+trang đã nhận. Đúng bài học `S1`. ~~(`[class*=agent-context-pill]` đếm TĂNG)~~ — **selector ấy
+SAI, gạch 16/09 tối**: nó khớp 2 nút cho MỘT ảnh. Đúng là `.agent-context-pill-thumb`; xem mục
+ngay dưới.
+
+
+## 16/09 (tối) — `R1` nối vòng: MÃ XONG, VÒNG SỐNG CHƯA KHÉP
+
+**Việc.** `tu-dong/vong-style.mjs`: chọn ảnh lượt trước → đính kèm → prompt style mới → gửi →
+chờ → ảnh mới về đĩa → JPG. **Không method mới.** 16 khối ghim · 16 đột biến, 0 sống sót · lượt
+chọn ảnh chạy thật trên vùng ghi.
+
+**Chưa ĐẠT, và lý do nằm NGOÀI repo.** Lượt chạy sống dừng ở chặng đính kèm: `scout.upload` báo
+`files: 1` mà trang **không nhận ảnh nào**. Nạp lại trang thì `.concurrency-overlay` hiện ra và
+**không tắt** — Udin đang ĐẦY CHỖ. (Trang vẽ xong mất **18 giây** sau lượt nạp lại.)
+
+**Ba số lật ba giả định, hai trong đó do chính mục HANDOFF bên trên viết ra.**
+⑴ `[class*=agent-context-pill]` khớp **2 nút cho MỘT ảnh** — cái hàng chứa
+(`agent-context-pills-row`) + cái thumb. Nay đếm `.agent-context-pill-thumb`, đúng một nút mỗi
+ảnh. Đó là lý do câu báo lỗi đầu tiên đọc ra `"2 → 2"`, nghe như đang có hai ảnh.
+⑵ **Lượt chạy trước để lại ảnh của nó đang đính kèm.** Gỡ được bằng `.pill-thumb-clear` (đo:
+thumb 1 → 0), nhưng gỡ là thứ phải **XIN**: `--xoa-pill-cu`. Mặc định vẫn từ chối, y hệt
+`--xoa-o-cu` của ô prompt và cùng một lý do — cái đang nằm đó có thể là ảnh Đức tự đưa vào.
+⑶ Sau lượt gỡ, mốc **luôn bằng 0**, nên hiệu số `sau > truoc` là một biến thừa; đổi sang một
+con số tuyệt đối — và hai con đột biến của nó hoá ra **tương đương**.
+
+**`W8` xanh sáng nay KHÔNG bảo đảm lượt nào cũng xanh.** Cùng lệnh, cùng ghế, cách nhau vài giờ.
+Một dòng ĐẠT là một ĐIỂM, không phải một đường — nên lệnh ghi vẫn phải đếm lại trên trang.
+
+**Làm tiếp:** đợi Udin rỗng chỗ rồi chạy một lượt với prompt CHƯA DÙNG BAO GIỜ —
+`vong-style.mjs "<prompt>" --du-an xe-dien-2026 --xoa-pill-cu --mo`.

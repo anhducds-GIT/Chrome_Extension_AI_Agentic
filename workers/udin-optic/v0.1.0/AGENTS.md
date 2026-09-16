@@ -101,8 +101,9 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `bridge/udin-optic-host.mjs` **(đổi 16/09)** | Máy chủ nay có **móc sửa tham số trước khi chuyển tiếp**, và nó chỉ chạm `scout.upload`: ghép `path` tương đối vào vùng ghi bằng `trongGoc`, **GHI ĐÈ** `path_tuyet_doi` người gọi tự điền, và bắt tệp **phải có thật** (Chrome không canh chỗ đó — đo 16/09) |
 | `../tu-dong/chon-che-do.mjs` | **`W5`** — chọn chế độ *Agent* / *Manual Gen*. Chốt là **VỊ TRÍ** nút đang mang `.active`, **không** phải số nút mang nó: con số ấy bằng 1 ở cả lượt đúng lẫn lượt hỏng. Xin đúng chế độ đang bật thì **không bấm lần nào** |
 | `../tu-dong/them-khung.mjs` | **`W6`** — thêm một KHUNG vào canvas qua menu *Add to canvas*. Đọc khối đầu file trước: tiền đề cũ của `W6` **sai**, và ba mục cần tệp bị **từ chối theo rủi ro** |
+| `../tu-dong/vong-style.mjs` **(mới 16/09)** | **`R1`** — MỘT lệnh chạy trọn vòng việc thật: chọn ảnh lượt trước → đính kèm → prompt style mới → ảnh mới về đĩa. Không mở năng lực nào, chỉ nối các chặng đã ĐẠT. **Ba chốt:** *"đã đính kèm"* đếm lại **trên trang** (`.agent-context-pill-thumb`), không tin `ok` của `scout.upload` · mục `Image` tìm theo **nhãn**, không theo số thứ tự · trang đang có ảnh đính kèm sẵn thì **từ chối**, gỡ phải xin bằng `--xoa-pill-cu` |
 | `../tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói; thân ở `../../_shared/goi-bridge/` |
-| `../tu-dong/tests/*.mjs` | năm phép ghim của tầng chạy việc |
+| `../tu-dong/tests/*.mjs` | phép ghim của tầng chạy việc — `run-all.mjs` tự quét cả thư mục, **đừng gõ số ở đây** |
 | `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — máy chủ Bridge. Luật của vùng: `workers/_shared/AGENTS.md` |
 | `../../_shared/goi-bridge/` | **LÕI DÙNG CHUNG** — bên gọi Bridge từ dòng lệnh |
 

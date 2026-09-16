@@ -43,14 +43,27 @@ Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout
 
 ### Việc còn lại, theo đúng thứ tự nên làm
 
-**① `R1` — MỘT LỆNH chạy trọn vòng việc thật của Đức.** Đức nói 16/09:
-*"lấy các ảnh đã được tạo bởi Udin, đưa vào, yêu cầu tạo theo style khác"*. Mọi mảnh đã có và
-đã chạy thật **rời rạc**; chưa có mảnh nào nối chúng lại. Viết `tu-dong/vong-style.mjs`:
-chọn một ảnh từ lượt chạy trước → `scout.upload` (`mo_bang` trỏ mục `Image`) → gõ prompt style
-mới → gửi → chờ xong → tải ảnh mới về đĩa.
-**Không cần method mới, không cần hỏi ai.** Cẩn thận đúng một chỗ: *"đã đính kèm"* phải kiểm
-bằng **pill trên trang** (`[class*=agent-context-pill]` đếm TĂNG), không tin lệnh trả về —
-đúng bài học `S1`. Rẻ nhất, và nó biến cả ngày hôm nay thành thứ dùng được.
+**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. MÃ XONG, VÒNG SỐNG CHƯA KHÉP.**
+`tu-dong/vong-style.mjs` đã có, nối đúng các chặng đã ĐẠT: chọn ảnh lượt trước → đính kèm →
+prompt style mới → gửi → chờ → ảnh mới về đĩa → JPG. **16 khối ghim · 16 đột biến, 0 sống sót ·
+lượt chọn ảnh chạy thật trên vùng ghi.** Không mở method nào mới.
+
+**Còn thiếu đúng một thứ: một lượt chạy SỐNG trọn vòng.** Lượt thử tối 16/09 dừng ở chặng đính
+kèm vì **Udin đang ĐẦY CHỖ** (`.concurrency-overlay` hiện ra và không tắt) — lý do nằm ngoài
+repo, không phải trong mã. Làm tiếp chỉ cần đợi Udin rỗng chỗ rồi chạy:
+
+```
+UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-style.mjs "<một prompt CHƯA DÙNG BAO GIỜ>" \
+                                                   --du-an xe-dien-2026 --xoa-pill-cu --mo
+```
+
+Đợt đo ấy đổi ba chỗ trong chính thiết kế, và cả ba đều là giả định của tôi bị lật:
+⑴ `[class*=agent-context-pill]` đếm **2 cho MỘT ảnh** (cái hàng chứa + cái thumb) — nay đếm
+`.agent-context-pill-thumb`, đúng một nút mỗi ảnh. ⑵ Lượt chạy trước **để lại ảnh của nó đang
+đính kèm**, nên lượt sau phải gỡ — và gỡ là thứ phải **XIN** (`--xoa-pill-cu`), y hệt
+`--xoa-o-cu` của ô prompt và cùng một lý do: cái đang nằm đó có thể là ảnh Đức tự đưa vào.
+⑶ Sau lượt gỡ thì mốc **luôn bằng 0**, nên hiệu số `sau > truoc` là một biến thừa — đổi sang
+một con số tuyệt đối, và hai con đột biến của nó hoá ra **tương đương**.
 
 **② `R2` — khép vòng tự cải tiến LẦN HAI, nay có đủ 8/8.** `T7` khép 14/09 ở mức `PARTIAL`:
 nó dò một trang lạ → sinh adapter → chạy. Lúc ấy bảng `W` mới 5/8 nên vòng chỉ đi được phần
@@ -68,7 +81,7 @@ ba đường đã ghi; mặc định ⒝ *gộp nhiều lượt sửa thành m�
 `observer`→`scouter` · và một lượt rà `BACKLOG.md`: nhiều mục `MỞ` từ 07/09 có thể đã chết theo
 thời gian, cần đọc lại chứ đừng đếm.
 
-### Bốn thứ ĐỪNG làm lại — mỗi cái đã tốn một lần
+### NĂM thứ ĐỪNG làm lại — mỗi cái đã tốn một lần
 
 **⑴ ĐỪNG tin một dòng "X bị chặn bởi Y" mà chưa đo `Y`.** Ba hàng `W6` `W5` `W8` đều hoãn vì
 `S-22`, và **cả ba lý do đều sai** — lý do thật lần lượt là: thao tác không tồn tại · cột "Cần"
@@ -86,6 +99,12 @@ làm được trên tab thật; nó cần một Chrome **của riêng nó**, và
 **⑷ ĐỪNG để `Page.setInterceptFileChooserDialog` ở trạng thái BẬT.** Lúc ấy hộp thoại chọn tệp
 mà **chính Đức** mở cũng im lặng không hiện, và không một thông báo nào chỉ về nguyên nhân. Nó
 chỉ được bật trong lòng một lượt `input.upload`, và lượt tắt nằm trong `finally`. Con `U11` canh.
+
+**⑸ MỘT HÀNG ĐẠT NÓI *“làm được”*, KHÔNG nói *“lần nào cũng được”*.** `W8` xanh sáng 16/09 trên
+một trang vừa nạp lại, chưa có ảnh nào đính kèm, Udin còn rỗng chỗ. Tối cùng ngày, cùng lệnh ấy,
+cùng trên chính cái ghế đó: `scout.upload` vẫn báo `files: 1` và trang **không nhận ảnh nào**.
+Một lượt đo ĐẠT là một ĐIỂM, không phải một đường — nên mọi lệnh ghi vẫn phải **đếm lại trên
+trang**, kể cả lệnh đã có một dòng ĐẠT trong bảng.
 
 ### Một thói quen đã trả tiền năm lần trong hai ngày
 
