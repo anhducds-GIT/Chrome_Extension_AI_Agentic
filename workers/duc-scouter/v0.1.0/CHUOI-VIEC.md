@@ -33,13 +33,19 @@
 
 **Đang ở đâu.** `Scouter v1` Đức ký 16/09 ([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md)) —
 đọc mục *KHÔNG hứa gì* trước khi dựa vào lệnh nào. Đường ghi **tự kiểm**: `scout.type` đọc lại ô
-nhập, `scout.click` nhận `wait_for`. Bảng `W`: `W1`–`W4` `W6` `W7` + E2E **ĐẠT**.
+nhập, `scout.click` nhận `wait_for`. Bảng `W`: **7/8 ĐẠT** — còn đúng `W8`.
 
 ### Việc còn lại, theo đúng thứ tự nên làm
 
-**① `W5` — chọn chế độ *Agent* / *Manual Gen*.** Cùng hình dạng `W6`: một cú bấm, nay có mốc.
-Chép khuôn `them-khung.mjs` — **đếm trạng thái trước/sau**, đừng tin mốc *“menu tắt”* hay
-*“lớp `active` đổi”* một mình. Không cần hỏi ai. Rẻ nhất trong danh sách.
+**~~① `W5`~~ XONG 16/09** — `chon-che-do.mjs`, chạy thật ba nhánh, 15 con đột biến giết được hết.
+Và nó lật một cột: hàng `W5` khai cần `O3` (`scout.a11y`), **lệnh gói Udin không có trên dây**.
+Đọc khối đầu `workers/udin-optic/tu-dong/chon-che-do.mjs` nếu cần chi tiết.
+
+> **BÀI HỌC ĐẮT NHẤT CỦA HAI VIỆC VỪA RỒI, đọc trước khi mở việc tiếp theo.**
+> `W6` và `W5` là **hai hàng liên tiếp** bị hoãn vì một lý do **sai** (`S-22`), và không ai đi
+> kiểm lại lý do hoãn — nên nó sống lâu hơn mọi lời khai khác trong bảng. **Một lý do hoãn cũng
+> là một lời khai, và nó cũng phải đi đo lại.** Trước khi tin dòng *“`X` bị chặn bởi `Y`”* nào
+> trong repo này, bỏ mười phút đo `Y`. Hai lần liền nó rẻ hơn cả việc làm.
 
 **② `S-27` — `scout.clear` vào đường tự kiểm.** Lệnh ghi CUỐI CÙNG còn fail-open; `ADR-0008`
 khai nó ở mục *KHÔNG hứa gì*. Máy móc đã sẵn: cùng cặp `nhanDangO`/`docO`, chỉ đổi phép

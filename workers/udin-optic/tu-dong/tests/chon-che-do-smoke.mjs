@@ -43,6 +43,15 @@ function lam(c = {}) {
     }
     if (method === "scout.text") {
       const n = soThuTu(p.selector);
+      /* `scout.text` TỪ CHỐI khớp 0 hoặc 2+ — đó là điều kiện của ADR-0006, viết thẳng trong
+       * mô tả method, không phải một tuỳ chọn. Máy giả phải từ chối y như vậy: một máy giả dễ
+       * tính hơn dây thật thì mọi phép ghim đứng trên nó đều rộng hơn nó tưởng, và chỗ rộng ra
+       * đó chính là chỗ bản thật sẽ ngã (`fake-encodes-my-belief`). */
+      if (!n || n.i < 1 || n.i > nhan.length) {
+        const e = new Error(`scout.text từ chối: selector '${p.selector}' khớp 0 phần tử.`);
+        e.code = "SELECTOR_NOT_UNIQUE";
+        throw e;
+      }
       return { data: { text: nhan[n.i - 1], matchCount: 1 } };
     }
     if (method === "scout.click") {

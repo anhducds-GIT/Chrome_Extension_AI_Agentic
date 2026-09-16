@@ -1881,3 +1881,24 @@ và treo Chrome của Đức. Từ chối **theo rủi ro**, và khai đúng là
 
 Lộ trình còn lại nằm ở khối **SAU COMPACT** đầu `CHUOI-VIEC.md`: `W5` → `S-27` → 🛑 `T29`
 (hỏi Đức) → dọn sổ. Danh sách năng lực đóng băng chỉ còn **một dòng**: `scout.upload`.
+
+## 2026-09-16 · `claude-scouter-udine` — `W5` xong ở gói Udin; sổ của Scouter sửa ba chỗ khai sai
+
+**Mã nằm ở `workers/udin-optic/tu-dong/chon-che-do.mjs`**, nhật ký đầy đủ ở HANDOFF của gói ấy.
+Ở đây chỉ ghi phần thuộc sổ Scouter, vì `CAPABILITIES.md` là sổ của Scouter.
+
+**Ba chỗ sửa tại chỗ, gạch chứ không xoá.**
+⑴ Hàng `W5` khai **Cần `O3` (`scout.a11y`)**. Lệnh đó **không có trên dây của gói Udin** (12
+method) — hàng ấy trỏ tới thứ không ai gọi được. Thật ra cần `O4`+`O8`+`I1`.
+⑵ Ô `O3` khai *"class không phân biệt được Agent / Manual Gen"*. Đúng **hẹp hơn nó nghe**: class
+không nói được *cái nào là Agent*, nhưng `.active` nói được *cái nào đang chọn* — thứ `W5` cần.
+⑶ Khối cảnh báo *"Hai thứ `S-22` đang che khuất"* (`W5`, `W6`): **sai cả hai**. Giữ lại gạch
+ngang kèm lý do, vì nó là bằng chứng cho bài học ở dưới.
+
+**Bài học, và đây là phần đáng giữ nhất của cả hai ngày.** `W6` và `W5` là **hai hàng liên tiếp**
+hoãn vì `S-22`, và **không ai đi kiểm lại lý do hoãn** — nên một lý do hoãn sống lâu hơn mọi lời
+khai khác trong bảng. Đã viết thành một khối trong `CHUOI-VIEC.md`: trước khi tin dòng *"`X` bị
+chặn bởi `Y`"* nào, bỏ mười phút đo `Y`. Hai lần liền nó rẻ hơn cả việc làm.
+
+**Bảng `W` nay 7/8 ĐẠT.** Còn đúng `W8` — `T29` `scout.upload`, **dòng năng lực cuối cùng**, cần
+`DOM.setFileInputFiles` nên là một **thay đổi luật an toàn**: chỗ đó phải hỏi Đức.

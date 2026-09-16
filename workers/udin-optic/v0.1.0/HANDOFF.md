@@ -442,3 +442,31 @@ hơn thứ nó đo. Ba mục đó thuộc `W8`/`T29`.
 
 **Cũng đo ra, tiện thì ghi:** gói này **không có** `scout.key` trong 12 lệnh, nên nó không bấm
 được `Escape`. Đóng một menu thì bấm lại chính nút mở nó, kèm `wait_state: "absent"`.
+
+## 2026-09-16 · `claude-scouter-udine` — `W5` xong, và một cột "Cần" khai sai từ 13/09
+
+**Việc.** `W5`: chọn chế độ *Agent* / *Manual Gen*. `chon-che-do.mjs` + 11 khối ghim,
+**15 con đột biến tay, 0 sống sót**. Chạy thật ba nhánh trên ghế `Udin_main`, trả ghế về
+đúng chế độ ban đầu. Bảng `W` nay **7/8** — còn đúng `W8` (`T29`, phải hỏi Đức).
+
+**Hàng bảng `W` khai `W5` cần `O3` (`scout.a11y`) — sai hai lần.**
+⑴ **`scout.a11y` không có trên dây của gói này.** Udin khai 12 method. Một hàng năng lực
+chỉ tới một lệnh gói không gọi được là một hàng **không ai chạy được**, và nó nằm đó ba ngày.
+⑵ Lời khai 12/09 (*"class không phân biệt được Agent / Manual Gen"*) đúng **hẹp hơn nó nghe**:
+class không nói được *cái nào là Agent* — nhưng `.active` nói được *cái nào đang chọn*, và `W5`
+cần cái thứ hai. Nên `W5` thật ra cần `O4`+`O8`+`I1`, cả ba **ĐÃ CHỨNG MINH** từ lâu. Nó chưa
+bao giờ thiếu năng lực; chỉ chưa ai làm. Số đo: `button.create-mode-btn` khớp **2**,
+`:nth-of-type(1)` = `"Agent"` (đang `active`), `:nth-of-type(2)` = `"Manual Gen"`.
+
+**Chốt của chặng CỐ Ý không phải phép đếm hiển nhiên.** Số nút mang `.active` là **1 trước và 1
+sau — ở cả nhánh chạy đúng LẪN nhánh cú bấm không tới trang**. Phép ghim dựa vào nó xanh ở cả hai
+nhánh, tức không ghim gì. Thứ phân biệt được là **VỊ TRÍ** nút đang bật.
+
+**Một con đột biến sống sót, và nó tố máy giả chứ không tố mã.** `E16` nới điều kiện dừng vòng
+đọc bảng nút. Máy giả của tôi trả chữ cho selector khớp **0**; dây thật thì `scout.text` **từ
+chối** khớp ≠ 1 (ADR-0006, viết thẳng trong mô tả method). Sửa **máy giả** về đúng hợp đồng —
+không sửa mã cho vừa phép ghim — và `E16` chết.
+
+**`S-22` bị đổ oan lần thứ hai trong một ngày.** `W6` hôm qua, `W5` hôm nay: **hai hàng liên
+tiếp** hoãn vì một lý do sai, và không ai đi kiểm lại lý do hoãn. Đã ghi thành khối cảnh báo ở
+`CHUOI-VIEC.md` của Scouter: **một lý do hoãn cũng là một lời khai, phải đi đo lại.**

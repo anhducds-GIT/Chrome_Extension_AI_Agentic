@@ -37,7 +37,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 |---|---|---|---|---|---|
 | O1 | Thông tin trang + phần tử bấm được | `scout.page` | **ĐÃ CHỨNG MINH** | `hnx.vn` 07/09 · Udin 12/09 (`TRIALS.md`) | |
 | O2 | Cây DOM | `scout.tree` | **ĐÃ CHỨNG MINH** | Udin 12/09 | |
-| O3 | Cây trợ năng (vai trò + tên) | `scout.a11y` | **ĐÃ CHỨNG MINH** | Udin 12/09: phân biệt "Agent" / "Manual Gen" mà class không phân biệt được | |
+| O3 | Cây trợ năng (vai trò + tên) | `scout.a11y` | **ĐÃ CHỨNG MINH** | Udin 12/09: phân biệt "Agent" / "Manual Gen" mà class không phân biệt được. **Thu hẹp 16/09 khi làm `W5`:** câu ấy đúng hẹp hơn nó nghe — class KHÔNG nói được *cái nào là Agent*, nhưng `.active` nói được *cái nào đang chọn*, và đó mới là thứ `W5` cần. `W5` nay chạy bằng `O4`+`O8`. **Và `scout.a11y` không có trên dây của gói `udin-optic`** (12 method) — đừng khai nó là "Cần" cho một workflow của gói ấy | |
 | O4 | Đếm phần tử khớp selector | `scout.query` | **ĐÃ CHỨNG MINH** | Udin 13/09 | |
 | O5 | Chụp màn hình phần đang thấy, **và cả trang dài** | `scout.shot` | **ĐÃ CHỨNG MINH** | Udin 12/09. `full_page` + `scale` thêm 14/09 (`T27`): chụp cả tài liệu rồi thu nhỏ trong chính lượt chụp. Trần 25 triệu điểm ảnh, từ chối TRƯỚC khi dựng ảnh — `dom.snapshot` đã chết vì đúng chỗ đó. **Chạy thật 14/09** trên một trang cao 3.002px: khung nhìn 64 KB → cả trang 273 KB → cả trang ở tỉ lệ 0,25 chỉ **43 KB**, tức **bốn lần diện tích với hai phần ba số byte** | |
 | O6 | Chờ có / hết / **bấm được thật** | `scout.wait` | **ĐÃ CHỨNG MINH** | Udin 13/09, `G-28` `G-30` | |
@@ -176,7 +176,7 @@ extension khác **mà `git status workers/duc-scouter` SẠCH** (15/09). Việc 
 | W2 | Gửi prompt, chờ xong, có ảnh mới | O4 O6 O7 I1 I2 | **ĐẠT** 13/09, 3 lượt | `gui-prompt.mjs` · trước: không đang chạy + ô trống · thao tác: gõ → Send mở khoá → bấm · thành công: nút thành Stop rồi tắt + có `src` ảnh mới · thất bại: Send vẫn khoá / không chạy / không có ảnh mới / quá 5 phút · `G-29` `G-30` |
 | W3 | Lấy ảnh kết quả về đĩa | O11 | **ĐẠT** 14/09 | `lay-anh.mjs` · trước: có ảnh mới của lượt này · thao tác: chọn selector duy nhất → grab từng khúc → `file.write` + `file.append` · thành công: **kích thước thật trên đĩa** khớp `bytes_total` · thất bại: selector không duy nhất · tệp đổi giữa chừng · đĩa nhận thiếu. Bằng chứng: hai ảnh 330.270 + 290.214 byte, `TRIALS` 14/09 |
 | W4 | Đọc câu trả lời chữ của agent | O8 | **ĐẠT** 14/09 | `doc-tra-loi.mjs` · trước: một lượt đã chạy xong · thao tác: hỏi lại trang từng ứng viên selector → cái khớp đúng MỘT → `scout.text` · thành công: chữ khác rỗng, không bị cắt, **và khác câu đọc được trước lượt gửi** · thất bại: không ứng viên nào khớp đúng một (khớp 0 = agent chưa đáp; khớp nhiều = trang đổi hình dạng) · chữ rỗng · chữ cụt ở trần 5.000 · chữ y hệt lượt trước. Bằng chứng `G-76`: đọc đúng câu trả lời cho prompt vừa gửi, 251 ký tự |
-| W5 | Chọn chế độ Agent / Manual Gen | O3 I1 | **CHƯA** | Dính `S-22` như mọi lượt bấm trên ghế này |
+| W5 | Chọn chế độ Agent / Manual Gen | ~~O3 I1~~ → **O4 O8 I1** | **ĐẠT** 16/09 | **Cột "Cần" khai SAI, gạch tại chỗ.** Hàng cũ chỉ tới `O3` (`scout.a11y`), mà `scout.a11y` **không có trên dây của gói Udin** (12 method) — một hàng chỉ tới lệnh gói không gọi được là hàng không ai chạy được. Đo lại: class **CÓ** phân biệt cái đang chọn (`create-mode-btn active`); phần đúng của lời khai 12/09 chỉ là class không nói được *cái nào là Agent* — tên lấy bằng `scout.text`. Và **lý do hoãn cũng sai**: `S-22` không bít nó, cú bấm tới trang **ba lần liên tiếp** hôm nay. · `chon-che-do.mjs` · trước: tab đã qua màn chờ · thao tác: đọc bảng nút (nhãn + nút nào `active`) → **xin đúng chế độ đang bật thì KHÔNG bấm** → bấm nút mang đúng nhãn, chờ chính nó có `.active` → đọc lại · thành công: **`active` chuyển từ nút cũ sang đúng nút xin**, đo thật Agent→Manual Gen→Agent · thất bại: nhãn lạ · không nút nào mang nhãn ấy · số nút ngoài 2…8 · **trước khi bấm mà không có đúng một nút `active`** · bấm xong `active` không sang · nhãn ở vị trí ấy đổi giữa chừng. **Chốt là VỊ TRÍ nút đang `active`, KHÔNG phải số nút mang `.active`**: con số ấy bằng 1 ở cả nhánh chạy đúng lẫn nhánh cú bấm không tới trang, nên nó không phân biệt được gì (`assertion-must-distinguish-branches`) |
 | W6 | ~~Đưa một ảnh kết quả vào canvas~~ → **Thêm một KHUNG vào canvas** | I1 | **ĐẠT** 16/09 | **Lời khai 13/09 SAI, gạch tại chỗ.** Đo lại: ảnh kết quả **đã nằm trên canvas rồi** (một lưới bốn ô `.canvas-image-container.is-batch-grid`), và nút *Add to canvas* là nút **mở MENU** bốn mục `Frame` · `Image` · `Video` · `3D Model` — thêm một đối tượng MỚI, RỖNG. Không có nút riêng trên từng ảnh (đếm trọn 54 nút của trang). **Và lý do hoãn cũng sai**: `S-22` không bít nó — cú bấm tới trang **bốn lần liên tiếp** hôm nay. · `them-khung.mjs` · trước: tab đã qua màn chờ, KHÔNG cần lượt sinh ảnh nào · thao tác: đếm khung → mở menu → **hỏi lại trang từng mục để tìm đúng NHÃN** → bấm → đếm lại · thành công: số khung **tăng đúng 1** (đo thật 8 → 9) · thất bại: loại lạ · loại cần tệp · nút khớp ≠ 1 · không mục nào mang nhãn ấy · menu không hiện/không tắt · **menu tắt mà khung không tăng**. Ba mục `Image`/`Video`/`3D Model` **bị từ chối theo RỦI RO, không phải đã đo**: chúng gần như chắc chắn mở hộp thoại chọn tệp của hệ điều hành, thứ treo Chrome cho tới khi có người bấm tay — chúng thuộc `W8`/`T29` |
 | W7 | Gửi prompt lần hai trên cùng ô | I4 | **ĐẠT** 14/09 | `gui-prompt.mjs` cờ `xoaOCu` · trước: ô prompt CÓ chữ sẵn (nút Send đã mở) · thao tác: `scout.clear` → **chờ nút Send khoá lại** → gõ prompt mới · thành công: chữ gõ ra không dính một mẩu nào của lượt trước · thất bại: không xin `xoaOCu` thì **vẫn từ chối như cũ** (lời từ chối là lớp bảo vệ, không phải thiếu sót); xoá xong mà Send vẫn mở thì ĐỎ và **không bấm lần nào**. Bằng chứng `G-77` |
 | W8 | Tải ảnh tham chiếu lên | I9 | **CHẶN** | `T29` `scout.upload` (`I9`) — dòng năng lực THẬT cuối cùng còn lại của cả gói |
@@ -184,7 +184,9 @@ extension khác **mà `git status workers/duc-scouter` SẠCH** (15/09). Việc 
 
 ### Cấp 3 — Udin đang ở đâu (tính từ bảng trên)
 
-Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **5 / 8 workflow ĐẠT · 1 CHẶN (`W8`) · E2E ĐẠT**.
+Chưa có danh sách bắt buộc Đức chốt, nên chỉ đếm được: **7 / 8 workflow ĐẠT · 1 CHẶN (`W8`) · E2E ĐẠT**.
+**Còn đúng MỘT hàng chưa ĐẠT trong cả bảng, và nó là `W8`** — tức `T29` `scout.upload`, thứ cần
+một method CDP mới nên phải hỏi Đức.
 
 **Vòng tự cải tiến (`T7`) — KHÉP 14/09.** Đây là năng lực mà cả gói sinh ra để có, và nó không
 nằm trong bảng `W` vì nó không phải một workflow của một trang: nó là *dò một trang chưa biết →
@@ -194,8 +196,9 @@ nó tự rút ra trùng bản làm tay `udin-optic/`. `G-84` `G-85` `G-86` `G-87
 Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
 
 **Và đây là chỗ câu hỏi ⓪ của Đức đã tự trả gần hết.** Đề xuất bắt buộc là `W1 W2 W3 W4 W7` +
-E2E — **cả sáu nay đều ĐẠT**. Ba `W` còn lại đúng là ba cái đề xuất để NGOÀI: `W5` `W6` dính
-`S-22`, `W8` cần `T29`. Nên ⓪ không còn định cỡ phần còn lại nữa; nó chỉ còn là một chữ ký xác
+E2E — **cả sáu nay đều ĐẠT**. ~~Ba `W` còn lại đúng là ba cái đề xuất để NGOÀI: `W5` `W6` dính
+`S-22`, `W8` cần `T29`.~~ **Sai hai phần ba, gạch tại chỗ 16/09:** `W5` và `W6` **không** dính
+`S-22` — cả hai đã ĐẠT trên đúng ghế ấy, cú bấm tới trang mọi lượt. Còn lại đúng `W8`, cần `T29`. Nên ⓪ không còn định cỡ phần còn lại nữa; nó chỉ còn là một chữ ký xác
 nhận rằng **điều kiện tách Udin đã đủ**, hoặc một câu nói Đức muốn thêm gì vào danh sách.
 
 ## 5. Lộ trình — viết lại 14/09 quanh MỘT câu hỏi của Đức
@@ -262,10 +265,13 @@ nhiêu, nên nó đứng trước mọi việc khác trong bảng dưới.
 | **④** | **`T21` tách Udin** thành gói riêng | các `W` bắt buộc ĐẠT **từ gói mới**, và **không một dòng Scouter nào phải sửa** | ③ |
 | **⑤** | Trang thứ hai khác loại (artboard: Vizcom / node editor / timeline) | có `W` ĐẠT mà không sửa seed | ④ |
 
-**Hai thứ `S-22` ĐANG che khuất, nói trước khi ai đó tưởng là lỗi mới.** `W5` và `W6` đều là *một
+~~**Hai thứ `S-22` ĐANG che khuất, nói trước khi ai đó tưởng là lỗi mới.** `W5` và `W6` đều là *một
 cú bấm*, và trên ghế này **không lượt bấm nào tới trang** (`G-74`). Nên hai `W` đó có thể viết
-xong mà vẫn không ĐẠT được **trên ghế này** — và đó KHÔNG phải lỗi của adapter. Ai gặp chuyện ấy
-thì đọc `S-22` trước, đừng đi tìm bug trong `pilots/udin-optic/`.
+xong mà vẫn không ĐẠT được **trên ghế này**.~~ **LỜI CẢNH BÁO NÀY SAI, đo lại 16/09.** `W6` bấm
+tới trang bốn lần liên tiếp, `W5` ba lần, trên đúng ghế ấy — cả hai ĐẠT. Thứ chặn hai hàng đó
+chưa bao giờ là `S-22`: `W6` bị chặn bởi **một thao tác không tồn tại**, `W5` bởi **một cột
+"Cần" khai sai**. Giữ đoạn này lại để nhớ một chuyện: **một lý do hoãn cũng là một lời khai, và
+nó cũng phải đi đo lại** — không ai đi kiểm lại lý do hoãn, nên nó sống lâu hơn mọi lời khai khác.
 
 **Vì sao `T33` đứng trước mọi việc mới:** nó không viết thêm dòng nào. Nó chỉ chạy lại thứ đã có
 trên một nền đã đổi — trần khúc 512 KiB làm một ảnh tốn 2 đơn vị thay vì 14 — và nó trả lời một
