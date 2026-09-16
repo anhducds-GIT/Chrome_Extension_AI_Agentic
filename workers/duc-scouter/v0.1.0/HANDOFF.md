@@ -2189,3 +2189,23 @@ không ai định đưa) · `U1` và `U2` 1 → 2 (hai đường cùng đưa byt
 
 `scout.tha` lên dây **chỉ ở gói Udin**, y như `scout.upload`: Scouter cố ý không khai đường đưa
 byte ra trang. 181/181 + 17/17 đột biến, 0 sống sót.
+
+
+## 17/09 — `input.tha` chạy thật trên trang thật, và một bài học điều phối
+
+**Đo trên Udin:** thả một tệp vào `#root`, `hit: descendant` → canvas **17 → 18**, và **0 cửa sổ
+hộp thoại** ở cả ba lần đếm. Đường kéo-thả làm đúng thứ nó hứa trên đồ thật, không chỉ trên
+Chrome hồ sơ trống.
+
+**Cổng chung của lõi ghi giữ nguyên hiệu lực ở method mới:** toạ độ thả suy từ `DOM.getBoxModel`
+rồi qua phép kiểm điểm bấm — `(719, 455)`, `relation: descendant`. Không một toạ độ nào tới từ
+người gọi.
+
+**BÀI HỌC ĐIỀU PHỐI:** một lượt sửa tệp **máy chủ Bridge** là một lượt **khởi động lại TIẾN
+TRÌNH**, không phải một lượt nạp lại extension — hai thứ nằm ở hai chỗ khác nhau và tôi gộp nhầm
+chúng, làm Đức phải thao tác hai lần. Extension đã có `scout.tha` trong khi máy chủ vẫn chạy mã
+bật từ 16:43, và triệu chứng là `INVALID_PARAMS` trông như lỗi mã.
+
+**Máy chủ từ chối ĐÚNG lúc phải từ chối** — nó trả *"trường này do MÁY CHỦ đặt … extension KHÔNG
+tự ghép, và không lùi về `path`"* thay vì đoán lấy một đường dẫn. Một lời từ chối đọc được ở đúng
+chỗ đã chỉ thẳng ra nguyên nhân trong một lượt.
