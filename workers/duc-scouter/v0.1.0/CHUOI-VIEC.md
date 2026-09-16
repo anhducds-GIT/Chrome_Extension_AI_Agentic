@@ -49,8 +49,10 @@ prompt style mới → gửi → chờ → ảnh mới về đĩa → JPG. **16 
 lượt chọn ảnh chạy thật trên vùng ghi.** Không mở method nào mới.
 
 **Còn thiếu đúng một thứ: một lượt chạy SỐNG trọn vòng.** Lượt thử tối 16/09 dừng ở chặng đính
-kèm vì **Udin đang ĐẦY CHỖ** (`.concurrency-overlay` hiện ra và không tắt) — lý do nằm ngoài
-repo, không phải trong mã. Làm tiếp chỉ cần đợi Udin rỗng chỗ rồi chạy:
+kèm vì **Udin đang ĐẦY CHỖ** — lý do nằm ngoài repo, không phải trong mã. Dấu hiệu nhận ra:
+`.concurrency-overlay` có mặt và đọc ra *“User Limit Reached · Please try again in a few minutes
+when other users finish their sessions.”*. Đo: **~25 phút** và **6 lượt bấm `Try Again`** cách
+nhau một phút đều không tắt được nó, nên **đừng bấm thêm — chỉ có đợi**. Làm tiếp:
 
 ```
 UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-style.mjs "<một prompt CHƯA DÙNG BAO GIỜ>" \
