@@ -20,7 +20,7 @@ const C = "https://cdn.udin/img/ccc.webp";
  * @param khongBadge bấm xong KHÔNG mọc huy hiệu
  * @param goKhongAn Shift+click lên ảnh đang chọn thì KHÔNG bỏ được
  */
-function lam({ canvas = [A, B, C], chonSan = [], soSai = null, khongBadge = false, goKhongAn = false, bamThem = null } = {}) {
+function lam({ canvas = [A, B, C], chonSan = [], soSai = null, khongBadge = false, goKhongAn = false, bamThem = null, khuat = [], bamKhongAn = false } = {}) {
   const nk = [];
   const trang = { canvas: [...canvas], chon: [...chonSan] };
   const q = (n) => ({ data: { matchCount: n, items: [], hasMore: false } });
@@ -50,15 +50,29 @@ function lam({ canvas = [A, B, C], chonSan = [], soSai = null, khongBadge = fals
       }
       { const m = sel.match(/^\.canvas-image-container\.selected:nth-of-type\((\d+)\)$/);
         if (m) return q(Number(m[1]) <= trang.chon.length ? 1 : 0); }
+      if (sel === SEL.huyHieu) return q(!khongBadge && trang.chon.length >= 2 ? trang.chon.length : 0);
+      { const m = sel.match(/^(\.canvas-image-container:has\(img\[src\^="(.*?)"\]\))\.selected$/);
+        if (m) { const c = demTienTo(m[2]);
+          if (c !== 1) return q(0);
+          const src = trang.canvas.find((x) => x.startsWith(m[2]));
+          return q(trang.chon.includes(src) ? 1 : 0); } }
       const p2 = tienTo(sel);
       if (p2 !== null) {
         const n = demTienTo(p2);
         if (!sel.endsWith(SEL.huyHieu)) return q(n);
-        /* huy hiệu: chỉ có khi hộp ấy khớp đúng một VÀ ảnh ấy đang được chọn */
-        if (n !== 1 || khongBadge) return q(0);
+        /* Huy hiệu: **Udin chỉ vẽ số khi có từ HAI ảnh trở lên** (đo thật 16/09 tối) — một ảnh
+         * thì hộp mang `selected` mà không có số nào. */
+        if (n !== 1 || khongBadge || trang.chon.length < 2) return q(0);
         const src = trang.canvas.find((s) => s.startsWith(p2));
         return q(soCua(src) === null ? 0 : 1);
       }
+    }
+    if (method === "scout.wait") {
+      /* Canvas kéo được, nên một ảnh có trong DOM vẫn có thể nằm ngoài khung nhìn. */
+      const p2 = tienTo(p.selector);
+      const src = p2 === null ? null : trang.canvas.find((x) => x.startsWith(p2));
+      const oke = src !== null && !khuat.includes(src);
+      return { data: { satisfied: oke, usableBlockedBy: oke ? null : "no_hit_test" } };
     }
     if (method === "scout.text") {
       const p2 = tienTo(p.selector);
@@ -79,6 +93,7 @@ function lam({ canvas = [A, B, C], chonSan = [], soSai = null, khongBadge = fals
       if (src === null) throw new Error("khong tro duoc: " + p.selector);
       const i = trang.chon.indexOf(src);
       if (i >= 0) { if (!goKhongAn) trang.chon.splice(i, 1); }
+      else if (bamKhongAn) { /* cú bấm không tới trang */ }
       else {
         trang.chon.push(src);
         /* Trang tự nhặt thêm một ảnh vào tập chọn — mỗi ảnh vẫn mang đúng số của nó, nên mọi phép
@@ -101,11 +116,14 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
   const bam = t.nk.filter((g) => g.method === "scout.chon").map((g) => g.p.selector);
   assert.deepEqual(bam, [hopCuaAnh(A), hopCuaAnh(B)], "phải bấm A trước B — thứ tự bấm LÀ thứ tự @N"); }
 
-// ⓑ CÙNG trang ấy, chỉ khác: trang gán cho ảnh thứ nhất số "2" → ĐỎ, và KHÔNG đi tiếp
+// ⓑ CÙNG trang ấy, chỉ khác: trang gán cho ảnh thứ nhất số "2" → ĐỎ.
 //    Cặp ⓐ+ⓑ là chỗ một phép kiểm dừng ở "đã có huy hiệu" sẽ xanh ở cả hai nhánh.
+//    HAI cú bấm đều xảy ra, và đó là bắt buộc chứ không phải sơ sót: **Udin chỉ vẽ số khi
+//    có từ HAI ảnh trở lên**, nên không có cách nào đọc thứ tự sớm hơn. Thứ đắt tiền là lượt
+//    gửi prompt, và nó vẫn chưa xảy ra.
 { const t = lam({ soSai: { viTri: 1, thanh: "2" } });
   await assert.rejects(() => chonTheoThuTu([A, B], t), /mang số \*\*"2"\*\*, không phải "1"/);
-  assert.equal(soLan(t.nk, "scout.chon"), 1, "sai số ở ảnh đầu thì KHÔNG được bấm tiếp ảnh sau"); }
+  assert.equal(soLan(t.nk, "scout.chon"), 2, "hai cú bấm — trước đó không đọc được số nào"); }
 
 // ⓒ một tấm ảnh nằm NHIỀU chỗ trên canvas → TỪ CHỐI, không bấm lần nào
 { const t = lam({ canvas: [A, A, B] });
@@ -135,10 +153,10 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
 { const t = lam({ chonSan: [C], goKhongAn: true });
   await assert.rejects(() => chonTheoThuTu([A, B], { ...t, boChonCu: true }), /KHÔNG giảm/); }
 
-// ⓗ bấm xong KHÔNG mọc huy hiệu → ĐỎ, và dừng ngay ở ảnh đầu
+// ⓗ chọn xong mà trang KHÔNG vẽ huy hiệu nào → ĐỎ, và nói rõ là chưa đọc được thứ tự
 { const t = lam({ khongBadge: true });
-  await assert.rejects(() => chonTheoThuTu([A, B], t), /không mọc ra huy hiệu/);
-  assert.equal(soLan(t.nk, "scout.chon"), 1); }
+  await assert.rejects(() => chonTheoThuTu([A, B], t), /chỉ vẽ 0 huy hiệu số/);
+  assert.equal(soLan(t.nk, "scout.chon"), 2); }
 
 // ⓘ dấu `…` lõi đọc gắn vào KHÔNG được lọt vào selector, và `"` thì từ chối
 { assert.equal(sachSrc("https://x/a.webp…"), "https://x/a.webp");
@@ -164,5 +182,31 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
 //    nên đây là chỗ duy nhất bắt được một `@3` mọc ra ngoài ý muốn.
 { const t = lam({ bamThem: C });
   await assert.rejects(() => chonTheoThuTu([A], t), /trang đếm ra 2 ảnh đang chọn/); }
+
+// ⓜ ảnh nằm ngoài khung nhìn của canvas → ĐỎ kèm việc Đức phải làm, và KHÔNG bấm bừa.
+//    Đo thật 16/09: 6/12 ảnh trên canvas bấm được, số còn lại báo `no_hit_test`.
+{ const t = lam({ khuat: [B] });
+  await assert.rejects(() => chonTheoThuTu([A, B], t), /KHÔNG bấm được \(no_hit_test\)/);
+  assert.equal(soLan(t.nk, "scout.chon"), 1, "ảnh đầu vẫn chọn, ảnh khuất thì dừng — không bấm mù"); }
+
+// ⓝ CHỌN ĐÚNG MỘT ẢNH: Udin không vẽ số nào, và hàm phải **khai là không đọc được thứ tự**
+//    chứ không bịa ra số 1. Đo thật 16/09 tối: 1 ảnh → selected 1, huy hiệu 0.
+{ const t = lam();
+  const k = await chonTheoThuTu([A], t);
+  assert.equal(k.thuTuKiemDuoc, false);
+  assert.deepEqual(k.daChon.map((x) => x.so), [null], "một ảnh thì `so` là null — không bịa");
+  assert.equal(soLan(t.nk, "scout.chon"), 1); }
+
+// ⓞ hai ảnh thì thứ tự ĐỌC ĐƯỢC, và cờ nói đúng thế
+{ const t = lam();
+  const k = await chonTheoThuTu([A, B], t);
+  assert.equal(k.thuTuKiemDuoc, true); }
+
+// ⓟ cú bấm KHÔNG tới trang → dừng ngay ở ảnh đầu, không bấm nốt những ảnh còn lại.
+//    Phép đối chiếu TỔNG cuối cùng cũng bắt được ca này, nhưng chỉ sau khi đã bấm hết — và
+//    câu báo lúc ấy nói "tổng không khớp" chứ không nói ẢNH NÀO hỏng. Đếm số cú bấm là chỗ phân biệt.
+{ const t = lam({ bamKhongAn: true });
+  await assert.rejects(() => chonTheoThuTu([A, B], t), /ảnh thứ 1 mà hộp ấy KHÔNG mang dấu/);
+  assert.equal(soLan(t.nk, "scout.chon"), 1, "hỏng ở ảnh đầu thì dừng ngay, không bấm nốt"); }
 
 console.log("chon-tham-chieu-smoke: OK");

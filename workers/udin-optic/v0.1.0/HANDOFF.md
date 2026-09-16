@@ -672,3 +672,27 @@ danh **CHỖ ĐẶT** — đo thật thấy một ảnh nằm **5 chỗ** trên 
 `@3` khi mới chọn 2 ảnh thì đỏ TRƯỚC khi tiêu đồng nào. 12 khối ghim · 12 đột biến, 0 sống sót.
 
 **Cần một lượt NẠP LẠI extension** — `scout.chon` là lệnh mới trên dây, extension chưa có nó.
+
+
+## 16/09 (khuya) — `@1` / `@2` CHẠY THẬT, và hai phép đo lật thiết kế
+
+**Chạy thật trên canvas của Đức:** bỏ 2 ảnh đang chọn → Shift+click A rồi B → **đọc ngược từ
+trang: A mang `"1"`, B mang `"2"`**, đúng hai ảnh đã xin. `scout.chon` lên dây sau lượt nạp lại.
+
+**⒜ Canvas là một MẶT PHẲNG KÉO ĐƯỢC.** *Có trong DOM* còn xa mới là *bấm được*: đo **6/12** ảnh
+bấm được, số còn lại `no_hit_test`. Lượt chạy đầu ngã ở toạ độ `y = -100` — phép kiểm điểm bấm
+chặn đúng một cú bấm mù, nhưng câu báo là câu của CDP và nó không nói Đức cần làm gì. Nay hỏi
+`scout.wait state=usable` TRƯỚC, và nói thẳng: *"kéo canvas cho nó hiện ra rồi chạy lại"*.
+
+**⒝ Udin CHỈ vẽ số khi có từ HAI ảnh trở lên.** Một ảnh thì hộp mang `selected` mà không huy hiệu
+nào — hợp lý, một ảnh thì chẳng có gì để xếp. Bản đầu đòi huy hiệu ngay sau cú bấm ĐẦU TIÊN nên
+nó ném oan. Nay phép kiểm thứ tự chạy SAU khi chọn xong, và chọn một ảnh thì trả `so: null` kèm
+`thuTuKiemDuoc: false` — **khai là không đọc được**, không bịa ra số 1.
+
+**Một hệ quả phải nói rõ:** vì không đọc được số trước khi có hai ảnh, lượt sai thứ tự chỉ lộ ra
+SAU khi đã bấm cả hai. Hai cú bấm ấy rẻ và bỏ được; thứ đắt tiền là lượt gửi prompt, và nó vẫn
+chưa xảy ra.
+
+**Một con đột biến sống sót chỉ ra MÃ THỪA, không phải ghim hở:** phép đếm huy hiệu trong từng hộp
+chỉ nói lại điều `scout.text` đã bảo đảm (từ chối mọi selector khớp ≠ 1). Xoá nó, thay vì đi ghim
+một thứ không làm gì. 15 khối ghim · 15 đột biến, 0 sống sót.

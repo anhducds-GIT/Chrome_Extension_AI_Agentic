@@ -9,7 +9,7 @@ last_verified_how: "Live 16/09: mot luot E2E that tren trang Udin (prompt moi, -
 evidence_ref: workers/duc-scouter/v0.1.0/docs/TRIALS.md
 owner: claude
 priority_rank: 4
-next_step: "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong."
+next_step: "scout.chon (method thu 25) DA CHAY THAT tren canvas Udin 16/09 khuya — doc nguoc duoc thu tu @1/@2. Chi tiet o STATUS goi udin-optic. Viec ke ben Scouter: khong co. Con no chung: input.upload van bat hop thoai Open cua Windows tren may Duc, chua tai hien duoc tren Chrome ho so trong."
 human_action: "khong"
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."

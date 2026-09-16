@@ -155,23 +155,70 @@ export async function chonTheoThuTu(dsSrc, tuyChon = {}) {
       );
     }
 
-    await goi("scout.chon", { target_id: tab, selector }, tuyChon);
-
-    /* Kiểm bằng TRANG: huy hiệu phải mọc ra TRONG ĐÚNG hộp vừa bấm. */
-    const selHuyHieu = `${selector} ${SEL.huyHieu}`;
-    let coHuyHieu = 0;
-    for (let n = 0; n < (tuyChon.soNhip ?? 16) && coHuyHieu !== 1; n++) {
-      await nghi(tuyChon.buocMs ?? 300);
-      coHuyHieu = await dem(tab, selHuyHieu);
-    }
-    if (coHuyHieu !== 1) {
+    /* CANVAS LÀ MỘT MẶT PHẲNG KÉO ĐƯỢC, nên "có trong DOM" còn xa mới là "bấm được": đo 16/09
+     * trên canvas thật, **6 / 12** ảnh bấm được, số còn lại báo `no_hit_test` vì chúng nằm ngoài
+     * khung nhìn. Không hỏi trước thì lượt bấm ngã với một câu của CDP — *"No node found at given
+     * location"* kèm một toạ độ `y = -100` — và câu ấy không nói được Đức cần làm gì. */
+    const dungDuoc = (await goi("scout.wait", {
+      target_id: tab, selector, state: "usable", timeout_ms: tuyChon.choMs ?? 2000,
+    }, tuyChon)).data;
+    if (dungDuoc?.satisfied !== true) {
       throw new Error(
-        `Đã Shift+click ảnh thứ ${mong} mà trong hộp ấy không mọc ra huy hiệu số nào (khớp ${coHuyHieu}) — ` +
-        "trang chưa nhận cú bấm; CHƯA gửi prompt.",
+        `Ảnh thứ ${mong} đang KHÔNG bấm được (${dungDuoc?.usableBlockedBy || "hết giờ"}) — nó nằm ngoài khung nhìn ` +
+        "của canvas, hoặc bị che. Kéo canvas cho nó hiện ra (hoặc bấm nút thu-vừa-màn-hình) rồi chạy lại. Chưa bấm gì.",
       );
     }
 
-    /* Và con số phải ĐÚNG thứ tự. Đây là chốt của cả file: có huy hiệu ≠ đúng số. */
+    await goi("scout.chon", { target_id: tab, selector }, tuyChon);
+
+    /* Kiểm bằng TRANG: đúng cái hộp vừa bấm phải mang dấu "đang chọn". */
+    let daChon = 0;
+    for (let n = 0; n < (tuyChon.soNhip ?? 16) && daChon !== 1; n++) {
+      await nghi(tuyChon.buocMs ?? 300);
+      daChon = await dem(tab, `${selector}.selected`);
+    }
+    if (daChon !== 1) {
+      throw new Error(
+        `Đã Shift+click ảnh thứ ${mong} mà hộp ấy KHÔNG mang dấu "đang chọn" (khớp ${daChon}) — ` +
+        "trang chưa nhận cú bấm; CHƯA gửi prompt.",
+      );
+    }
+    ra.push({ src: sachSrc(dsSrc[i]), selector, so: null });
+  }
+
+  const tong = await dem(tab, SEL.dangChon);
+  if (tong !== dsSrc.length) {
+    throw new Error(`Chọn xong ${dsSrc.length} ảnh mà trang đếm ra ${tong} ảnh đang chọn — tập chọn không khớp; chưa gửi prompt.`);
+  }
+
+  /* ─── THỨ TỰ, đọc lại từ trang ──────────────────────────────────────────
+   * Đo 16/09 tối, và nó lật một giả định của chính file này: **Udin chỉ vẽ số khi có từ HAI ảnh
+   * trở lên.** Một ảnh được chọn thì hộp mang `selected` mà không có huy hiệu nào — hợp lý, một
+   * ảnh thì chẳng có gì để xếp thứ tự. Bản đầu đòi huy hiệu ngay sau cú bấm ĐẦU TIÊN nên nó ném
+   * oan ở lượt chạy thật đầu tiên.
+   *
+   * Nên phép kiểm thứ tự chạy SAU KHI đã chọn xong, và chỉ chạy khi có cái để xếp. Một ảnh thì
+   * `so` trả về `null` — **khai là không có**, chứ không bịa ra số 1. */
+  if (ra.length < 2) return { boChon: truoc, daChon: ra, thuTuKiemDuoc: false };
+
+  let soHuyHieu = 0;
+  for (let n = 0; n < (tuyChon.soNhip ?? 16) && soHuyHieu !== ra.length; n++) {
+    await nghi(tuyChon.buocMs ?? 300);
+    soHuyHieu = await dem(tab, SEL.huyHieu);
+  }
+  if (soHuyHieu !== ra.length) {
+    throw new Error(`Đã chọn ${ra.length} ảnh mà trang chỉ vẽ ${soHuyHieu} huy hiệu số — chưa đọc được thứ tự; chưa gửi prompt.`);
+  }
+
+  for (let i = 0; i < ra.length; i++) {
+    const mong = i + 1;
+    const selHuyHieu = `${ra[i].selector} ${SEL.huyHieu}`;
+    /* KHÔNG đếm lại huy hiệu trong từng hộp ở đây, dù nó trông như một lớp bảo vệ nữa: `scout.text`
+     * TỪ CHỐI mọi selector khớp ≠ 1 (ADR-0006), nên phép đếm ấy chỉ nói lại một câu lõi đọc đã
+     * nói. Con đột biến gỡ nó ra không giết được ai — đó là dấu của mã thừa, không phải của ghim
+     * hở, nên xoá thay vì đi ghim một thứ không làm gì.
+     *
+     * Chốt thật của cả file nằm ở dòng dưới: **có huy hiệu ≠ ĐÚNG SỐ.** */
     const doc = await chu(tab, selHuyHieu);
     if (doc !== String(mong)) {
       throw new Error(
@@ -180,14 +227,9 @@ export async function chonTheoThuTu(dsSrc, tuyChon = {}) {
         "không một dòng đỏ nào. Dừng ở đây.",
       );
     }
-    ra.push({ src: sachSrc(dsSrc[i]), selector, so: mong });
+    ra[i].so = mong;
   }
-
-  const tong = await dem(tab, SEL.dangChon);
-  if (tong !== dsSrc.length) {
-    throw new Error(`Chọn xong ${dsSrc.length} ảnh mà trang đếm ra ${tong} ảnh đang chọn — tập chọn không khớp; chưa gửi prompt.`);
-  }
-  return { boChon: truoc, daChon: ra };
+  return { boChon: truoc, daChon: ra, thuTuKiemDuoc: true };
 }
 
 /**
