@@ -2089,3 +2089,8 @@ chỗ. Ghi thành luật ⑸ ở `CHUOI-VIEC.md`, và `TRIALS.md` có hàng riê
 
 **Không đụng một dòng nào của seed.** `R1` chỉ nối các chặng đã ĐẠT — đúng điều kiện nó sinh ra
 để chứng minh.
+
+**Lượt chờ, đo tử tế để lần sau khỏi đo lại.** Màn chắn đọc nguyên văn *“User Limit Reached ·
+Please try again in a few minutes when other users finish their sessions.”*. Đo **~25 phút** và
+**6 lượt bấm `Try Again`** cách nhau một phút: không tắt được nó. Nên dấu hiệu ấy nghĩa là
+**ĐỢI**, không phải **BẤM THÊM** — và nó không phải một chặng hỏng của gói này.
