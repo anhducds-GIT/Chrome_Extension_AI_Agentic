@@ -126,8 +126,8 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang.",
-      "human_action": "@Đức:chốt — D4: cho hay khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10.",
+      "next_step": "HET VIEC MO. Dem 16/09 dong: S-27 (scout.clear tu kiem — chay that ca ba nhanh tu CA HAI goi) · S-04 · T6 · T21 chang 5. D4 chot: CHUA MO DOM.setFileInputFiles — dem duoc 0 viec dang chay can dua tep vao trang, va W8 von ngoai danh sach bat buoc. MOC MO: ngay Duc can dua mot ANH THAM CHIEU vao Udin. CON MO duy nhat: T10/S-21, chi can MOT TAB TRANG de gan/nha debugger len.",
+      "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": "2026-09-16",
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter).",
-      "human_action": "@Đức:bấm — nap lai extension Udin MOT lan de scout.clear tu kiem chay tu chinh goi nay. Khong gap: khong lenh nao hong, chi la lenh xoa van bao dat theo kieu cu cho toi luc do.",
+      "next_step": "scout.clear tu kiem DA CHAY THAT TU CHINH GOI NAY 16/09 sau khi Duc nap lai: o co 15 ky tu -> da_kiem true (hai phim da toi trang); xoa lai o da rong -> da_kiem true nhung CAU KHAC. Duong ghi cua goi khong con lenh nao noi doi. Bang W: 7/8; W8 HOAN CO CHU Y (D4 ben Scouter, moc mo la ngay Duc can dua anh tham chieu vao Udin).",
+      "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang.",
+      "title": "HET VIEC MO. Dem 16/09 dong: S-27 (scout.clear tu kiem — chay that ca ba nhanh tu CA HAI goi) · S-04 · T6 · T21 chang 5. D4 chot: CHUA MO DOM.setFileInputFiles — dem duoc 0 viec dang chay can dua tep vao trang, va W8 von ngoai danh sach bat buoc. MOC MO: ngay Duc can dua mot ANH THAM CHIEU vao Udin. CON MO duy nhat: T10/S-21, chi can MOT TAB TRANG de gan/nha debugger len.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter).",
+      "title": "scout.clear tu kiem DA CHAY THAT TU CHINH GOI NAY 16/09 sau khi Duc nap lai: o co 15 ky tu -> da_kiem true (hai phim da toi trang); xoa lai o da rong -> da_kiem true nhung CAU KHAC. Duong ghi cua goi khong con lenh nao noi doi. Bang W: 7/8; W8 HOAN CO CHU Y (D4 ben Scouter, moc mo la ngay Duc can dua anh tham chieu vao Udin).",
       "rank": 5,
       "claim": null
     }
