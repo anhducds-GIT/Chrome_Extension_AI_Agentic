@@ -861,3 +861,16 @@ Một dòng script: `npm run scouter:hinh-hoc` → `workers/duc-scouter/v0.1.0/s
 Đó là phép đo đóng `S-21` (một tab thôi trả lời câu hỏi hình học). Nó **không** nằm trong suite
 mặc định, cố ý: nó mở một Chrome riêng và giết tiến trình vẽ trang — cùng kiểu với
 `scouter:doc-lai` và `scouter:action-probe`. Nhật ký đầy đủ ở `workers/duc-scouter/HANDOFF.md`.
+
+## 2026-09-16 · `claude-scouter-udine` — móc `truocKhiChuyen` ở máy chủ Bridge DÙNG CHUNG
+
+`workers/_shared/bridge-host/bridge-host-core.mjs` nhận thêm một tuỳ chọn `truocKhiChuyen`:
+một hàm sửa phong bì **trước khi chuyển tiếp xuống extension**. **Mặc định KHÔNG CÓ**, và ba gói
+`duc-auto-*` không truyền gì nên hành vi của chúng không đổi một byte.
+
+Nó ra đời cho `scout.upload` (`T29`): đường dẫn tương đối phải được ghép vào vùng ghi, mà **chỉ
+máy chủ biết vùng ghi ở đâu và chỉ máy chủ là bên người gọi không chi phối được**. Để extension
+tự ghép thì phải đẩy cái biết ấy xuống theo một đường khác — tức đẻ thêm một chỗ để lệch.
+
+Móc ném thì lượt gọi ĐỎ và **không gì được chuyển xuống**: một đường dẫn chưa kiểm được thì
+không đi tiếp. Thêm `scouter:tai-len` và `scouter:hinh-hoc` vào `package.json`.

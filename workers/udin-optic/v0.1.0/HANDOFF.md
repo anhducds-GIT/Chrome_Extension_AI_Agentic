@@ -513,3 +513,27 @@ chứ không chỉ trong máy giả. Ô prompt trả về rỗng như lúc gặp
 
 **`W8` hoãn có chủ ý** (`D4` bên Scouter, chốt 16/09): không việc nào đang chạy cần đưa tệp vào
 trang. Mốc mở là ngày Đức cần đưa một **ảnh tham chiếu** vào Udin. Bảng `W` giữ **7/8**.
+
+## 2026-09-16 · `claude-scouter-udine` — `scout.upload`: gói đi từ 12 lên 13 method
+
+Đức chốt: *lấy ảnh Udin vừa tạo, đưa ngược vào, xin style khác*. Ảnh nằm trong vùng ghi của
+**gói này** (`anh-ra/udin-optic/<dự-án>/<lượt>/`), nên lệnh ở đây chứ không ở Scouter — kế
+hoạch `T29` viết hôm trước đặt nhầm chỗ.
+
+**Máy chủ của gói nay có một móc sửa tham số trước khi chuyển tiếp**, và nó chỉ chạm
+`scout.upload`. Ba việc, theo thứ tự: ghép `path` tương đối vào vùng ghi bằng `trongGoc` ·
+**GHI ĐÈ** `path_tuyet_doi` mà người gọi tự điền · bắt tệp **phải có thật**.
+
+**Vế thứ ba sinh ra từ một phép đo, không từ sự cẩn thận.** Chrome **nhận** một đường dẫn không
+tồn tại và gắn vào trang một tệp **rỗng 0 byte** mà không báo gì (`npm run scouter:tai-len`).
+Máy chủ là bên DUY NHẤT thấy đĩa, nên nó phải canh.
+
+**Đã chạy thật trên dây, trước khi extension được nạp lại:** `../ra-ngoai.txt`, đường tuyệt đối
+và `C:x.txt` đều bị **máy chủ** chặn bằng `PATH_OUTSIDE_ROOT` — **không cái nào chạm tới
+extension**. Đường hợp lệ đi qua máy chủ trót lọt rồi dừng ở `METHOD_NOT_FOUND` của bản
+extension cũ, đúng như dự đoán.
+
+**`W8` CHƯA đóng.** Đo trang: **không có `<input type=file>` nào**, cả khi menu *Add to canvas*
+mở. Udin gần như chắc chắn dựng ô ấy tạm trong chính lượt bấm, hoặc dùng cửa chọn tệp của trình
+duyệt — **CHƯA ĐO**, và không đo bằng cách bấm thử `Image`. Đường đo an toàn cần
+`Page.setInterceptFileChooserDialog`, tức một câu hỏi nữa cho Đức.

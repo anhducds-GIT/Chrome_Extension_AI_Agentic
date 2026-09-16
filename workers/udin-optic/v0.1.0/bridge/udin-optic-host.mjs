@@ -86,6 +86,31 @@ export function ghepDuongUpload(envelope, root) {
   /* `trongGoc` ném `FileError` kèm mã (`PATH_OUTSIDE_ROOT`…), và máy chủ giữ nguyên mã đó cho
    * người gọi — nên không bọc lại, không nuốt. */
   const tuyetDoi = trongGoc(root, p.path);
+
+  /* ---- TỆP PHẢI CÓ THẬT, và chốt này sinh ra từ một PHÉP ĐO chứ không từ sự cẩn thận ------
+   * Đo 16/09 trên Chrome thật (`npm run scouter:tai-len`): đưa `DOM.setFileInputFiles` một
+   * đường dẫn KHÔNG TỒN TẠI thì **Chrome không báo lỗi gì cả** — nó gắn vào ô một tệp rỗng
+   * **0 byte** mang đúng cái tên ấy, và lượt gọi trả về ĐẠT. Trang nhận một tệp rỗng, người
+   * gọi đọc được một màu xanh, và không ai biết gì.
+   *
+   * Đó đúng hạng lỗi mà cả gói này chống: nói dối chứ không báo lỗi. Chặn ở ĐÂY vì đây là bên
+   * DUY NHẤT nhìn thấy đĩa — extension không stat được, và Chrome thì đã đo là không canh. */
+  let thongTin;
+  try { thongTin = fs.statSync(tuyetDoi); }
+  catch {
+    const e = new Error(`Không có file đó trong vùng ghi: '${p.path}'. Chrome KHÔNG canh chỗ này — ` +
+      "đo 16/09: nó nhận đường dẫn không tồn tại rồi gắn một tệp RỖNG vào trang mà không báo gì.");
+    e.code = "FILE_NOT_FOUND";
+    e.details = { path: p.path };
+    throw e;
+  }
+  if (thongTin.isDirectory()) {
+    const e = new Error(`'${p.path}' là một thư mục, không phải file.`);
+    e.code = "IS_DIRECTORY";
+    e.details = { path: p.path };
+    throw e;
+  }
+
   return { ...envelope, params: { ...p, path_tuyet_doi: tuyetDoi } };
 }
 

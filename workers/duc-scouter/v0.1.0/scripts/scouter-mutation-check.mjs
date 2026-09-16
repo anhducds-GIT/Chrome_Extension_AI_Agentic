@@ -1484,6 +1484,13 @@ BATCHES.push({
       soLan: 1
     },
     {
+      ma: "U9",
+      ten: "Bỏ chốt *tệp phải có thật* — Chrome gắn một tệp RỖNG vào trang và báo đạt",
+      tim: "  try { thongTin = fs.statSync(tuyetDoi); }",
+      thay: "  try { thongTin = { isDirectory: () => false }; }",
+      soLan: 1
+    },
+    {
       ma: "U8",
       ten: "Kh\u00f4ng gh\u00e9p v\u00e0o v\u00f9ng ghi n\u1eefa \u2014 `path` \u0111i nguy\u00ean v\u0103n xu\u1ed1ng extension",
       tim: "  const tuyetDoi = trongGoc(root, p.path);",

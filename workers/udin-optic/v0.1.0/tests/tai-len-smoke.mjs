@@ -83,6 +83,23 @@ const phongBi = (params, method = "scout.upload") => ({
   assert.equal(truocKhiChuyen(goc), goc, "phong bì của method khác phải đi qua Y NGUYÊN, cùng một đối tượng");
 }
 
+/* ---- ⓔ TỆP PHẢI CÓ THẬT — chốt sinh ra từ một PHÉP ĐO ------------------
+ * Đo 16/09 trên Chrome thật (`npm run scouter:tai-len`): `DOM.setFileInputFiles` với một đường
+ * dẫn KHÔNG TỒN TẠI thì Chrome **không báo lỗi** — nó gắn vào ô một tệp **rỗng 0 byte** mang
+ * đúng tên ấy, và lượt gọi trả ĐẠT. Nên máy chủ phải canh, vì nó là bên DUY NHẤT thấy đĩa. */
+{
+  assert.throws(() => ghepDuongUpload(phongBi({ selector: "#tep", path: "udin-optic/khong-co.webp" }), GOC),
+    (e) => e.code === "FILE_NOT_FOUND",
+    "tệp không có mà vẫn cho đi tiếp — trang sẽ nhận một tệp RỖNG và người gọi đọc được màu xanh");
+
+  assert.throws(() => ghepDuongUpload(phongBi({ selector: "#tep", path: "udin-optic/xe-dien-2026" }), GOC),
+    (e) => e.code === "IS_DIRECTORY", "một thư mục không phải một tệp");
+
+  /* Và đường đúng vẫn phải đi qua — chốt mới không được chặn nhầm thứ hợp lệ. */
+  const ok = ghepDuongUpload(phongBi({ selector: "#tep", path: "udin-optic/xe-dien-2026/anh-1.webp" }), GOC);
+  assert.ok(ok.params.path_tuyet_doi.endsWith("anh-1.webp"));
+}
+
 /* Hai khối về LÕI GHI (`input.upload` từ chối khi thiếu đường máy chủ đặt · từ chối khi phần
  * tử không phải ô chọn tệp) KHÔNG nằm ở đây, cố ý. `scouter-actions-core.mjs` là tệp của gói
  * `duc-scouter`; gói này chỉ giữ một BẢN CHÉP TỪNG BYTE. Ghim nó ở đây thì con đột biến mổ bản
@@ -90,4 +107,4 @@ const phongBi = (params, method = "scout.upload") => ({
  * Chúng ở `workers/duc-scouter/v0.1.0/tests/tai-len-smoke.mjs`. */
 
 try { fs.rmSync(GOC, { recursive: true, force: true }); fs.rmSync(NGOAI, { force: true }); } catch { /* thư mục tạm */ }
-console.log("  · tai-len máy chủ (T29/W8): 4 khối xanh");
+console.log("  · tai-len máy chủ (T29/W8): 5 khối xanh");

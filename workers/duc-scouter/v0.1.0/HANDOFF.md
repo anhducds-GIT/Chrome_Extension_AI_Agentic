@@ -1989,3 +1989,35 @@ dụng cụ mà vẫn đi xin. **Trước khi xin người ta một điều ki�
 **Một màu xanh giả sinh ra từ chính dụng cụ đo.** Lượt chạy đầu treo, và Node **thoát mã 0** kèm
 cảnh báo *unsettled top-level await* — phép đo báo ĐẠT mà chưa in một chữ. Đã thêm hạn cho từng
 lệnh CDP (`G-72`, lần này cắn chính bộ đo).
+
+## 2026-09-16 · `claude-scouter-udine` — `T29` xong phần NĂNG LỰC; `W8` vấp một tiền đề thứ tư
+
+**Đức chốt:** *"lấy các ảnh đã được tạo bởi Udin, đưa vào, yêu cầu tạo theo style khác"*. Mốc mở
+của `D4` chạm, nên `DOM.setFileInputFiles` mở và `input.upload` ra đời.
+
+**Kế hoạch `T29` cũ sai chỗ ĐẶT.** Nó viết `scout.upload` cho Scouter *"vì Scouter có host
+riêng"*. Nhưng ảnh nằm trong vùng ghi của **Udin**, nên một lệnh ở Scouter không với tới được
+chính những tấm ảnh nó sinh ra để dùng. Nó ở Udin: **12 → 13 method**.
+
+**Lớp bảo vệ nằm ở HAI chỗ, và không gộp được.** MÁY CHỦ ghép đường dẫn (`trongGoc`, đã ghim từ
+07/09) và **GHI ĐÈ** `path_tuyet_doi` mỗi lượt — một trường người gọi đặt được thì nó không còn
+là chốt, nó là gợi ý. LÕI GHI từ chối khi thiếu trường ấy (**không lùi về `path`**) và đòi
+**CHROME khớp CSS** xác nhận phần tử là `input[type=file]` — đọc thuộc tính rồi suy thì một
+`<div type="file">` lọt qua.
+
+**PHÉP ĐO TÌM RA MỘT CHUYỆN KHÔNG CÓ TRONG TÀI LIỆU CDP.** `npm run scouter:tai-len`: đưa
+`DOM.setFileInputFiles` một đường dẫn **KHÔNG TỒN TẠI** thì Chrome **không báo lỗi** — nó gắn
+vào ô một tệp **rỗng 0 byte** đúng tên ấy và trả về ĐẠT. Trang nhận tệp rỗng, người gọi đọc màu
+xanh. Nên máy chủ `statSync` trước khi chuyển tiếp — con `U9` canh chỗ đó. Chốt này không ai
+nghĩ ra nếu chỉ đọc tài liệu.
+
+**Chạy thật trên Chrome sạch:** file có mặt trên trang, **đúng tên, đúng 54 byte**, gắn vào ô
+thứ HAI đúng như selector chỉ, ô kia còn rỗng. Ba nhánh đỏ đúng mã.
+
+**`U5` sống sót lượt đầu và nó tố PHÉP GHIM chứ không tố mã:** trang giả chỉ có MỘT ô chọn tệp,
+nên *"ô đầu tiên"* và *"ô selector khớp"* là cùng một số. Dựng hai ô thì nó chết.
+**10 khối ghim, 9 đột biến, 178/178.** Ghim ở gói **SỞ HỮU** tệp, không ghim chéo.
+
+**`W8` CHƯA đóng, và lý do là tiền đề thứ tư trong hai ngày.** Đo trang Udin: **không có một
+`<input type=file>` nào** — cả lúc menu *Add to canvas* đóng lẫn lúc mở. Năng lực đúng và đã
+chứng minh; trang thì không có cái ô để đổ vào. Xem `W8` ở `CAPABILITIES.md`.
