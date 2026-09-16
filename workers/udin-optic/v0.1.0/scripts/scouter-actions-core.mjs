@@ -69,7 +69,11 @@ export const ACTION_NAMES = Object.freeze([
   /* MỞ 16/09 — Đức chốt `D4`/`T29`. Xem khối giải trình ở chính `input.upload` bên dưới, và
    * đọc nó TRƯỚC khi sửa gì quanh đây: đây là hành động ghi DUY NHẤT đưa byte đi **từ đĩa ra
    * một trang web**, ngược chiều mọi thứ còn lại của gói. */
-  "input.upload"
+  "input.upload",
+  /* MỞ 16/09 khuya — Đức chốt đường ⒝ sau khi đường ⒜ bật hộp thoại `Open` lên màn hình anh.
+   * Nó KHÔNG mở thêm quyền đọc đĩa nào: tệp vẫn đi qua đúng cái cổng của `input.upload` —
+   * `path_tuyet_doi` do MÁY CHỦ đặt, nhốt trong vùng ghi. Thứ nó bỏ đi là **hộp thoại**. */
+  "input.tha"
 ]);
 
 /* Method CDP được phép ở đường GHI. Ba lệnh `DOM.*` đầu chỉ để TÌM và ĐƯA VÀO TẦM NHÌN đúng
@@ -136,6 +140,27 @@ export const WRITE_CDP_METHODS = Object.freeze([
    * **không cần kênh sự kiện** — ô nhận file nằm lại trong DOM chờ, nên hỏi lại là thấy. Ba thứ
    * đáng lẽ phải mở kèm mà hoá ra không cần. */
   "Page.setInterceptFileChooserDialog",
+  /* ---- MỞ 16/09 khuya — Đức chốt đường ⒝, sau khi ĐO trên Chrome hồ sơ trống -------------
+   * KÉO-THẢ MỘT TỆP vào trang, tức đúng thao tác Đức làm bằng tay khi lôi một ảnh từ Explorer
+   * vào canvas. Nó **không bao giờ dựng hộp thoại chọn tệp** — theo cấu tạo, không phải nhờ
+   * chặn: nó không đi qua hộp thoại nào cả.
+   *
+   * VÌ SAO MỞ: lời khai *"hộp thoại không hiện lên màn hình Đức"* của `W8` **SAI** (Đức gửi ảnh
+   * chụp 16/09). Ba giả thuyết đã đo và đều trượt, nên đường `Page.setInterceptFileChooserDialog`
+   * không sửa được bằng hiểu biết hiện có. Đường này bỏ hẳn cái hộp thoại thay vì đi chặn nó.
+   *
+   * **KHÔNG mở thêm quyền đọc đĩa nào.** `files` nhận đường dẫn TUYỆT ĐỐI, và đường ấy vẫn do
+   * **máy chủ Bridge** đặt từ một `path` tương đối, vẫn nhốt trong vùng ghi, vẫn bắt tệp phải có
+   * thật — đúng cái cổng `input.upload` đang đi qua. Extension không tự ghép đường dẫn bao giờ.
+   *
+   * **TOẠ ĐỘ VẪN DO TA TÍNH.** Method này nhận `x`/`y`, và đó chính là chỗ chốt ⑶ phải canh:
+   * điểm thả suy từ `DOM.getBoxModel` của phần tử đã khớp, cộng một lượt kiểm điểm bấm — y hệt
+   * `input.click`. Nhận toạ độ từ người gọi là biến nó thành "thả tệp vào bất kỳ đâu".
+   *
+   * Đo 16/09 (`do-keo-tha` trên Chrome hồ sơ trống): trang nhận `dragenter → dragover → drop`,
+   * `files.length = 1`, tên đúng, **525119 byte khai VÀ đọc thật ra cũng 525119**, kiểu
+   * `image/jpeg`, và **0 hộp thoại** trước lẫn sau. */
+  "Input.dispatchDragEvent",
   "Input.dispatchMouseEvent",
   "Input.dispatchKeyEvent",
   /* MỞ 08/09 — Đức chốt. Trước đó dòng chú thích trên khai "CỐ Ý KHÔNG CÓ `Page.navigate`",
@@ -545,6 +570,44 @@ const ACTIONS = {
    * Cách rẻ hơn — đọc `DOM.getAttributes` rồi tìm `type=file` — sai ở chỗ một `<div type="file">`
    * cũng lọt, và `DOM.setFileInputFiles` lên một phần tử không phải ô chọn tệp thì báo lỗi
    * của Chrome, đọc không ra nguyên nhân. Một lượt dò thêm rẻ hơn một câu lỗi khó hiểu. */
+  /* ⑹ input.tha — KÉO-THẢ MỘT TỆP VÀO MỘT PHẦN TỬ (đường ⒝, 16/09 khuya).
+   *
+   * Cùng việc với `input.upload`, khác đúng một chỗ và chỗ ấy là lý do nó tồn tại: **nó không
+   * đi qua hộp thoại chọn tệp nào cả.** `input.upload` phải bấm một nút để trang dựng ô nhận
+   * file ra, và cú bấm ấy — đo trên máy Đức 16/09 — **bật hộp thoại `Open` của Windows lên màn
+   * hình anh**, mỗi lượt một cú Cancel. Đường này bỏ hẳn cái hộp thoại thay vì đi chặn nó.
+   *
+   * Ba khoá giữ nguyên, không nới một cái nào: `path_tuyet_doi` do MÁY CHỦ đặt · selector khớp
+   * ĐÚNG MỘT · toạ độ suy từ hộp phần tử rồi kiểm điểm bấm. Method CDP nhận `x`/`y`, nên chốt ⑶
+   * phải canh đúng ở đây — nhận toạ độ từ ngoài là biến nó thành *"thả tệp vào bất kỳ đâu"*.
+   *
+   * HỨA GÌ: *đã bắn đủ chuỗi `dragEnter → dragOver → drop` mang đúng tệp ấy vào đúng phần tử đã
+   * khớp.* KHÔNG hứa *"trang đã nhận ảnh"* — trang có thể bỏ qua sự kiện thả, hoặc nhận rồi tải
+   * lên máy chủ của nó mà hỏng. Người gọi đếm lại trên trang. */
+  async "input.tha"(send, params) {
+    const duong = params.path_tuyet_doi;
+    if (typeof duong !== "string" || duong.trim() === "") {
+      throw new ActionError("UPLOAD_PATH_MISSING",
+        "Thiếu `path_tuyet_doi`. Trường đó do MÁY CHỦ Bridge đặt từ `path` tương đối — extension " +
+        "không tự ghép đường dẫn bao giờ.");
+    }
+    const selector = readSelector(params.selector);
+    const node = await locateOne(send, selector);
+    const point = await centreOf(send, node.nodeId);
+    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
+
+    /* `dragOperationsMask: 1` = "copy" — đúng thứ Explorer gửi khi kéo một tệp vào trình duyệt. */
+    const duLieu = { items: [], files: [duong], dragOperationsMask: 1 };
+    for (const type of ["dragEnter", "dragOver", "drop"]) {
+      await send("Input.dispatchDragEvent", { type, x: point.x, y: point.y, data: duLieu });
+    }
+    return {
+      selector, matchCount: node.matchCount, thaTai: point, hit,
+      path: typeof params.path === "string" ? params.path : null, files: 1,
+      method: "Input.dispatchDragEvent"
+    };
+  },
+
   async "input.upload"(send, params) {
     const duong = params.path_tuyet_doi;
     if (typeof duong !== "string" || duong.trim() === "") {

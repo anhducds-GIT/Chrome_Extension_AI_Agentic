@@ -341,13 +341,14 @@ BATCHES.push({
     },
     {
       ma: "HB1",
-      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm ở CẢ BA chỗ (bấm · chọn · rê chuột): có lớp phủ cũng kệ (đúng bug S-17)",
+      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm ở CẢ BỐN chỗ (bấm · chọn · thả · rê chuột): có lớp phủ cũng kệ (đúng bug S-17)",
       tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       thay: '    const hit = { relation: "self", hitNodeId: node.nodeId };',
-      /* 2 → 3 ngày 16/09: `input.chon` (Shift+click) là chỗ thứ ba, và nó PHẢI có phép kiểm này
-       * y như hai chỗ kia — bấm nhầm vào lớp phủ thì tập chọn sai mà không báo gì. Con số này
-       * chỉ được nâng sau khi đã NHÌN từng chỗ khớp, không phải để dập một mỏ neo đỏ. */
-      soLan: 3
+      /* 2 → 3 → 4 ngày 16/09. Chỗ thứ ba là `input.chon` (Shift+click): bấm nhầm vào lớp phủ thì
+       * tập chọn sai mà không báo gì. Chỗ thứ tư là `input.tha` (kéo-thả), và ở đó cái giá còn
+       * cao hơn — thả một TỆP vào một lớp phủ là đưa tệp cho thứ không ai định đưa.
+       * Con số này chỉ được nâng sau khi đã NHÌN từng chỗ khớp, không phải để dập một neo đỏ. */
+      soLan: 4
     },
     {
       ma: "HB2",
@@ -1434,14 +1435,18 @@ BATCHES.push({
       ten: "L\u00f9i v\u1ec1 `path` khi thi\u1ebfu \u0111\u01b0\u1eddng m\u00e1y ch\u1ee7 \u0111\u1eb7t \u2014 extension t\u1ef1 gh\u00e9p \u0111\u01b0\u1eddng d\u1eabn",
       tim: "    const duong = params.path_tuyet_doi;",
       thay: "    const duong = params.path_tuyet_doi || params.path;",
-      soLan: 1
+      /* 1 → 2 ngày 16/09 khuya: `input.tha` mang ĐÚNG cái khoá ấy, và nó PHẢI mang — hai đường
+       * cùng đưa byte từ đĩa ra một trang web, một đường lách được là cổng vùng ghi thành đồ
+       * trang trí. Con số nâng sau khi đã NHÌN cả hai chỗ khớp. */
+      soLan: 2
     },
     {
       ma: "U2",
       ten: "B\u1ecf h\u1eb3n ph\u00e9p ki\u1ec3m thi\u1ebfu \u0111\u01b0\u1eddng \u2014 g\u1eafn m\u1ed9t `undefined` v\u00e0o \u00f4 ch\u1ecdn t\u1ec7p",
       tim: '    if (typeof duong !== "string" || duong.trim() === "") {',
       thay: "    if (false) {",
-      soLan: 1
+      /* 1 → 2, cùng lý do với `U1`: `input.tha` phải từ chối y hệt khi thiếu đường máy chủ đặt. */
+      soLan: 2
     },
     {
       ma: "U3",

@@ -31,7 +31,7 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
 {
   const DUNG = ["session.hello", "system.capabilities", "system.ping", "scout.targets",
     "scout.query", "scout.text", "scout.wait",
-    "scout.click", "scout.chon", "scout.type", "scout.clear", "scout.upload", "scout.grab", "scout.navigate"];
+    "scout.click", "scout.chon", "scout.type", "scout.clear", "scout.upload", "scout.tha", "scout.grab", "scout.navigate"];
   assert.deepEqual([...METHOD_NAMES].sort(), [...DUNG].sort(),
     "từ vựng đổi = đổi luật an toàn (luật gói số 4). Thêm/bớt phải hỏi Đức, không sửa lén dòng này.");
 
@@ -49,12 +49,12 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
   assert.equal(banGocMethod.length, 25, "Scouter phải còn 25 method; đổi thì xem lại bảng CẮT ở trên");
 
   const c = capabilities();
-  /* BẢY lệnh GHI từ 16/09 tối. `scout.upload` vẫn là lệnh DUY NHẤT của gói đưa
+  /* TÁM lệnh GHI từ 16/09 khuya. `scout.upload` và `scout.tha` là HAI lệnh của gói đưa
    * byte đi **từ đĩa ra một trang web** — mọi lệnh còn lại đi chiều ngược lại. Con số này phải
    * đổi tay cùng lúc với từ vựng ở khối ⑴, cố ý: hai chỗ cùng nói một chuyện thì một chỗ quên
    * là một chỗ đỏ. */
-  assert.equal(c.methods.filter((m) => !m.read_only).length, 7,
-    "bảy lệnh GHI: click · chon · type · clear · upload · grab · navigate");
+  assert.equal(c.methods.filter((m) => !m.read_only).length, 8,
+    "tám lệnh GHI: click · chon · type · clear · upload · tha · grab · navigate");
   assert.equal(c.seed, "udin-optic-v0.1", "tự khai đúng tên mình — `bridge.sessions` là chỗ người ta nhìn để phân biệt");
 }
 

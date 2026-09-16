@@ -44,7 +44,7 @@ function lamTrang(idOTep) {
   assert.ok(WRITE_CDP_METHODS.includes("Page.setInterceptFileChooserDialog"));
   assert.ok(!WRITE_CDP_METHODS.includes("Page.enable"),
     "`Page.enable` KHÔNG cần cho lượt chặn hộp thoại — đo 16/09. Thêm nó là nới bề mặt cho một nhu cầu không có");
-  assert.equal(WRITE_CDP_METHODS.length, 16,
+  assert.equal(WRITE_CDP_METHODS.length, 17,
     "danh sách method CDP của lõi GHI đổi = đổi luật an toàn. Thêm một cái phải hỏi Đức (ADR gốc mục 2)");
 }
 
@@ -224,4 +224,87 @@ function lamTrangMo({ themO = 1, chanNem = false, tatNem = false } = {}) {
     assert.deepEqual(t.daGoi, [], "chưa quyết mà đã chạm dây — và tệ hơn, có thể đã bật cái chặn");
   }
 }
-console.log("  · tai-len lõi ghi (T29/W8): 9 khối xanh");
+
+/* ---- ⑨ `input.tha` — ĐƯỜNG KÉO-THẢ, KHÔNG HỘP THOẠI (16/09 khuya) --------
+ *
+ * Vì sao đường này ra đời: lời khai *"hộp thoại không hiện lên màn hình Đức"* của `W8` **SAI** —
+ * Đức gửi ảnh chụp hộp thoại `Open` hai lần trong một tối. Ba giả thuyết đã đo và đều trượt, nên
+ * `Page.setInterceptFileChooserDialog` không sửa được bằng hiểu biết hiện có. Đường này **không
+ * đi qua hộp thoại nào cả** — đó là khác biệt về CẤU TẠO, không phải một lượt chặn khéo hơn. */
+function lamTrangTha({ nutTrungDiem = 42 } = {}) {
+  const daGoi = [];
+  const sendRaw = async (m, p) => {
+    daGoi.push({ m, p });
+    if (m === "DOM.getDocument") return { root: { nodeId: 1 } };
+    if (m === "DOM.querySelectorAll") return { nodeIds: p.nodeId === 1 ? [42] : [42] };
+    if (m === "DOM.getBoxModel") return { model: { content: [10, 20, 110, 20, 110, 60, 10, 60], margin: [0, 0, 20, 0, 20, 10, 0, 10] } };
+    if (m === "DOM.getNodeForLocation") return nutTrungDiem === null ? {} : { nodeId: nutTrungDiem };
+    return {};
+  };
+  return { sendRaw, daGoi, tha: () => daGoi.filter((g) => g.m === "Input.dispatchDragEvent") };
+}
+
+{
+  assert.ok(ACTION_NAMES.includes("input.tha"));
+  assert.ok(WRITE_CDP_METHODS.includes("Input.dispatchDragEvent"));
+
+  /* ⑨a Đường đúng: ĐỦ BA khung, ĐÚNG thứ tự, CÙNG một toạ độ, và `files` mang đường TUYỆT ĐỐI. */
+  {
+    const t = lamTrangTha();
+    const ra = await runAction("input.tha", { sendRaw: t.sendRaw },
+      { selector: "#canvas", path: "udin-optic/anh-1.webp", path_tuyet_doi: DUONG });
+    assert.equal(ra.ok, true, JSON.stringify(ra));
+    const b = t.tha();
+    assert.deepEqual(b.map((g) => g.p.type), ["dragEnter", "dragOver", "drop"],
+      "thiếu một khung là trang thật bỏ qua lượt thả — chuỗi này chép từ phép đo trên Chrome sạch");
+    assert.equal(new Set(b.map((g) => `${g.p.x},${g.p.y}`)).size, 1, "ba khung phải cùng MỘT điểm");
+    for (const g of b) {
+      assert.deepEqual(g.p.data.files, [DUONG], "`files` mang đường TUYỆT ĐỐI do máy chủ đặt");
+      assert.deepEqual(g.p.data.items, []);
+    }
+    /* Toạ độ suy từ hộp phần tử (tâm 60,40), KHÔNG phải từ người gọi. */
+    assert.deepEqual([b[0].p.x, b[0].p.y], [60, 40]);
+    /* Trả về đường TƯƠNG ĐỐI — nhật ký không chở đường ổ đĩa. */
+    assert.equal(ra.data.path, "udin-optic/anh-1.webp");
+    assert.equal(ra.data.method, "Input.dispatchDragEvent");
+    /* CHỐT CỦA CẢ ĐƯỜNG NÀY: không đụng tới hộp thoại một lần nào. */
+    assert.equal(t.daGoi.filter((g) => g.m === "Page.setInterceptFileChooserDialog").length, 0,
+      "đường kéo-thả mà còn gọi tới lượt chặn hộp thoại thì nó đã thành đường cũ");
+    assert.equal(t.daGoi.filter((g) => g.m === "DOM.setFileInputFiles").length, 0);
+  }
+
+  /* ⑨b Toạ độ của NGƯỜI GỌI bị bỏ qua — chốt ⑶. Đây là chỗ method này nguy hiểm nhất: nó nhận
+   * `x`/`y`, nên một tham số lọt qua là "thả tệp vào bất kỳ đâu trên màn hình". */
+  {
+    const t = lamTrangTha();
+    const ra = await runAction("input.tha", { sendRaw: t.sendRaw },
+      { selector: "#canvas", x: 9999, y: 8888, path: "a.webp", path_tuyet_doi: DUONG });
+    /* Không phải "bỏ qua" mà là **TỪ CHỐI THẲNG**, và khoá ấy nằm ở cổng chung của lõi ghi nên
+     * `input.tha` thừa hưởng nó mà không phải viết thêm dòng nào. Đo lại ở đây vì method này là
+     * method ĐẦU TIÊN của gói thật sự nhận `x`/`y` xuống CDP — nếu cổng ấy hở thì hở đúng ở đây. */
+    assert.equal(ra.ok, false);
+    assert.equal(ra.code, "COORDINATE_NOT_ACCEPTED");
+    assert.equal(t.tha().length, 0, "từ chối rồi thì không được bắn một khung nào");
+  }
+
+  /* ⑨c Thiếu `path_tuyet_doi` → ĐỎ, và KHÔNG bắn một khung nào. Extension không tự ghép đường. */
+  {
+    const t = lamTrangTha();
+    const ra = await runAction("input.tha", { sendRaw: t.sendRaw }, { selector: "#canvas", path: "a.webp" });
+    assert.equal(ra.ok, false);
+    assert.equal(ra.code, "UPLOAD_PATH_MISSING");
+    assert.equal(t.tha().length, 0);
+  }
+
+  /* ⑨d Điểm thả bị lớp phủ che → ĐỎ, và KHÔNG bắn `drop`. Cùng khoá với `input.click` (`S-17`):
+   * thả một tệp vào một lớp phủ là đưa tệp cho thứ không ai định đưa. */
+  {
+    const t = lamTrangTha({ nutTrungDiem: 777 });
+    const ra = await runAction("input.tha", { sendRaw: t.sendRaw },
+      { selector: "#canvas", path: "a.webp", path_tuyet_doi: DUONG });
+    assert.equal(ra.ok, false, JSON.stringify(ra));
+    assert.equal(t.tha().length, 0, "chưa kiểm được điểm thả thì không thả");
+  }
+}
+
+console.log("  · tai-len lõi ghi (T29/W8 + kéo-thả): 10 khối xanh");

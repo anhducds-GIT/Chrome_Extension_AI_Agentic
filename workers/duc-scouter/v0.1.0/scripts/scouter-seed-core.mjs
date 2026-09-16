@@ -57,6 +57,7 @@ const ACTION_BY_METHOD = Object.freeze({
   "scout.key": "input.key",
   "scout.clear": "input.clear",
   "scout.upload": "input.upload",
+  "scout.tha": "input.tha",
   "scout.hover": "input.hover",
   "scout.scroll": "input.scroll",
   "scout.history": "input.history"
@@ -635,6 +636,23 @@ export function createSeedHandlers(deps = {}) {
         path: params.path,
         path_tuyet_doi: params.path_tuyet_doi
       });
+    },
+
+    /* `scout.tha` — kéo-thả một tệp vào một phần tử. Cùng việc với `scout.upload`, khác đúng một
+     * chỗ: **không đi qua hộp thoại chọn tệp nào**. Khai `da_kiem: false` như mọi lệnh ghi khác. */
+    async "scout.tha"(params) {
+      const target = await resolveTarget(params.target_id);
+      const ra = await runAction("scout.tha", target, {
+        selector: params.selector,
+        path: params.path,
+        path_tuyet_doi: params.path_tuyet_doi
+      });
+      return {
+        ...ra, da_kiem: false, kiem_bang: null,
+        kiem_noi: "Đã bắn đủ chuỗi dragEnter → dragOver → drop mang đúng tệp ấy vào đúng phần tử đã khớp. " +
+          "KHÔNG kiểm được trang đã nhận ảnh chưa — trang có thể bỏ qua sự kiện thả, hoặc nhận rồi tải lên " +
+          "máy chủ của nó mà hỏng. Đếm lại trên trang rồi hãy tin.",
+      };
     },
 
     async "scout.key"(params) {

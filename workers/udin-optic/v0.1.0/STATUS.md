@@ -5,7 +5,7 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "@1/@2 DA CHAY THAT 16/09 khuya: bo chon cu -> Shift+click theo thu tu -> DOC NGUOC tu trang A->1, B->2. chon-tham-chieu.mjs, 15 khoi ghim, 15 dot bien 0 song sot. Hai phep do lat thiet ke: canvas keo duoc nen chi 6/12 anh bam duoc (hoi scout.wait state=usable truoc), va Udin CHI ve so khi co tu HAI anh tro len (mot anh -> so: null, khai la khong doc duoc). Viec ke: noi tang chon nay vao vong-style.mjs de chay tron mot luot @1/@2 that. Con no: hop thoai Open van bat len khi dinh kem."
+next_step: "CHO DUC NAP LAI EXTENSION — scout.tha (keo-tha, KHONG hop thoai) da viet xong va do xong tren Chrome ho so trong: trang nhan du dragenter/dragover/drop, 525119 byte khai VA doc that ra cung 525119, 0 hop thoai. Sau khi nap lai: chay thu scout.tha tren canvas that, roi thay scout.upload bang no trong moi luot dua anh tu ngoai vao. Anh ngoai vung ghi thi phai CHEP vao truoc (udin-optic/vao/). Sau do: noi tang chon @1/@2 vao vong-style.mjs."
 human_action: "khong"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"

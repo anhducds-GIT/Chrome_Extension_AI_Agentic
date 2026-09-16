@@ -205,7 +205,10 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     ["scout.history", { target_id: "T1", direction: "back" }],
     /* `scout.chon` (Shift+click) là lệnh GHI — nó đổi tập đang chọn của trang, và tập ấy quyết định
      * prompt trỏ vào ảnh nào. Tắt công tắc thì nó phải chặn y như mọi lệnh ghi khác. */
-    ["scout.chon", { target_id: "T1", selector: ".canvas-image-container" }]
+    ["scout.chon", { target_id: "T1", selector: ".canvas-image-container" }],
+    /* `scout.tha` đưa BYTE từ đĩa ra một trang web — nếu có một lệnh nào phải chủi qua cái phanh
+     * thì là nó. Tắt công tắc mà nó vẫn chạy là mở đúng cái cửa `input.upload` sinh ra để canh. */
+    ["scout.tha", { target_id: "T1", selector: "#canvas", path: "a/b.jpg", path_tuyet_doi: "C:/vung-ghi/a/b.jpg" }]
   ];
   for (const [method, params] of cases) {
     const { handlers, engine } = makeHandlers(undefined);

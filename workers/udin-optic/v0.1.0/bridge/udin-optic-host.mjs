@@ -130,7 +130,8 @@ function xuLyTaiCho(method, p, root, port) {
         /* `scout.upload` đi XUỐNG extension, nhưng máy chủ sửa tham số của nó dọc đường. Khai ra
          * để người gọi biết `path` của mình được ghép vào vùng ghi chứ không đi nguyên văn. */
         sua_doc_duong: {
-          "scout.upload": "`path` tương đối được ghép vào vùng ghi ở máy chủ; `path_tuyet_doi` do máy chủ đặt và GHI ĐÈ giá trị người gọi tự điền."
+          "scout.upload": "`path` tương đối được ghép vào vùng ghi ở máy chủ; `path_tuyet_doi` do máy chủ đặt và GHI ĐÈ giá trị người gọi tự điền.",
+          "scout.tha": "Y HỆT `scout.upload` — cùng một móc, cùng một cổng vùng ghi. Khác đúng một chỗ: nó KHÔNG đi qua hộp thoại chọn tệp nào."
         }
       };
     case "file.write":
@@ -166,8 +167,12 @@ export function createUdinBridge({ pairing, root, ...conLai } = {}) {
     ...conLai, pairing: daKiem, protocol: PROTOCOL, methodTaiCho,
     /* CHỈ đụng đúng một method. Mọi phong bì khác đi qua nguyên vẹn — một cái móc chạm vào mọi
      * lượt gọi là một chỗ để làm hỏng mọi lượt gọi. */
+    /* HAI method, và cả hai đi qua CÙNG MỘT móc — cố ý: `scout.tha` là `scout.upload` bỏ cái
+     * hộp thoại đi, nên nó phải trả đúng cái giá ấy ở máy chủ. Một trong hai đường lách được
+     * cổng vùng ghi thì cổng kia thành đồ trang trí. */
     truocKhiChuyen: (envelope) => (
-      envelope.method === "scout.upload" ? ghepDuongUpload(envelope, gocThat) : envelope
+      envelope.method === "scout.upload" || envelope.method === "scout.tha"
+        ? ghepDuongUpload(envelope, gocThat) : envelope
     )
   });
 }

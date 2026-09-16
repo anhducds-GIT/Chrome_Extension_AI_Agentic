@@ -722,3 +722,28 @@ mấy ảnh đang làm tham chiếu"* — vẫn đúng việc, nhưng tên gọi
 
 **Tải lên chỉ còn cần cho MỘT việc:** đưa ảnh từ NGOÀI vào (ảnh chụp của Đức). Đó cũng là đường
 duy nhất bật hộp thoại `Open`.
+
+
+## 16/09 (khuya) — `scout.tha`: bỏ hẳn hộp thoại, không phải chặn nó
+
+**Đức hỏi thẳng:** *"có cách nào tránh được điểm này không? hay phải sống chung?"* — **tránh được.**
+
+**Đo tiền đề TRƯỚC khi xin mở method**, trên Chrome hồ sơ trống của riêng máy đo: trang nhận đủ
+`dragenter → dragover → drop`, `files.length = 1`, tên đúng, **525119 byte khai VÀ đọc thật ra
+cũng 525119**, kiểu `image/jpeg`, và **0 hộp thoại** trước lẫn sau. Nếu phép đo ấy đỏ thì đã
+không phải đi xin gì.
+
+**`scout.tha` lên dây CHỈ ở gói này**, y như `scout.upload` — Scouter là bộ đồ nghề chung và nó cố
+ý không khai đường đưa byte ra trang. Cùng một móc máy chủ, cùng cổng vùng ghi: `path` tương đối,
+máy chủ ghép thành tuyệt đối và **ghi đè** giá trị người gọi tự điền, tệp phải có thật.
+
+**Ba khoá không nới một cái nào.** Method CDP nhận `x`/`y`, và đó là chỗ nguy hiểm nhất của nó —
+nhưng cổng chung của lõi ghi **TỪ CHỐI THẲNG** mọi toạ độ người gọi tự điền (`COORDINATE_NOT_ACCEPTED`),
+nên `input.tha` thừa hưởng khoá ấy mà không phải viết thêm dòng nào. Đo lại trong phép ghim vì đây
+là method ĐẦU TIÊN của gói thật sự đưa `x`/`y` xuống CDP: cổng ấy hở thì hở đúng ở đây.
+
+**Một việc của Đức không tự chạy được:** ảnh của anh nằm ở `Downloads`, tức NGOÀI vùng ghi, nên
+máy chủ từ chối — đúng thiết kế. Đường đi là **chép** ảnh vào vùng ghi trước (`udin-optic/vao/`);
+bản gốc không bị đụng. Tên có dấu và dấu cách thì đổi sang tên không dấu.
+
+10 khối ghim ở `tai-len-smoke.mjs` · 8 đột biến riêng, 0 sống sót. **Cần một lượt NẠP LẠI extension.**

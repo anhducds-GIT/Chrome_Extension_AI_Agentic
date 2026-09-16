@@ -549,6 +549,25 @@ const METHOD_ENTRIES = [
       };
     }
   }),
+  /* `scout.tha` — kéo-thả một tệp vào một phần tử. MỞ 16/09 khuya, Đức chốt đường ⒝.
+   * Cùng việc với `scout.upload`, cùng cổng vùng ghi ở máy chủ, khác đúng một chỗ và chỗ ấy là
+   * lý do nó tồn tại: **nó không đi qua hộp thoại chọn tệp nào** — theo cấu tạo, không phải nhờ
+   * chặn. Đo trên Chrome hồ sơ trống: trang nhận đủ `dragenter → dragover → drop`, `files` đúng
+   * một tệp, **525119 byte khai VÀ đọc thật ra cũng 525119**, và **0 hộp thoại**. */
+  registryEntry({
+    name: "scout.tha", read_only: false, deadline_ms: 30000,
+    description: "Drag and drop ONE file from the server's write root onto one element, exactly as a person dragging a file out of the file manager onto the page. Unlike scout.upload it never goes through a file chooser at all, so no OS dialog can appear on the owner's screen. Same locks as scout.upload and scout.click together: path is relative and the SERVER turns it absolute inside the write root (a caller-supplied absolute path is discarded), the selector must match exactly one element, and the drop point is computed from that element's box after a hit test - never taken from the caller. Returns da_kiem:false: it proves the drag sequence was dispatched, NOT that the page accepted the file. Count what the page shows before trusting it.",
+    params_schema: { target_id: "string", selector: "string", path: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "path", "path_tuyet_doi"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        path: duongTuongDoi(params.path),
+        path_tuyet_doi: duongMayChuDat(params.path_tuyet_doi)
+      };
+    }
+  }),
   registryEntry({
     name: "scout.grab", read_only: false, deadline_ms: 34000,
     description: "Download the file one element points to (its src or href), using the URL read inside the browser. The URL itself is never returned: signed URLs keep their signature out of logs and off disk. Takes a selector, never a URL, and refuses unless it matches exactly one element.",

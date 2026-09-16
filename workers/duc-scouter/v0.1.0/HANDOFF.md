@@ -2159,3 +2159,33 @@ thẩm quyền đắt hơn một ô trống; ai sửa quanh đó thì tách hai 
 **Và một con đột biến sống sót chỉ ra MÃ THỪA, không phải ghim hở:** phép đếm huy hiệu trong từng
 hộp chỉ nói lại điều `scout.text` đã bảo đảm (ADR-0006 — từ chối mọi selector khớp ≠ 1). Đường
 đúng là **xoá mã**, không phải đi ghim một thứ không làm gì.
+
+
+## 16/09 (khuya) — `Input.dispatchDragEvent`: method CDP thứ 17, và nó ĐÓNG một cửa
+
+**Đo trước, xin sau.** Trên Chrome hồ sơ trống: `dragenter → dragover → drop` đủ, `files.length = 1`,
+**525119 byte khai VÀ đọc thật ra cũng 525119**, `image/jpeg`, **0 hộp thoại**. Phép đo ấy đỏ thì
+đã không phải đi xin gì.
+
+**Vì sao mở:** `Page.setInterceptFileChooserDialog` **không giữ được lời hứa của nó**. Hàng `W8`
+khai *"hộp thoại không hiện lên màn hình Đức"* — sai, Đức gửi ảnh chụp hai lần trong một tối. Ba
+giả thuyết sửa đều trượt trên Chrome sạch (tắt chặn sớm · trang bấm trễ · thiếu `Page.enable`),
+nên nó không sửa được bằng hiểu biết hiện có. Đường mới **không đi qua hộp thoại nào cả** — khác
+biệt về CẤU TẠO, không phải một lượt chặn khéo hơn.
+
+**KHÔNG mở thêm quyền đọc đĩa nào.** `files` nhận đường TUYỆT ĐỐI, và đường ấy vẫn do **máy chủ
+Bridge** đặt từ một `path` tương đối, vẫn nhốt trong vùng ghi, vẫn bắt tệp phải có thật — đúng cái
+cổng `input.upload` đang đi qua. Extension không tự ghép đường dẫn bao giờ.
+
+**Chỗ nguy hiểm thật của method này là `x`/`y`** — nó là method ĐẦU TIÊN của gói thật sự đưa toạ độ
+xuống CDP. Cổng chung của lõi ghi **TỪ CHỐI THẲNG** toạ độ người gọi tự điền
+(`COORDINATE_NOT_ACCEPTED`), nên `input.tha` thừa hưởng khoá ấy; phép ghim đo lại tại chỗ, vì nếu
+cổng ấy hở thì nó hở đúng ở đây.
+
+**Ba mỏ neo đột biến nâng số sau khi đã NHÌN từng chỗ khớp**, không phải để dập neo đỏ: `HB1`
+3 → 4 (`input.tha` là chỗ thứ tư cần kiểm điểm bấm — thả một TỆP vào lớp phủ là đưa tệp cho thứ
+không ai định đưa) · `U1` và `U2` 1 → 2 (hai đường cùng đưa byte từ đĩa ra trang; một đường lách
+được là cổng vùng ghi thành đồ trang trí).
+
+`scout.tha` lên dây **chỉ ở gói Udin**, y như `scout.upload`: Scouter cố ý không khai đường đưa
+byte ra trang. 181/181 + 17/17 đột biến, 0 sống sót.
