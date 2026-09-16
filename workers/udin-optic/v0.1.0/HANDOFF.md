@@ -556,3 +556,20 @@ Nợ `S-31` bên Scouter ghi lại chuyện này: gói này **không tự nạp 
 cắt ở `T21`), nên mỗi lượt sửa mã đều tốn một cú bấm của Đức — hôm nay là ba. Mặc định cho tới
 khi có quyết định khác: **gộp nhiều lượt sửa thành MỘT lượt nạp lại**, đừng mở method mới cho
 một chuyện kỷ luật giải quyết được.
+
+## 2026-09-16 · `claude-scouter-udine` — `W8` chạy thật; gói này **8/8**, `MASTERED`
+
+Đưa ngược tấm `02-batch-…jpg` mà chính gói này tải về hôm ấy vào lại trang Udin, **không một cú
+bấm nào của người**: mục `Image` tìm theo **NHÃN** · hộp thoại hệ điều hành **không hiện lên màn
+hình Đức** · pill đính kèm **0 → 2**, nhãn `"1 Image"` · ô chọn tệp tạm bị trang thu lại về **0**,
+đúng như khi người dùng tự chọn. 5 đơn vị trần ghi.
+
+**Bảng `W` đủ 8/8, không còn hàng CHẶN, E2E ĐẠT → `MASTERED`.**
+
+**Việc kế của gói này là `R1`** (roadmap ở `CHUOI-VIEC.md` bên Scouter): một lệnh chạy TRỌN vòng
+việc thật của Đức — chọn ảnh lượt trước → `scout.upload` → gõ prompt style mới → gửi → chờ →
+tải ảnh mới về. Mọi mảnh đã có và đã chạy thật **rời rạc**; chưa ai nối lại.
+
+**Cẩn thận đúng một chỗ khi làm `R1`:** *"đã đính kèm"* phải kiểm bằng **pill trên trang**
+(`[class*=agent-context-pill]` đếm TĂNG), **không tin lệnh trả về** — `scout.upload` hứa đúng
+*đã bảo Chrome gắn file vào ô*, không hứa trang đã nhận. Đúng bài học `S1`.
