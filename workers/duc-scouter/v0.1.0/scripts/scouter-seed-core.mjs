@@ -51,6 +51,7 @@ const PROBE_BY_METHOD = Object.freeze({
  * này lại là bước đầu tiên để hai danh sách kia cũng bị gộp. */
 const ACTION_BY_METHOD = Object.freeze({
   "scout.click": "input.click",
+  "scout.chon": "input.chon",
   "scout.navigate": "input.navigate",
   "scout.type": "input.type",
   "scout.key": "input.key",
@@ -545,6 +546,23 @@ export function createSeedHandlers(deps = {}) {
         ...ra, da_kiem: true, kiem_bang: "dom.wait",
         kiem_noi: `Bấm xong thì '${params.wait_for}' đã ${trangThai === "absent" ? "biến mất" : "xuất hiện"} ` +
           `sau ${cho.data?.waitedMs ?? "?"}ms — trang có phản ứng.`
+      };
+    },
+
+    /* `scout.chon` — Shift+click, dựng THỨ TỰ tham chiếu (`R2-chon`, 16/09).
+     *
+     * KHÔNG có đường `wait_for` như `scout.click`, và đó là cố ý: thứ đáng kiểm ở đây không phải
+     * *"có phần tử nào xuất hiện không"* mà là **CON SỐ** trang gán cho phần tử vừa chọn. Một
+     * `wait_for` chờ `.selected` sẽ xanh cả khi trang gán nhầm số — tức xanh ở cả hai nhánh. Nên
+     * lệnh này khai thẳng là **chưa kiểm**, và người gọi đọc lại con số. */
+    async "scout.chon"(params) {
+      const target = await resolveTarget(params.target_id);
+      const ra = await runAction("scout.chon", target, { selector: params.selector });
+      return {
+        ...ra, da_kiem: false, kiem_bang: null,
+        kiem_noi: "Đã bắn một cú bấm trái CÓ GIỮ SHIFT vào đúng phần tử đã khớp. KHÔNG kiểm được " +
+          "phần tử ấy nay có nằm trong tập đang chọn không, và càng không kiểm được nó mang SỐ THỨ TỰ " +
+          "nào — đọc lại con số trên trang rồi hãy tin.",
       };
     },
 

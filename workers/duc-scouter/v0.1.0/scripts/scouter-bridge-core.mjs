@@ -529,6 +529,19 @@ const METHOD_ENTRIES = [
   /* ---- HAI LỆNH "ĐI LẠI" MỞ 14/09 — [ADR-0007] --------------------------
    * Cả hai đi kèm luật ĐỌC-TRƯỚC: `scout.view` đọc lại tầm nhìn là thứ duy nhất kiểm được
    * chúng, vì cả hai chỉ hứa *"đã bắn sự kiện"*. */
+  /* `scout.chon` — Shift+click, MỞ 16/09. Nó tồn tại vì một lý do rất cụ thể trên Udin: đó là
+   * cách người dùng dựng THỨ TỰ tham chiếu, và prompt gọi chúng bằng `@1` / `@2`. Bấm thường và
+   * bấm giữ Shift là hai ý định khác nhau, nên chúng mang hai cái tên khác nhau — gộp lại thành
+   * một cờ của `scout.click` là mời người gọi nhầm một chỗ không có dấu hiệu gì khi nhầm. */
+  registryEntry({
+    name: "scout.chon", read_only: false, deadline_ms: 30000,
+    description: "Shift+click one element, i.e. ADD it to the page's current selection instead of replacing that selection. Same locks as scout.click: exactly one match, coordinates computed from the element box, and a hit test before the event. Shift is hardcoded; there is no caller-supplied modifier parameter, and there will not be one. Returns da_kiem:false and says so: it proves a shift-click was dispatched, NOT that the element is now selected, and above all NOT what ORDER NUMBER the page gave it. Read that number back off the page before trusting it - on a page where selection order drives the prompt, a wrong number is a wrong answer that still looks like a right one. Beware on links: shift-clicking an anchor opens a new window.",
+    params_schema: { target_id: "string", selector: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector"]);
+      return { target_id: requiredTargetId(params.target_id), selector: requiredSelector(params.selector) };
+    }
+  }),
   registryEntry({
     name: "scout.hover", read_only: false, deadline_ms: 30000,
     description: "Move the real mouse onto one element without clicking, for menus that only exist while hovered. Same locks as scout.click: exactly one match, coordinates computed from the element box, and a hit test before the event so hovering something covered refuses instead of lying.",

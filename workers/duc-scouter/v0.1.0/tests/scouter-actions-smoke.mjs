@@ -114,7 +114,7 @@ function makeFakePage(options = {}) {
 
 /* ---- ① Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.clear", "input.navigate", "input.grabUrl",
+  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.chon", "input.type", "input.key", "input.clear", "input.navigate", "input.grabUrl",
     "input.scroll", "input.hover", "input.history", "input.upload"]);
 
   /* `input.zoom` nằm trong danh sách này CÓ Ý: nó là cái tên hiển nhiên nhất cho một lệnh thu

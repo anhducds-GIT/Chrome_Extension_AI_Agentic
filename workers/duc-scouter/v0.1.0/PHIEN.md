@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "R1 DA KHEP VONG 16/09 toi (chi tiet o STATUS goi udin-optic). CON MOT VET: chang dinh kem van bat hop thoai Open cua Windows tren may Duc. Ba gia thuyet da do tren Chrome ho so trong va DEU TRUOT (tat chan som / trang bam tre / thieu Page.enable) — khac biet nam o duong chrome.debugger cua extension, chua do duoc. Sau do: (2) R2 khep vong tu cai tien lan hai. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG."
+- next_step: "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong."
 - human_action: "khong"

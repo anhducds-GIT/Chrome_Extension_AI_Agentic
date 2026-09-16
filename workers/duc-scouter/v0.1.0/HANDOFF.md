@@ -2113,3 +2113,29 @@ Nên `Page.setInterceptFileChooserDialog` **chạy đúng qua ống điều khi�
 **Hỏng theo kiểu IM LẶNG**, nên nó không tự lộ: ô chọn tệp sống trong lúc hộp thoại treo, nên
 `DOM.setFileInputFiles` vẫn ăn và lượt chạy vẫn trả `ok`. Cái giá nằm trên màn hình Đức, không nằm
 trong kết quả lệnh.
+
+
+## 16/09 (khuya) — `scout.chon`: Shift+click, và vì sao nó KHÔNG phải một cờ của `scout.click`
+
+**Method thứ 25.** Shift+click một phần tử, tức **thêm** nó vào tập đang chọn thay vì thay thế
+tập ấy. **Không thêm method CDP nào** — vẫn `Input.dispatchMouseEvent`, chỉ thêm mặt nạ `SHIFT`.
+
+**Khối cảnh báo cũ ở `scouter-actions-core.mjs` viết:** *"thêm một hằng số nữa vào chỗ này là
+bước đầu tiên để có một tham số `modifiers`"*. Cảnh báo ấy **vẫn đứng**, và nó chặn đúng cái nó
+sinh ra để chặn: một **tham số tự do**. `SHIFT` ở đây gõ cứng trong thân hàm của một **thao tác
+có tên**, y hệt `CTRL` của `input.clear`. Ngày nào có ai xin `modifiers` thành tham số, câu trả
+lời vẫn là không.
+
+**Một tên riêng chứ không phải một cờ**, vì bấm thường và bấm giữ Shift là hai ý định khác nhau:
+nhầm cái nào cũng ra một tập chọn khác, prompt trỏ nhầm ảnh, và **trang không báo gì cả**.
+
+**`clickAt` giữ nguyên từng byte khi không có phím bổ trợ.** `modifiers: 0` là mặc định của CDP
+nên hai cách chạy y hệt — nhưng chuỗi ba khung chuột **chép từ một phép đo thật** và con `dilai`
+canh nó từng byte. Thêm một trường vào một chuỗi ĐÃ ĐO là biến nó thành một chuỗi CHƯA ĐO, dù
+trường ấy vô hại. Nên trường `modifiers` chỉ xuất hiện khi khác 0.
+
+**Mỏ neo đột biến `HB1` nâng 2 → 3** sau khi đã NHÌN từng chỗ khớp: chỗ thứ ba là `input.chon`,
+và nó phải có phép kiểm điểm bấm y như hai chỗ kia.
+
+**Giá phải nói rõ:** Shift+click lên một thẻ liên kết **mở cửa sổ mới**. Nó chỉ bắn sau cổng
+selector (khớp đúng một) và phép kiểm điểm bấm.

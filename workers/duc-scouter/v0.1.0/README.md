@@ -65,7 +65,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Hai mươi bốn** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Hai mươi lăm** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -87,6 +87,7 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.hover` | **có** | đưa chuột tới một phần tử mà **không bấm** — cho những menu chỉ tồn tại khi có chuột rê lên. Cùng ba cái khoá của `scout.click`, kể cả hỏi-điểm trước khi bắn |
 | `scout.scroll` | **có** | **đưa một phần tử vào tầm nhìn mà không bấm** — để chụp nó, hoặc để danh sách tải-thêm-khi-cuộn sinh ra phần tiếp theo (cuộn tới phần tử cuối rồi lặp). **Không nhận số điểm ảnh**: đường bánh xe chuột không bao giờ trả lời trên trang thật và nó **khoá cả tab** (`G-72`). Hứa *đã bảo trình duyệt cuộn*, không hứa *nó đang hiện* — kiểm bằng `scout.view` |
 | `scout.history` | **có** | lùi / tiến **một bước** trong lịch sử của chính tab đó, giữ nguyên trạng thái trang đã cất ở đó. Người gọi nói HƯỚNG; chỉ số mục lịch sử tính ở trong. Hết đường thì từ chối, không im lặng |
+| `scout.chon` | **có** | **Shift+click** một phần tử — tức **THÊM nó vào tập đang chọn**, không thay thế tập ấy. Cùng khoá với `scout.click` (khớp đúng một · toạ độ tính từ hộp phần tử · kiểm điểm bấm). Phím `Shift` **gõ cứng trong lõi ghi**, không tham số nào chạm tới — cùng khuôn với `Ctrl+A` của `scout.clear`, và vì cùng một lý do. Nó khai **`da_kiem: false`**: chứng minh đã bắn cú bấm, **không** chứng minh phần tử nay đang được chọn, và nhất là **không** nói nó mang SỐ THỨ TỰ nào — đọc lại con số trên trang rồi hãy tin. Shift+click lên một thẻ liên kết **mở cửa sổ mới** |
 | `scout.clear` | **có** | **xoá sạch một ô nhập** bằng bàn phím thật: `Ctrl+A` rồi `Delete`. Phím và phím bổ trợ **gõ cứng trong lõi ghi** — không tham số nào đổi được, vì `Ctrl` + phím tuỳ ý chạm tới lệnh của trình duyệt (`Ctrl+W` đóng tab). Trên macOS **không xoá được** (ở đó là `Cmd+A`) |
 | `scout.fetch` | **có** | gọi một URL http(s) bằng **chồng mạng của chính trình duyệt**. Trả văn bản; `as: "base64"` cho thân nhị phân như PDF. Không kèm cookie trừ khi khai `with_credentials` |
 | `scout.grab` | **có** | tải TỆP mà một phần tử trỏ tới (`src` hoặc `href`), dùng URL đọc được **bên trong** trình duyệt. **Không trả URL** — ảnh sau URL ký sẵn thì chữ ký không lọt ra nhật ký hay xuống đĩa. Nhận selector, không nhận url |

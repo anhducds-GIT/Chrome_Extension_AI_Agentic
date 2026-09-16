@@ -341,10 +341,13 @@ BATCHES.push({
     },
     {
       ma: "HB1",
-      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm ở CẢ bấm lẫn rê chuột: có lớp phủ cũng kệ (đúng bug S-17)",
+      ten: "CHỐT ⑸ — gỡ hẳn lượt kiểm ở CẢ BA chỗ (bấm · chọn · rê chuột): có lớp phủ cũng kệ (đúng bug S-17)",
       tim: "    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));",
       thay: '    const hit = { relation: "self", hitNodeId: node.nodeId };',
-      soLan: 2
+      /* 2 → 3 ngày 16/09: `input.chon` (Shift+click) là chỗ thứ ba, và nó PHẢI có phép kiểm này
+       * y như hai chỗ kia — bấm nhầm vào lớp phủ thì tập chọn sai mà không báo gì. Con số này
+       * chỉ được nâng sau khi đã NHÌN từng chỗ khớp, không phải để dập một mỏ neo đỏ. */
+      soLan: 3
     },
     {
       ma: "HB2",
@@ -406,7 +409,7 @@ BATCHES.push({
     {
       ma: "H7",
       ten: "Bỏ khung mouseMoved: đổi một chuỗi ĐÃ ĐO thành một chuỗi CHƯA ĐO",
-      tim: '  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0 });' + NL,
+      tim: '  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0, ...bt });' + NL,
       thay: "",
       soLan: 1
     },
@@ -1303,15 +1306,15 @@ BATCHES.push({
     {
       ma: "V5",
       ten: "CHIỀU NGƯỢC: `clickCount` gõ cứng 1 — lượt bấm đúp im lặng thành hai lượt bấm đơn",
-      tim: "clickCount: lan });",
-      thay: "clickCount: 1 });",
+      tim: "clickCount: lan, ...bt });",
+      thay: "clickCount: 1, ...bt });",
       soLan: 2
     },
     {
       ma: "V6",
       ten: "Mặt nạ `buttons` gõ cứng 1 — bấm phải gửi đi một sự kiện tự mâu thuẫn",
-      tim: "buttons: nut.mask, clickCount: lan });",
-      thay: "buttons: 1, clickCount: lan });",
+      tim: "buttons: nut.mask, clickCount: lan, ...bt });",
+      thay: "buttons: 1, clickCount: lan, ...bt });",
       soLan: 1
     },
     {

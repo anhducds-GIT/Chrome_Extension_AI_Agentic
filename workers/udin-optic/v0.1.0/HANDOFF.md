@@ -652,3 +652,23 @@ tệp. Nên nó không rẻ hơn về mặt dữ liệu; nó thắng ở chỗ *
 ⒜ `Page.enable` (rẻ, giữ nguyên đường đang chạy, **chưa chứng minh là chữa được**) ·
 ⒝ `Input.dispatchDragEvent` (đổi hẳn sang kéo-thả, **theo cấu tạo không có hộp thoại**, và bỏ được
 `Page.setInterceptFileChooserDialog` khỏi bề mặt). Không cái nào chặn `R1` — vòng đã chạy.
+
+
+## 16/09 (khuya) — `@1` / `@2`: chọn ảnh tham chiếu theo đúng thứ tự
+
+**Vì sao làm.** Đức nêu ràng buộc mà `R1` chưa chạm tới: *"nếu bạn apply 1 cho 2 mà không xác
+định được đâu là 1, đâu là 2 thì sẽ không còn chính xác nữa."* Và ảnh chụp của Đức cho thấy mô
+hình thật: **Shift+click** một ảnh trên canvas thì nó mang huy hiệu `1`, ảnh sau mang `2`, và
+prompt gọi chúng bằng `@N` — câu thật trên màn hình là *"APPLY STYLE OF @1 TO @2"*.
+
+**Đo trước khi xây, và phép đo đổi thiết kế.** `data-image-id` CÓ trên mọi ảnh canvas nhưng nằm
+ngoài danh sách trắng của lõi đọc nên **giá trị bị che**; `alt` của mọi ảnh đều là `"Canvas image"`.
+Thứ duy nhất phân biệt được là `src` — và lõi đọc **cắt** nó rồi gắn `…` vào cuối (để nguyên dấu
+ấy trong selector thì khớp 0, đã dính). Quan trọng hơn: `src` định danh **TẤM ẢNH**, không định
+danh **CHỖ ĐẶT** — đo thật thấy một ảnh nằm **5 chỗ** trên canvas cùng lúc. Ca đó **TỪ CHỐI**.
+
+**`chon-tham-chieu.mjs`.** Bỏ chọn cũ (phải XIN, `boChonCu`) → Shift+click từng ảnh theo thứ tự →
+**đọc lại con số trong đúng hộp vừa bấm** → đối chiếu tổng. Thêm `kiemPromptThamChieu`: prompt gọi
+`@3` khi mới chọn 2 ảnh thì đỏ TRƯỚC khi tiêu đồng nào. 12 khối ghim · 12 đột biến, 0 sống sót.
+
+**Cần một lượt NẠP LẠI extension** — `scout.chon` là lệnh mới trên dây, extension chưa có nó.

@@ -46,6 +46,9 @@
 
 export const ACTION_NAMES = Object.freeze([
   "input.click",
+  /* MỞ 16/09 — Shift+click, để dựng THỨ TỰ tham chiếu (`@1` / `@2` của Udin). Đức chốt.
+   * Không thêm method CDP nào — vẫn `Input.dispatchMouseEvent`, chỉ thêm mặt nạ `SHIFT` gõ cứng. */
+  "input.chon",
   "input.type",
   "input.key",
   "input.clear",
@@ -188,10 +191,21 @@ const NAMED_KEYS = Object.freeze({
 
 export const NAMED_KEY_NAMES = Object.freeze(Object.keys(NAMED_KEYS));
 
-/* Mặt nạ phím bổ trợ của CDP: Alt=1, **Ctrl=2**, Meta=4, Shift=8. Chỉ `Ctrl` có mặt ở đây, và
- * chỉ `input.clear` dùng nó. Thêm một hằng số nữa vào chỗ này là bước đầu tiên để có một tham
- * số `modifiers` — xem khối giải trình ở `input.clear`. */
+/* Mặt nạ phím bổ trợ của CDP: Alt=1, **Ctrl=2**, Meta=4, Shift=8.
+ *
+ * Khối này từng viết *"chỉ `Ctrl` có mặt ở đây … thêm một hằng số nữa là bước đầu tiên để có một
+ * tham số `modifiers`"*. Cảnh báo ấy đúng, và nó vẫn đứng — nên đọc kỹ chỗ nó chặn cái gì:
+ * nó chặn **một tham số tự do**, không chặn **một thao tác có tên**.
+ *
+ * `SHIFT` mở 16/09 cho `input.chon`, và đi đúng khuôn `input.clear` đã đi với `CTRL`: phím bổ trợ
+ * **gõ cứng trong thân hàm**, không một tham số nào của người gọi chạm tới nó, và nó gắn với MỘT
+ * thao tác mang tên rõ ràng. Ngày nào có ai muốn `modifiers` thành tham số thì cảnh báo trên vẫn
+ * là câu trả lời: **không**.
+ *
+ * GIÁ PHẢI NÓI RÕ: Shift+click lên một thẻ liên kết mở CỬA SỔ MỚI. Nên `input.chon` chỉ bắn sau
+ * khi đã qua cổng selector (khớp đúng một) VÀ phép kiểm điểm bấm — y hệt `input.click`. */
 const CTRL = 2;
+const SHIFT = 8;
 
 /* ---- BA BẢNG CỐ ĐỊNH của nhóm "đi lại" (14/09, [ADR-0007]) ----------------
  * Cùng khuôn với `NAMED_KEYS`, và vì cùng một lý do: người gọi chọn một CÁI TÊN trong bảng, họ
@@ -321,6 +335,29 @@ const ACTIONS = {
    * chỗ thứ hai là chỗ người ta quên cập nhật.
    *
    * Không khai gì thì cư xử Y HỆT như trước: trái, một lượt. */
+  /* ③c input.chon — SHIFT+CLICK, tức "thêm phần tử này vào tập đang chọn" (`R2-chon`, 16/09).
+   *
+   * Vì sao cần một thao tác RIÊNG chứ không phải một cờ của `input.click`: trên Udin, Shift+click
+   * là cách người dùng dựng **thứ tự tham chiếu** — ảnh bấm trước mang huy hiệu `1`, ảnh sau mang
+   * `2`, và prompt gọi chúng bằng `@1` / `@2` (*"APPLY STYLE OF @1 TO @2"*, Đức đo 16/09). Một cú
+   * bấm THƯỜNG và một cú bấm GIỮ SHIFT là hai ý định khác nhau tới mức phải mang hai cái tên:
+   * nhầm cái nào cũng ra một tập chọn khác, và prompt trỏ nhầm ảnh mà **không báo lỗi gì cả**.
+   *
+   * HỨA GÌ: *đã bắn một cú bấm trái có giữ Shift vào đúng phần tử đã khớp.* KHÔNG hứa *"phần tử
+   * ấy nay đang được chọn"* — cùng lời hứa hẹp của `input.click` (`S-22`). Ai gọi thì tự kiểm
+   * bằng trang; với Udin, dấu kiểm là con số đọc được trên `.selection-order-badge`. */
+  async "input.chon"(send, params) {
+    const selector = readSelector(params.selector);
+    const node = await locateOne(send, selector);
+    const point = await centreOf(send, node.nodeId);
+    const hit = await kiemDiemBam(send, node.nodeId, point, await gocCuon(send, node.rootNodeId));
+    await clickAt(send, point, MOUSE_BUTTONS.left, 1, SHIFT);
+    return {
+      selector, matchCount: node.matchCount, clickedAt: point, hit,
+      phimBoTro: "Shift", method: "Input.dispatchMouseEvent"
+    };
+  },
+
   async "input.click"(send, params) {
     const selector = readSelector(params.selector);
     const nut = readNutChuot(params.button);
@@ -1053,11 +1090,18 @@ async function gocCuon(send, rootNodeId) {
 /* `clickCount` TĂNG DẦN qua từng cặp nhấn-nhả (1 rồi 2), không phải gửi thẳng số 2 một lần.
  * Đó là hình dạng trình duyệt thật sinh ra, và trang nào nghe `dblclick` thì nghe đúng cái
  * chuỗi đó — gửi một cặp mang `clickCount: 2` là một sự kiện không trình duyệt nào tạo ra. */
-async function clickAt(send, point, nut = MOUSE_BUTTONS.left, soLan = 1) {
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0 });
+/* `modifiers` KHÔNG bao giờ tới từ người gọi — nó chỉ nhận hằng số gõ cứng của một thao tác có
+ * tên (`SHIFT` của `input.chon`). Mặc định 0, tức `input.click` không đổi một byte hành vi. */
+async function clickAt(send, point, nut = MOUSE_BUTTONS.left, soLan = 1, modifiers = 0) {
+  /* Không phím bổ trợ thì KHÔNG gắn trường `modifiers` vào khung sự kiện. `modifiers: 0` là mặc
+   * định của CDP nên hai cách chạy y hệt nhau — nhưng chuỗi ba khung này **chép từ một phép đo
+   * thật** (`scouter-input-trust-probe`, 06/09), và con `dilai` canh nó từng byte. Thêm một
+   * trường vào một chuỗi đã đo là biến nó thành một chuỗi CHƯA đo, dù trường ấy vô hại. */
+  const bt = modifiers ? { modifiers } : {};
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0, ...bt });
   for (let lan = 1; lan <= soLan; lan += 1) {
-    await send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: nut.name, buttons: nut.mask, clickCount: lan });
-    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: nut.name, buttons: 0, clickCount: lan });
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: nut.name, buttons: nut.mask, clickCount: lan, ...bt });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: nut.name, buttons: 0, clickCount: lan, ...bt });
   }
 }
 

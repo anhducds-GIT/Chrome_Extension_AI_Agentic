@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "R1 DA KHEP VONG 16/09 toi: vong-style.mjs chay song tron vong, 4 anh moi ve dia (xe-dien-2026/2026-09-16T13-51-37-688Z), canvas 2->7. CON MOT VET: chang dinh kem VAN bat hop thoai Open cua Windows va Duc phai bam Cancel — luot tai len van thanh cong du co hop thoai, nen no hong kieu IM LANG. Cau 'hop thoai khong hien' o hang W8 la SAI, da gach tai cho. Duong DAN da do va DONG (Udin chi nhan paste noi bo canvas). Viec ke: do duong chrome.debugger cua extension."
+- next_step: "CHO DUC NAP LAI EXTENSION — scout.chon (Shift+click) la lenh MOI tren day, extension chua co no. Sau khi nap lai: chay thu chon-tham-chieu.mjs tren canvas that de xac nhan doc dung so 1 va 2. R1 (vong-style.mjs) DA KHEP VONG 16/09. Moi da xong cho @1/@2: chon-tham-chieu.mjs, 12 khoi ghim, 12 dot bien 0 song sot. Con no: hop thoai Open van bat len."
 - human_action: "khong"

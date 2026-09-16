@@ -31,7 +31,7 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
 {
   const DUNG = ["session.hello", "system.capabilities", "system.ping", "scout.targets",
     "scout.query", "scout.text", "scout.wait",
-    "scout.click", "scout.type", "scout.clear", "scout.upload", "scout.grab", "scout.navigate"];
+    "scout.click", "scout.chon", "scout.type", "scout.clear", "scout.upload", "scout.grab", "scout.navigate"];
   assert.deepEqual([...METHOD_NAMES].sort(), [...DUNG].sort(),
     "từ vựng đổi = đổi luật an toàn (luật gói số 4). Thêm/bớt phải hỏi Đức, không sửa lén dòng này.");
 
@@ -44,17 +44,17 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
    * dùng — ảnh Udin nằm sau URL ký hạn giờ nên `scout.fetch` trả 403 (`S-24`, đo 14/09). */
   assert.ok(!METHOD_NAMES.includes("scout.fetch"));
 
-  /* Bản gốc phải còn ĐỦ 24 — lệch nghĩa là ai đó cắt nhầm bên Scouter, và bảng trên thành vô nghĩa. */
-  const goc24 = doc(scouter, "scripts", "scouter-bridge-core.mjs").match(/^    name: "/gm) || [];
-  assert.equal(goc24.length, 24, "Scouter phải còn 24 method; đổi thì xem lại bảng CẮT ở trên");
+  /* Bản gốc phải còn ĐỦ 25 — lệch nghĩa là ai đó cắt nhầm bên Scouter, và bảng trên thành vô nghĩa. */
+  const banGocMethod = doc(scouter, "scripts", "scouter-bridge-core.mjs").match(/^    name: "/gm) || [];
+  assert.equal(banGocMethod.length, 25, "Scouter phải còn 25 method; đổi thì xem lại bảng CẮT ở trên");
 
   const c = capabilities();
-  /* SÁU lệnh GHI từ 16/09. `scout.upload` là lệnh ghi thứ sáu, và là lệnh DUY NHẤT của gói đưa
+  /* BẢY lệnh GHI từ 16/09 tối. `scout.upload` vẫn là lệnh DUY NHẤT của gói đưa
    * byte đi **từ đĩa ra một trang web** — mọi lệnh còn lại đi chiều ngược lại. Con số này phải
    * đổi tay cùng lúc với từ vựng ở khối ⑴, cố ý: hai chỗ cùng nói một chuyện thì một chỗ quên
    * là một chỗ đỏ. */
-  assert.equal(c.methods.filter((m) => !m.read_only).length, 6,
-    "sáu lệnh GHI: click · type · clear · upload · grab · navigate");
+  assert.equal(c.methods.filter((m) => !m.read_only).length, 7,
+    "bảy lệnh GHI: click · chon · type · clear · upload · grab · navigate");
   assert.equal(c.seed, "udin-optic-v0.1", "tự khai đúng tên mình — `bridge.sessions` là chỗ người ta nhìn để phân biệt");
 }
 
