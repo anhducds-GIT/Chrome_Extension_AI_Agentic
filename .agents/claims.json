@@ -103,5 +103,11 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e4c239c384a473e7"
+  "_fingerprint": "dda9396aa1494ec9",
+  "tam": {
+    "workers/duc-scouter/v0.1.0/STATUS.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-16T05:27:03.973Z"
+    }
+  }
 }

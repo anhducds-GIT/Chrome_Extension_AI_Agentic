@@ -3,6 +3,9 @@ schema: extension-status/v2
 id: duc-scouter
 name: Duc Scouter
 lifecycle: active
+last_verified: 2026-09-16
+last_verified_commit: bf3ff4413e3a384495356b161ed751f6d98121d9
+last_verified_how: "Live 16/09: mot luot E2E that tren trang Udin (prompt moi, --du-an s1-nghiem-thu) chay tron W1->W2->W3->JPG->W4 — 4 tep mo dau FF D8 FF, co khop TUNG BYTE voi bao cao, ban .webp goc con nguyen. Tren chinh luot do scout.type tra da_kiem:true qua duong tro nang (~390ms moi lenh go; doi chung scout.query tran 15ms). Ba nhanh cua scout.click do TREN DAY THAT: moc co that -> da_kiem true sau 2ms; moc khong toi -> CLICK_NOT_OBSERVED sau 1018ms; bam tran -> tu khai chua kiem. PHAM VI: day KHONG phai nghiem thu scout.clear — lenh do van chua tu kiem, no S-27."
 owner: claude
 priority_rank: 4
 next_step: "SCOUTER v1 — Duc ky 16/09 (ADR-0008 cua goi). manifest khai 1.0.0; thu muc van la v0.1.0 vi do la mot DUONG DAN, khong phai mot phien ban (muoi phep ghim so tung byte, package.json, va bo khoi dong ngoai repo deu dung ten do). v1 hua NAM dieu va KHONG hua BON dieu — doc ADR-0008. Viec ke duoc mo khoa boi chinh S1/S2: T35 (W6 dua anh vao canvas) tung bi dat sau vi no la mot cu bam ma khong co cach nao biet no chay hay khong; nay scout.click co wait_for. Con T29 (scout.upload) van can mot method Bridge MOI nen van phai hoi Duc."
