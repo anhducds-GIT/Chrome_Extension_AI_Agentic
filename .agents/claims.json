@@ -103,11 +103,15 @@
       "released_at": null
     }
   },
-  "_fingerprint": "dda9396aa1494ec9",
+  "_fingerprint": "a815e84a2d4b8c29",
   "tam": {
+    "workers/duc-scouter/v0.1.0/docs/TRIALS.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-16T05:28:43.676Z"
+    },
     "workers/duc-scouter/v0.1.0/STATUS.md": {
       "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T05:27:03.973Z"
+      "luc": "2026-09-16T05:28:43.676Z"
     }
   }
 }
