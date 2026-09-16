@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go (khop -> da_kiem true / lech -> nem WRITE_NOT_OBSERVED / khong doc duoc -> khai that); scout.click khai da_kiem:false va nhan them tham so wait_for de kiem duoc. Tu vung KHONG doi: 24 va 12. Phep do tren Chrome 153 dao nguoc gia dinh cua ke hoach: <input>/<textarea> doc ra RONG qua dom.text, o contenteditable thi doc duoc — nen chon duong doc theo TEN THE. 17 con dot bien moi, giet duoc het; suite hai ben xanh. CON LAI DUNG MOT DIEM DUNG (S4): Duc nap lai hai extension + mo khoa ghi, AI chay mot luot E2E that, roi Duc ky Scouter v1.",
-      "human_action": "@Đức:bấm — nap lai CA HAI extension (ma doi o ca hai) roi mo khoa ghi, de AI chay mot luot E2E that. Xong luot do thi @Đức:chốt — ky Scouter v1. Khong con viec ky thuat nao dang cho.",
+      "next_step": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go: khop -> da_kiem true; lech -> nem WRITE_NOT_OBSERVED; khong doc duoc -> khai that. scout.click khai da_kiem:false, nhan them wait_for de kiem duoc. Tu vung KHONG doi (24/12). Do tren Chrome 153: <input>/<textarea> doc ra RONG qua dom.text, contenteditable thi doc duoc — chon duong doc theo TEN THE. 17 dot bien moi giet duoc het. CON MOT DIEM DUNG (S4): nap lai + mo khoa ghi, AI chay E2E that, roi ky v1.",
+      "human_action": "@Đức:bấm — nap lai CA HAI extension roi mo khoa ghi de AI chay mot luot E2E that. Xong luot do thi @Đức:chốt — ky Scouter v1.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem (bon tep ghim so tung byte + tep moi tu-kiem-ghi.mjs), bridge-core rieng nhan wait_for va hai ma loi moi — tu vung van 12 method. Suite 12/12 xanh. Mot dieu do lai va KHAC ghi chu hom truoc: o prompt Udin la textarea, khong phai o giau — nen no di duong cay tro nang, chua do duoc cho do dat bao nhieu tren trang canvas nang. Se do ngay o luot E2E ke tiep. Khong lam gay W2: doc khong ra thi khai chua kiem duoc, khong nem, va chot G-29 van dung nguyen cho.",
-      "human_action": "@Đức:bấm — nap lai extension goi nay cung luot voi duc-scouter, roi mo khoa ghi de AI chay mot luot E2E that. Diem dung nay dung chung voi diem dung cua duc-scouter, khong phai hai lan.",
+      "next_step": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem; tu vung van 12; suite 12/12 xanh. Viec ke la mot luot E2E that sau khi Duc nap lai — luot do vua chung minh khong gay gi, vua do cai chua do duoc (o prompt la <textarea> nen no doc lai bang cay tro nang: dat bao nhieu tren trang canvas nang?). Chi tiet o HANDOFF 2026-09-16g.",
+      "human_action": "@Đức:bấm — nap lai extension goi nay CUNG LUOT voi duc-scouter roi mo khoa ghi. Mot diem dung chung cho ca hai goi.",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go (khop -> da_kiem true / lech -> nem WRITE_NOT_OBSERVED / khong doc duoc -> khai that); scout.click khai da_kiem:false va nhan them tham so wait_for de kiem duoc. Tu vung KHONG doi: 24 va 12. Phep do tren Chrome 153 dao nguoc gia dinh cua ke hoach: <input>/<textarea> doc ra RONG qua dom.text, o contenteditable thi doc duoc — nen chon duong doc theo TEN THE. 17 con dot bien moi, giet duoc het; suite hai ben xanh. CON LAI DUNG MOT DIEM DUNG (S4): Duc nap lai hai extension + mo khoa ghi, AI chay mot luot E2E that, roi Duc ky Scouter v1.",
+      "title": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go: khop -> da_kiem true; lech -> nem WRITE_NOT_OBSERVED; khong doc duoc -> khai that. scout.click khai da_kiem:false, nhan them wait_for de kiem duoc. Tu vung KHONG doi (24/12). Do tren Chrome 153: <input>/<textarea> doc ra RONG qua dom.text, contenteditable thi doc duoc — chon duong doc theo TEN THE. 17 dot bien moi giet duoc het. CON MOT DIEM DUNG (S4): nap lai + mo khoa ghi, AI chay E2E that, roi ky v1.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem (bon tep ghim so tung byte + tep moi tu-kiem-ghi.mjs), bridge-core rieng nhan wait_for va hai ma loi moi — tu vung van 12 method. Suite 12/12 xanh. Mot dieu do lai va KHAC ghi chu hom truoc: o prompt Udin la textarea, khong phai o giau — nen no di duong cay tro nang, chua do duoc cho do dat bao nhieu tren trang canvas nang. Se do ngay o luot E2E ke tiep. Khong lam gay W2: doc khong ra thi khai chua kiem duoc, khong nem, va chot G-29 van dung nguyen cho.",
+      "title": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem; tu vung van 12; suite 12/12 xanh. Viec ke la mot luot E2E that sau khi Duc nap lai — luot do vua chung minh khong gay gi, vua do cai chua do duoc (o prompt la <textarea> nen no doc lai bang cay tro nang: dat bao nhieu tren trang canvas nang?). Chi tiet o HANDOFF 2026-09-16g.",
       "rank": 5,
       "claim": null
     }

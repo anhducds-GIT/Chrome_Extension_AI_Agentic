@@ -103,23 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "c665b2097fb306eb",
-  "tam": {
-    "workers/duc-scouter/v0.1.0/AGENTS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T03:54:38.611Z"
-    },
-    "workers/udin-optic/v0.1.0/AGENTS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T03:54:38.611Z"
-    },
-    "workers/duc-scouter/v0.1.0/STATUS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T03:54:38.611Z"
-    },
-    "workers/udin-optic/v0.1.0/STATUS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T03:54:38.611Z"
-    }
-  }
+  "_fingerprint": "e4c239c384a473e7"
 }
