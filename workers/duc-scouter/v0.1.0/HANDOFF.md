@@ -1811,3 +1811,29 @@ Thêm `backendNodeId` vào `dom.query`: đó là **mối nối** sang `a11y.tree
 `backend_node_id` từ lâu). Không mở quyền nào — không method nào nhận số đó từ người gọi.
 
 17 con đột biến mới, giết được hết; `M11` canh mối nối vừa nói.
+
+## 2026-09-16g · `S3` đóng trên dây thật — và câu hỏi tôi định hỏi Đức **tự trả lời**
+
+Đức nạp lại, mở khoá. Đo ghế: seed `udin-optic-v0.1`, `scout.click` đã khai đủ
+`wait_for`/`wait_state`/`wait_timeout_ms` — đúng bản mới.
+
+**GIÁ CỦA LƯỢT ĐỌC LẠI, đo thẳng trên trang Udin:** một lượt `scout.type` một ký tự mất
+**404 ms** — đó gần như trọn phần cố định (một lượt dò + **hai** lượt kéo cây trợ năng).
+Đối chứng trên cùng tab: `scout.query` trần **15 ms**. Tức lượt đọc lại thêm khoảng
+**390 ms** cho mỗi lệnh gõ.
+
+**Nên câu hỏi tôi định đưa Đức chốt thì KHÔNG CẦN HỎI NỮA.** Mục trước ghi rằng
+`Accessibility.getPartialAXTree` (hỏi đúng một nút) rẻ hơn hẳn và đáng cân nhắc mở.
+**Rút lại:** 390 ms không phải một cái giá đáng đổi lấy một dòng mới trong danh sách method CDP.
+Một bề mặt an toàn rộng thêm để tiết kiệm vài trăm mili giây là một món hời tồi. Đóng câu hỏi.
+
+**Ba nhánh của `S2`, đo trên dây thật chứ không qua đồ giả:**
+bấm kèm mốc có thật → `da_kiem: true` qua `dom.wait` (mốc tới sau 2 ms) ·
+mốc không bao giờ tới → **`CLICK_NOT_OBSERVED`** sau 1018 ms ·
+bấm trần → `da_kiem: false` kèm câu khai. Cả ba đúng như phép ghim nói.
+
+**E2E thật** (`--du-an "s1-nghiem-thu"`, prompt mới hoàn toàn): trọn W1→W2→W3→JPG→W4,
+4 tệp `.jpg` mở đầu `FF D8 FF`, cỡ khớp **từng byte** với báo cáo, 4 bản `.webp` gốc
+còn nguyên. Không lệnh nào gãy.
+
+Còn lại: **đúng một chữ ký của Đức cho `v1`**. Không còn việc kỹ thuật nào đang chờ.

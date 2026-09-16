@@ -73,20 +73,22 @@ kèm một câu; đưa `wait_for` (kèm `wait_state` `present`/`absent`) thì ki
 không xảy ra thì **ĐỎ** (`CLICK_NOT_OBSERVED`). *Đóng bằng:* `TK12`–`TK17` giết được hết.
 `README` nói thẳng, có ví dụ. **Không thêm lệnh nào** — `wait_for` là một tham số.
 
-**S3 · Mang sang Udin — ✅ mã XONG 16/09, còn chờ một lượt E2E thật.** Bốn tệp ghim so từng
+**S3 · Mang sang Udin — ✅ XONG 16/09, E2E thật đã chạy.** Bốn tệp ghim so từng
 byte đã đồng bộ (thêm tệp mới `tu-kiem-ghi.mjs` vào bảng `CẶP`); `bridge-core.mjs` riêng
 của Udin nhận hai mã lỗi và `wait_for`. **Suite hai bên xanh · đột biến 0 sống sót.**
 
-> **Một điều đo lại và nó KHÁC ghi chú hôm qua:** ô prompt của Udin là `textarea.agent-textarea`,
-> tức `<textarea>` — **không phải** ô giàu. Nên nó đi **đường trợ năng**, và mỗi lượt gõ kéo cây
-> trợ năng hai lần trên một trang canvas nặng. **Chưa đo được** chỗ đó đắt bao nhiêu: cần ghế sống.
-> Không làm gãy `W2`: đọc không ra thì khai *chưa kiểm được*, không ném, và chốt `G-29` (nút
-> Send mở khoá) vẫn đứng nguyên chỗ cũ.
+> **Ô prompt của Udin là `textarea.agent-textarea`** — không phải ô giàu như ghi chú hôm qua —
+> nên nó đi **đường trợ năng**. **Đã đo trên ghế sống 16/09: ~390 ms mỗi lượt gõ**, đã gồm hai
+> lượt kéo cây trợ năng (đối chứng: `scout.query` trần 15 ms). Rẻ.
+>
+> **E2E thật 16/09** (`--du-an "s1-nghiem-thu"`, prompt mới): W1→W2→W3→JPG→W4 trọn vẹn ·
+> 4 tệp mở đầu `FF D8 FF`, cỡ khớp **từng byte** với báo cáo · 4 bản `.webp` gốc còn nguyên.
+> Trên chính lượt đó `scout.type` trả `da_kiem: true` qua đường trợ năng.
 
-**S4 · RỒI MỚI ký `v1` — 🛑 ĐIỂM DỪNG DUY NHẤT, đang chờ Đức.** Hai việc, một lần:
-**⑴ Đức nạp lại cả hai extension** (mã đã đổi ở cả hai) · **⑵ mở khoá ghi**, rồi AI chạy một lượt
-E2E thật với prompt mới — lượt đó vừa chứng minh không gãy gì, vừa **đo luôn** cái chưa đo được ở
-`S3`. Xong thì Đức ký `v1`.
+**S4 · RỒI MỚI ký `v1` — 🛑 ĐIỂM DỪNG DUY NHẤT, chỉ còn chữ ký.** Đức đã nạp lại và mở
+khoá; lượt E2E thật đã chạy xong và **đạt**. Ba nhánh của `S2` cũng đã đo trên dây thật:
+bấm có mốc → `da_kiem: true` · mốc không tới → **`CLICK_NOT_OBSERVED`** · bấm trần → tự khai
+chưa kiểm. **Không còn việc kỹ thuật nào đang chờ** — chỉ còn Đức tuyên bố `v1`.
 
 ### ĐẶT SAU, có lý do
 

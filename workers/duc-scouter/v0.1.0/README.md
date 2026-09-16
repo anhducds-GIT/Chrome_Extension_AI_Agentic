@@ -179,6 +179,11 @@ nó kiểm được, và không xảy ra thì **ĐỎ** (`CLICK_NOT_OBSERVED`).
 chúng là **cây trợ năng**. Ô `contenteditable` thì ngược lại: chữ nằm thật trong cây, nên nó đi
 đường rẻ. Chọn đường theo **tên thẻ**, không mò.
 
+**GIÁ CỦA LƯỢT ĐỌC LẠI, đo trên trang thật 16/09** (Udin, ô nhiều dòng → đường trợ năng):
+**~390 ms** cho mỗi lượt `scout.type`, đã gồm một lượt dò và **hai** lượt kéo cây trợ năng.
+Đối chứng: một lượt `scout.query` trần trên cùng tab mất 15 ms. Rẻ — nên đường hẹp hơn
+(`Accessibility.getPartialAXTree`, hỏi đúng một nút) **không cần mở**.
+
 **Từ vựng KHÔNG đổi:** vẫn 24 method. `wait_for` là một **tham số** của `scout.click`, không phải
 một lệnh mới — và không lượt gọi cũ nào phải sửa.
 

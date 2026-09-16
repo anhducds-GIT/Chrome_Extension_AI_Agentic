@@ -387,3 +387,17 @@ vẫn đứng nguyên chỗ cũ trong `gui-prompt.mjs` và vẫn là thứ chặ
 
 **CHƯA ĐO ĐƯỢC, và nó cần một lượt chạy thật:** cây trợ năng của trang Udin to bao nhiêu, mất bao
 lâu. Không đo được mà không có ghế sống. Đo ngay ở lượt E2E kế tiếp.
+
+## 2026-09-16h · Lượt E2E thật sau `S3` — và con số còn thiếu
+
+**Thứ mục trước khai là CHƯA ĐO ĐƯỢC, nay đã đo:** ô prompt `<textarea>` đi đường trợ năng,
+và một lượt `scout.type` trên chính trang Udin mất **404 ms** cho một ký tự — gần trọn phần
+cố định, gồm **hai** lượt kéo cây trợ năng. Đối chứng `scout.query` trần: **15 ms**.
+Trang canvas nặng **không** làm đường này đắt như tôi lo.
+
+`scout.type` trên ô prompt trả `da_kiem: true`, `kiem_bang: "a11y"`. Tức `W2` nay có
+**hai** lớp kiểm chồng nhau: lớp mới đọc lại chữ, và chốt `G-29` cũ (nút Send mở khoá) vẫn
+đứng nguyên chỗ. Chưa bỏ lớp nào — hai lớp đo hai thứ khác nhau: chữ tới DOM, và chữ tới React.
+
+**E2E** (`--du-an "s1-nghiem-thu"`, prompt mới): W1→W2→W3→JPG→W4 trọn vẹn · 4 tệp JPEG thật,
+cỡ khớp từng byte · `.webp` gốc còn nguyên · thư mục dự án mới sinh đúng chỗ.
