@@ -103,5 +103,11 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e4c239c384a473e7"
+  "_fingerprint": "d6b1a6b98a1fd1f2",
+  "tam": {
+    "HANDOFF.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-16T09:13:19.662Z"
+    }
+  }
 }

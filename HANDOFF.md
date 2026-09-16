@@ -854,3 +854,10 @@ Việc thật ở `workers/duc-scouter/` và `workers/udin-optic/` (đường gh
 `scout.type` đọc lại ô nhập, `scout.click` khai thật + tham số `wait_for`). Ở gốc repo
 phiên này chỉ **sinh lại ba bảng máy sinh** và thêm một lệnh vào `package.json`
 (`scouter:doc-lai`). Không đổi một dòng luật, một dòng `scripts/` hay `tests/` nào ở tầng gốc.
+
+## 2026-09-16 · `claude-scouter-udine` — thêm `scouter:hinh-hoc` vào `package.json`
+
+Một dòng script: `npm run scouter:hinh-hoc` → `workers/duc-scouter/v0.1.0/scripts/do-hinh-hoc.mjs`.
+Đó là phép đo đóng `S-21` (một tab thôi trả lời câu hỏi hình học). Nó **không** nằm trong suite
+mặc định, cố ý: nó mở một Chrome riêng và giết tiến trình vẽ trang — cùng kiểu với
+`scouter:doc-lai` và `scouter:action-probe`. Nhật ký đầy đủ ở `workers/duc-scouter/HANDOFF.md`.
