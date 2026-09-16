@@ -355,3 +355,15 @@ cũ** `udin-optic/<lượt>/` — thêm một tầng mà không gãy lượt ch�
 Còn lại: ba thứ trên bảng bên chỉ **mắt người** thấy được (cỡ chữ, thu phóng trang, nút *Kiểm tra
 kết nối*) — `chrome.debugger` **không gắn được vào trang extension**, nên không có đường nào để AI
 tự bấm chúng. Đã đo gián tiếp bằng `npm run udin:bang-ben` (Chrome sạch, 0 lỗi console).
+
+## 2026-09-16f · Việc kế **không ở gói này**
+
+Đức chốt 16/09: **sửa đường ghi trước, rồi mới ký `Scouter v1`**. Chuỗi `S1`–`S4` nằm ở
+`duc-scouter/v0.1.0/CHUOI-VIEC.md`, vì `scout.type`/`scout.click` là **tệp chép bị ghim** — sửa ở
+đây trước là làm gãy phép so từng byte trên đúng tệp chứa cái phanh (luật gói ⓢ, chiều Scouter → Udin).
+
+Gói này nhận bản chép ở chặng `S3`, rồi một lượt E2E thật để chứng minh không gãy gì.
+
+**Một điều của gói này `S1` phải chịu được:** ô nhập của trang Udin là loại **giàu**
+(`contenteditable`), không phải `<input>`. Đọc lại không ra chữ thì phải **khai là chưa kiểm được**,
+không ném và cũng không im lặng báo đạt — nếu không, `S1` sẽ làm chết chính `W2` của gói này.
