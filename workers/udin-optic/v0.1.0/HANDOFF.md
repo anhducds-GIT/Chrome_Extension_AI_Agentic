@@ -904,3 +904,31 @@ nó, và lượt chạy được đóng dấu ĐẠT với một câu trả lờ
 ở Udin (lượt một agent tự trả *"Done!"* không sinh gì; lượt hai treo ở *đang chạy* >20 phút, lưới
 kết quả đứng yên ở 16). Vòng **không nói dối** ở cả hai: nó báo *"chạy xong nhưng không có ảnh
 mới"* và *"VẪN ĐANG CHẠY sau 902s — chưa hỏng, chỉ là chưa xong"*, và giữ đường `--noi-lai`.
+
+## 2026-09-17e · `claude-scouter-udine` — nguyên nhân thật của ba lượt hỏng: máy chủ Udin ĐẦY CHỖ
+
+**Mục 17/09d để ngỏ câu hỏi nguyên nhân; nay có dữ liệu, nên khép lại ở đây thay vì để nó sống
+tiếp như một chỗ tối.** Sau khi nạp lại trang, `W1` chặn ngay với một câu đọc được, và chữ trên
+màn chắn là **`"User Limit Reached · Please try again in a few minutes when other users finish
+their sessions."`** — đúng `.concurrency-overlay` đã gặp 16/09.
+
+**Nó giải thích cả ba lượt, không phải một:**
+
+| lượt | triệu chứng | nay đọc là |
+|---|---|---|
+| ① | Udin đáp *"Done! What would you like to do next?"*, không sinh ảnh nào | agent bị cắt phần sinh ảnh vì hết suất |
+| ② | treo ở *"Thinking ahead…"* hơn 20 phút, lưới kết quả đứng yên ở 16 | lượt chạy không bao giờ được cấp chỗ |
+| ③ | `W1` chặn thẳng sau khi nạp lại trang | màn chắn hiện ra đúng như nó phải thế |
+
+**Ba lượt ấy KHÔNG lãng phí**, và đó là chỗ đáng ghi: mỗi lượt để lại một phép đo mà lượt chạy
+suôn sẻ không bao giờ cho — độ trễ thả (3,2–3,6s), và cái lỗ `W4` đọc dòng trạng thái ra như câu
+trả lời. Cái thứ hai chỉ lộ ra vì có một lượt treo đủ lâu để tôi đi hỏi trang.
+
+**Và không một lượt nào trong ba lượt nói dối.** `W2` báo *"chạy xong nhưng không có ảnh mới"*;
+`gui-prompt` báo *"VẪN ĐANG CHẠY sau 902s — chưa hỏng, chỉ là chưa xong"* kèm đường `--noi-lai`;
+`W1` báo *"máy chủ Udin vẫn đầy chỗ, thử lại sau"*. Ba câu khác nhau cho ba trạng thái khác nhau.
+
+**`RD` (chạy sống ca thả ảnh ngoài, canvas có sẵn nhiều ảnh trùng `src`) CHƯA ĐÓNG** — chặn bởi
+sức chứa máy chủ Udin, **không** bởi thứ gì trong repo này. Đường danh tính đã chứng minh xong
+trên dây thật ở lượt ① (thả vào, chọn được, gửi được); thứ còn thiếu duy nhất là một lượt Udin
+chịu sinh ảnh. Luật cũ vẫn đúng: **đừng bấm `Try Again` thêm — chỉ có đợi.**
