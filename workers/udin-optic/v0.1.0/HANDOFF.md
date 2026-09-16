@@ -630,3 +630,25 @@ của ứng dụng, không phải đường nhập tệp — đừng quay lại.
 **Hai lần trong một tối tôi dùng sai dụng cụ đo**, và cả hai đều cho ra *"không có hộp thoại"*:
 `MainWindowTitle` không thấy cửa sổ CON của Chrome; bộ lấy mẫu "mỗi 400 ms" thực ra chỉ lấy được 7
 mẫu vì mỗi lượt gọi PowerShell tốn hơn một giây. Ảnh chụp của Đức mới là phép đo đúng.
+
+
+## 16/09 (khuya) — Đức đo tay bốn đường đưa ảnh, và mô hình của trang lộ ra
+
+**Mô hình thật của Udin không phải "đính kèm vào ô chữ".** Nút `+` → `Image` thêm được **nhiều
+ảnh một lượt**, và ảnh vào thẳng **CANVAS**; ảnh nào được **chọn** thì mới thành một *reference*
+trong prompt. Nên `.agent-context-pill-thumb` mà `vong-style.mjs` đếm là **số ảnh đang được chọn
+làm tham chiếu**, không phải số tệp đã tải lên. Phép đếm vẫn đúng việc của nó, nhưng tên gọi
+trong đầu tôi thì sai, và cái tên sai ấy sẽ dẫn nhầm ở lượt nào cần nhiều ảnh.
+
+**Bốn đường, đo bằng tay:** ⑴ `+` → `Image` — ĐƯỢC, nhiều ảnh, **có hộp thoại**. ⑵ **kéo-thả từ
+Explorer vào canvas — ĐƯỢC, không hộp thoại.** ⑶ dán từ clipboard hệ điều hành — **KHÔNG** (cả tệp
+lẫn bitmap). ⑷ copy–paste **trong nội bộ canvas — ĐƯỢC**, nhưng đó là tính năng riêng của ứng dụng.
+
+**Một chỗ sửa lại cho đúng:** kéo-thả **không** gửi "một link ảnh" như linh cảm ban đầu — Windows
+gửi **danh sách đường dẫn tệp**, trang nhận qua `DataTransfer.files`, y hệt thứ nó nhận từ ô chọn
+tệp. Nên nó không rẻ hơn về mặt dữ liệu; nó thắng ở chỗ **không bao giờ dựng hộp thoại**.
+
+**Việc kế** là bỏ được hộp thoại, và cả hai đường đều cần **một method CDP mới** → phải hỏi Đức:
+⒜ `Page.enable` (rẻ, giữ nguyên đường đang chạy, **chưa chứng minh là chữa được**) ·
+⒝ `Input.dispatchDragEvent` (đổi hẳn sang kéo-thả, **theo cấu tạo không có hộp thoại**, và bỏ được
+`Page.setInterceptFileChooserDialog` khỏi bề mặt). Không cái nào chặn `R1` — vòng đã chạy.
