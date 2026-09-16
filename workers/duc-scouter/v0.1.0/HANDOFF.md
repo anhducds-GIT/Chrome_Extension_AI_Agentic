@@ -1959,3 +1959,33 @@ mình vào Udin để nó sinh ảnh theo ảnh đó.* Anh nói câu ấy là l�
 **`S-27` nay chạy thật từ CẢ HAI gói.** Sau khi Đức nạp lại Udin: ô 15 ký tự → `da_kiem: true`
 *“hai phím đã tới trang”*; xoá lại ô rỗng → `da_kiem: true` kèm câu KHÁC. Hết việc mở, trừ
 `T10`/`S-21` — chỉ thiếu một tab trắng.
+
+## 2026-09-16 · `claude-scouter-udine` — `T10`/`S-21` đóng, và tôi đã đi xin một thứ tự làm được
+
+**Tái hiện được `S-21`** — cái lỗi treo từ 12/09 mà chưa ai hiểu. `npm run scouter:hinh-hoc`:
+Chrome riêng hồ sơ trống, giết tiến trình vẽ trang bằng `Page.crash`, rồi hỏi lại ba câu —
+hỏi-điểm **hết hạn không trả lời** · ảnh chụp `Internal error` · hộp cũng hết hạn. Rồi **một
+lượt điều hướng làm cả ba lành lại ngay**, đúng câu mà `S-21` đã ghi mà không giải thích được.
+
+**Hai giả thuyết chết, còn một đúng.** ⒜ chết từ `G-41`. ⒝ *"gắn debugger hỏng để lại target dở
+dang"* — **chết 16/09**: gắn hai phiên lên cùng target rồi nhả một, hình học không hề hấn. Còn
+⒞ *renderer bị thay*, và nó đúng.
+
+**Một chỗ KHÔNG khớp, ghi ra chứ không lờ đi:** 12/09 Chrome **trả lời** `-32000 No node found`;
+ở phép tái hiện nó **không trả lời gì**. Renderer chết hẳn thì im lặng, renderer bị thay thì
+vẫn trả lời bằng một bảng nodeId mới. Cả hai đều là ⒞.
+
+**Thứ đáng giá nhất lại là phần PHÂN BIỆT**, nay ở `README.md`: hỏi-điểm **và** ảnh chụp cùng
+hỏng = renderer chết, chữa bằng điều hướng. Chỉ `getBoxModel` hỏng mà ảnh **vẫn ra** = nodeId
+cũ, chữa bằng **hỏi lại selector**. Gộp hai cái là đẩy người sửa đi đập cả trang để chữa một
+con số cũ.
+
+**SAI CỦA TÔI, ghi vào đây vì nó tốn của Đức một vòng hỏi-đáp.** Tôi khai `T10` *"chặn bởi:
+cần Đức mở giúp một tab trắng"* và đưa anh đi mở tab. Sai: phép đo này **phải được phép giết
+tiến trình vẽ trang** — thứ không bao giờ làm được trên tab thật của anh. Nó cần một Chrome
+**của riêng nó**, và `do-doc-lai.mjs` đã tự dựng Chrome như thế từ sáng cùng ngày. Tôi có sẵn
+dụng cụ mà vẫn đi xin. **Trước khi xin người ta một điều kiện, hỏi xem mình tự dựng được không.**
+
+**Một màu xanh giả sinh ra từ chính dụng cụ đo.** Lượt chạy đầu treo, và Node **thoát mã 0** kèm
+cảnh báo *unsettled top-level await* — phép đo báo ĐẠT mà chưa in một chữ. Đã thêm hạn cho từng
+lệnh CDP (`G-72`, lần này cắn chính bộ đo).
