@@ -1776,3 +1776,38 @@ Chuỗi `S1`–`S4` nay là **chuỗi việc đang chạy**, không còn là đ�
 **Ba quyết định lấy trước để chuỗi không phải dừng hỏi:** ① không thêm method nào — từ vựng giữ **24** và **12**, cả hai là hợp đồng `deepEqual`. ② lệch thì **NÉM**, không trả về kèm một cờ buồn — phong bì thành công chở thất bại là thứ người gọi phải nhớ mà bóc. ③ ô nhập giàu (trang Udin dùng loại đó) không được làm `S1` dừng: **ba** trạng thái — khớp · lệch (ném) · không đọc được (khai thật).
 
 **Hai thứ KHÔNG làm:** đi tìm nguyên nhân `S-22` (Đức đã đóng, `T28`) · nới thời gian chờ khi đọc lại thấy lệch — `S-22` ghi rõ đó là **sai hoàn toàn hướng**.
+
+## 2026-09-16f · `S1` + `S2` đóng — và phép đo ĐẢO NGƯỢC kế hoạch
+
+`scout.type` nay **đọc lại ô nhập** sau khi gõ. Ba câu trả lời: khớp → `da_kiem: true` ·
+lệch → **ném `WRITE_NOT_OBSERVED`** · không đọc được → khai thật, không ném.
+`scout.click` khai `da_kiem: false` kèm một câu, và nhận thêm tham số `wait_for` để
+kiểm được. **Từ vựng không đổi: 24 và 12**, cả hai vẫn là hợp đồng `deepEqual`.
+
+**PHÉP ĐO LÀ CHỖ ĐÁNG ĐỌC NHẤT** (`npm run scouter:doc-lai`, Chrome 153). Kế hoạch viết
+*“ô giàu là ca không đọc được”*. **Ngược hẳn:**
+
+| ô | `dom.text` | trợ năng |
+|---|---|---|
+| `<input type=text>` | **rỗng** | đúng chữ |
+| `<textarea>` | **rỗng** | đúng chữ |
+| `<div contenteditable>` | đúng chữ | đúng chữ |
+| `<input type=password>` | rỗng | **chuỗi dấu che** |
+
+Không phải khuyết tật: ô nhập thường giữ chữ ở **thuộc tính đối tượng**, nên cây DOM không có
+gì để đọc. Nên đường đọc chọn theo **TÊN THẺ**, không mò. Và ô che nội dung là một trạng thái
+**THỨ BA** — ném ở đó thì mọi lượt gõ mật khẩu đều thành một lời buộc tội sai.
+
+**Đếm, không phải “có chứa”.** `scout.type` không xoá chữ cũ, nên một ô đã sẵn chuỗi ấy làm
+phép *“có chứa”* ĐẠT cho một lượt gõ chưa bao giờ tới trang. Con `TK2` là đúng cái đó.
+
+**MỘT ĐƯỜNG RẺ HƠN NHIỀU mà tôi KHÔNG tự mở, Đức chốt giùm:** đọc lại ô nhập thường phải kéo
+**cả cây trợ năng** vì đó là thứ duy nhất có sẵn trong từ vựng. `Accessibility.getPartialAXTree`
+hỏi **đúng một nút** — rẻ hơn hẳn, và **hẹp hơn** cái đang dùng. Nhưng nó là một method CDP MỚI,
+tức đổi luật an toàn, tức phải hỏi. Chưa hỏi thì chưa mở. Giá của việc chưa mở: hai lượt kéo cây
+mỗi lần gõ vào ô thường — **chưa đo trên trang nặng**.
+
+Thêm `backendNodeId` vào `dom.query`: đó là **mối nối** sang `a11y.tree` (bên ấy đã khai
+`backend_node_id` từ lâu). Không mở quyền nào — không method nào nhận số đó từ người gọi.
+
+17 con đột biến mới, giết được hết; `M11` canh mối nối vừa nói.

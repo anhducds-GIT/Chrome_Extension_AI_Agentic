@@ -364,6 +364,26 @@ tự bấm chúng. Đã đo gián tiếp bằng `npm run udin:bang-ben` (Chrome 
 
 Gói này nhận bản chép ở chặng `S3`, rồi một lượt E2E thật để chứng minh không gãy gì.
 
-**Một điều của gói này `S1` phải chịu được:** ô nhập của trang Udin là loại **giàu**
-(`contenteditable`), không phải `<input>`. Đọc lại không ra chữ thì phải **khai là chưa kiểm được**,
-không ném và cũng không im lặng báo đạt — nếu không, `S1` sẽ làm chết chính `W2` của gói này.
+**Một điều của gói này `S1` phải chịu được:** ~~ô nhập của trang Udin là loại **giàu**
+(`contenteditable`)~~ — **SAI, gạch 16/09.** Đo lại chính mã của gói: `qua-man-cho.mjs` khai
+`oPrompt: "textarea.agent-textarea"`, tức một `<textarea>`. Câu KẾT LUẬN thì vẫn đứng, và nay nó
+còn đúng hơn: đọc lại không ra chữ thì phải **khai là chưa kiểm được**, không ném và cũng không im
+lặng báo đạt — nếu không, `S1` sẽ làm chết chính `W2` của gói này.
+
+## 2026-09-16g · `S3` — nhận bản chép đường ghi tự kiểm
+
+Bốn tệp ghim so từng byte đã đồng bộ (`scouter-probes` · `scouter-seed-core` ·
+`scouter-actions-core` · tệp MỚI `tu-kiem-ghi.mjs`, đã thêm một dòng vào bảng `CẶP`).
+`bridge-core.mjs` riêng của gói nhận hai mã lỗi mới và tham số `wait_for` — **từ vựng vẫn 12**.
+
+**Chỗ ô prompt của Udin là `<textarea>` chứ không phải ô giàu** (gạch lại lời khai cũ ở mục
+trước) đổi một thứ có giá: đường đọc lại của nó là **cây trợ năng**, không phải `dom.text` — tức
+mỗi lượt `scout.type` kéo cây trợ năng **hai lần** trên một trang canvas nặng.
+
+**Giá nếu chỗ đó đắt, và vì sao nó KHÔNG làm gãy `W2`:** đọc không ra thì kết quả khai
+`da_kiem: false` kèm một câu — **không ném**. Chốt `G-29` (nút Send mở khoá = chữ đã tới React)
+vẫn đứng nguyên chỗ cũ trong `gui-prompt.mjs` và vẫn là thứ chặn thật. Tức xấu nhất là
+**chậm hơn**, không phải hỏng.
+
+**CHƯA ĐO ĐƯỢC, và nó cần một lượt chạy thật:** cây trợ năng của trang Udin to bao nhiêu, mất bao
+lâu. Không đo được mà không có ghế sống. Đo ngay ở lượt E2E kế tiếp.

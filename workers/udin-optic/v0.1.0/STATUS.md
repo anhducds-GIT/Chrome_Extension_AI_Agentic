@@ -5,8 +5,8 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "U0..U5 xong, U4 da nghiem thu bang DIA 16/09. Viec ke KHONG o goi nay ma o duc-scouter: chuoi S1..S4 (duong ghi thoi bao DAT khi trang khong nhan). Goi nay nhan ban chep o chang S3, roi mot luot E2E that de chung minh khong gay gi."
-human_action: "khong"
+next_step: "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem (bon tep ghim so tung byte + tep moi tu-kiem-ghi.mjs), bridge-core rieng nhan wait_for va hai ma loi moi — tu vung van 12 method. Suite 12/12 xanh. Mot dieu do lai va KHAC ghi chu hom truoc: o prompt Udin la textarea, khong phai o giau — nen no di duong cay tro nang, chua do duoc cho do dat bao nhieu tren trang canvas nang. Se do ngay o luot E2E ke tiep. Khong lam gay W2: doc khong ra thi khai chua kiem duoc, khong nem, va chot G-29 van dung nguyen cho."
+human_action: "@Đức:bấm — nap lai extension goi nay cung luot voi duc-scouter, roi mo khoa ghi de AI chay mot luot E2E that. Diem dung nay dung chung voi diem dung cua duc-scouter, khong phai hai lan."
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
 current_focus: "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."

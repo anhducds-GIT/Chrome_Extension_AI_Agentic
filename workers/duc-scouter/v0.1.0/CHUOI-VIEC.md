@@ -56,21 +56,37 @@ riêng lẻ**. Nguy hiểm rơi vào ai dùng `scout.type`/`scout.click` trực 
 
 ### Bốn chặng, không chặng nào cần method Bridge MỚI
 
-**S1 · `scout.type` TỰ KIỂM.** Gõ xong thì **đọc lại giá trị ô nhập** bằng đường đọc đã có
-(`dom.text` / `DOM.getAttributeValue`). Khớp → `da_kiem: true`. Không khớp → **`WRITE_NOT_OBSERVED`**,
-không báo đạt. *Đóng khi:* đột biến *“bỏ lượt đọc lại”* bị giết, và một lượt E2E thật vẫn xanh.
+**S1 · `scout.type` TỰ KIỂM — ✅ XONG 16/09.** Gõ xong thì đọc lại ô nhập. Khớp →
+`da_kiem: true` · lệch → ném `WRITE_NOT_OBSERVED` · không đọc được → khai thật.
+*Đóng bằng:* bảy con đột biến ở phần phán + bốn con ở đường nối, **giết được hết** — trong đó
+`TK9` là *“bỏ lượt đọc lại”* và `TK2` là *“quay về phép có chứa”*. Một lượt chạy trên Chrome
+thật (`npm run scouter:doc-lai`) **ĐẠT trên bốn loại ô**.
 
-**S2 · `scout.click` KHAI THẬT.** Một cú bấm **không có dấu vết chung** để đọc lại, nên nó **không
-tự kiểm được** — và câu trả lời đúng là **nói ra điều đó**, không phải giả vờ. Trả `da_kiem: false`
-kèm một câu, và `README` nói thẳng. **Thêm một đường TỰ CHỌN:** người gọi đưa `cho_doi`
-(một selector phải xuất hiện hoặc biến mất sau cú bấm) → lúc đó `scout.click` **kiểm được**.
-*Đóng khi:* không đưa `cho_doi` thì kết quả **tự khai là chưa kiểm**; có đưa mà không xảy ra thì ĐỎ.
+> **PHÉP ĐO ĐẢO NGƯỢC MỘT GIẢ ĐỊNH CỦA CHÍNH KHỐI NÀY.** Trên đây viết *“ô giàu là ca không đọc
+> được”*. Đo ra **ngược hẳn**: `<input>` và `<textarea>` giữ chữ ở **thuộc tính đối tượng** nên
+> cây DOM đọc ra **rỗng**; ô `contenteditable` thì đọc được. Nên đường đọc chọn theo **tên thẻ**.
+> Ca *“không đọc được”* thật là **ô che nội dung** (`type="password"` trả về chuỗi dấu che) và
+> **bản đọc bị cắt ở trần**. Ba trạng thái vẫn đúng — chỉ là trạng thái thứ ba rơi vào chỗ khác.
 
-**S3 · Mang sang Udin** (bản chép bị ghim so từng byte) + một lượt E2E thật để chứng minh
-không làm gãy gì. *Đóng khi:* suite hai bên xanh · đột biến 0 sống sót · E2E thật 4/4.
+**S2 · `scout.click` KHAI THẬT — ✅ XONG 16/09.** Không đưa mốc thì trả `da_kiem: false`
+kèm một câu; đưa `wait_for` (kèm `wait_state` `present`/`absent`) thì kiểm được, và
+không xảy ra thì **ĐỎ** (`CLICK_NOT_OBSERVED`). *Đóng bằng:* `TK12`–`TK17` giết được hết.
+`README` nói thẳng, có ví dụ. **Không thêm lệnh nào** — `wait_for` là một tham số.
 
-**S4 · RỒI MỚI ký `v1`.** Đây là lý do thứ tự quan trọng: ký `v1` **trước** nghĩa là
-đóng dấu lên một lời hứa mà đường ghi chưa giữ được.
+**S3 · Mang sang Udin — ✅ mã XONG 16/09, còn chờ một lượt E2E thật.** Bốn tệp ghim so từng
+byte đã đồng bộ (thêm tệp mới `tu-kiem-ghi.mjs` vào bảng `CẶP`); `bridge-core.mjs` riêng
+của Udin nhận hai mã lỗi và `wait_for`. **Suite hai bên xanh · đột biến 0 sống sót.**
+
+> **Một điều đo lại và nó KHÁC ghi chú hôm qua:** ô prompt của Udin là `textarea.agent-textarea`,
+> tức `<textarea>` — **không phải** ô giàu. Nên nó đi **đường trợ năng**, và mỗi lượt gõ kéo cây
+> trợ năng hai lần trên một trang canvas nặng. **Chưa đo được** chỗ đó đắt bao nhiêu: cần ghế sống.
+> Không làm gãy `W2`: đọc không ra thì khai *chưa kiểm được*, không ném, và chốt `G-29` (nút
+> Send mở khoá) vẫn đứng nguyên chỗ cũ.
+
+**S4 · RỒI MỚI ký `v1` — 🛑 ĐIỂM DỪNG DUY NHẤT, đang chờ Đức.** Hai việc, một lần:
+**⑴ Đức nạp lại cả hai extension** (mã đã đổi ở cả hai) · **⑵ mở khoá ghi**, rồi AI chạy một lượt
+E2E thật với prompt mới — lượt đó vừa chứng minh không gãy gì, vừa **đo luôn** cái chưa đo được ở
+`S3`. Xong thì Đức ký `v1`.
 
 ### ĐẶT SAU, có lý do
 
