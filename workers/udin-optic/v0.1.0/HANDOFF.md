@@ -331,3 +331,27 @@ răng (đột biến 2 lượt, 2 chết): đổi tên một `id` → bắt đú
 
 Nửa **tĩnh** (kiểm `id`) vào thẳng suite nhanh ở cả hai gói vì nó không cần Chrome — *cái gì phải
 nhớ mới chạy thì sẽ có lúc quên*. Nửa **sống**: `npm run scouter:bang-ben` · `npm run udin:bang-ben`.
+
+## 2026-09-16e · ĐIỂM DỪNG ① qua — `U4` nghiệm thu bằng ĐĨA
+
+Đức nạp lại xong. Đo ghế trước khi tiêu gì: **12 lệnh · 5 lệnh ghi · seed `udin-optic-v0.1`** —
+đúng bản mới, không phải bản cũ còn sót.
+
+**Nhánh từ chối đo trước vì nó không tốn gì.** Ba tên project xấu — `Dự án A` · `../ra-ngoai` ·
+`CON` — đều đỏ kèm lý do RIÊNG và **đỏ trước khi chạm dây**: prompt chưa hề được gửi.
+
+**Lượt thật:** `--du-an "xe-dien-2026"`, prompt mới hoàn toàn. W1→W2→W3→JPG→W4 trọn vẹn;
+`W4` đọc đúng câu trả lời **mới** (nói về ấm trà, khớp prompt).
+
+**Kiểm bằng ĐĨA, không tin báo cáo:** 4 tệp `.jpg` mở đầu `FF D8 FF` (JPEG thật), kích
+thước khớp **từng byte** với báo cáo · 4 bản `.webp` gốc vẫn nằm nguyên · cây thư mục chứng minh
+**cả hai chiều**: lượt mới ở `udin-optic/xe-dien-2026/<lượt>/`, **lượt cũ 15/09 vẫn ở hình dạng
+cũ** `udin-optic/<lượt>/` — thêm một tầng mà không gãy lượt chạy nào.
+
+**MỘT DÒNG CHƯA ĐO ĐƯỢC, và giá của nó:** cờ `--mo` (`spawn("explorer.exe")`). Không đo
+được mà không tiêu thêm một lượt credit. **Giá nếu nó hỏng:** đường dẫn đầy đủ vẫn được in ra,
+Đức chép dán thay vì có cửa sổ tự mở — không mất dữ liệu, không mất tiền.
+
+Còn lại: ba thứ trên bảng bên chỉ **mắt người** thấy được (cỡ chữ, thu phóng trang, nút *Kiểm tra
+kết nối*) — `chrome.debugger` **không gắn được vào trang extension**, nên không có đường nào để AI
+tự bấm chúng. Đã đo gián tiếp bằng `npm run udin:bang-ben` (Chrome sạch, 0 lỗi console).

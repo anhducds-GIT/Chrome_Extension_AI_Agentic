@@ -120,10 +120,15 @@ Chặng này viết là *"chạy đúng sáu bước của `kiem-cai-dat.mjs`, b
 Windows (`CON`, `NUL`, `COM1`…), dấu chấm cuối, khoảng trắng đầu/cuối, quá dài — **bị từ chối
 kèm lý do RIÊNG, và đỏ khi CHƯA gọi một lệnh nào** (chưa tốn credit) · máy chủ **khởi động thật**
 bốn kiểu cấu hình, mỗi kiểu ra đúng một dòng đọc được, không ra stack trace.
-*Còn chờ:* một lượt E2E thật kiểm bằng ĐĨA.
+*✅ **NGHIỆM THU ĐẠT 16/09, kiểm bằng ĐĨA**:* một lượt E2E thật với `--du-an "xe-dien-2026"` →
+4 tệp `.jpg` mở đầu `FF D8 FF` (JPEG thật), kích thước khớp từng byte với báo cáo · 4 bản
+`.webp` gốc vẫn nguyên · **lượt chạy cũ 15/09 vẫn ở hình dạng cũ** `udin-optic/<lượt>/`, không gãy ·
+ba tên project xấu (dấu tiếng Việt · `../` · `CON`) **đỏ trước khi chạm dây**, prompt chưa hề được gửi.
+*Chưa đo được:* cờ `--mo` (một dòng `spawn("explorer.exe")`). **Giá nếu nó hỏng:** đường dẫn
+vẫn được in ra đầy đủ, Đức chép dán thay vì có cửa sổ tự mở — không mất gì.
 
-**→ ĐIỂM DỪNG ①: Đức nạp lại extension một lần.** Gộp `U1 U2 U3 U4` vào đúng một lượt nạp. Sau đó
-AI chạy một lượt E2E thật để nghiệm thu cả bốn.
+**→ ĐIỂM DỪNG ① — ✅ QUA 16/09.** Đức nạp lại, AI đo ghế: **12 lệnh · 5 lệnh ghi · seed
+`udin-optic-v0.1`** — đúng bản mới đã nạp. Lượt E2E thật chạy trọn W1→W2→W3→JPG→W4.
 
 **U5 · Mang về Scouter — ✅ MÃ XONG 16/09.**
 Mang `U1` (cỡ chữ) · `U2` (thu phóng trang) · `U3` (nút *Kiểm tra kết nối*). `U4` **không mang**: Scouter không sinh ảnh, nên nó không có kết xuất để chia theo project.
