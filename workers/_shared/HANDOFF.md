@@ -260,3 +260,17 @@ ngay lượt chạy đầu: tôi để `'duc-scouter'` làm ví dụ trong một
 khi có bản chép thứ hai, thay vì sau như lần trước.
 
 Đường tệp ghép cặp nay hỏi `duongGhepCapChuan()` thay vì gõ cứng lần hai.
+
+## 2026-09-16 · `claude-scouter-udine` — `bridge-host-core.mjs` nhận móc `truocKhiChuyen`
+
+Một tuỳ chọn mới: một hàm sửa phong bì **trước khi chuyển tiếp xuống extension**.
+**Mặc định KHÔNG CÓ** — ba gói `duc-auto-*` không truyền gì nên hành vi của chúng không đổi một
+byte. Đây là một cái móc, không phải một luật mới.
+
+**Vì sao nó phải ở tầng này.** `scout.upload` (`T29`) nhận đường dẫn TƯƠNG ĐỐI và phải ghép vào
+vùng ghi. Chỉ máy chủ biết vùng ghi ở đâu, và chỉ máy chủ là bên **người gọi không chi phối
+được**. Để extension tự ghép thì cái biết ấy phải đẩy xuống theo một đường khác — tức đẻ thêm
+một chỗ để lệch, và extension chỉ TRẢ LỜI chứ không hỏi ra dây được (`G-96`).
+
+**Móc ném thì lượt gọi ĐỎ và không gì được chuyển xuống** — đúng chiều an toàn: một đường dẫn
+chưa kiểm được thì không đi tiếp. Gói `udin-optic` là nơi đầu tiên dùng nó.

@@ -73,7 +73,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 | I6 | Rê chuột (hover) | `scout.hover` | **CÓ** | Làm 14/09, [ADR-0007]. Chạy trên Udin: lệnh **hoàn tất** 5,2 giây, hỏi-điểm trả `descendant`. **Nhưng thế KHÔNG phải chứng minh trang đã nhận** — tôi đã trót khai `ĐÃ CHỨNG MINH` rồi rút lại trong cùng ngày, vì trên ghế Đức **không sự kiện chuột nào tới trang** (`S-22`, Đức chốt ngừng điều tra 14/09): trang thử không đếm được lấy một lượt `mousedown` nào, kể cả của một lượt bấm thường. Cái ĐÃ chứng minh: lệnh chạy trọn, hỏi-điểm đúng, không treo. Vẫn hỏi-điểm trước khi bắn (`S-17`, khác loại sự kiện) | |
 | I7 | Bấm đúp / bấm phải | `scout.click` (`button` · `click_count`) | **CÓ** | Làm 14/09: thêm THAM SỐ, **không thêm method** — mọi thứ đắt giá của lượt bấm (khớp đúng một · đưa vào tầm nhìn · hỏi-điểm) là y hệt, và tách ra là chép ba cái chốt ấy sang chỗ thứ hai. Không khai gì thì cư xử y như trước. Chạy trên trang thử 14/09: **lệnh hoàn tất, trang không đếm được sự kiện nào** — đó là `S-22`, không phải lỗi của hai tham số này. Ghế nào không dính `S-22` thì đây là chỗ đo lại | |
 | I8 | Kéo thả A → B | — | **CHƯA CÓ** | toạ độ đích cũng phải suy từ **phần tử đích** (luật gói 7). Cần lệnh Bridge mới | ✋ |
-| I9 | Tải file lên (upload) | `scout.upload` | **ĐÃ CHỨNG MINH** | Làm 16/09 (`T29`), Đức chốt `D4`. ~~cần `DOM.setFileInputFiles`~~ → **đã mở**, và file **bắt buộc** lấy từ vùng ghi Bridge: `path` chỉ nhận đường TƯƠNG ĐỐI, **máy chủ** ghép vào vùng ghi và **ghi đè** giá trị người gọi tự điền. Lõi ghi đòi **Chrome khớp CSS** xác nhận phần tử là `input[type=file]`. **Chạy thật trên Chrome sạch** (`npm run scouter:tai-len`): file trên trang đúng tên · đúng 54 byte · vào đúng ô selector chỉ (ô thứ HAI), ô kia còn rỗng. **Một phát hiện ngoài tài liệu CDP:** Chrome **nhận** cả đường dẫn KHÔNG TỒN TẠI và gắn một tệp rỗng 0 byte mà không báo lỗi — nên máy chủ `statSync` trước. Chỉ lên dây ở gói `udin-optic` (12→13); Scouter giữ nguyên **24** | |
+| I9 | Tải file lên (upload) | `input.upload` (lõi ghi) | **ĐÃ CHỨNG MINH** | Làm 16/09 (`T29`), Đức chốt `D4`. ~~cần `DOM.setFileInputFiles`~~ → **đã mở**, và file **bắt buộc** lấy từ vùng ghi Bridge: `path` chỉ nhận đường TƯƠNG ĐỐI, **máy chủ** ghép vào vùng ghi và **ghi đè** giá trị người gọi tự điền. Lõi ghi đòi **Chrome khớp CSS** xác nhận phần tử là `input[type=file]`. **Chạy thật trên Chrome sạch** (`npm run scouter:tai-len`): file trên trang đúng tên · đúng 54 byte · vào đúng ô selector chỉ (ô thứ HAI), ô kia còn rỗng. **Một phát hiện ngoài tài liệu CDP:** Chrome **nhận** cả đường dẫn KHÔNG TỒN TẠI và gắn một tệp rỗng 0 byte mà không báo lỗi — nên máy chủ `statSync` trước. **Cột “Lệnh” ghi `input.upload` chứ không ghi `scout.upload`, cố ý và phép ghim đã bắt đúng chỗ này:** hành động nằm trong **lõi ghi dùng chung**, nhưng **method trên dây chỉ có ở gói `udin-optic`** (12→13). Scouter giữ nguyên **24** — nó có tay chân mà không mở cửa, và bảng này đo tay chân. Viết `scout.upload` vào đây là khai một cửa Scouter không có | |
 | I10 | Đưa tiêu điểm vào ô | trong `scout.type` | **CÓ** | không có lệnh riêng; chưa cần | |
 
 ### D · Thấy trang đã đổi
@@ -101,8 +101,8 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 
 ### Đếm cấp 1 (đếm lại tay khi sửa bảng)
 
-**ĐÃ CHỨNG MINH 25 · MỘT PHẦN 3 · CÓ 6 · CHƯA CÓ / CHƯA ĐO 8 · ĐÃ BỎ 1.** Tổng 43 dòng.
-**Seed Coverage = 25 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
+**ĐÃ CHỨNG MINH 26 · MỘT PHẦN 3 · CÓ 6 · CHƯA CÓ / CHƯA ĐO 7 · ĐÃ BỎ 1.** Tổng 43 dòng.
+**Seed Coverage = 26 / 42** (không tính dòng ĐÃ BỎ; MỘT PHẦN không tính là đạt).
 
 Ngày 14/09 thêm sáu dòng cùng một lượt (`O13` `N5` `I5` `I6` `I7`, và `O5` mở rộng), rồi **chạy thật
 cả sáu trong cùng ngày**. Bốn lên `ĐÃ CHỨNG MINH` — `O13` `N5` `I5` `O5`. **Hai dừng ở `CÓ`, và
