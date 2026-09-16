@@ -65,6 +65,10 @@ export const ERROR_DEFINITIONS = Object.freeze({
   /* `retryable: false` DÙ xoá hai lần bằng xoá một lần: lượt thử lại bắn đúng hai phím vừa
    * thất bại, nên nó không chữa được nguyên nhân nào mà vẫn tiêu một suất của cái phanh. */
   CLEAR_NOT_OBSERVED: { retryable: false, message: "Ctrl+A and Delete were dispatched but the field still has characters." },
+  /* Hai mã của `scout.upload`. Cả hai `retryable: false`: thử lại y nguyên thì hỏng y nguyên —
+   * một cái cần sửa cấu hình máy chủ, cái kia cần sửa selector. */
+  UPLOAD_PATH_MISSING: { retryable: false, message: "The Bridge server did not resolve the path; this extension never joins paths itself." },
+  NOT_A_FILE_INPUT: { retryable: false, message: "The selector matched an element that is not an <input type=file>." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The extension could not complete the request." }
 });
@@ -255,6 +259,35 @@ function optionalFlag(value, path) {
 function noParams(raw) {
   objectParams(raw, []);
   return {};
+}
+
+/* ---- HAI PHÉP KIỂM CỦA `scout.upload` (`T29`, 16/09) ----------------------
+ * Hai trường, hai nguồn khác hẳn nhau, nên hai phép kiểm khác hẳn nhau. Gộp chúng lại là đánh
+ * mất đúng cái phân biệt làm nên lớp bảo vệ.
+ */
+
+/* `path` — NGƯỜI GỌI đưa. Chỉ nhận đường TƯƠNG ĐỐI. Phép kiểm thật (`..`, liên kết mềm, ổ đĩa)
+ * nằm ở MÁY CHỦ; ở đây chỉ chặn hình dạng hiển nhiên, và chặn sớm để câu lỗi nói đúng trường. */
+function duongTuongDoi(value) {
+  if (typeof value !== "string" || value.trim() === "") {
+    invalidParams("params.path", "cần một đường dẫn TƯƠNG ĐỐI so với vùng ghi Bridge, dạng chuỗi");
+  }
+  if (value.length > 1024) invalidParams("params.path", "dài quá 1024 ký tự");
+  if (value.includes("\0")) invalidParams("params.path", "chứa byte 0");
+  return value;
+}
+
+/* `path_tuyet_doi` — MÁY CHỦ đặt, và nó GHI ĐÈ mỗi lượt. Người gọi tự điền thì giá trị ấy bị
+ * vứt ở máy chủ trước khi tới đây, nên phép kiểm này KHÔNG phải một cổng chặn người gọi — nó là
+ * cái phanh cho một cấu hình sai: chạy extension này sau một máy chủ KHÔNG có móc ghép đường
+ * dẫn thì trường này vắng, và lệnh phải ĐỎ chứ không được lùi về `path`. */
+function duongMayChuDat(value) {
+  if (typeof value !== "string" || value.trim() === "") {
+    invalidParams("params.path_tuyet_doi",
+      "thiếu — trường này do MÁY CHỦ Bridge đặt từ `path`. Vắng nó nghĩa là máy chủ chưa có móc " +
+      "ghép đường dẫn; extension KHÔNG tự ghép, và không lùi về `path`");
+  }
+  return value;
 }
 
 /* ---- Khung registryEntry (lấy lại từ worker) ---------------------------- */
@@ -467,6 +500,32 @@ const METHOD_ENTRIES = [
    *
    * `deadline_ms` 34000 bằng `scout.fetch`: nó cũng là một lượt gọi mạng, và con `B9` so từng
    * method với ngưỡng đọc thẳng từ lõi máy chủ. */
+  registryEntry({
+    /* ---- `scout.upload` — MỞ 16/09, Đức chốt `D4`. ĐỌC KHỐI NÀY TRƯỚC KHI SỬA -------------
+     * Đây là method DUY NHẤT của gói đưa byte đi **từ đĩa ra một trang web**. Mọi lệnh còn lại
+     * đi chiều ngược lại. Nó ra đời cho đúng một việc Đức nêu 16/09: *lấy ảnh Udin vừa tạo,
+     * đưa ngược vào, xin một style khác* — tức ảnh đã nằm sẵn trong vùng ghi của chính gói này.
+     *
+     * **`path` TƯƠNG ĐỐI, và đó không phải thẩm mỹ.** Nhận đường tuyệt đối từ ngoài dây là giao
+     * cả ổ đĩa của Đức cho người gọi. Máy chủ ghép `path` vào vùng ghi rồi mới chuyển xuống, và
+     * nó **ghi đè** `path_tuyet_doi` mỗi lượt — người gọi tự điền thì giá trị ấy bị vứt.
+     *
+     * **KHÔNG tự kiểm**, và đây là giới hạn thật: một ô chọn tệp không nhả tên file ra qua
+     * đường đọc nào của gói này. Nó hứa đúng *đã bảo Chrome gắn file vào ô*. Muốn chắc trang đã
+     * nhận thì chờ **dấu vết trang để lại** (ảnh xem trước, tên tệp hiện lên) bằng `scout.wait`. */
+    name: "scout.upload", read_only: false, deadline_ms: 30000,
+    description: "Put ONE file from the Bridge write root into ONE <input type=file> on the page. The path is RELATIVE to the write root and the Bridge SERVER joins it — only the server knows where the write root is, and it overwrites the resolved path on every call, so a caller cannot smuggle an absolute path. Refuses unless the selector matches exactly one element AND Chrome's own CSS matching says that element is an input[type=file]. This does NOT self-verify: a file input never reveals its filename through any read path this package has, so it promises only that Chrome was told to attach the file. To confirm the page took it, wait for a trace the page leaves — a preview thumbnail, a filename appearing — with scout.wait.",
+    params_schema: { target_id: "string", selector: "string", path: "string", path_tuyet_doi: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "path", "path_tuyet_doi"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        path: duongTuongDoi(params.path),
+        path_tuyet_doi: duongMayChuDat(params.path_tuyet_doi)
+      };
+    }
+  }),
   registryEntry({
     name: "scout.grab", read_only: false, deadline_ms: 34000,
     description: "Download the file one element points to (its src or href), using the URL read inside the browser. The URL itself is never returned: signed URLs keep their signature out of logs and off disk. Takes a selector, never a URL, and refuses unless it matches exactly one element.",

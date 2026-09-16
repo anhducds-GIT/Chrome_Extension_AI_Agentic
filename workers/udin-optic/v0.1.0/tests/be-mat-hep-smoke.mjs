@@ -20,13 +20,18 @@ const goc = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const scouter = path.join(goc, "..", "..", "duc-scouter", "v0.1.0");
 const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
 
-/* ---- ⑴ TỪ VỰNG ĐÓNG Ở MƯỜI HAI LỆNH, và 12 lệnh kia KHÔNG TỒN TẠI ---------
+/* ---- ⑴ TỪ VỰNG ĐÓNG Ở MƯỜI BA LỆNH, và 12 lệnh kia KHÔNG TỒN TẠI ----------
  * "Cắt chứ không tắt" (ADR-0021 ⑵): một lệnh bị bỏ phải là lệnh KHÔNG CÓ, không phải lệnh có
- * mà đang bị chặn — cái sau thì bật lại được bằng một dòng cờ. */
+ * mà đang bị chặn — cái sau thì bật lại được bằng một dòng cờ.
+ *
+ * **12 → 13 ngày 16/09, Đức chốt `D4`.** `scout.upload` là lệnh đầu tiên thêm vào gói này kể từ
+ * lúc tách, và nó thêm vì một việc Đức nêu đích danh: lấy ảnh Udin vừa tạo, đưa ngược vào, xin
+ * một style khác. Con số trong tiêu đề khối này ĐỔI THEO — để nó ở 12 là dòng chữ nói một đằng
+ * và phép kiểm nói một nẻo. */
 {
   const DUNG = ["session.hello", "system.capabilities", "system.ping", "scout.targets",
     "scout.query", "scout.text", "scout.wait",
-    "scout.click", "scout.type", "scout.clear", "scout.grab", "scout.navigate"];
+    "scout.click", "scout.type", "scout.clear", "scout.upload", "scout.grab", "scout.navigate"];
   assert.deepEqual([...METHOD_NAMES].sort(), [...DUNG].sort(),
     "từ vựng đổi = đổi luật an toàn (luật gói số 4). Thêm/bớt phải hỏi Đức, không sửa lén dòng này.");
 
@@ -44,7 +49,12 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
   assert.equal(goc24.length, 24, "Scouter phải còn 24 method; đổi thì xem lại bảng CẮT ở trên");
 
   const c = capabilities();
-  assert.equal(c.methods.filter((m) => !m.read_only).length, 5, "năm lệnh GHI: click · type · clear · grab · navigate");
+  /* SÁU lệnh GHI từ 16/09. `scout.upload` là lệnh ghi thứ sáu, và là lệnh DUY NHẤT của gói đưa
+   * byte đi **từ đĩa ra một trang web** — mọi lệnh còn lại đi chiều ngược lại. Con số này phải
+   * đổi tay cùng lúc với từ vựng ở khối ⑴, cố ý: hai chỗ cùng nói một chuyện thì một chỗ quên
+   * là một chỗ đỏ. */
+  assert.equal(c.methods.filter((m) => !m.read_only).length, 6,
+    "sáu lệnh GHI: click · type · clear · upload · grab · navigate");
   assert.equal(c.seed, "udin-optic-v0.1", "tự khai đúng tên mình — `bridge.sessions` là chỗ người ta nhìn để phân biệt");
 }
 

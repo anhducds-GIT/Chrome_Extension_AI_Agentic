@@ -171,6 +171,7 @@ function extensionOrigin(value) {
  * @param {object}  o.pairing        tệp ghép cặp (chưa kiểm cũng được, hàm này kiểm)
  * @param {string}  o.protocol       tên giao thức của SẢN PHẨM NÀY — xem ⑴ ở khối đầu file
  * @param {object} [o.methodTaiCho]  { "<method>": async (params, ctx) => result } — xem ⑵
+ * @param {function} [o.truocKhiChuyen]  (envelope) => envelope — xem ⑶
  */
 export function createBridgeHostCore(options = {}) {
   const pairing = validatePairing(options.pairing);
@@ -179,6 +180,20 @@ export function createBridgeHostCore(options = {}) {
     throw new Error("`protocol` phải là tên giao thức của chính sản phẩm này, dạng chữ thường có dấu chấm.");
   }
   const taiCho = options.methodTaiCho && typeof options.methodTaiCho === "object" ? options.methodTaiCho : {};
+  /* ⑶ MÓC SỬA PHONG BÌ TRƯỚC KHI CHUYỂN TIẾP — mở 16/09 cho `T29`.
+   *
+   * **Vì sao phải ở ĐÂY chứ không ở extension.** `scout.upload` nhận một đường dẫn TƯƠNG ĐỐI và
+   * phải ghép nó vào vùng ghi. Chỉ máy chủ biết vùng ghi ở đâu, và chỉ máy chủ là bên mà người
+   * gọi **không** chi phối được. Để extension tự ghép thì nó phải được cho biết vùng ghi, mà
+   * extension chỉ TRẢ LỜI chứ không hỏi được ra dây (`G-96`) — nên cái biết ấy phải đẩy xuống
+   * theo một đường khác, tức là đẻ thêm một chỗ để lệch.
+   *
+   * **Mặc định KHÔNG CÓ móc**, và ba gói `duc-auto-*` không truyền gì nên hành vi của chúng
+   * không đổi một byte. Đây là một cái móc, không phải một luật mới.
+   *
+   * Móc ném thì lượt gọi ĐỎ và **không có gì được chuyển xuống** — đúng chiều an toàn: một
+   * đường dẫn chưa kiểm được thì không đi tiếp. */
+  const truocKhiChuyen = typeof options.truocKhiChuyen === "function" ? options.truocKhiChuyen : null;
   const requestTimeoutMs = Math.max(100, Number(options.requestTimeoutMs || DEFAULT_REQUEST_TIMEOUT_MS));
   const authTimeoutMs = Math.max(100, Number(options.authTimeoutMs || 5000));
   const maxInflight = Math.max(1, Math.min(256, Number(options.maxInflight || MAX_INFLIGHT)));
@@ -466,8 +481,18 @@ export function createBridgeHostCore(options = {}) {
     }
     const relayId = crypto.randomUUID();
     /* `target` là dữ liệu định tuyến của máy chủ; extension không bao giờ nhìn thấy nó. */
-    const relayEnvelope = { ...envelope };
+    let relayEnvelope = { ...envelope };
     delete relayEnvelope.target;
+    if (truocKhiChuyen) {
+      try {
+        relayEnvelope = await truocKhiChuyen(relayEnvelope);
+      } catch (error) {
+        json(response, 200, failureEnvelope(envelope.request_id, error?.code || "INVALID_PARAMS", {
+          message: String(error?.message || error), ...(error?.details || {})
+        }));
+        return;
+      }
+    }
     const timer = setTimeout(() => settleRelay(relayId, failureEnvelope(envelope.request_id, "REQUEST_TIMEOUT")), requestTimeoutMs);
     inflight.set(relayId, {
       response,

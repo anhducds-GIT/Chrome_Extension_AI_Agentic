@@ -191,6 +191,10 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     ["scout.key", { target_id: "T1", selector: "#in", key: "Enter" }],
     /* Xoa o nhap cung la GHI: no doi noi dung tren trang cua Duc. */
     ["scout.clear", { target_id: "T1", selector: "#in" }],
+    /* `scout.upload` (T29, 16/09) — day la lenh DUY NHAT dua byte TU DIA RA MOT TRANG WEB,
+     * nen no la lenh ghi can cai phanh nhat trong ca danh sach. Quen dong nay la de mo mot
+     * cua di vong qua phanh cho dung cai lenh nguy nhat. */
+    ["scout.upload", { target_id: "T1", selector: "#tep", path: "a.png", path_tuyet_doi: "C:\\x\\a.png" }],
     /* Doi trang la DIEU KHIEN trang, nen no phai tra dung cai gia ma scout.click tra.
      * Them mot hanh dong GHI ma quen dong nay la mo mot cua di vong qua phanh. */
     ["scout.navigate", { target_id: "T1", url: "https://vi-du.test/x" }],

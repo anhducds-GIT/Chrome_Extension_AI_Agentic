@@ -62,7 +62,11 @@ export const ACTION_NAMES = Object.freeze([
    * trang, và đó là việc của `scout.view`. */
   "input.scroll",
   "input.hover",
-  "input.history"
+  "input.history",
+  /* MỞ 16/09 — Đức chốt `D4`/`T29`. Xem khối giải trình ở chính `input.upload` bên dưới, và
+   * đọc nó TRƯỚC khi sửa gì quanh đây: đây là hành động ghi DUY NHẤT đưa byte đi **từ đĩa ra
+   * một trang web**, ngược chiều mọi thứ còn lại của gói. */
+  "input.upload"
 ]);
 
 /* Method CDP được phép ở đường GHI. Ba lệnh `DOM.*` đầu chỉ để TÌM và ĐƯA VÀO TẦM NHÌN đúng
@@ -94,6 +98,24 @@ export const WRITE_CDP_METHODS = Object.freeze([
    * kiểu hỏng đắt nhất, vì nó nói dối chứ không báo lỗi. */
   "DOM.getNodeForLocation",
   "DOM.focus",
+  /* ---- MỞ 16/09 — Đức chốt `D4`. ĐÂY LÀ CỬA ĐẦU TIÊN ĐI TỪ ĐĨA RA MỘT TRANG WEB ----------
+   * Mọi method khác trong danh sách này chỉ đụng tới thứ đã có sẵn trên trang. Cái này đưa
+   * **nội dung một file trên máy Đức** vào tay một trang web, và trang web gửi nó đi đâu là
+   * việc của nó. Nên bốn cái khoá, và cả bốn đều phải còn:
+   *
+   *   ⑴ **Extension KHÔNG BAO GIỜ tự ghép đường dẫn.** Nó chỉ nhận `path_tuyet_doi`, và
+   *     trường đó do **MÁY CHỦ Bridge** đặt — máy chủ ghi đè nó ở mỗi lượt, kể cả khi người
+   *     gọi cố tự điền. Chỉ máy chủ biết vùng ghi ở đâu, nên chỉ nó kiểm được đường dẫn có
+   *     chui ra ngoài không (`trongGoc` ở `bridge/file-core.mjs`, đã ghim từ 07/09).
+   *   ⑵ **Thiếu trường đó thì TỪ CHỐI**, không lùi về `path`. Chạy trên một máy chủ không có
+   *     móc ghép đường dẫn thì lệnh này phải chết, chứ không được đoán lấy một đường dẫn.
+   *   ⑶ **Phần tử phải là `<input type="file">` THẬT**, do chính Chrome khớp CSS xác nhận —
+   *     không phải do ta đọc thuộc tính rồi tự suy. Một `<div type="file">` sẽ lọt phép suy ấy.
+   *   ⑷ Vẫn qua **cái phanh**: đây là lệnh GHI, nên nó cần công tắc của Đức và tiêu trần 200.
+   *
+   * Cái này KHÔNG mở thêm gì về phía ĐỌC: `file.read` đã đọc được mọi file dưới vùng ghi từ
+   * 07/09. Thứ mới là **hướng đi của byte**. */
+  "DOM.setFileInputFiles",
   "Input.dispatchMouseEvent",
   "Input.dispatchKeyEvent",
   /* MỞ 08/09 — Đức chốt. Trước đó dòng chú thích trên khai "CỐ Ý KHÔNG CÓ `Page.navigate`",
@@ -452,6 +474,50 @@ const ACTIONS = {
       await send("Input.dispatchKeyEvent", { type, key: "Delete", code: xoa.code, windowsVirtualKeyCode: xoa.vk });
     }
     return { selector, matchCount: node.matchCount, steps: ["Ctrl+A", "Delete"], method: "Input.dispatchKeyEvent" };
+  },
+
+  /* ⑸ input.upload — ĐƯA MỘT FILE TỪ VÙNG GHI VÀO MỘT Ô CHỌN TỆP (`T29`/`W8`, 16/09).
+   *
+   * Đọc khối `DOM.setFileInputFiles` ở `WRITE_CDP_METHODS` trước. Hai chốt sống ở ĐÂY:
+   *
+   * **`path_tuyet_doi` do MÁY CHỦ đặt, không phải người gọi.** Máy chủ ghi đè trường này ở mỗi
+   * lượt chuyển tiếp, nên một người gọi tự điền vào đó chỉ tốn công. Ở đây ta không kiểm nó có
+   * nằm trong vùng ghi không — **cố ý**: extension không biết vùng ghi ở đâu, và một phép kiểm
+   * đoán chừng ở đây sẽ thành bản thứ hai của một luật, rồi lệch với bản thật. Ta chỉ kiểm nó
+   * CÓ MẶT, và từ chối nếu thiếu.
+   *
+   * **Phần tử phải là `<input type="file">`, hỏi CHROME chứ không tự suy.** Ta chạy thêm một
+   * lượt `DOM.querySelectorAll` với `input[type="file"]` rồi đòi nút của mình nằm trong đó.
+   * Cách rẻ hơn — đọc `DOM.getAttributes` rồi tìm `type=file` — sai ở chỗ một `<div type="file">`
+   * cũng lọt, và `DOM.setFileInputFiles` lên một phần tử không phải ô chọn tệp thì báo lỗi
+   * của Chrome, đọc không ra nguyên nhân. Một lượt dò thêm rẻ hơn một câu lỗi khó hiểu. */
+  async "input.upload"(send, params) {
+    const selector = readSelector(params.selector);
+    const duong = params.path_tuyet_doi;
+    if (typeof duong !== "string" || duong.trim() === "") {
+      throw new ActionError("UPLOAD_PATH_MISSING",
+        "Thiếu `path_tuyet_doi`. Trường đó do MÁY CHỦ Bridge đặt từ `path` tương đối — extension " +
+        "không tự ghép đường dẫn bao giờ. Lệnh này chạy trên một máy chủ không có móc ấy thì " +
+        "phải chết, chứ không được đoán lấy một đường dẫn.");
+    }
+    const node = await locateOne(send, selector);
+
+    const oTep = await send("DOM.querySelectorAll", { nodeId: node.rootNodeId, selector: "input[type=\"file\"]" });
+    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {
+      throw new ActionError("NOT_A_FILE_INPUT",
+        `Selector '${selector}' khớp một phần tử KHÔNG phải <input type="file">. Trang có ` +
+        `${(oTep?.nodeIds || []).length} ô chọn tệp. Hỏi Chrome khớp CSS, không đọc thuộc tính rồi suy: ` +
+        "một `<div type=\"file\">` lọt qua phép suy ấy.");
+    }
+
+    await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });
+    /* Trả về `path` TƯƠNG ĐỐI mà người gọi đưa, không trả đường tuyệt đối: nhật ký không cần
+     * chở cả đường dẫn ổ đĩa, và người gọi vốn đã biết thứ mình xin. */
+    return {
+      selector, matchCount: node.matchCount,
+      path: typeof params.path === "string" ? params.path : null,
+      files: 1, method: "DOM.setFileInputFiles"
+    };
   },
 
   /* ③ input.key — gõ MỘT phím có tên, chọn từ bảng cố định. */

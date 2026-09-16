@@ -24,7 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBridgeHostCore, MAX_ENVELOPE_BYTES, validatePairing } from "../../../_shared/bridge-host/bridge-host-core.mjs";
 import { timVungGhi, canhTrumLenNhau } from "./vung-ghi.mjs";
-import { docFile, FileError, ghiFile, lietKe, MAX_FILE_BYTES } from "./file-core.mjs";
+import { docFile, FileError, ghiFile, lietKe, MAX_FILE_BYTES, trongGoc } from "./file-core.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -65,6 +65,30 @@ function canhVungGhi(root) {
   return goiThat;
 }
 
+/* ---- GHÉP ĐƯỜNG DẪN CHO `scout.upload` (`T29`, 16/09) ---------------------
+ * `scout.upload` nhận `path` **TƯƠNG ĐỐI** so với vùng ghi. Chỗ ghép nó thành đường tuyệt đối
+ * là ĐÂY, và chỉ ở đây, vì hai lý do không đổi được:
+ *
+ *   ⑴ chỉ máy chủ biết vùng ghi ở đâu — extension không biết, và nó không hỏi ra dây được;
+ *   ⑵ chỉ máy chủ là bên mà người gọi không chi phối được.
+ *
+ * **GHI ĐÈ, không phải điền vào chỗ trống.** Nếu người gọi tự điền `path_tuyet_doi` thì giá trị
+ * ấy bị vứt ở đây, mỗi lượt, không báo gì. Đó là cả cái khoá: một trường mà người gọi đặt được
+ * thì nó không còn là chốt an toàn nữa, nó là một gợi ý.
+ *
+ * `trongGoc` là hàm `file.write` đang dùng từ 07/09 — chặn đường tuyệt đối, chặn `C:x.txt`
+ * (thứ mà `path.isAbsolute` trả `false`), chặn `..`, và chặn cả liên kết mềm trỏ ra ngoài.
+ * KHÔNG viết lại một bản thứ hai ở đây. */
+export function ghepDuongUpload(envelope, root) {
+  const p = envelope.params && typeof envelope.params === "object" && !Array.isArray(envelope.params)
+    ? envelope.params
+    : {};
+  /* `trongGoc` ném `FileError` kèm mã (`PATH_OUTSIDE_ROOT`…), và máy chủ giữ nguyên mã đó cho
+   * người gọi — nên không bọc lại, không nuốt. */
+  const tuyetDoi = trongGoc(root, p.path);
+  return { ...envelope, params: { ...p, path_tuyet_doi: tuyetDoi } };
+}
+
 function xuLyTaiCho(method, p, root, port) {
   switch (method) {
     case "host.capabilities":
@@ -77,7 +101,12 @@ function xuLyTaiCho(method, p, root, port) {
         local_methods: [...METHOD_TAI_CHO],
         /* Nói thẳng cái KHÔNG có, đừng bắt người gọi suy ra từ chỗ vắng mặt. */
         absent: { "file.delete": "Xoá file là việc phải hỏi Đức trước (luật gốc). Chưa mở." },
-        note: "Mọi method khác đi thẳng xuống extension qua WebSocket."
+        note: "Mọi method khác đi thẳng xuống extension qua WebSocket.",
+        /* `scout.upload` đi XUỐNG extension, nhưng máy chủ sửa tham số của nó dọc đường. Khai ra
+         * để người gọi biết `path` của mình được ghép vào vùng ghi chứ không đi nguyên văn. */
+        sua_doc_duong: {
+          "scout.upload": "`path` tương đối được ghép vào vùng ghi ở máy chủ; `path_tuyet_doi` do máy chủ đặt và GHI ĐÈ giá trị người gọi tự điền."
+        }
       };
     case "file.write":
       return ghiFile(root, p.path, p.content, { append: false, encoding: p.encoding || "utf8" });
@@ -108,7 +137,14 @@ export function createUdinBridge({ pairing, root, ...conLai } = {}) {
     async (params) => xuLyTaiCho(ten, params && typeof params === "object" && !Array.isArray(params) ? params : {}, gocThat, daKiem.port)
   ]));
 
-  return createBridgeHostCore({ ...conLai, pairing: daKiem, protocol: PROTOCOL, methodTaiCho });
+  return createBridgeHostCore({
+    ...conLai, pairing: daKiem, protocol: PROTOCOL, methodTaiCho,
+    /* CHỈ đụng đúng một method. Mọi phong bì khác đi qua nguyên vẹn — một cái móc chạm vào mọi
+     * lượt gọi là một chỗ để làm hỏng mọi lượt gọi. */
+    truocKhiChuyen: (envelope) => (
+      envelope.method === "scout.upload" ? ghepDuongUpload(envelope, gocThat) : envelope
+    )
+  });
 }
 
 /* ---- Chạy thẳng từ dòng lệnh --------------------------------------------- */

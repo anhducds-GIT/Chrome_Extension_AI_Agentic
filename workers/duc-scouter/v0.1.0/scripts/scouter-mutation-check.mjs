@@ -1407,6 +1407,92 @@ BATCHES.push({
   ]
 });
 
+/* ---- `T29`/`W8`: `scout.upload`. M\u1ebb n\u00e0y canh **c\u1eeda duy nh\u1ea5t \u0111i t\u1eeb \u0111\u0129a ra m\u1ed9t trang web**,
+   n\u00ean n\u00f3 \u0111\u01b0\u1ee3c \u0111\u1ecdc k\u1ef9 h\u01a1n m\u1ecdi m\u1ebb kh\u00e1c. Hai n\u1eeda, hai t\u1ec7p, hai gi\u1ed1ng lo\u00e0i l\u1ed7i kh\u00e1c h\u1eb3n nhau:
+
+     \u2460 **L\u00d5I GHI** (t\u1ec7p c\u1ee7a g\u00f3i n\u00e0y) \u2014 l\u00f9i v\u1ec1 `path`, b\u1ecf ph\u00e9p ki\u1ec3m \u00f4-ch\u1ecdn-t\u1ec7p, ch\u1edf \u0111\u01b0\u1eddng
+       tuy\u1ec7t \u0111\u1ed1i ra ngo\u00e0i.
+     \u2461 **M\u00c1Y CH\u1ee6 UDIN** (t\u1ec7p c\u1ee7a g\u00f3i kia) \u2014 \u0111\u1ec3 gi\u00e1 tr\u1ecb ng\u01b0\u1eddi g\u1ecdi t\u1ef1 \u0111i\u1ec1n s\u1ed1ng s\u00f3t. Con `U7` l\u00e0
+       con \u0111\u1eaft nh\u1ea5t c\u1ea3 b\u1ed9 \u0111o: n\u00f3 \u0111\u1ed5i M\u1ed8T th\u1ee9 t\u1ef1 to\u00e1n t\u1eed tr\u1ea3i, v\u00e0 h\u1eadu qu\u1ea3 l\u00e0 m\u1ed9t l\u01b0\u1ee3t g\u1ecdi \u0111\u01b0a
+       \u0111\u01b0\u1ee3c m\u1ed9t t\u1ec7p **ngo\u00e0i v\u00f9ng ghi** v\u00e0o trang, trong khi m\u1ecdi ph\u00e9p ki\u1ec3m kh\u00e1c v\u1eabn xanh.
+
+   M\u1ebb \u2461 nh\u1eafm t\u1ec7p c\u1ee7a g\u00f3i `udin-optic`, c\u00f3 \u00fd: \u0111\u00e2y l\u00e0 b\u1ed9 \u0111o \u0111\u1ed9t bi\u1ebfn DUY NH\u1ea4T c\u1ee7a repo, v\u00e0 m\u1ed9t ch\u1ed1t
+   an to\u00e0n kh\u00f4ng c\u00f3 con \u0111\u1ed9t bi\u1ebfn n\u00e0o canh th\u00ec kh\u00f4ng ph\u1ea3i m\u1ed9t ch\u1ed1t. ------------------------------ */
+const PIN_TAI_LEN = path.join(ROOT, "tests", "tai-len-smoke.mjs");
+const UDIN = path.join(ROOT, "..", "..", "udin-optic", "v0.1.0");
+
+BATCHES.push({
+  ten: "TAI LEN \u2014 l\u00f5i ghi",
+  target: path.join(ROOT, "scripts", "scouter-actions-core.mjs"),
+  pin: PIN_TAI_LEN,
+  mutants: [
+    {
+      ma: "U1",
+      ten: "L\u00f9i v\u1ec1 `path` khi thi\u1ebfu \u0111\u01b0\u1eddng m\u00e1y ch\u1ee7 \u0111\u1eb7t \u2014 extension t\u1ef1 gh\u00e9p \u0111\u01b0\u1eddng d\u1eabn",
+      tim: "    const duong = params.path_tuyet_doi;",
+      thay: "    const duong = params.path_tuyet_doi || params.path;",
+      soLan: 1
+    },
+    {
+      ma: "U2",
+      ten: "B\u1ecf h\u1eb3n ph\u00e9p ki\u1ec3m thi\u1ebfu \u0111\u01b0\u1eddng \u2014 g\u1eafn m\u1ed9t `undefined` v\u00e0o \u00f4 ch\u1ecdn t\u1ec7p",
+      tim: '    if (typeof duong !== "string" || duong.trim() === "") {',
+      thay: "    if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "U3",
+      ten: "B\u1ecf ph\u00e9p ki\u1ec3m \u00f4-ch\u1ecdn-t\u1ec7p \u2014 g\u1eafn file v\u00e0o m\u1ed9t ph\u1ea7n t\u1eed b\u1ea5t k\u1ef3",
+      tim: '    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {',
+      thay: "    if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "U4",
+      ten: "N\u1edbi th\u00e0nh *trang c\u00f3 \u00f4 ch\u1ecdn t\u1ec7p n\u00e0o \u0111\u00f3* \u2014 xanh c\u1ea3 khi selector tr\u1ecf ch\u1ed7 kh\u00e1c",
+      tim: '    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {',
+      thay: "    if ((oTep?.nodeIds || []).length === 0) {",
+      soLan: 1
+    },
+    {
+      ma: "U5",
+      ten: "G\u1eafn v\u00e0o \u00f4 ch\u1ecdn t\u1ec7p \u0110\u1ea6U TI\u00caN thay v\u00ec \u00f4 selector kh\u1edbp",
+      tim: '    await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });',
+      thay: '    await send("DOM.setFileInputFiles", { nodeId: (oTep?.nodeIds || [])[0], files: [duong] });',
+      soLan: 1
+    },
+    {
+      ma: "U6",
+      ten: "Ch\u1edf \u0111\u01b0\u1eddng TUY\u1ec6T \u0110\u1ed0I ra k\u1ebft qu\u1ea3 \u2014 v\u00f9ng ghi c\u1ee7a \u0110\u1ee9c v\u00e0o nh\u1eadt k\u00fd",
+      tim: '      path: typeof params.path === "string" ? params.path : null,',
+      thay: "      path: duong,",
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "TAI LEN \u2014 m\u00e1y ch\u1ee7 gh\u00e9p \u0111\u01b0\u1eddng d\u1eabn (t\u1ec7p c\u1ee7a g\u00f3i udin-optic)",
+  target: path.join(UDIN, "bridge", "udin-optic-host.mjs"),
+  pin: path.join(UDIN, "tests", "tai-len-smoke.mjs"),
+  mutants: [
+    {
+      ma: "U7",
+      ten: "GI\u00c1 TR\u1eca NG\u01af\u1edcI G\u1eccI T\u1ef0 \u0110I\u1ec0N TH\u1eaeNG \u2014 m\u1ed9t t\u1ec7p ngo\u00e0i v\u00f9ng ghi v\u00e0o \u0111\u01b0\u1ee3c trang",
+      tim: "  return { ...envelope, params: { ...p, path_tuyet_doi: tuyetDoi } };",
+      thay: "  return { ...envelope, params: { path_tuyet_doi: tuyetDoi, ...p } };",
+      soLan: 1
+    },
+    {
+      ma: "U8",
+      ten: "Kh\u00f4ng gh\u00e9p v\u00e0o v\u00f9ng ghi n\u1eefa \u2014 `path` \u0111i nguy\u00ean v\u0103n xu\u1ed1ng extension",
+      tim: "  const tuyetDoi = trongGoc(root, p.path);",
+      thay: "  const tuyetDoi = p.path;",
+      soLan: 1
+    }
+  ]
+});
+
 /* ---- `S-27`: `scout.clear` VÀO ĐƯỜNG TỰ KIỂM. Tới sáng 16/09 đây là lệnh ghi CUỐI CÙNG
    còn fail-open: nó trả `steps: ["Ctrl+A","Delete"]`, và trả **y hệt** như thế khi ô vốn đã rỗng.
    Những con dưới đây canh ba chỗ khác nhau, và hai chỗ đầu mới là chỗ dễ viết sai:

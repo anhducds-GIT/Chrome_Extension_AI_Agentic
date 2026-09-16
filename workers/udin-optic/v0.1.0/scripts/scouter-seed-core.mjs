@@ -55,6 +55,7 @@ const ACTION_BY_METHOD = Object.freeze({
   "scout.type": "input.type",
   "scout.key": "input.key",
   "scout.clear": "input.clear",
+  "scout.upload": "input.upload",
   "scout.hover": "input.hover",
   "scout.scroll": "input.scroll",
   "scout.history": "input.history"
@@ -594,6 +595,27 @@ export function createSeedHandlers(deps = {}) {
         throw error;
       }
       return { ...ra, ...phan };
+    },
+
+    /* `scout.upload` — đưa một file từ vùng ghi Bridge vào một ô chọn tệp (`T29`/`W8`, 16/09).
+     *
+     * Handler này CỐ Ý mỏng: mọi chốt nằm ở hai chỗ khác, và gom chúng về đây là dựng bản thứ
+     * hai của một luật. `path` tương đối → đường tuyệt đối là việc của **MÁY CHỦ** (chỉ nó biết
+     * vùng ghi); phần tử có phải ô chọn tệp không là việc của **lõi ghi** (chỉ nó nói chuyện
+     * được với Chrome).
+     *
+     * KHÔNG tự kiểm như `scout.type`/`scout.clear`, và đây là một giới hạn THẬT chứ không phải
+     * chỗ chưa làm: một ô chọn tệp **không nhả tên file ra qua đường đọc nào** của gói này —
+     * `dom.text` rỗng, giá trị trợ năng là nhãn nút chứ không phải tên tệp. Nên nó hứa đúng
+     * một câu: *đã bảo Chrome gắn file vào ô*. Muốn chắc trang đã nhận thì kiểm bằng **dấu vết
+     * trang để lại** — ảnh xem trước, tên tệp hiện lên — bằng `scout.wait`. */
+    async "scout.upload"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.upload", target, {
+        selector: params.selector,
+        path: params.path,
+        path_tuyet_doi: params.path_tuyet_doi
+      });
     },
 
     async "scout.key"(params) {
