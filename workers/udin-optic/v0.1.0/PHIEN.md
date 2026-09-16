@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "CHO DUC NAP LAI EXTENSION — scout.tha (keo-tha, KHONG hop thoai) da viet xong va do xong tren Chrome ho so trong: trang nhan du dragenter/dragover/drop, 525119 byte khai VA doc that ra cung 525119, 0 hop thoai. Sau khi nap lai: chay thu scout.tha tren canvas that, roi thay scout.upload bang no trong moi luot dua anh tu ngoai vao. Anh ngoai vung ghi thi phai CHEP vao truoc (udin-optic/vao/). Sau do: noi tang chon @1/@2 vao vong-style.mjs."
+- next_step: "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du."
 - human_action: "khong"

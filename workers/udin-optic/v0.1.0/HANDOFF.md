@@ -747,3 +747,26 @@ máy chủ từ chối — đúng thiết kế. Đường đi là **chép** ản
 bản gốc không bị đụng. Tên có dấu và dấu cách thì đổi sang tên không dấu.
 
 10 khối ghim ở `tai-len-smoke.mjs` · 8 đột biến riêng, 0 sống sót. **Cần một lượt NẠP LẠI extension.**
+
+
+## 17/09 — `scout.tha` CHẠY THẬT: ảnh ngoài vào canvas, không một hộp thoại nào
+
+**Đo:** thả ảnh của Đức vào `#root` tại `(719, 455)`, `hit: descendant` → **canvas 17 → 18**, và
+**0 cửa sổ hộp thoại** ở cả ba lần đếm. Câu hỏi của Đức — *"phải sống chung không?"* — trả lời
+xong: không.
+
+**Thả vào đâu: `#root`.** Udin không có lớp canvas riêng nào đọc được — `.canvas-viewport`,
+`.canvas-container`, `[class*=canvas-area]`, `main` đều khớp **0**. Thứ duy nhất khớp đúng một là
+`#root`. Ghi ra để người sau khỏi đi tìm một cái tên đẹp hơn không tồn tại.
+
+**BÀI HỌC ĐIỀU PHỐI, và nó là lỗi của tôi:** sửa `udin-optic-host.mjs` là sửa một **TIẾN TRÌNH
+ĐANG CHẠY**, không phải một tệp extension. Tôi bắt Đức nạp lại extension, rồi mới phát hiện máy
+chủ vẫn chạy mã cũ (bật lúc 16:43) — hai việc đáng lẽ gộp làm một. Từ nay mỗi lượt xin nạp lại
+phải nói rõ **cả hai**: extension hay máy chủ, hay cả hai.
+
+**Máy chủ từ chối đúng lúc phải từ chối.** Extension đã có `scout.tha` nhưng máy chủ chưa có móc
+ghép đường dẫn, và nó trả `INVALID_PARAMS` kèm câu *"trường này do MÁY CHỦ đặt … extension KHÔNG
+tự ghép, và không lùi về `path`"* — thay vì đoán lấy một đường dẫn. Đúng thiết kế `T29`.
+
+**Bật lại máy chủ:** `START-BRIDGE_Udin-Optic.ps1` ở Bridge home. Nó **tự thoát nếu cổng đã có
+người nghe**, nên phải tắt tiến trình cũ trước (`Stop-Process`), rồi mới chạy launcher.
