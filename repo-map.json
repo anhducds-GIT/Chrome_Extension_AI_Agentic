@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "R1 DA KHEP VONG 16/09 toi (chi tiet o STATUS goi udin-optic). CON MOT VET: chang dinh kem van bat hop thoai Open cua Windows tren may Duc. Ba gia thuyet da do tren Chrome ho so trong va DEU TRUOT (tat chan som / trang bam tre / thieu Page.enable) — khac biet nam o duong chrome.debugger cua extension, chua do duoc. Sau do: (2) R2 khep vong tu cai tien lan hai. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG.",
+      "next_step": "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "R1 DA KHEP VONG 16/09 toi: vong-style.mjs chay song tron vong, 4 anh moi ve dia (xe-dien-2026/2026-09-16T13-51-37-688Z), canvas 2->7. CON MOT VET: chang dinh kem VAN bat hop thoai Open cua Windows va Duc phai bam Cancel — luot tai len van thanh cong du co hop thoai, nen no hong kieu IM LANG. Cau 'hop thoai khong hien' o hang W8 la SAI, da gach tai cho. Duong DAN da do va DONG (Udin chi nhan paste noi bo canvas). Viec ke: do duong chrome.debugger cua extension.",
+      "next_step": "CHO DUC NAP LAI EXTENSION — scout.chon (Shift+click) la lenh MOI tren day, extension chua co no. Sau khi nap lai: chay thu chon-tham-chieu.mjs tren canvas that de xac nhan doc dung so 1 va 2. R1 (vong-style.mjs) DA KHEP VONG 16/09. Moi da xong cho @1/@2: chon-tham-chieu.mjs, 12 khoi ghim, 12 dot bien 0 song sot. Con no: hop thoai Open van bat len.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "R1 DA KHEP VONG 16/09 toi (chi tiet o STATUS goi udin-optic). CON MOT VET: chang dinh kem van bat hop thoai Open cua Windows tren may Duc. Ba gia thuyet da do tren Chrome ho so trong va DEU TRUOT (tat chan som / trang bam tre / thieu Page.enable) — khac biet nam o duong chrome.debugger cua extension, chua do duoc. Sau do: (2) R2 khep vong tu cai tien lan hai. (3) R3 TRANG THU HAI khac loai. (4) don so: S-31, T8, ra lai BACKLOG.",
+      "title": "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "R1 DA KHEP VONG 16/09 toi: vong-style.mjs chay song tron vong, 4 anh moi ve dia (xe-dien-2026/2026-09-16T13-51-37-688Z), canvas 2->7. CON MOT VET: chang dinh kem VAN bat hop thoai Open cua Windows va Duc phai bam Cancel — luot tai len van thanh cong du co hop thoai, nen no hong kieu IM LANG. Cau 'hop thoai khong hien' o hang W8 la SAI, da gach tai cho. Duong DAN da do va DONG (Udin chi nhan paste noi bo canvas). Viec ke: do duong chrome.debugger cua extension.",
+      "title": "CHO DUC NAP LAI EXTENSION — scout.chon (Shift+click) la lenh MOI tren day, extension chua co no. Sau khi nap lai: chay thu chon-tham-chieu.mjs tren canvas that de xac nhan doc dung so 1 va 2. R1 (vong-style.mjs) DA KHEP VONG 16/09. Moi da xong cho @1/@2: chon-tham-chieu.mjs, 12 khoi ghim, 12 dot bien 0 song sot. Con no: hop thoai Open van bat len.",
       "rank": 5,
       "claim": null
     }
