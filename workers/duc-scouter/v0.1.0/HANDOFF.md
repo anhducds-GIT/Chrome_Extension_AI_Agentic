@@ -1750,3 +1750,21 @@ không đổi một byte nào của trang), cùng họ với `Page.captureScreen
 Đây **không phải nới quyền để làm cổng xanh** — mã đã gửi nó từ trước, việc mở lượt quét chỉ làm
 chuyện đó **hiện ra**. Nhưng nó vẫn là một dòng thêm vào lớp bảo vệ, nên nó được viết ra chứ
 không lặng lẽ. Chi tiết ở `G-97`.
+
+## 2026-09-16e · Đề xuất `S1`–`S4`: đường GHI thôi nói dối, rồi mới ký `v1`
+
+Đo bằng mã: `scout.type` trả `typed: text.length` (số phím nó **gửi đi**), `scout.clear` trả
+`steps: ["Ctrl+A","Delete"]`, và số chỗ **đọc lại** sau khi ghi trong cả lõi ghi là **0**. Đường ghi
+**fail-open** — đó chính là `S-22`.
+
+`S-22` có **hai nửa**: ① *vì sao sự kiện không tới trang* — Đức **đã chốt ngừng điều tra** (`T28`);
+② *đường ghi thôi báo ĐẠT khi sự kiện không tới nơi* — **chưa ai làm**. Điều kiện đóng viết sẵn là
+**đóng được mà không cần biết nguyên nhân**.
+
+**Phân biệt đừng bỏ qua:** lượt E2E sáng nay **không** phải một lời nói dối — `W4` đọc lại câu
+trả lời và từ chối nếu chữ không đổi, nên **cả chuỗi tự kiểm ở cuối**. Fail-open nằm ở **từng lệnh
+riêng lẻ**, và nguy hiểm rơi vào ai dùng chúng trực tiếp mà không có một `W4` ở cuối — `T35`, `T7`.
+
+Bốn chặng đề xuất ở đầu `CHUOI-VIEC.md`, **không chặng nào cần method Bridge mới**. Được đánh
+dấu **ĐỀ XUẤT, chưa phải luật** — chờ Đức chốt đúng một câu: làm `S1`–`S3` trước rồi ký `v1`,
+hay ký `v1` ngay và để chúng thành `v1.1`.
