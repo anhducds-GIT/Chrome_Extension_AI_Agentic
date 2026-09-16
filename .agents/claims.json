@@ -103,11 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "4d490ff7ff5b0e76",
-  "tam": {
-    "workers/duc-scouter/v0.1.0/CHUOI-VIEC.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T10:44:55.419Z"
-    }
-  }
+  "_fingerprint": "e4c239c384a473e7"
 }
