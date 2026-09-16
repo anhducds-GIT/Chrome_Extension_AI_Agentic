@@ -847,3 +847,10 @@ Việc thật ở `workers/udin-optic/` và `workers/duc-scouter/` (chặng `U5`
 thu phóng trang và nút *Kiểm tra kết nối* về Scouter). Ở gốc repo phiên này chỉ **sinh lại ba bảng
 máy sinh** và thêm hai lệnh vào `package.json` (`scouter:bang-ben`, `udin:bang-ben`).
 Không đổi một dòng luật, một dòng `scripts/` hay `tests/` nào ở tầng gốc.
+
+## 2026-09-16c · Bảng máy sinh theo HEAD sau `S1`–`S3`
+
+Việc thật ở `workers/duc-scouter/` và `workers/udin-optic/` (đường ghi **tự kiểm**:
+`scout.type` đọc lại ô nhập, `scout.click` khai thật + tham số `wait_for`). Ở gốc repo
+phiên này chỉ **sinh lại ba bảng máy sinh** và thêm một lệnh vào `package.json`
+(`scouter:doc-lai`). Không đổi một dòng luật, một dòng `scripts/` hay `tests/` nào ở tầng gốc.

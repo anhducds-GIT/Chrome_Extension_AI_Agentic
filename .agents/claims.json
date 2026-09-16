@@ -103,11 +103,11 @@
       "released_at": null
     }
   },
-  "_fingerprint": "bdb2752405813af8",
+  "_fingerprint": "94cebee480999824",
   "tam": {
-    "workers/udin-optic/v0.1.0/scripts/scouter-actions-core.mjs": {
+    "HANDOFF.md": {
       "owner": "claude-scouter-udine",
-      "luc": "2026-09-16T03:36:30.573Z"
+      "luc": "2026-09-16T03:46:48.806Z"
     }
   }
 }
