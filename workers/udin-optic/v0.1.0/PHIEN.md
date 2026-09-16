@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem; tu vung van 12; suite 12/12 xanh. Viec ke la mot luot E2E that sau khi Duc nap lai — luot do vua chung minh khong gay gi, vua do cai chua do duoc (o prompt la <textarea> nen no doc lai bang cay tro nang: dat bao nhieu tren trang canvas nang?). Chi tiet o HANDOFF 2026-09-16g."
-- human_action: "@Đức:bấm — nap lai extension goi nay CUNG LUOT voi duc-scouter roi mo khoa ghi. Mot diem dung chung cho ca hai goi."
+- next_step: "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1."
+- human_action: "@Đức:chốt — ky Scouter v1 (viec o goi duc-scouter). Goi nay khong con viec nao dang cho."

@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go: khop -> da_kiem true; lech -> nem WRITE_NOT_OBSERVED; khong doc duoc -> khai that. scout.click khai da_kiem:false, nhan them wait_for de kiem duoc. Tu vung KHONG doi (24/12). Do tren Chrome 153: <input>/<textarea> doc ra RONG qua dom.text, contenteditable thi doc duoc — chon duong doc theo TEN THE. 17 dot bien moi giet duoc het. CON MOT DIEM DUNG (S4): nap lai + mo khoa ghi, AI chay E2E that, roi ky v1.",
-      "human_action": "@Đức:bấm — nap lai CA HAI extension roi mo khoa ghi de AI chay mot luot E2E that. Xong luot do thi @Đức:chốt — ky Scouter v1.",
+      "next_step": "S1 S2 S3 XONG va da nghiem thu TREN DAY THAT 16/09. scout.type doc lai o nhap (khop / lech thi nem WRITE_NOT_OBSERVED / khong doc duoc thi khai that); scout.click khai da_kiem:false va nhan wait_for de kiem duoc — ca ba nhanh do tren day that, dung. Tu vung khong doi (24/12). Gia cua luot doc lai: ~390ms moi lenh go tren trang Udin, doi chung scout.query tran 15ms — RE, nen khong can mo them method CDP nao. E2E that 4/4. CON DUNG MOT VIEC: Duc ky Scouter v1.",
+      "human_action": "@Đức:chốt — ky Scouter v1. Da nap lai, da mo khoa, E2E that da chay va dat. Khong con viec ky thuat nao dang cho.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem; tu vung van 12; suite 12/12 xanh. Viec ke la mot luot E2E that sau khi Duc nap lai — luot do vua chung minh khong gay gi, vua do cai chua do duoc (o prompt la <textarea> nen no doc lai bang cay tro nang: dat bao nhieu tren trang canvas nang?). Chi tiet o HANDOFF 2026-09-16g.",
-      "human_action": "@Đức:bấm — nap lai extension goi nay CUNG LUOT voi duc-scouter roi mo khoa ghi. Mot diem dung chung cho ca hai goi.",
+      "next_step": "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1.",
+      "human_action": "@Đức:chốt — ky Scouter v1 (viec o goi duc-scouter). Goi nay khong con viec nao dang cho.",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "S1 S2 S3 XONG 16/09. scout.type doc lai o nhap sau khi go: khop -> da_kiem true; lech -> nem WRITE_NOT_OBSERVED; khong doc duoc -> khai that. scout.click khai da_kiem:false, nhan them wait_for de kiem duoc. Tu vung KHONG doi (24/12). Do tren Chrome 153: <input>/<textarea> doc ra RONG qua dom.text, contenteditable thi doc duoc — chon duong doc theo TEN THE. 17 dot bien moi giet duoc het. CON MOT DIEM DUNG (S4): nap lai + mo khoa ghi, AI chay E2E that, roi ky v1.",
+      "title": "S1 S2 S3 XONG va da nghiem thu TREN DAY THAT 16/09. scout.type doc lai o nhap (khop / lech thi nem WRITE_NOT_OBSERVED / khong doc duoc thi khai that); scout.click khai da_kiem:false va nhan wait_for de kiem duoc — ca ba nhanh do tren day that, dung. Tu vung khong doi (24/12). Gia cua luot doc lai: ~390ms moi lenh go tren trang Udin, doi chung scout.query tran 15ms — RE, nen khong can mo them method CDP nao. E2E that 4/4. CON DUNG MOT VIEC: Duc ky Scouter v1.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "S3 XONG 16/09: goi nay da nhan ban chep duong ghi tu kiem; tu vung van 12; suite 12/12 xanh. Viec ke la mot luot E2E that sau khi Duc nap lai — luot do vua chung minh khong gay gi, vua do cai chua do duoc (o prompt la <textarea> nen no doc lai bang cay tro nang: dat bao nhieu tren trang canvas nang?). Chi tiet o HANDOFF 2026-09-16g.",
+      "title": "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1.",
       "rank": 5,
       "claim": null
     }
