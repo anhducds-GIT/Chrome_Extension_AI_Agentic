@@ -415,3 +415,30 @@ lệnh khác nhau.
 
 **Việc kế của gói: `T35` — `W6` đưa ảnh vào canvas.** Nó bị đặt sau vì nó là **một cú bấm**
 mà trước `S2` thì không có cách nào biết nó chạy hay không. Nay đưa `wait_for` là có mốc.
+
+## 2026-09-16j · `W6` xong — và một dòng bảng năng lực hoá ra là **lời khai**
+
+Bảng `W` khai `W6` = *“đưa một ảnh kết quả vào canvas”*, dựa trên một quan sát 13/09: *“nút
+Add to canvas có trong DOM”*. Đo lại hôm nay thì **thao tác ấy không tồn tại**:
+
+  ⑴ ảnh kết quả **đã nằm trên canvas** dưới dạng lưới bốn ô (`.is-batch-grid`);
+  ⑵ nút *Add to canvas* là nút **mở MENU** — `Frame` · `Image` · `Video` · `3D Model`;
+  ⑶ đếm trọn **54 nút** của trang: không nút nào riêng trên từng ảnh.
+
+**Lý do hoãn cũng sai:** `CHUOI-VIEC` đoán nó sẽ hỏng vì `S-22`. Hôm nay cú bấm tới trang
+**bốn lần liên tiếp** trên đúng ghế ấy. Thứ chặn `W6` là một thao tác không có thật.
+
+`them-khung.mjs` nay làm việc có thật: **thêm một khung** vào canvas. Chạy thật **8 → 9**.
+
+**CHỐT CỦA CẢ CHẶNG, và nó là bài học `S1` lặp lại:** menu tắt **không** chứng minh khung đã
+thêm — bấm lại chính nút mở menu cũng làm nó tắt, bấm ra ngoài cũng thế. `wait_state: "absent"`
+trả lời câu *menu còn không*, không trả lời câu *khung có thêm không*. Chỉ **phép đếm** phân biệt
+được. Con `D1`/`D2` canh đúng chỗ đó; 6 con đột biến tay, giết được hết.
+
+**MỘT PHÉP ĐO TÔI TỪ CHỐI CHẠY, khai đúng là chưa đo:** bấm thử `Image` để biết nó mở gì.
+Nếu nó dựng hộp thoại chọn tệp của hệ điều hành thì hộp thoại đó **treo Chrome của Đức** cho tới
+khi có người bấm tay — và cái ghế đang chạy việc thật đứng im theo. Một phép đo không được đắt
+hơn thứ nó đo. Ba mục đó thuộc `W8`/`T29`.
+
+**Cũng đo ra, tiện thì ghi:** gói này **không có** `scout.key` trong 12 lệnh, nên nó không bấm
+được `Escape`. Đóng một menu thì bấm lại chính nút mở nó, kèm `wait_state: "absent"`.

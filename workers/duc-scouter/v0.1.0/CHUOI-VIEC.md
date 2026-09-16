@@ -26,6 +26,44 @@
 6. **Gặp câu chưa có đáp án thì ghi ra, đừng đoán cho tròn chuyện.** Một chẩn đoán sai có thẩm
    quyền đắt hơn một ô trống.
 
+## SAU COMPACT — đọc ĐÚNG khối này rồi bắt tay, 16/09
+
+> Mọi khối bên dưới là **chuyện đã xong**. Khối này là **việc còn lại**, và nó ngắn có lý do:
+> danh sách năng lực đóng băng chỉ còn **một dòng**.
+
+**Đang ở đâu.** `Scouter v1` Đức ký 16/09 ([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md)) —
+đọc mục *KHÔNG hứa gì* trước khi dựa vào lệnh nào. Đường ghi **tự kiểm**: `scout.type` đọc lại ô
+nhập, `scout.click` nhận `wait_for`. Bảng `W`: `W1`–`W4` `W6` `W7` + E2E **ĐẠT**.
+
+### Việc còn lại, theo đúng thứ tự nên làm
+
+**① `W5` — chọn chế độ *Agent* / *Manual Gen*.** Cùng hình dạng `W6`: một cú bấm, nay có mốc.
+Chép khuôn `them-khung.mjs` — **đếm trạng thái trước/sau**, đừng tin mốc *“menu tắt”* hay
+*“lớp `active` đổi”* một mình. Không cần hỏi ai. Rẻ nhất trong danh sách.
+
+**② `S-27` — `scout.clear` vào đường tự kiểm.** Lệnh ghi CUỐI CÙNG còn fail-open; `ADR-0008`
+khai nó ở mục *KHÔNG hứa gì*. Máy móc đã sẵn: cùng cặp `nhanDangO`/`docO`, chỉ đổi phép
+phán từ *“chữ tăng thêm”* sang *“ô còn rỗng”*. Xong thì bớt được một dòng khỏi mục ấy.
+
+**③ 🛑 `T29` / `W8` — `scout.upload`. ĐÂY LÀ CHỖ PHẢI HỎI ĐỨC, và là dòng năng lực CUỐI
+CÙNG của danh sách đóng băng.** Nó cần method CDP mới `DOM.setFileInputFiles` → **đổi luật
+an toàn**. Đã có sẵn thiết kế: chỉ nhận **đường dẫn tương đối**, và **máy chủ Bridge** ghép nó vào
+vùng ghi rồi mới chuyển xuống — chỉ máy chủ biết vùng ghi ở đâu nên chỉ nó kiểm được đường dẫn có
+chui ra ngoài không. Scouter có host riêng nên việc này **không** đụng lõi dùng chung.
+**Nó mở khoá luôn ba mục `Image`/`Video`/`3D Model` của menu `W6`.**
+
+**④ Dọn sổ: `T21` chặng ⑤ · `S-04` · `T6` · `T10`.** Không cái nào chặn cái nào.
+
+### Hai thứ ĐỪNG làm lại
+
+**Đừng mở `Accessibility.getPartialAXTree`.** Đã cân 16/09 và **rút lại**: đường đang dùng tốn
+**~390 ms** mỗi lệnh gõ (đối chứng: một lượt dò trần 15 ms). Không đáng đổi một dòng trong lớp
+bảo vệ lấy chừng đó. Muốn mở lại thì phải có **số mới**, không phải một cảm giác.
+
+**Đừng bấm thử `Image`/`Video`/`3D Model` trong menu *Add to canvas*** để xem nó mở gì.
+Nếu nó dựng hộp thoại chọn tệp của hệ điều hành thì hộp thoại đó **treo Chrome của Đức** cho tới
+khi có người bấm tay. Đường đúng đi qua `T29`, và `T29` bắt đầu bằng một câu hỏi cho Đức.
+
 ## CHUỖI ĐANG CHẠY — làm đường GHI thôi nói dối, rồi mới ký `v1`
 
 > **Đức chốt 16/09: *“sửa trước, rồi ký”*.** Khối này là chuỗi việc đang chạy, không còn là đề xuất.
@@ -141,7 +179,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **⓪** | **Chốt `W` nào BẮT BUỘC trước khi tách** | — | **câu của Đức — nhưng nay chỉ còn là chữ ký.** Danh sách đề xuất `W1 W2 W3 W4 W7` + E2E **đã ĐẠT trọn** ngày 14/09, nên ⓪ không còn định cỡ gì nữa: gật là đủ điều kiện tách, hoặc nói thêm `W` nào |
 | **T33** | **Chạy lại E2E TRỌN VẸN** trên Udin | — | **XONG + CHẠY THẬT 14/09: 4/4 ảnh**, kích thước trên đĩa khớp từng byte, **9 đơn vị** trần ghi cho cả bốn (lượt trước: 16 cho MỘT). Không viết thêm một dòng nào — `TRIALS` 14/09, `G-68` `G-78` |
 | **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | **XONG + CHẠY THẬT 14/09** — `doc-tra-loi.mjs`, nay là chặng thứ tư của E2E. Đọc đúng câu trả lời cho prompt vừa gửi (`G-76`) |
-| **T35** | `W6` — đưa một ảnh vào canvas | — | **việc kế.** Hết chặn, nhưng **dính `S-22`**: nó là một cú bấm, nên có thể viết xong mà vẫn không ĐẠT *trên ghế này* |
+| **T35** | ~~`W6` đưa một ảnh vào canvas~~ → **thêm một KHUNG vào canvas** | — | **XONG + CHẠY THẬT 16/09** — `them-khung.mjs`, 8 → 9 khung. **Hai tiền đề của chính dòng này bị lật:** thao tác *“đưa ảnh lên canvas”* **không tồn tại** (ảnh kết quả đã ở trên canvas), và `S-22` **không** bít nó — cú bấm tới trang bốn lần liên tiếp hôm nay. 6 đột biến tay, giết được hết |
 | **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | **XONG + CHẠY THẬT 14/09** — cờ `xoaOCu` trong `gui-prompt.mjs`; **lời từ chối cũ giữ nguyên làm mặc định** (`G-77`) |
 | **T29** | `scout.upload` (`I9`) → `W8` | — | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng |
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
@@ -232,19 +270,32 @@ không hạ lời từ chối xuống cho tiện. Mặc định vẫn từ chố
 ⑶ **Selector nghe hợp lý nhất khớp 20.** `:last-of-type` xét theo tên thẻ trong TỪNG cha. Luôn
 hỏi lại trang từng ứng viên — đây là lần thứ hai cơ chế ấy cứu một chặng (`G-54`, rồi `G-76`).
 
-## T35 · `W6` đưa một ảnh vào canvas  ⟵ *việc kế*
+## T35 · `W6`  ⟵ ✅ **XONG 16/09**, và nó lật hai tiền đề
 
-| | `W` | Chặn tan vì | Chỗ đừng làm sai |
-|---|---|---|---|
-| `T35` | `W6` đưa ảnh vào canvas | vốn chỉ cần `I1` | **Dính `S-22`**: một cú bấm. Viết được, nhưng có thể không ĐẠT **trên ghế này**, và đó không phải lỗi adapter |
+**Thao tác mà bảng `W` khai từ 13/09 — *“đưa một ảnh kết quả vào canvas”* — KHÔNG TỒN TẠI.**
+Đo lại trên chính trang đó, ba chỗ cùng lúc:
 
-Đóng khi có **hợp đồng ⟨trước · thao tác · thành công · thất bại⟩** ghi vào bảng `W`, một lượt
-chạy thật, và phép ghim cho đường hỏng — không chỉ đường đúng. `T34` và `T36` đã đóng theo đúng
-khuôn ấy ngày 14/09; chép lại hình dạng của chúng thay vì nghĩ ra khuôn mới.
+  ⑴ ảnh kết quả **đã nằm trên canvas rồi**, dưới dạng một lưới bốn ô (`.is-batch-grid`);
+  ⑵ nút *Add to canvas* là nút **mở MENU** bốn mục — `Frame` · `Image` · `Video` · `3D Model`
+     — tức thêm một đối tượng **mới, rỗng**;
+  ⑶ đếm trọn **54 nút** của trang: không có nút nào riêng trên từng ảnh kết quả.
 
-**Và biết trước một chuyện**: `T35` có thể viết xong, ghim xanh, chạy thật mà **vẫn không ĐẠT**,
-vì cú bấm không tới trang trên ghế này. Đó là `S-22`, không phải lỗi adapter — đừng đi tìm bug
-trong `pilots/udin-optic/`, và đừng nới phép kiểm để nó xanh.
+**Và lý do hoãn cũng sai.** Khối này đoán `T35` sẽ hỏng vì `S-22` (*“cú bấm không tới trang”*).
+Ngày 16/09 cú bấm tới trang **bốn lần liên tiếp** trên đúng ghế ấy. Thứ chặn `W6` chưa bao giờ là
+đường sự kiện chuột — là **một thao tác không có thật**. *Một dòng bảng năng lực là một LỜI KHAI.*
+
+**`W6` nay là: thêm một KHUNG vào canvas** — nhánh duy nhất của menu ấy chạy trọn mà không cần
+một tệp nào. Không phải đồ trang trí: ở Optic, khung là chỗ một lượt sinh ảnh đổ kết quả vào.
+Hợp đồng đầy đủ ở đầu `udin-optic/tu-dong/them-khung.mjs`; đo thật **8 → 9**.
+
+**Chốt của cả chặng, và nó là bài học `S1` lặp lại:** menu tắt **không** chứng minh khung đã thêm —
+bấm lại chính nút mở menu cũng làm nó tắt. Chỉ **phép đếm trước/sau** phân biệt được hai chuyện đó.
+Con `D1` và `D2` canh đúng chỗ ấy.
+
+**Một phép đo KHÔNG được phép chạy, ghi ra thay vì giả vờ không có:** bấm thử `Image` để biết nó
+mở gì. Nếu nó dựng một hộp thoại hệ điều hành thì hộp thoại đó **treo Chrome của Đức** cho tới khi
+có người bấm tay — một phép đo không được đắt hơn thứ nó đo. Ba mục `Image`/`Video`/`3D Model`
+bị từ chối **theo rủi ro**, và khai đúng là **chưa đo**. Chúng thuộc `W8`/`T29`.
 
 ## T29 · `scout.upload` (`I9`) — đưa một tệp vào trang
 

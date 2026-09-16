@@ -1861,3 +1861,23 @@ nên không ai đang tin lời khai của nó. Máy móc để chữa thì đã 
 **Việc kế, và nó do chính `S1`/`S2` mở khoá:** `T35` (`W6` đưa ảnh vào canvas) từng bị
 đặt sau **vì nó là một cú bấm mà không có cách nào biết nó chạy hay không**. Nay `scout.click`
 có `wait_for`. `T29` (`scout.upload`) vẫn cần một method Bridge MỚI → vẫn phải hỏi Đức.
+
+## 2026-09-16i · `T35` đóng bằng cách **lật chính đề bài của nó**
+
+Chi tiết ở `udin-optic/HANDOFF` mục cùng ngày và ở `docs/TRIALS.md`. Ba thứ thuộc về
+gói NÀY, vì chúng nói về sổ sách chứ không về trang Udin:
+
+**⑴ Một dòng bảng năng lực là một LỜI KHAI, không phải một sự thật.** Dòng `W6` ra đời 13/09 từ
+một cái **tên nút đọc được trong DOM** — *“Add to canvas”* — và cái tên ấy nói dối: nút đó mở một
+menu thêm đối tượng RỖNG. Đã sửa dòng `W6` **tại chỗ**, giữ vế cũ gạch đi.
+
+**⑵ Một lý do hoãn cũng cần bị lật khi nó sai.** `CHUOI-VIEC` hoãn `T35` vì *“dính `S-22`”*. Hôm
+nay cú bấm tới trang **bốn lần liên tiếp**. Nếu không đo, `T35` sẽ nằm mãi trong danh sách hoãn
+với một lý do **không còn đúng** — và không ai đi kiểm lại lý do hoãn.
+
+**⑶ Có phép đo không được phép chạy.** Bấm thử `Image` có thể dựng một hộp thoại hệ điều hành
+và treo Chrome của Đức. Từ chối **theo rủi ro**, và khai đúng là **chưa đo** — không viết thành
+*“đã xác định là cần upload”*.
+
+Lộ trình còn lại nằm ở khối **SAU COMPACT** đầu `CHUOI-VIEC.md`: `W5` → `S-27` → 🛑 `T29`
+(hỏi Đức) → dọn sổ. Danh sách năng lực đóng băng chỉ còn **một dòng**: `scout.upload`.

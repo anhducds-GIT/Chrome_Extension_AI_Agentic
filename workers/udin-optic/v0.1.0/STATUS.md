@@ -5,7 +5,7 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "S3 XONG va da nghiem thu bang DIA 16/09; Scouter da duoc Duc ky v1 nen ban chep o goi nay dang dung tren mot nen da chot. Viec ke cua goi: T35 — W6 dua anh vao canvas — nay LAM DUOC vi scout.click da co wait_for, tuc cu bam co mot moc de doi chieu. Truoc S2 thi khong co cach nao biet cu bam do chay hay khong, va do dung la ly do T35 bi dat sau."
+next_step: "W6 XONG + CHAY THAT 16/09: them-khung.mjs, 8->9 khung, 6 dot bien tay giet duoc het. Tien de cu cua W6 sai va da gach tai cho. Viec ke cua goi: W5 (chon che do Agent/Manual Gen) — cung hinh dang W6, chep khuon them-khung.mjs va nho DEM trang thai truoc/sau chu dung tin moc mot minh. Ba muc Image/Video/3D Model cua menu Add to canvas cho T29 (scout.upload) ben Scouter."
 human_action: "khong"
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"

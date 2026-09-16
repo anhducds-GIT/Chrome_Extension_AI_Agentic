@@ -97,6 +97,7 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 | `../tu-dong/thu-muc-du-an.mjs` | tên project → thư mục ra. **Từ chối tên xấu kèm lý do, KHÔNG tự sửa lén**. Đức chốt 15/09 |
 | `../tu-dong/doi-sang-jpg.mjs` | đổi ảnh vừa tải sang **JPG** (chặng cuối của E2E). Đức chốt 15/09 |
 | `../tu-dong/doi-sang-jpg.ps1` | bộ đổi thật, chạy bằng **WIC của Windows** — không thêm dependency nào |
+| `../tu-dong/them-khung.mjs` | **`W6`** — thêm một KHUNG vào canvas qua menu *Add to canvas*. Đọc khối đầu file trước: tiền đề cũ của `W6` **sai**, và ba mục cần tệp bị **từ chối theo rủi ro** |
 | `../tu-dong/goi-bridge.mjs` | vỏ năm dòng khai danh tính gói; thân ở `../../_shared/goi-bridge/` |
 | `../tu-dong/tests/*.mjs` | năm phép ghim của tầng chạy việc |
 | `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — máy chủ Bridge. Luật của vùng: `workers/_shared/AGENTS.md` |
