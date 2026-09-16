@@ -613,6 +613,7 @@ export function createSeedHandlers(deps = {}) {
       const target = await resolveTarget(params.target_id);
       return await runAction("scout.upload", target, {
         selector: params.selector,
+        mo_bang: params.mo_bang,
         path: params.path,
         path_tuyet_doi: params.path_tuyet_doi
       });

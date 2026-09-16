@@ -34,9 +34,17 @@ function lamTrang(idOTep) {
   assert.ok(ACTION_NAMES.includes("input.upload"));
   assert.ok(WRITE_CDP_METHODS.includes("DOM.setFileInputFiles"),
     "hành động có mà method CDP không được khai thì nó chết ở cửa `createWriteSender`");
-  /* Cửa này mở 16/09 và KHÔNG được kéo theo cửa nào khác: `DOM.setFileInputFiles` là method
-   * duy nhất của lượt mở ấy. Con số dưới đây đổi tay, và đổi tay là chỗ người ta dừng lại nghĩ. */
-  assert.equal(WRITE_CDP_METHODS.length, 15,
+  /* HAI cửa mở ngày 16/09, và chỉ hai. `Page.setInterceptFileChooserDialog` mở SAU, khi phép đo
+   * cho thấy ô nhận file của Udin chỉ sống trong lúc hộp thoại mở.
+   *
+   * Và nó KHÔNG kéo theo cửa nào khác — chỗ này đáng ghi vì nó ngược với trực giác: phép đo
+   * 16/09 cho thấy nó chạy **không cần `Page.enable`** và **không cần kênh sự kiện** (ô nhận file
+   * nằm lại trong DOM chờ, nên hỏi lại là thấy). Hai method đáng lẽ phải mở kèm mà hoá ra không.
+   * Con số dưới đây đổi TAY, và đổi tay là chỗ người ta dừng lại nghĩ. */
+  assert.ok(WRITE_CDP_METHODS.includes("Page.setInterceptFileChooserDialog"));
+  assert.ok(!WRITE_CDP_METHODS.includes("Page.enable"),
+    "`Page.enable` KHÔNG cần cho lượt chặn hộp thoại — đo 16/09. Thêm nó là nới bề mặt cho một nhu cầu không có");
+  assert.equal(WRITE_CDP_METHODS.length, 16,
     "danh sách method CDP của lõi GHI đổi = đổi luật an toàn. Thêm một cái phải hỏi Đức (ADR gốc mục 2)");
 }
 
@@ -125,4 +133,95 @@ function lamTrang(idOTep) {
   assert.equal(daGoi.filter((g) => g.m === "DOM.setFileInputFiles").length, 0);
 }
 
-console.log("  · tai-len lõi ghi (T29/W8): 6 khối xanh");
+
+/* ═══ ĐƯỜNG ⒝ — BẤM MỘT NÚT ĐỂ TRANG DỰNG Ô CHỌN TỆP RA (`mo_bang`) ═══════
+ * Đo trên trang Udin 16/09: ô `<input type=file>` được dựng TẠM rồi XOÁ ĐI — nó chỉ sống trong
+ * lúc hộp thoại đang mở. Nên trình tự bắt buộc là CHẶN hộp thoại TRƯỚC, rồi mới bấm.
+ */
+
+/** Trang giả cho đường ⒝: cú bấm dựng thêm `themO` ô chọn tệp mới. */
+function lamTrangMo({ themO = 1, chanNem = false, tatNem = false } = {}) {
+  const daGoi = [];
+  let oTep = [9];                     /* trang đã sẵn một ô, để phép lọc "ô MỚI" có việc thật */
+  let daBam = false;
+  const sendRaw = async (m, p) => {
+    daGoi.push({ m, p });
+    if (m === "Page.setInterceptFileChooserDialog") {
+      if (p.enabled && chanNem) throw new Error("Chrome tu choi chan");
+      if (!p.enabled && tatNem) throw new Error("Chrome tu choi tat chan");
+      return {};
+    }
+    if (m === "DOM.getDocument") return { root: { nodeId: 1 } };
+    if (m === "DOM.querySelectorAll") {
+      if (p.selector === 'input[type="file"]') return { nodeIds: daBam ? [...oTep, ...Array.from({ length: themO }, (_, i) => 100 + i)] : oTep };
+      return { nodeIds: [42] };
+    }
+    /* `margin` cần cho `gocCuon` (`S-23`): nó suy độ cuộn từ mép âm của `:root`. Thiếu nó thì
+     * lượt bấm đỏ bằng `CLICK_HIT_TEST_FAILED` — máy giả thiếu, không phải mã sai. */
+    if (m === "DOM.getBoxModel") return { model: { content: [0, 0, 20, 0, 20, 10, 0, 10], margin: [0, 0, 20, 0, 20, 10, 0, 10] } };
+    if (m === "DOM.getNodeForLocation") return { nodeId: 42 };
+    if (m === "Input.dispatchMouseEvent") { if (p.type === "mouseReleased") daBam = true; return {}; }
+    return {};
+  };
+  const chan = () => daGoi.filter((g) => g.m === "Page.setInterceptFileChooserDialog").map((g) => g.p.enabled);
+  return { sendRaw, daGoi, chan, gan: () => daGoi.filter((g) => g.m === "DOM.setFileInputFiles") };
+}
+
+/* ---- ⑦ Đường đúng của `mo_bang`: CHẶN trước, bấm sau, TẮT cuối --------- */
+{
+  const t = lamTrangMo();
+  const ra = await runAction("input.upload", { sendRaw: t.sendRaw },
+    { mo_bang: "#image", path: "udin-optic/anh-1.webp", path_tuyet_doi: DUONG });
+  assert.equal(ra.ok, true, JSON.stringify(ra));
+  assert.deepEqual(t.chan(), [true, false], "phải BẬT chặn rồi TẮT, đúng một lần mỗi chiều");
+
+  /* THỨ TỰ LÀ CẢ VẤN ĐỀ: bấm trước khi chặn thì hộp thoại hệ điều hành dựng lên màn hình Đức
+   * và đứng đó tới khi có người bấm tay — đúng cái đã hai lần bị từ chối. */
+  const ten = t.daGoi.map((g) => `${g.m}${g.m === "Page.setInterceptFileChooserDialog" ? `:${g.p.enabled}` : ""}`);
+  assert.ok(ten.indexOf("Page.setInterceptFileChooserDialog:true") < ten.indexOf("Input.dispatchMouseEvent"),
+    `phải CHẶN trước khi BẤM — thứ tự thật: ${ten.join(" → ")}`);
+  assert.ok(ten.lastIndexOf("Page.setInterceptFileChooserDialog:false") > ten.indexOf("DOM.setFileInputFiles"),
+    "lượt TẮT phải đứng sau lượt gắn file");
+
+  /* Gắn vào ô MỚI hiện ra, không phải ô vốn đã có. */
+  assert.deepEqual(t.gan()[0].p, { nodeId: 100, files: [DUONG] },
+    "phải đổ vào ô MỚI do cú bấm dựng ra, không phải ô trang vốn đã có");
+  assert.equal(ra.data.mo_bang, "#image");
+  assert.equal(ra.data.selector, null);
+}
+
+/* ---- ⑧ KHỐI ĐẮT NHẤT CỦA CẢ TỆP: hỏng giữa chừng thì VẪN PHẢI TẮT -----
+ * Để quên cái chặn ở trạng thái BẬT nghĩa là hộp thoại chọn tệp mà CHÍNH ĐỨC mở cũng im lặng
+ * không hiện — anh sẽ tưởng Chrome hỏng, và không một thông báo nào chỉ về đây. Đây là hậu quả
+ * tệ nhất mà `T29` có thể gây ra, và nó xảy ra ở NHÁNH LỖI, nhánh không ai chạy thử. */
+{
+  /* ⒜ cú bấm không dựng ra ô nào */
+  const a = lamTrangMo({ themO: 0 });
+  const ra = await runAction("input.upload", { sendRaw: a.sendRaw },
+    { mo_bang: "#image", path: "a.webp", path_tuyet_doi: DUONG });
+  assert.equal(ra.ok, false);
+  assert.equal(ra.code, "NO_FILE_CHOOSER");
+  assert.deepEqual(a.chan(), [true, false], "lượt gọi ĐỎ mà cái chặn vẫn BẬT — Chrome của Đức nuốt mọi hộp thoại từ đây");
+
+  /* ⒝ cú bấm dựng ra NHIỀU ô → từ chối, và vẫn tắt */
+  const b = lamTrangMo({ themO: 3 });
+  const rb = await runAction("input.upload", { sendRaw: b.sendRaw },
+    { mo_bang: "#image", path: "a.webp", path_tuyet_doi: DUONG });
+  assert.equal(rb.code, "SELECTOR_AMBIGUOUS");
+  assert.equal(b.gan().length, 0, "nhiều ô mới thì KHÔNG đổ vào cái đầu tiên");
+  assert.deepEqual(b.chan(), [true, false]);
+}
+
+/* ---- ⑨ Phải chọn ĐÚNG MỘT đường, và khai cả hai là chưa quyết --------- */
+{
+  for (const p of [
+    { selector: "#tep", mo_bang: "#image" },
+    {}
+  ]) {
+    const t = lamTrangMo();
+    const ra = await runAction("input.upload", { sendRaw: t.sendRaw }, { ...p, path: "a.webp", path_tuyet_doi: DUONG });
+    assert.equal(ra.code, "UPLOAD_MODE_UNCLEAR", JSON.stringify(p));
+    assert.deepEqual(t.daGoi, [], "chưa quyết mà đã chạm dây — và tệ hơn, có thể đã bật cái chặn");
+  }
+}
+console.log("  · tai-len lõi ghi (T29/W8): 9 khối xanh");

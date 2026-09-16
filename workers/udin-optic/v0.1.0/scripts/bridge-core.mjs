@@ -69,6 +69,9 @@ export const ERROR_DEFINITIONS = Object.freeze({
    * một cái cần sửa cấu hình máy chủ, cái kia cần sửa selector. */
   UPLOAD_PATH_MISSING: { retryable: false, message: "The Bridge server did not resolve the path; this extension never joins paths itself." },
   NOT_A_FILE_INPUT: { retryable: false, message: "The selector matched an element that is not an <input type=file>." },
+  UPLOAD_MODE_UNCLEAR: { retryable: false, message: "Give exactly one of selector or mo_bang." },
+  /* `retryable: false`: bấm lại đúng cái nút vừa không mở cửa chọn tệp thì nó vẫn không mở. */
+  NO_FILE_CHOOSER: { retryable: false, message: "Clicking that element did not make the page create a file input." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The extension could not complete the request." }
 });
@@ -515,12 +518,19 @@ const METHOD_ENTRIES = [
      * nhận thì chờ **dấu vết trang để lại** (ảnh xem trước, tên tệp hiện lên) bằng `scout.wait`. */
     name: "scout.upload", read_only: false, deadline_ms: 30000,
     description: "Put ONE file from the Bridge write root into ONE <input type=file> on the page. The path is RELATIVE to the write root and the Bridge SERVER joins it — only the server knows where the write root is, and it overwrites the resolved path on every call, so a caller cannot smuggle an absolute path. Refuses unless the selector matches exactly one element AND Chrome's own CSS matching says that element is an input[type=file]. This does NOT self-verify: a file input never reveals its filename through any read path this package has, so it promises only that Chrome was told to attach the file. To confirm the page took it, wait for a trace the page leaves — a preview thumbnail, a filename appearing — with scout.wait.",
-    params_schema: { target_id: "string", selector: "string", path: "string", path_tuyet_doi: "string" },
+    params_schema: { target_id: "string", selector: "string?", mo_bang: "string?", path: "string", path_tuyet_doi: "string" },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "selector", "path", "path_tuyet_doi"]);
+      const params = objectParams(raw, ["target_id", "selector", "mo_bang", "path", "path_tuyet_doi"]);
+      /* ĐÚNG MỘT trong hai, và cổng này đứng ở đây chứ không ở lõi ghi: một yêu cầu chưa quyết
+       * thì đừng cho nó đi xuống tận nơi bắn chuột rồi mới từ chối. */
+      const coSel = params.selector !== undefined && params.selector !== null;
+      const coMo = params.mo_bang !== undefined && params.mo_bang !== null;
+      if (coSel === coMo) {
+        invalidParams("params.selector", "chọn ĐÚNG MỘT: `selector` (ô chọn tệp có sẵn) hoặc `mo_bang` (nút phải bấm để trang dựng ô ấy ra)");
+      }
       return {
         target_id: requiredTargetId(params.target_id),
-        selector: requiredSelector(params.selector),
+        ...(coSel ? { selector: requiredSelector(params.selector) } : { mo_bang: requiredSelector(params.mo_bang) }),
         path: duongTuongDoi(params.path),
         path_tuyet_doi: duongMayChuDat(params.path_tuyet_doi)
       };

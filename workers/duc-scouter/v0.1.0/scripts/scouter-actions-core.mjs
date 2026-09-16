@@ -116,6 +116,23 @@ export const WRITE_CDP_METHODS = Object.freeze([
    * Cái này KHÔNG mở thêm gì về phía ĐỌC: `file.read` đã đọc được mọi file dưới vùng ghi từ
    * 07/09. Thứ mới là **hướng đi của byte**. */
   "DOM.setFileInputFiles",
+  /* ---- MỞ 16/09 — Đức chốt, sau khi ĐO. Method này LÀM GIẢM rủi ro, không tăng -----------
+   * Nó bảo Chrome **đừng dựng hộp thoại chọn tệp lên màn hình**; thay vào đó lượt chọn tệp
+   * nằm lại trong tay giao thức. Nhờ nó, cú bấm mở hộp thoại — thứ đã hai lần bị từ chối vì
+   * *"nó treo Chrome cho tới khi có người bấm tay"* — trở nên an toàn để máy tự bấm.
+   *
+   * **Nó KHÔNG mở thêm quyền đọc file nào.** File vẫn phải đi qua `DOM.setFileInputFiles`, vẫn
+   * bị máy chủ nhốt trong vùng ghi. Thứ nó đổi là *hộp thoại có hiện lên màn hình Đức hay không*.
+   *
+   * **HIỂM THẬT của nó là ĐỂ QUÊN BẬT**, và chỗ ấy phải đọc kỹ: khi còn bật, hộp thoại mà
+   * CHÍNH ĐỨC mở cũng im lặng không hiện — anh sẽ tưởng Chrome hỏng, và không có thông báo nào
+   * chỉ về đây. Nên nó chỉ được bật trong LÒNG một lượt `input.upload`, và lượt tắt nằm trong
+   * `finally` — kể cả khi mọi thứ ở giữa ném.
+   *
+   * Đo 16/09 (`npm run scouter:tai-len`, khối ⑤): nó chạy **không cần `Page.enable`**, và
+   * **không cần kênh sự kiện** — ô nhận file nằm lại trong DOM chờ, nên hỏi lại là thấy. Ba thứ
+   * đáng lẽ phải mở kèm mà hoá ra không cần. */
+  "Page.setInterceptFileChooserDialog",
   "Input.dispatchMouseEvent",
   "Input.dispatchKeyEvent",
   /* MỞ 08/09 — Đức chốt. Trước đó dòng chú thích trên khai "CỐ Ý KHÔNG CÓ `Page.navigate`",
@@ -492,7 +509,6 @@ const ACTIONS = {
    * cũng lọt, và `DOM.setFileInputFiles` lên một phần tử không phải ô chọn tệp thì báo lỗi
    * của Chrome, đọc không ra nguyên nhân. Một lượt dò thêm rẻ hơn một câu lỗi khó hiểu. */
   async "input.upload"(send, params) {
-    const selector = readSelector(params.selector);
     const duong = params.path_tuyet_doi;
     if (typeof duong !== "string" || duong.trim() === "") {
       throw new ActionError("UPLOAD_PATH_MISSING",
@@ -500,24 +516,23 @@ const ACTIONS = {
         "không tự ghép đường dẫn bao giờ. Lệnh này chạy trên một máy chủ không có móc ấy thì " +
         "phải chết, chứ không được đoán lấy một đường dẫn.");
     }
-    const node = await locateOne(send, selector);
-
-    const oTep = await send("DOM.querySelectorAll", { nodeId: node.rootNodeId, selector: "input[type=\"file\"]" });
-    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {
-      throw new ActionError("NOT_A_FILE_INPUT",
-        `Selector '${selector}' khớp một phần tử KHÔNG phải <input type="file">. Trang có ` +
-        `${(oTep?.nodeIds || []).length} ô chọn tệp. Hỏi Chrome khớp CSS, không đọc thuộc tính rồi suy: ` +
-        "một `<div type=\"file\">` lọt qua phép suy ấy.");
+    /* HAI ĐƯỜNG, và người gọi phải chọn ĐÚNG MỘT. Không có mặc định, cố ý: hai đường này nhìn
+     * giống nhau mà rủi ro khác hẳn, nên bắt khai ra thay vì đoán hộ. */
+    const coSel = params.selector !== undefined && params.selector !== null;
+    const coMo = params.mo_bang !== undefined && params.mo_bang !== null;
+    if (coSel === coMo) {
+      throw new ActionError("UPLOAD_MODE_UNCLEAR",
+        "Chọn ĐÚNG MỘT: `selector` (ô chọn tệp đã có sẵn trên trang) hoặc `mo_bang` (selector của " +
+        "nút phải bấm để trang dựng ô ấy ra). Khai cả hai, hoặc không khai gì, đều là chưa quyết.");
     }
 
-    await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });
+    const ketQua = coMo
+      ? await taiLenQuaNutMo(send, readSelector(params.mo_bang), duong)
+      : await taiLenVaoOSan(send, readSelector(params.selector), duong);
+
     /* Trả về `path` TƯƠNG ĐỐI mà người gọi đưa, không trả đường tuyệt đối: nhật ký không cần
      * chở cả đường dẫn ổ đĩa, và người gọi vốn đã biết thứ mình xin. */
-    return {
-      selector, matchCount: node.matchCount,
-      path: typeof params.path === "string" ? params.path : null,
-      files: 1, method: "DOM.setFileInputFiles"
-    };
+    return { ...ketQua, path: typeof params.path === "string" ? params.path : null, files: 1 };
   },
 
   /* ③ input.key — gõ MỘT phím có tên, chọn từ bảng cố định. */
@@ -797,6 +812,83 @@ function readKeyName(value) {
 
 /* Chốt ⑷ sống ở đây. `DOM.querySelectorAll` trả về TOÀN BỘ khớp, nên ta biết con số thật —
  * và từ chối khi nó không phải 1. */
+/* Trần chờ ô nhận file hiện ra sau cú bấm, và nhịp hỏi lại. Nhỏ: trang dựng ô ấy ngay trong
+ * chính lượt xử lý cú bấm, nên nó có mặt gần như tức thì — đo 16/09 thấy nó đã ở đó sau 700ms.
+ * Trần rộng hơn chỉ kéo dài thời gian cái chặn hộp thoại còn BẬT, mà đó là thứ phải ngắn. */
+const UPLOAD_CHO_MS = 4000;
+const UPLOAD_NHIP_MS = 150;
+
+/** Hỏi trang xem có đúng những nút nào là `<input type="file">`. */
+async function timOTep(send) {
+  const doc = await send("DOM.getDocument", { depth: 0, pierce: false });
+  const root = doc?.root;
+  if (!root?.nodeId) throw new ActionError("NO_DOCUMENT", "Target không trả về document nào.");
+  const found = await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: "input[type=\"file\"]" });
+  return found?.nodeIds || [];
+}
+
+/** Đường ⒜ — ô chọn tệp ĐÃ CÓ SẴN trên trang. */
+async function taiLenVaoOSan(send, selector, duong) {
+  const node = await locateOne(send, selector);
+  const oTep = await timOTep(send);
+  if (!oTep.includes(node.nodeId)) {
+    throw new ActionError("NOT_A_FILE_INPUT",
+      `Selector '${selector}' khớp một phần tử KHÔNG phải <input type="file">. Trang có ` +
+      `${oTep.length} ô chọn tệp. Hỏi Chrome khớp CSS, không đọc thuộc tính rồi suy: ` +
+      "một `<div type=\"file\">` lọt qua phép suy ấy.");
+  }
+  await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });
+  return { selector, matchCount: node.matchCount, method: "DOM.setFileInputFiles", mo_bang: null };
+}
+
+/* Đường ⒝ — trang KHÔNG có sẵn ô nào; phải bấm một nút để nó dựng ô ra. Đo trên trang Udin
+ * 16/09: bấm `Image` thì một `<input type="file">` hiện ra, và trang XOÁ nó đi ngay sau khi
+ * người dùng chọn xong. Cửa sổ sống của nó ≈ khoảng thời gian hộp thoại đang mở.
+ *
+ * Nên trình tự bắt buộc là: **CHẶN hộp thoại TRƯỚC, rồi mới bấm.** Bấm trước thì hộp thoại của
+ * hệ điều hành dựng lên màn hình Đức và đứng đó tới khi có người bấm tay — đúng cái đã hai lần
+ * bị từ chối.
+ *
+ * Và lượt TẮT chặn nằm trong `finally`, không có ngoại lệ: để quên nó bật thì hộp thoại mà chính
+ * Đức mở cũng im lặng không hiện, và không có thông báo nào chỉ về đây. */
+async function taiLenQuaNutMo(send, moBang, duong) {
+  const truoc = await timOTep(send);
+  const nut = await locateOne(send, moBang);
+  const diem = await centreOf(send, nut.nodeId);
+  const hit = await kiemDiemBam(send, nut.nodeId, diem, await gocCuon(send, nut.rootNodeId));
+
+  await send("Page.setInterceptFileChooserDialog", { enabled: true });
+  try {
+    await clickAt(send, diem, readNutChuot(undefined), 1);
+
+    let moi = [];
+    for (let i = 0; i * UPLOAD_NHIP_MS < UPLOAD_CHO_MS; i += 1) {
+      const nay = await timOTep(send);
+      moi = nay.filter((id) => !truoc.includes(id));
+      if (moi.length) break;
+      await new Promise((r) => setTimeout(r, UPLOAD_NHIP_MS));
+    }
+
+    if (moi.length === 0) {
+      throw new ActionError("NO_FILE_CHOOSER",
+        `Bấm '${moBang}' xong mà trang KHÔNG dựng thêm ô chọn tệp nào trong ${UPLOAD_CHO_MS}ms. ` +
+        `Trước cú bấm đã có ${truoc.length} ô. Có thể nút ấy không mở cửa chọn tệp, hoặc nó mở ` +
+        "một cửa khác (kéo-thả, dán) mà đường này không với tới.");
+    }
+    if (moi.length > 1) {
+      throw new ActionError("SELECTOR_AMBIGUOUS",
+        `Cú bấm dựng ra ${moi.length} ô chọn tệp mới. Đổ file vào "cái đầu tiên" là chỗ tự động ` +
+        "hoá phá hỏng đồ thật — từ chối, và đưa `selector` trỏ đích danh nếu bạn biết cái nào.");
+    }
+    await send("DOM.setFileInputFiles", { nodeId: moi[0], files: [duong] });
+    return { selector: null, mo_bang: moBang, matchCount: nut.matchCount, hit, method: "DOM.setFileInputFiles" };
+  } finally {
+    /* KHÔNG có `catch` ở đây: một lượt tắt hỏng phải nổi lên cho người gọi thấy, vì hậu quả của
+     * nó là Chrome của Đức im lặng nuốt mọi hộp thoại chọn tệp. */
+    await send("Page.setInterceptFileChooserDialog", { enabled: false });
+  }
+}
+
 async function locateOne(send, selector) {
   await send("DOM.enable", {});
   const doc = await send("DOM.getDocument", { depth: 0, pierce: false });

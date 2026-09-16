@@ -1443,29 +1443,57 @@ BATCHES.push({
     {
       ma: "U3",
       ten: "B\u1ecf ph\u00e9p ki\u1ec3m \u00f4-ch\u1ecdn-t\u1ec7p \u2014 g\u1eafn file v\u00e0o m\u1ed9t ph\u1ea7n t\u1eed b\u1ea5t k\u1ef3",
-      tim: '    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {',
-      thay: "    if (false) {",
+      tim: "  if (!oTep.includes(node.nodeId)) {",
+      thay: "  if (false) {",
       soLan: 1
     },
     {
       ma: "U4",
       ten: "N\u1edbi th\u00e0nh *trang c\u00f3 \u00f4 ch\u1ecdn t\u1ec7p n\u00e0o \u0111\u00f3* \u2014 xanh c\u1ea3 khi selector tr\u1ecf ch\u1ed7 kh\u00e1c",
-      tim: '    if (!(oTep?.nodeIds || []).includes(node.nodeId)) {',
-      thay: "    if ((oTep?.nodeIds || []).length === 0) {",
+      tim: "  if (!oTep.includes(node.nodeId)) {",
+      thay: "  if (oTep.length === 0) {",
       soLan: 1
     },
     {
       ma: "U5",
       ten: "G\u1eafn v\u00e0o \u00f4 ch\u1ecdn t\u1ec7p \u0110\u1ea6U TI\u00caN thay v\u00ec \u00f4 selector kh\u1edbp",
-      tim: '    await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });',
-      thay: '    await send("DOM.setFileInputFiles", { nodeId: (oTep?.nodeIds || [])[0], files: [duong] });',
+      tim: '  await send("DOM.setFileInputFiles", { nodeId: node.nodeId, files: [duong] });',
+      thay: '  await send("DOM.setFileInputFiles", { nodeId: oTep[0], files: [duong] });',
+      soLan: 1
+    },
+    {
+      ma: "U10",
+      ten: "BẤM TRƯỚC RỒI MỚI CHẶN — hộp thoại hệ điều hành dựng lên màn hình Đức",
+      /* NEO PHẢI GỒM CẢ CÚ BẤM. Bản đầu chỉ dời dòng chặn xuống trong `try` — vẫn đứng TRƯỚC
+       * `clickAt`, tức không đảo gì cả, và con đột biến sống sót vì CHÍNH NÓ viết sai chứ không
+       * vì phép ghim yếu. Một con đột biến không làm đúng việc nó khai là một lỗ trong bộ đo. */
+      tim: '  await send("Page.setInterceptFileChooserDialog", { enabled: true });' + NL + "  try {" + NL
+        + "    await clickAt(send, diem, readNutChuot(undefined), 1);",
+      thay: "  try {" + NL + "    await clickAt(send, diem, readNutChuot(undefined), 1);" + NL
+        + '    await send("Page.setInterceptFileChooserDialog", { enabled: true });',
+      soLan: 1
+    },
+    {
+      ma: "U11",
+      ten: "Để QUÊN CÁI CHẶN Ở TRẠNG THÁI BẬT — Chrome của Đức nuốt mọi hộp thoại chọn tệp",
+      tim: "  } finally {" + NL
+        + "    /* KHÔNG có `catch` ở đây: một lượt tắt hỏng phải nổi lên cho người gọi thấy, vì hậu quả của",
+      thay: "  } finally { if (false) {" + NL
+        + "    /* KHÔNG có `catch` ở đây: một lượt tắt hỏng phải nổi lên cho người gọi thấy, vì hậu quả của",
+      soLan: 1
+    },
+    {
+      ma: "U12",
+      ten: "Đổ file vào ô ĐẦU TIÊN thay vì ô MỚI hiện ra sau cú bấm",
+      tim: "      moi = nay.filter((id) => !truoc.includes(id));",
+      thay: "      moi = nay.slice(0, 1);",
       soLan: 1
     },
     {
       ma: "U6",
       ten: "Ch\u1edf \u0111\u01b0\u1eddng TUY\u1ec6T \u0110\u1ed0I ra k\u1ebft qu\u1ea3 \u2014 v\u00f9ng ghi c\u1ee7a \u0110\u1ee9c v\u00e0o nh\u1eadt k\u00fd",
-      tim: '      path: typeof params.path === "string" ? params.path : null,',
-      thay: "      path: duong,",
+      tim: '    return { ...ketQua, path: typeof params.path === "string" ? params.path : null, files: 1 };',
+      thay: "    return { ...ketQua, path: duong, files: 1 };",
       soLan: 1
     }
   ]
