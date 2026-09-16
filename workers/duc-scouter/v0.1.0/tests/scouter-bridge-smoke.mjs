@@ -309,7 +309,11 @@ function request(method, params) {
   /* Tham số đi tới nơi nguyên vẹn, không bị nuốt. */
   assert.deepEqual(ghi[1].params, { selector: "#txt", text: "abc" });
   assert.deepEqual(ghi[2].params, { selector: "#txt", key: "Enter" });
-  assert.equal(engine.calls.length, 3, "mỗi lượt hỏng vẫn phải gọi đúng một lượt tới lõi");
+  /* Đếm lượt GHI, không đếm tổng lượt gọi (`S1`, 16/09). Từ nay `scout.type` đọc lại ô nhập,
+   * nên một lượt `scout.type` sinh THÊM lượt đọc — và chính chỗ đó là thứ ta muốn có. Thứ
+   * phép ghim này canh vẫn y nguyên: **một lượt hỏng không được thử lại lượt GHI**. */
+  assert.equal(engine.calls.filter((call) => call.ghi).length, 3,
+    "mỗi lượt hỏng vẫn phải gọi đúng MỘT lượt ghi tới lõi — không thử lại");
 }
 
 /* ---- ⑦ Target không có thì nói thẳng, không dò bừa ---------------------- */

@@ -1109,6 +1109,16 @@ function shapeNode(node, budget, flat = false) {
   const { attributes, redactedAttributes } = maskAttributes(node.attributes);
   const shaped = {
     nodeId: node.nodeId ?? null,
+    /* `backendNodeId` MỞ RA 16/09 cho `S1` (đường ghi tự kiểm). Nó là thứ NỐI hai phép dò:
+     * `a11y.tree` đã khai `backend_node_id` từ lâu, còn bên DOM thì con số ấy bị `shapeNode`
+     * bỏ đi — nên không có cách nào hỏi *"nút trợ năng nào là phần tử tôi vừa gõ vào"*, và
+     * đối chiếu theo TÊN thì chỉ là đoán.
+     *
+     * Nó KHÔNG phải dữ liệu của trang: đây là một con số Chrome tự đặt, sống theo phiên
+     * debugger, không mang nội dung, không mang danh tính người dùng — nên chính sách che
+     * (`maskAttributes`) không đụng tới nó. Và nó KHÔNG mở thêm quyền: không method nào trong
+     * `READ_ONLY_CDP_METHODS` hay `WRITE_CDP_METHODS` nhận `backendNodeId` từ người gọi. */
+    backendNodeId: node.backendNodeId ?? null,
     nodeType: node.nodeType ?? null,
     nodeName: node.nodeName ?? null,
     localName: node.localName ?? null,

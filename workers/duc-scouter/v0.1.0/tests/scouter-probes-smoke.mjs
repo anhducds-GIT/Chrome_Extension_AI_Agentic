@@ -154,7 +154,8 @@ function makeFakePage({ matchCount = 3, sauThat = Infinity } = {}) {
       const i = (params.nodeId ?? 100) - 100;
       return {
         node: {
-          nodeId: params.nodeId, nodeType: 1, nodeName: "BUTTON", localName: "button",
+          nodeId: params.nodeId, backendNodeId: 900 + i,
+          nodeType: 1, nodeName: "BUTTON", localName: "button",
           childNodeCount: 0, attributes: attrsOf(i)
         }
       };
@@ -224,6 +225,13 @@ const FAKE_TARGETS = [
   assert.equal(res.data.hasMore, true);
   assert.equal(res.data.items[0].nodeName, "BUTTON", "và 'chúng là gì'");
   assert.equal(res.data.items[0].attributes["aria-label"], "Nút số 0");
+  /* `backendNodeId` — MỐI NỐI giữa hai phép dò (`S1`, 16/09). `a11y.tree` đã khai
+   * `backend_node_id` từ lâu; thiếu con số này ở phía DOM thì không có cách nào hỏi *"nút trợ
+   * năng nào là phần tử tôi vừa gõ vào"*, và đối chiếu theo TÊN chỉ là đoán. Bỏ nó đi thì
+   * `scout.type` lặng lẽ tụt xuống *"không đọc được"* ở mọi ô nhập thường — một màu xanh giả
+   * trọn vẹn, vì lượt gõ vẫn báo `ok: true`. */
+  assert.equal(res.data.items[0].backendNodeId, 900, "dom.query phải chở backendNodeId ra ngoài");
+  assert.equal(res.data.items[1].backendNodeId, 901, "và nó phải là của ĐÚNG phần tử đó, không phải một hằng số");
 
   /* Selector đi làm THAM SỐ giao thức, không nối vào chuỗi nào. */
   const qsa = page.seen.find((c) => c.method === "DOM.querySelectorAll");

@@ -107,8 +107,8 @@ const BATCHES = [
       {
         ma: "S7",
         ten: "Nới trần độ dài selector lên gấp trăm lần",
-        tim: '  if (value.length > 1024) invalidParams("params.selector", "expected at most 1024 characters");',
-        thay: '  if (value.length > 102400) invalidParams("params.selector", "expected at most 1024 characters");',
+        tim: '  if (value.length > 1024) invalidParams(duong, "expected at most 1024 characters");',
+        thay: '  if (value.length > 102400) invalidParams(duong, "expected at most 1024 characters");',
         soLan: 1
       },
       {
@@ -1340,6 +1340,154 @@ BATCHES.push({
       ten: "`G-72` — bỏ hạn cho mỗi lệnh CDP: một lệnh treo giữ debugger, khoá cả tab cho mọi lệnh sau",
       tim: "  if (!(hanMs > 0)) return viec;",
       thay: "  return viec;",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- `S1`/`S2`: ĐƯỜNG GHI TỰ KIỂM. Mẻ này canh đúng một thứ — **đường ghi thôi nói dối**.
+   Trước 16/09 `scout.type` trả về số phím nó GỬI ĐI và báo đạt cho một việc có thể chưa xảy
+   ra; con T1 dưới đây là chính cái đó, viết lại thành một dòng. ------------------------- */
+const PIN_TU_KIEM = path.join(ROOT, "tests", "ghi-tu-kiem-smoke.mjs");
+
+BATCHES.push({
+  ten: "GHI TỰ KIỂM — phần phán (thuần logic)",
+  target: path.join(ROOT, "scripts", "tu-kiem-ghi.mjs"),
+  pin: PIN_TU_KIEM,
+  mutants: [
+    {
+      ma: "TK1",
+      ten: "Đếm thành 'lớn hơn hoặc bằng' — ô không đổi một chữ nào vẫn được báo ĐẠT",
+      tim: "  if (sauLan > truocLan) {",
+      thay: "  if (sauLan >= truocLan) {",
+      soLan: 1
+    },
+    {
+      ma: "TK2",
+      ten: "Quay về phép 'có chứa' — chữ vốn nằm sẵn trong ô được tính là trang đã nhận",
+      tim: "  const sauLan = demLan(s.gia, daGo);",
+      thay: "  const sauLan = s.gia.includes(daGo) ? truocLan + 1 : truocLan;",
+      soLan: 1
+    },
+    {
+      ma: "TK3",
+      ten: "Đếm CHỒNG LẤN — 'aaaa' hoá ra chứa 'aa' ba lần, con số tăng mà không ai gõ gì",
+      tim: "    tu = thay + tim.length;",
+      thay: "    tu = thay + 1;",
+      soLan: 1
+    },
+    {
+      ma: "TK4",
+      ten: "Bỏ nhánh ô CHE nội dung — mọi lượt gõ vào ô mật khẩu thành một lời buộc tội sai",
+      tim: "  if (laChe(s.gia)) {",
+      thay: "  if (false && laChe(s.gia)) {",
+      soLan: 1
+    },
+    {
+      ma: "TK5",
+      ten: "Bỏ nhánh bản đọc BỊ CẮT — một bản đọc cụt bị đem ra kết luận 'trang không nhận'",
+      tim: "  if (t.cat || s.cat) {",
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK6",
+      ten: "Bỏ nhánh KHÔNG ĐỌC ĐƯỢC — 'chưa có bằng chứng' bị đổi thành 'trang không nhận'",
+      tim: "  if (!t.docDuoc || !s.docDuoc) {",
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK7",
+      ten: "Chữ đã gõ đi ra trong câu giải thích — mật khẩu nằm trong nhật ký",
+      tim: "    `Đã gõ ${daGo.length} ký tự, nhưng đọc lại bằng ${ten} thì chuỗi đó vẫn xuất hiện ` +",
+      thay: "    `Đã gõ ${daGo} (${daGo.length} ký tự), nhưng đọc lại bằng ${ten} thì chuỗi đó vẫn xuất hiện ` +",
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "GHI TỰ KIỂM — đường nối ở seed",
+  target: path.join(ROOT, "scripts", "scouter-seed-core.mjs"),
+  pin: PIN_TU_KIEM,
+  mutants: [
+    {
+      ma: "TK8",
+      ten: "Bỏ lượt đọc TRƯỚC khi gõ — chỉ còn phép 'có chứa', và phép ấy xanh giả",
+      tim: "      const truoc = await docO(target, params.selector, cach, nut);",
+      thay: "      const truoc = { docDuoc: false, gia: \"\", cat: false };",
+      soLan: 1
+    },
+    {
+      ma: "TK9",
+      ten: "Bỏ lượt đọc SAU khi gõ — quay đúng về hành vi cũ: báo đạt cho việc chưa xảy ra",
+      tim: "      const sau = await docO(target, params.selector, cach, nut);",
+      thay: "      const sau = { docDuoc: false, gia: \"\", cat: false };",
+      soLan: 1
+    },
+    {
+      ma: "TK10",
+      ten: "Chọn đường đọc bằng cách MÒ chứ không theo tên thẻ — `<input>` đọc mãi ra rỗng",
+      tim: "      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? \"a11y\" : \"dom.text\";",
+      thay: "      const cach = \"dom.text\";",
+      soLan: 1
+    },
+    {
+      ma: "TK11",
+      ten: "Lệch mà không ném: bọc lại thành một phong bì ĐẠT chở một cái cờ buồn",
+      tim: "        if (error?.code === MA_KHONG_QUAN_SAT) {",
+      thay: "        if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK12",
+      ten: "Cú bấm trần tự khai là đã kiểm — đúng lời nói dối mà `S2` sinh ra để diệt",
+      tim: "        return { ...ra, da_kiem: false, kiem_bang: null, kiem_noi: CAU_BAM_KHONG_KIEM };",
+      thay: "        return { ...ra, da_kiem: true, kiem_bang: null, kiem_noi: CAU_BAM_KHONG_KIEM };",
+      soLan: 1
+    },
+    {
+      ma: "TK13",
+      ten: "Đưa mốc mà mốc không tới cũng cho qua — tham số `wait_for` thành đồ trang trí",
+      tim: "      if (cho.data?.satisfied !== true) {",
+      thay: "      if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK14",
+      ten: "Lượt chờ sau khi bấm bỏ qua `wait_state` — chiều BIẾN MẤT thành chiều xuất hiện",
+      tim: "        selector: params.wait_for, state: trangThai, timeoutMs: params.wait_timeout_ms",
+      thay: "        selector: params.wait_for, state: \"present\", timeoutMs: params.wait_timeout_ms",
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "GHI TỰ KIỂM — cổng tham số `wait_for`",
+  target: path.join(ROOT, "scripts", "scouter-bridge-core.mjs"),
+  pin: PIN_TU_KIEM,
+  mutants: [
+    {
+      ma: "TK15",
+      ten: "`S-16` lần nữa: trần chờ sau khi bấm nới lên 30 giây, vượt hạn của chính lệnh bấm",
+      tim: "const MAX_CHO_SAU_BAM_MS = 20000;",
+      thay: "const MAX_CHO_SAU_BAM_MS = 30000;",
+      soLan: 1
+    },
+    {
+      ma: "TK16",
+      ten: "Nhận `wait_state: usable` — kiểm một thứ rồi tưởng mình đã kiểm thứ kia",
+      tim: '        && params.wait_state !== "present" && params.wait_state !== "absent") {',
+      thay: "        && false) {",
+      soLan: 1
+    },
+    {
+      ma: "TK17",
+      ten: "`wait_state` không cần `wait_for` — khai một mốc rỗng rồi tưởng mình đã kiểm",
+      tim: "        && (params.wait_for === undefined || params.wait_for === null)) {",
+      thay: "        && false) {",
       soLan: 1
     }
   ]

@@ -114,6 +114,13 @@ const MUTANTS = [
     tim: '    const doc = await send("DOM.getDocument", { depth, pierce: false });',
     thay: '    const doc = await send("DOM.getDocument", { depth: 0, pierce: false });',
     soLan: 1
+  },
+  {
+    ma: "M11",
+    ten: "Bỏ `backendNodeId` khỏi dom.query — mối nối sang cây trợ năng đứt, `S1` tụt xuống 'không đọc được'",
+    tim: "    backendNodeId: node.backendNodeId ?? null,",
+    thay: "    backendNodeId: null,",
+    soLan: 1
   }
 ];
 
