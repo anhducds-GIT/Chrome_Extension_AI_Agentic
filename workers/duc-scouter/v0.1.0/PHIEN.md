@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "SCOUTER v1 — Duc ky 16/09 (ADR-0008 cua goi). manifest khai 1.0.0; thu muc van la v0.1.0 vi do la mot DUONG DAN, khong phai mot phien ban (muoi phep ghim so tung byte, package.json, va bo khoi dong ngoai repo deu dung ten do). v1 hua NAM dieu va KHONG hua BON dieu — doc ADR-0008. Viec ke duoc mo khoa boi chinh S1/S2: T35 (W6 dua anh vao canvas) tung bi dat sau vi no la mot cu bam ma khong co cach nao biet no chay hay khong; nay scout.click co wait_for. Con T29 (scout.upload) van can mot method Bridge MOI nen van phai hoi Duc."
+- next_step: "SCOUTER v1 da ky 16/09 (ADR-0008). T35/W6 XONG cung ngay, va no LAT HAI TIEN DE: thao tac 'dua anh ket qua vao canvas' KHONG TON TAI (anh da o tren canvas roi), va S-22 khong bit no. W6 nay la 'them mot KHUNG vao canvas', do that 8->9. LO TRINH CON LAI o khoi 'SAU COMPACT' dau CHUOI-VIEC.md: (1) W5 chon che do — re nhat, khong hoi ai; (2) S-27 scout.clear tu kiem; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen phai hoi Duc — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10."
 - human_action: "khong"
