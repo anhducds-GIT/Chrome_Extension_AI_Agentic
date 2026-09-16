@@ -126,7 +126,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong.",
+      "next_step": "scout.chon (method thu 25) DA CHAY THAT tren canvas Udin 16/09 khuya — doc nguoc duoc thu tu @1/@2. Chi tiet o STATUS goi udin-optic. Viec ke ben Scouter: khong co. Con no chung: input.upload van bat hop thoai Open cua Windows tren may Duc, chua tai hien duoc tren Chrome ho so trong.",
       "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "CHO DUC NAP LAI EXTENSION — scout.chon (Shift+click) la lenh MOI tren day, extension chua co no. Sau khi nap lai: chay thu chon-tham-chieu.mjs tren canvas that de xac nhan doc dung so 1 va 2. R1 (vong-style.mjs) DA KHEP VONG 16/09. Moi da xong cho @1/@2: chon-tham-chieu.mjs, 12 khoi ghim, 12 dot bien 0 song sot. Con no: hop thoai Open van bat len.",
+      "next_step": "@1/@2 DA CHAY THAT 16/09 khuya: bo chon cu -> Shift+click theo thu tu -> DOC NGUOC tu trang A->1, B->2. chon-tham-chieu.mjs, 15 khoi ghim, 15 dot bien 0 song sot. Hai phep do lat thiet ke: canvas keo duoc nen chi 6/12 anh bam duoc (hoi scout.wait state=usable truoc), va Udin CHI ve so khi co tu HAI anh tro len (mot anh -> so: null, khai la khong doc duoc). Viec ke: noi tang chon nay vao vong-style.mjs de chay tron mot luot @1/@2 that. Con no: hop thoai Open van bat len khi dinh kem.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "CHO DUC NAP LAI EXTENSION — scout.chon (method thu 25, Shift+click) chua co trong extension. Sau do do that tren canvas Udin. Da xong: R1 khep vong, va tang chon anh tham chieu theo thu tu (@1/@2) voi phep doc lai con so tren trang. Con no: input.upload van bat hop thoai Open cua Windows tren may Duc — chua tai hien duoc tren Chrome ho so trong.",
+      "title": "scout.chon (method thu 25) DA CHAY THAT tren canvas Udin 16/09 khuya — doc nguoc duoc thu tu @1/@2. Chi tiet o STATUS goi udin-optic. Viec ke ben Scouter: khong co. Con no chung: input.upload van bat hop thoai Open cua Windows tren may Duc, chua tai hien duoc tren Chrome ho so trong.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "CHO DUC NAP LAI EXTENSION — scout.chon (Shift+click) la lenh MOI tren day, extension chua co no. Sau khi nap lai: chay thu chon-tham-chieu.mjs tren canvas that de xac nhan doc dung so 1 va 2. R1 (vong-style.mjs) DA KHEP VONG 16/09. Moi da xong cho @1/@2: chon-tham-chieu.mjs, 12 khoi ghim, 12 dot bien 0 song sot. Con no: hop thoai Open van bat len.",
+      "title": "@1/@2 DA CHAY THAT 16/09 khuya: bo chon cu -> Shift+click theo thu tu -> DOC NGUOC tu trang A->1, B->2. chon-tham-chieu.mjs, 15 khoi ghim, 15 dot bien 0 song sot. Hai phep do lat thiet ke: canvas keo duoc nen chi 6/12 anh bam duoc (hoi scout.wait state=usable truoc), va Udin CHI ve so khi co tu HAI anh tro len (mot anh -> so: null, khai la khong doc duoc). Viec ke: noi tang chon nay vao vong-style.mjs de chay tron mot luot @1/@2 that. Con no: hop thoai Open van bat len khi dinh kem.",
       "rank": 5,
       "claim": null
     }
