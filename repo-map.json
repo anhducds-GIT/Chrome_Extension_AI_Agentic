@@ -126,8 +126,8 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "U5 XONG 16/09: bang ben Scouter nay co co chu, thu phong trang va nut Kiem tra ket noi (mang tu udin-optic ve, hai loi vao bang so tung byte). S-26 DONG: tach M5 lam ba thi lo ra dom.text va dom.wait KHONG CO CHOT nao — da dung chot rieng, mo luot quet tu 4 len 9 phep do, nay 16/16 giet duoc. CHO DUC CHOT MOT CAU o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) truoc roi ky v1, hay ky v1 ngay va de bon chang do thanh v1.1.",
-      "human_action": "@Đức:chốt — mot cau o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) TRUOC roi ky Scouter v1, hay ky v1 ngay va de bon chang do thanh v1.1. Da nap lai extension xong; khong con viec ky thuat nao dang cho.",
+      "next_step": "Duc chot 16/09: SUA TRUOC ROI KY. Chuoi S1..S4 o dau CHUOI-VIEC.md, chay mot mach S1->S3, con dung mot diem dung o cuoi la chu ky v1. S1: scout.type doc lai o nhap sau khi go — khop / lech thi NEM / khong doc duoc thi khai that. S2: scout.click khai da_kiem:false, them tham so cho_doi de kiem duoc. S3: mang sang Udin + mot luot E2E that. Khong chang nao them method Bridge.",
+      "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "U0..U5 XONG va U4 DA NGHIEM THU BANG DIA 16/09 (4 tep JPG that trong anh-ra/udin-optic/xe-dien-2026/<luot>/, luot chay cu khong gay). Con lai: Duc nhin ba thu tren bang ben (co chu / thu phong trang / nut Kiem tra ket noi) roi ky Scouter v1 — DIEM DUNG (2).",
-      "human_action": "@Đức:chốt — nhin ba thu tren bang ben roi ky Scouter v1. Da nap lai xong; U4 nghiem thu dat bang dia. Khong con viec ky thuat nao dang cho.",
+      "next_step": "U0..U5 xong, U4 da nghiem thu bang DIA 16/09. Viec ke KHONG o goi nay ma o duc-scouter: chuoi S1..S4 (duong ghi thoi bao DAT khi trang khong nhan). Goi nay nhan ban chep o chang S3, roi mot luot E2E that de chung minh khong gay gi.",
+      "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "U5 XONG 16/09: bang ben Scouter nay co co chu, thu phong trang va nut Kiem tra ket noi (mang tu udin-optic ve, hai loi vao bang so tung byte). S-26 DONG: tach M5 lam ba thi lo ra dom.text va dom.wait KHONG CO CHOT nao — da dung chot rieng, mo luot quet tu 4 len 9 phep do, nay 16/16 giet duoc. CHO DUC CHOT MOT CAU o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) truoc roi ky v1, hay ky v1 ngay va de bon chang do thanh v1.1.",
+      "title": "Duc chot 16/09: SUA TRUOC ROI KY. Chuoi S1..S4 o dau CHUOI-VIEC.md, chay mot mach S1->S3, con dung mot diem dung o cuoi la chu ky v1. S1: scout.type doc lai o nhap sau khi go — khop / lech thi NEM / khong doc duoc thi khai that. S2: scout.click khai da_kiem:false, them tham so cho_doi de kiem duoc. S3: mang sang Udin + mot luot E2E that. Khong chang nao them method Bridge.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "U0..U5 XONG va U4 DA NGHIEM THU BANG DIA 16/09 (4 tep JPG that trong anh-ra/udin-optic/xe-dien-2026/<luot>/, luot chay cu khong gay). Con lai: Duc nhin ba thu tren bang ben (co chu / thu phong trang / nut Kiem tra ket noi) roi ky Scouter v1 — DIEM DUNG (2).",
+      "title": "U0..U5 xong, U4 da nghiem thu bang DIA 16/09. Viec ke KHONG o goi nay ma o duc-scouter: chuoi S1..S4 (duong ghi thoi bao DAT khi trang khong nhan). Goi nay nhan ban chep o chang S3, roi mot luot E2E that de chung minh khong gay gi.",
       "rank": 5,
       "claim": null
     }
