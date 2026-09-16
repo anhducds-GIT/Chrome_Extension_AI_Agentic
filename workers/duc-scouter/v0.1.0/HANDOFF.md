@@ -2049,3 +2049,24 @@ là một lỗ trong bộ đo**, không phải một phép ghim mạnh.
 
 **14 khối ghim · 12 đột biến · 181/181.** Còn thiếu đúng một lượt nạp lại extension Udin.
 Nợ mới `S-31`: gói Udin không tự nạp lại được, hôm nay tốn **ba lượt bấm** của Đức.
+
+## 2026-09-16 · `claude-scouter-udine` — `W8` chạy thật, bảng `W` đủ **8/8**, Udin `MASTERED`
+
+**Chạy thật, không một cú bấm nào của người:** đưa ngược tấm `02-batch-…jpg` mà chính Udin sinh
+ra hôm ấy vào lại Udin. Mục `Image` tìm theo **NHÃN** · **hộp thoại hệ điều hành không hiện lên
+màn hình Đức** · pill đính kèm **0 → 2**, nhãn `"1 Image"` · ô chọn tệp tạm bị trang thu lại về
+**0**, đúng như khi người dùng tự chọn.
+
+**Bảng `W` đủ 8/8, không còn hàng CHẶN, E2E ĐẠT → `MASTERED`** theo đúng điều kiện file
+`CAPABILITIES.md` tự viết từ 13/09.
+
+**Ba hàng cuối hết chặn vì BA lý do khác nhau, và không cái nào là lý do đã ghi.** Cả ba dòng cũ
+đều đổ cho `S-22`: `W6` thật ra bị chặn bởi **một thao tác không tồn tại**; `W5` bởi **một cột
+"Cần" khai sai**; `W8` bởi **chỗ đặt sai** rồi tới **một ô nhận file chỉ sống trong lúc hộp thoại
+mở**. Đó là bài học đắt nhất của hai ngày, và nó đã vào roadmap mới thành dòng *"đừng tin một
+dòng X-bị-chặn-bởi-Y mà chưa đo Y"*.
+
+**Roadmap viết lại** ở khối `SAU COMPACT` đầu `CHUOI-VIEC.md`. Giai đoạn năng lực đóng; giai
+đoạn tới là **dùng được**: `R1` một lệnh chạy trọn vòng việc thật của Đức · `R2` khép vòng tự
+cải tiến lần hai với bộ đầy đủ · `R3` trang thứ hai khác loại — phép đo duy nhất trả lời câu
+*"seed này dùng lại được không"*. **Không việc nào cần hỏi Đức.**

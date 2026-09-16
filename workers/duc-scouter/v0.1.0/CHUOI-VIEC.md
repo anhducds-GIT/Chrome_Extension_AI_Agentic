@@ -26,61 +26,73 @@
 6. **Gặp câu chưa có đáp án thì ghi ra, đừng đoán cho tròn chuyện.** Một chẩn đoán sai có thẩm
    quyền đắt hơn một ô trống.
 
-## SAU COMPACT — đọc ĐÚNG khối này rồi bắt tay, 16/09
+## SAU COMPACT — đọc ĐÚNG khối này rồi bắt tay (viết lại 16/09, tối)
 
-> Mọi khối bên dưới là **chuyện đã xong**. Khối này là **việc còn lại**, và nó ngắn có lý do:
-> danh sách năng lực đóng băng chỉ còn **một dòng**.
+> Mọi khối bên dưới là **chuyện đã xong**. Khối này là **việc còn lại**.
+> Khối trước của mục này đã hoàn thành trọn vẹn; bản này thay hẳn nó.
 
-**Đang ở đâu.** `Scouter v1` Đức ký 16/09 ([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md)) —
-đọc mục *KHÔNG hứa gì* trước khi dựa vào lệnh nào. Đường ghi **tự kiểm**: `scout.type` đọc lại ô
-nhập, `scout.click` nhận `wait_for`. Bảng `W`: **7/8 ĐẠT** — còn đúng `W8`.
+### Đang ở đâu — một câu
+
+**Phần NĂNG LỰC đã xong.** Bảng `W` của Udin **8/8**, không còn hàng CHẶN nào, E2E ĐẠT →
+Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout.type` · `scout.click` ·
+`scout.clear` đều tự kiểm hoặc khai thẳng là chưa kiểm được. `Scouter v1` đã ký
+([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md) — đọc mục *KHÔNG hứa gì* trước khi dựa vào lệnh nào).
+
+**Nên giai đoạn tiếp KHÔNG phải mở thêm năng lực.** Chín tháng việc còn lại chia làm ba, và
+`R1` là thứ Đức thật sự cần dùng.
 
 ### Việc còn lại, theo đúng thứ tự nên làm
 
-**~~① `W5`~~ XONG 16/09** — `chon-che-do.mjs`, chạy thật ba nhánh, 15 con đột biến giết được hết.
-Và nó lật một cột: hàng `W5` khai cần `O3` (`scout.a11y`), **lệnh gói Udin không có trên dây**.
-Đọc khối đầu `workers/udin-optic/tu-dong/chon-che-do.mjs` nếu cần chi tiết.
+**① `R1` — MỘT LỆNH chạy trọn vòng việc thật của Đức.** Đức nói 16/09:
+*"lấy các ảnh đã được tạo bởi Udin, đưa vào, yêu cầu tạo theo style khác"*. Mọi mảnh đã có và
+đã chạy thật **rời rạc**; chưa có mảnh nào nối chúng lại. Viết `tu-dong/vong-style.mjs`:
+chọn một ảnh từ lượt chạy trước → `scout.upload` (`mo_bang` trỏ mục `Image`) → gõ prompt style
+mới → gửi → chờ xong → tải ảnh mới về đĩa.
+**Không cần method mới, không cần hỏi ai.** Cẩn thận đúng một chỗ: *"đã đính kèm"* phải kiểm
+bằng **pill trên trang** (`[class*=agent-context-pill]` đếm TĂNG), không tin lệnh trả về —
+đúng bài học `S1`. Rẻ nhất, và nó biến cả ngày hôm nay thành thứ dùng được.
 
-> **BÀI HỌC ĐẮT NHẤT CỦA HAI VIỆC VỪA RỒI, đọc trước khi mở việc tiếp theo.**
-> `W6` và `W5` là **hai hàng liên tiếp** bị hoãn vì một lý do **sai** (`S-22`), và không ai đi
-> kiểm lại lý do hoãn — nên nó sống lâu hơn mọi lời khai khác trong bảng. **Một lý do hoãn cũng
-> là một lời khai, và nó cũng phải đi đo lại.** Trước khi tin dòng *“`X` bị chặn bởi `Y`”* nào
-> trong repo này, bỏ mười phút đo `Y`. Hai lần liền nó rẻ hơn cả việc làm.
+**② `R2` — khép vòng tự cải tiến LẦN HAI, nay có đủ 8/8.** `T7` khép 14/09 ở mức `PARTIAL`:
+nó dò một trang lạ → sinh adapter → chạy. Lúc ấy bảng `W` mới 5/8 nên vòng chỉ đi được phần
+đọc. Chạy lại với bộ đầy đủ là phép thử thật cho câu *"seed này dùng lại được"*.
+**Không cần hỏi ai.**
 
-**~~② `S-27`~~ XONG 16/09** — `scout.clear` đọc lại ô, `CLEAR_NOT_OBSERVED` khi còn chữ.
-**Đường ghi nay KHÔNG còn lệnh nào fail-open.** Dòng ấy đã rời mục *KHÔNG hứa gì* của
-`ADR-0008` (xem khối *“Sửa sau chữ ký”* ở cuối ADR — gỡ được vì `v1` hứa NHIỀU hơn, không phải
-vì ai nới phép kiểm). Món ngoài dự tính: **ô mật khẩu kiểm được ở lượt xoá**, dù không kiểm
-được ở lượt gõ.
+**③ `R3` — TRANG THỨ HAI, khác loại.** Đây là đích của cả lộ trình từ đầu (chặng ⑤), và là
+phép đo duy nhất trả lời được câu *"Scouter là bộ đồ nghề chung hay là một cái adapter cho
+Udin"*. Ứng viên: Vizcom (artboard), một node editor, một timeline.
+**Đóng khi:** có `W` ĐẠT trên trang mới **mà không sửa một dòng nào của seed**. Sửa phải một
+dòng thì đó là câu trả lời, và là câu trả lời đáng giá hơn.
 
-**③ ~~`T29` / `W8`~~ — HOÃN CÓ CHỦ Ý, chốt 16/09 ở mục `D4`.** Đếm bằng đúng thước đã đóng
-`T6`: **không việc nào đang chạy cần đưa tệp vào trang**, và `W8` vốn nằm NGOÀI danh sách `W`
-bắt buộc. Cửa này là cửa đầu tiên đi từ **đĩa ra một trang web**, nên nó không được mở vì
-*“sắp tới chắc sẽ cần”*.
-**Mốc mở, một câu:** ngày Đức cần đưa một **ảnh tham chiếu** của anh vào Udin. Lúc ấy nó rẻ —
-phần đường dẫn đã xây và đã ghim, còn lại một dòng khai method và một lượt chạy thật.
+**④ Dọn sổ, không cái nào chặn cái nào.** `S-31` (Udin không tự nạp lại được — chọn một trong
+ba đường đã ghi; mặc định ⒝ *gộp nhiều lượt sửa thành một lượt nạp lại*) · `T8` đổi tên
+`observer`→`scouter` · và một lượt rà `BACKLOG.md`: nhiều mục `MỞ` từ 07/09 có thể đã chết theo
+thời gian, cần đọc lại chứ đừng đếm.
 
-**~~④ Dọn sổ~~ XONG 16/09**, trừ một mục:
-· ~~`T21` chặng ⑤~~ — sáu mục của danh sách dọn nhà đều đã xong, kiểm từng cái 16/09.
-· ~~`S-04`~~ — đóng bằng số đo: **7 lượt reload thật, 0 lượt mất phản hồi**, khứ hồi 11–17 ms
-  trên trần 250 ms.
-· ~~`T6`~~ — đóng bằng đường ⒝ và một phép đếm: **0 chỗ gọi `scout.network`** trong cả repo.
-· ~~**`T10` (`S-21`) CÒN MỞ**, chặn bởi việc thiếu một **tab nháp**~~ — **ĐÓNG 16/09, và lời
-  khai trên SAI ở chỗ quan trọng nhất: nó không hề cần tab của Đức.** Phép đo tự dựng một
-  Chrome riêng hồ sơ trống (`scripts/chrome-do.mjs`), nơi nó được phép giết tiến trình vẽ
-  trang — thứ không bao giờ làm được trên tab thật. **Tôi đã đi xin một thứ mà mình tự làm
-  được**, và cái giá là một vòng hỏi-đáp với Đức. Trước khi xin người ta một điều kiện, hỏi
-  xem điều kiện ấy có tự dựng được không.
+### Bốn thứ ĐỪNG làm lại — mỗi cái đã tốn một lần
 
-### Hai thứ ĐỪNG làm lại
+**⑴ ĐỪNG tin một dòng "X bị chặn bởi Y" mà chưa đo `Y`.** Ba hàng `W6` `W5` `W8` đều hoãn vì
+`S-22`, và **cả ba lý do đều sai** — lý do thật lần lượt là: thao tác không tồn tại · cột "Cần"
+khai sai · chỗ đặt sai. Một lý do hoãn là lời khai duy nhất **không ai đi kiểm lại**, nên nó
+sống lâu hơn mọi lời khai khác. Bỏ mười phút đo `Y` trước.
 
-**Đừng mở `Accessibility.getPartialAXTree`.** Đã cân 16/09 và **rút lại**: đường đang dùng tốn
-**~390 ms** mỗi lệnh gõ (đối chứng: một lượt dò trần 15 ms). Không đáng đổi một dòng trong lớp
-bảo vệ lấy chừng đó. Muốn mở lại thì phải có **số mới**, không phải một cảm giác.
+**⑵ ĐỪNG đi xin Đức một điều kiện mình tự dựng được.** `T10` từng khai *"chặn bởi: cần Đức mở
+một tab trắng"*. Sai — phép đo ấy phải được phép **giết tiến trình vẽ trang**, thứ không bao giờ
+làm được trên tab thật; nó cần một Chrome **của riêng nó**, và `scripts/chrome-do.mjs` dựng cái
+đó trong mười dòng. Đức đã nói thẳng: *"từ sau đừng dừng lại hỏi tôi câu bạn tự làm được nhé."*
 
-**Đừng bấm thử `Image`/`Video`/`3D Model` trong menu *Add to canvas*** để xem nó mở gì.
-Nếu nó dựng hộp thoại chọn tệp của hệ điều hành thì hộp thoại đó **treo Chrome của Đức** cho tới
-khi có người bấm tay. Đường đúng đi qua `T29`, và `T29` bắt đầu bằng một câu hỏi cho Đức.
+**⑶ ĐỪNG mở `Accessibility.getPartialAXTree`.** Đã cân và **rút lại**: đường đang dùng tốn
+~390 ms mỗi lệnh gõ (đối chứng: một lượt dò trần 15 ms). Muốn mở lại thì phải có **số mới**.
+
+**⑷ ĐỪNG để `Page.setInterceptFileChooserDialog` ở trạng thái BẬT.** Lúc ấy hộp thoại chọn tệp
+mà **chính Đức** mở cũng im lặng không hiện, và không một thông báo nào chỉ về nguyên nhân. Nó
+chỉ được bật trong lòng một lượt `input.upload`, và lượt tắt nằm trong `finally`. Con `U11` canh.
+
+### Một thói quen đã trả tiền năm lần trong hai ngày
+
+**Đo tiền đề TRƯỚC khi xây, không phải sau.** Năm lần một đề bài viết sẵn bị lật khi đem đi đo:
+`W6` (thao tác không tồn tại) · `W5` (`scout.a11y` không có trên dây) · `T29` (đặt nhầm gói) ·
+`W8` (trang không có ô nhận file) · và chính Chrome (nhận cả đường dẫn không tồn tại, gắn một
+tệp rỗng, không báo lỗi). Bốn cái đầu đáng lẽ đo được trong năm phút.
 
 ## CHUỖI ĐANG CHẠY — làm đường GHI thôi nói dối, rồi mới ký `v1`
 
