@@ -2021,3 +2021,31 @@ nên *"ô đầu tiên"* và *"ô selector khớp"* là cùng một số. Dựng
 **`W8` CHƯA đóng, và lý do là tiền đề thứ tư trong hai ngày.** Đo trang Udin: **không có một
 `<input type=file>` nào** — cả lúc menu *Add to canvas* đóng lẫn lúc mở. Năng lực đúng và đã
 chứng minh; trang thì không có cái ô để đổ vào. Xem `W8` ở `CAPABILITIES.md`.
+
+## 2026-09-16 · `claude-scouter-udine` — `Page.setInterceptFileChooserDialog`: mở một cửa để ĐÓNG một cửa khác
+
+**Đức chốt cho mở, sau khi đo.** Và đây là method hiếm: **nó làm GIẢM rủi ro**. Nó bảo Chrome
+đừng dựng hộp thoại chọn tệp lên màn hình — nhờ thế cú bấm `Image`, thứ tôi đã **hai lần từ
+chối tự bấm** vì *"nó treo Chrome tới khi có người bấm tay"*, nay máy tự bấm được.
+
+**Phép đo trả lời ba câu cùng lúc, và cả ba gọn hơn dự tính.** Trang mô phỏng Udin trên Chrome
+riêng: lệnh chạy **không cần `Page.enable`** · **không cần kênh sự kiện** (ô nhận file **nằm lại
+trong DOM chờ** khi hộp thoại bị chặn, nên hỏi lại là thấy) · và trang đọc được
+`"PILL: anh.webp / 43 byte"` — tay xử lý `change` của chính trang chạy, y như khi người dùng tự
+chọn. **Một method, không kéo theo cái nào.** Ba thứ tôi tưởng phải mở kèm thì hoá ra không.
+
+**`input.upload` nay hai đường, người gọi chọn ĐÚNG MỘT:** `selector` (ô có sẵn) ·
+`mo_bang` (nút phải bấm để trang dựng ô ra). Đường `mo_bang`: **chặn → bấm → tìm ô MỚI → đổ file
+→ TẮT trong `finally`**.
+
+**Hiểm thật của method này không phải quyền đọc file** — file vẫn qua `DOM.setFileInputFiles`,
+vẫn nhốt trong vùng ghi. Nó là **để quên cái chặn ở trạng thái BẬT**: lúc ấy hộp thoại mà
+CHÍNH ĐỨC mở cũng im lặng không hiện, và không một thông báo nào chỉ về đây. Con `U11` canh
+đúng chỗ đó, và khối ghim ⑧ đòi cái chặn phải tắt **ở mọi nhánh lỗi**.
+
+**`U10` sống sót lượt đầu vì CHÍNH CON ĐỘT BIẾN viết sai** — nó dời dòng chặn xuống trong `try`
+nhưng vẫn để trước cú bấm, tức không đảo gì cả. **Một con đột biến không làm đúng việc nó khai
+là một lỗ trong bộ đo**, không phải một phép ghim mạnh.
+
+**14 khối ghim · 12 đột biến · 181/181.** Còn thiếu đúng một lượt nạp lại extension Udin.
+Nợ mới `S-31`: gói Udin không tự nạp lại được, hôm nay tốn **ba lượt bấm** của Đức.

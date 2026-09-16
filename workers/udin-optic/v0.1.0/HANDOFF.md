@@ -537,3 +537,22 @@ extension cũ, đúng như dự đoán.
 mở. Udin gần như chắc chắn dựng ô ấy tạm trong chính lượt bấm, hoặc dùng cửa chọn tệp của trình
 duyệt — **CHƯA ĐO**, và không đo bằng cách bấm thử `Image`. Đường đo an toàn cần
 `Page.setInterceptFileChooserDialog`, tức một câu hỏi nữa cho Đức.
+
+## 2026-09-16 · `claude-scouter-udine` — `mo_bang`: đường DUY NHẤT chạy được trên trang này
+
+Ô `<input type=file>` của Udin được dựng **TẠM** rồi xoá đi — nó chỉ sống trong lúc hộp thoại
+đang mở. Nên `scout.upload` có thêm `mo_bang`: đưa selector của **nút phải bấm**, lệnh sẽ
+**chặn hộp thoại TRƯỚC** (nên nó không hiện lên màn hình Đức), bấm, tìm ô **MỚI** hiện ra, đổ
+file vào, rồi **tắt chặn trong `finally`**.
+
+Từ chối rõ ràng: cú bấm không dựng ra ô nào → `NO_FILE_CHOOSER`; dựng ra nhiều ô →
+`SELECTOR_AMBIGUOUS` (đổ vào *"cái đầu tiên"* là chỗ tự động hoá phá hỏng đồ thật); khai cả
+`selector` lẫn `mo_bang`, hoặc không khai gì → `UPLOAD_MODE_UNCLEAR`.
+
+**Chưa chạy thật trên gói này** — cần một lượt nạp lại extension. Lượt thử vừa rồi trả đúng
+`INVALID_PARAMS: unknown field 'mo_bang'`, tức bản đang chạy là bản trước khi thêm đường ấy.
+
+Nợ `S-31` bên Scouter ghi lại chuyện này: gói này **không tự nạp lại được** (`scout.reload` bị
+cắt ở `T21`), nên mỗi lượt sửa mã đều tốn một cú bấm của Đức — hôm nay là ba. Mặc định cho tới
+khi có quyết định khác: **gộp nhiều lượt sửa thành MỘT lượt nạp lại**, đừng mở method mới cho
+một chuyện kỷ luật giải quyết được.

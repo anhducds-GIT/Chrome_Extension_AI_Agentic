@@ -61,6 +61,19 @@
   · **đóng khi:** `scout.clear` trả `da_kiem` theo cùng ba trạng thái của `S1`, một con đột
   biến *“bỏ lượt đọc lại”* bị giết, và mục *KHÔNG hứa gì* của `ADR-0008` bớt đi dòng ấy.~~
 
+- **S-31** · **Gói `udin-optic` không tự nạp lại được, và hôm nay cái giá đó đo được.** `scout.reload`
+  bị **cắt** khỏi gói (ADR-0021 ⑵ *"cắt chứ không tắt"*), nên mọi lượt sửa mã của gói đều cần
+  **Đức bấm tay** một lần. Ngày 16/09 nó tốn **ba lượt bấm của anh** cho ba lượt sửa nối tiếp —
+  và Đức đã nói thẳng: *"từ sau đừng dừng lại hỏi tôi câu bạn tự làm được nhé."* Lượt nạp lại
+  này thì anh **phải** làm, nhưng tần suất thì sửa được.
+  **Ba đường, chưa chọn:** ⒜ mở `scout.reload` cho gói (đảo một quyết định của `T21` — phải hỏi
+  Đức, và lý do cắt nó vẫn còn giá trị: một gói hẹp không nên tự khởi động lại mình);
+  ⒝ gộp nhiều lượt sửa thành MỘT lượt nạp lại — kỷ luật của người viết, không cần mã;
+  ⒞ chạy thử qua ghế Scouter (`<all_urls>`) trước, chỉ nạp lại Udin khi đã chắc.
+  **[ĐỌC]** `METHOD_NAMES` ở `scripts/bridge-core.mjs` và khối ⑴ của `tests/be-mat-hep-smoke.mjs`.
+  · **đóng khi:** chọn được một đường và ghi lý do vào đây. **⒝ là mặc định cho tới lúc đó** —
+  đừng mở method mới cho một chuyện kỷ luật giải quyết được.
+
 - ~~**S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**~~ —
   **ĐÓNG 16/09 bằng vế thứ hai của chính điều kiện đóng.**
 

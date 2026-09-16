@@ -5,8 +5,8 @@ name: Udin Optic
 lifecycle: building
 owner: claude-scouter-udine
 priority_rank: 5
-next_step: "scout.upload len day (12->13). Lop bao ve chay that: .., duong tuyet doi, C:x.txt deu bi MAY CHU chan, khong cai nao cham toi extension. CAN DUC NAP LAI extension Udin mot lan de lenh nay song tren day. W8 VAN CHAN: trang khong co input[type=file] nao."
-human_action: "@Đức:bấm — nap lai extension Udin mot lan (goi nay co y khong co scout.reload). May chu Bridge da duoc khoi dong lai voi ma moi roi."
+next_step: "scout.upload nay co them duong `mo_bang`: bam mot nut de trang dung o chon tep ra, CHAN hop thoai truoc nen no khong hien len man hinh Duc. Do la duong duy nhat chay duoc tren trang nay — o <input type=file> cua Udin duoc dung TAM roi xoa di. CHO MOT LUOT NAP LAI extension."
+human_action: "@Đức:bấm — nap lai extension Udin mot lan nua, lan cuoi cua viec nay."
 version_source: workers/udin-optic/v0.1.0/manifest.json
 lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
 current_focus: "Duc dao thu tu 15/09: lam UI o Udin TRUOC roi apply nguoc ve Scouter va dong v1 — dung ADR-0007. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? HAI LOI KHAI CUA CHINH LO TRINH DA BI DO VA BAC BO 16/09: (a) G-95 — setZoom KHONG doi quyen tabs, nen U2 khong dung manifest; nhung setZoom cung KHONG bi host_permissions chan, nen lop an toan nam tren duong DOC (tab.url bi giau), khong tren duong GHI. (b) G-96 — bang ben KHONG goi duoc bridge.sessions: extension chi TRA LOI, khong phat di duoc yeu cau nao ra day; nen bo kiem hoi cung nhung cau ay tu phia extension, nam buoc. CON DUNG HAI DIEM: (1) Duc nap lai extension MOT lan — DANG CHO; (2) Duc ky Scouter v1 sau U5."
