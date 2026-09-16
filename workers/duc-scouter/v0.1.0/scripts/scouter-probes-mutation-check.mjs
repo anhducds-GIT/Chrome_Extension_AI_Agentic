@@ -116,6 +116,24 @@ const MUTANTS = [
     soLan: 1
   },
   {
+    /* Hai chiều của lượt nới 17/09, và phải có CẢ HAI. `M12` canh cái đã khai đọc được thật —
+     * không thì danh tính ảnh trên canvas Udin đứt mà không ai biết. `M13` canh lượt nới ấy
+     * KHÔNG lan ra cả họ `data-*`: một bản vá lười kiểu đó làm mọi phép ghim của `M12` xanh y
+     * hệt, nên chỉ mình `M12` không phân biệt được hai nhánh. */
+    ma: "M12",
+    ten: "Gỡ `data-image-id` khỏi danh sách trắng — danh tính ảnh canvas Udin đứt im lặng",
+    tim: '  "data-image-id"',
+    thay: "  /* go 17/09 */",
+    soLan: 1
+  },
+  {
+    ma: "M13",
+    ten: "Nới cho CẢ HỌ `data-*` thay vì đúng cái đã khai",
+    tim: "    if (!safe.has(attrName)) {",
+    thay: '    if (!safe.has(attrName) && !attrName.startsWith("data-")) {',
+    soLan: 1
+  },
+  {
     ma: "M11",
     ten: "Bỏ `backendNodeId` khỏi dom.query — mối nối sang cây trợ năng đứt, `S1` tụt xuống 'không đọc được'",
     tim: "    backendNodeId: node.backendNodeId ?? null,",

@@ -37,7 +37,7 @@ import { layAnh } from "./lay-anh.mjs";
 import { docTraLoi } from "./doc-tra-loi.mjs";
 import { doiSangJpg } from "./doi-sang-jpg.mjs";
 import { kiemTenDuAn, duongDayDu } from "./thu-muc-du-an.mjs";
-import { anhTrenCanvas, chonTheoThuTu, kiemPromptThamChieu, hopCuaAnh } from "./chon-tham-chieu.mjs";
+import { idTrenCanvas, idTheoSrc, anhTrenCanvas, chonTheoThuTu, kiemPromptThamChieu } from "./chon-tham-chieu.mjs";
 
 /* Bề mặt để thả. Đo 17/09: Udin KHÔNG có lớp canvas riêng nào đọc được — `.canvas-viewport`,
  * `.canvas-container`, `[class*=canvas-area]`, `main` đều khớp 0. `#root` là thứ duy nhất khớp
@@ -47,49 +47,44 @@ export const NOI_THA = "#root";
 const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Đưa MỘT tệp từ vùng ghi lên canvas, rồi trả về `src` mà canvas gán cho nó.
+ * Đưa MỘT tệp từ vùng ghi lên canvas, rồi trả về `data-image-id` trang gán cho chỗ đặt mới.
  *
- * Danh tính học bằng **phần chênh của tập `src` trước/sau**, không bằng tên tệp — và đó không
- * phải tiện tay: đo 16/09, ảnh trên canvas mang `persistent/…/img/<mốc>-<mã>.webp` trong khi ảnh
- * trong khung chat mang `ephemeral/…/generated/batch-…webp`, **khớp 0/8 theo tên**. Canvas giữ
- * một bản KHÁC của cùng tấm ảnh.
+ * Danh tính học bằng **phần chênh của tập `data-image-id` trước/sau**. Hai bản trước đã sai ở
+ * đúng chỗ này, và cả hai sai cùng một kiểu — lấy một CÁI TÊN làm danh tính:
+ *   · theo TÊN TỆP (16/09) — canvas giữ một bản khác, khớp **0/8**
+ *   · theo `src` (17/09 sáng) — Udin mã hoá lại ảnh thả vào thành `data:image/webp;base64,…`,
+ *     lõi đọc cắt ở 200 ký tự, và hai ảnh khác hẳn nhau cho ra **hai chuỗi y hệt**. Canvas mọc
+ *     18 → 20 mà phép so thấy 0 ảnh mới, rồi lệnh báo *"trang chưa nhận"*.
+ * `data-image-id` là mã TRANG tự đặt cho từng chỗ đặt — không phải chuỗi ta cắt ngắn rồi đem so.
  */
 export async function thaLenCanvas(duong, tuyChon = {}) {
   const goi = tuyChon.goi || goiThat;
   const nghi = tuyChon.ngu || ngu;
   const tab = await (tuyChon.timTab || timTabThat)(URL_UDIN, tuyChon);
 
-  const truoc = await anhTrenCanvas(tuyChon);
+  const truoc = await idTrenCanvas(tuyChon);
   const ra = await goi("scout.tha", { target_id: tab, selector: NOI_THA, path: duong }, tuyChon);
 
   for (let i = 0; i < (tuyChon.soNhip ?? 24); i++) {
     await nghi(tuyChon.buocMs ?? 700);
-    const sau = await anhTrenCanvas(tuyChon);
+    const sau = await idTrenCanvas(tuyChon);
     const moi = sau.filter((s) => !truoc.includes(s));
-    if (moi.length === 1) return { path: duong, src: moi[0], canvasTruoc: truoc.length, canvasSau: sau.length };
+    if (moi.length === 1) return { path: duong, id: moi[0], canvasTruoc: truoc.length, canvasSau: sau.length };
     if (moi.length > 1) {
       throw new Error(
-        `Thả một tệp mà canvas mọc thêm ${moi.length} ảnh — không biết ảnh nào là của lượt này, nên không chọn được tham chiếu. Chưa gửi prompt.`,
+        `Thả một tệp mà canvas mọc thêm ${moi.length} chỗ đặt — không biết chỗ nào là của lượt này, nên không chọn được tham chiếu. Chưa gửi prompt.`,
       );
     }
   }
   throw new Error(
-    `Đã bắn đủ chuỗi kéo-thả cho '${duong}' (lệnh báo ${ra?.data?.files ?? "?"} tệp) mà canvas KHÔNG mọc thêm ảnh nào — ` +
+    `Đã bắn đủ chuỗi kéo-thả cho '${duong}' (lệnh báo ${ra?.data?.files ?? "?"} tệp) mà canvas KHÔNG mọc thêm chỗ đặt nào — ` +
     "trang chưa nhận; chưa gửi prompt. Kiểm: tệp có nằm trong vùng ghi không, và trang đã vẽ xong chưa.",
   );
 }
 
-/** `canvas:<chuỗi>` → `src` của ảnh trên canvas chứa chuỗi ấy. Khớp ≠ 1 thì TỪ CHỐI. */
+/** `canvas:<chuỗi>` → `data-image-id` của chỗ đặt mang mẩu `src` ấy. Khớp ≠ 1 thì TỪ CHỐI. */
 export async function timTrenCanvas(manh, tuyChon = {}) {
-  const ds = await anhTrenCanvas(tuyChon);
-  const trung = [...new Set(ds.filter((s) => s.includes(manh)))];
-  if (trung.length !== 1) {
-    throw new Error(
-      `'canvas:${manh}' khớp ${trung.length} ảnh trên canvas, cần đúng 1. ` +
-      (trung.length > 1 ? "Đưa một mẩu `src` dài hơn cho đủ riêng." : "Không có ảnh nào mang mẩu ấy — xem `anhTrenCanvas()`."),
-    );
-  }
-  return trung[0];
+  return await idTheoSrc(manh, tuyChon);
 }
 
 export async function vongThamChieu(prompt, tuyChon = {}) {
@@ -110,16 +105,16 @@ export async function vongThamChieu(prompt, tuyChon = {}) {
   const nguon = [];
   for (const muc of dsAnh) {
     if (typeof muc === "string" && muc.startsWith("canvas:")) {
-      nguon.push({ kieu: "canvas", src: await timTrenCanvas(muc.slice(7), tuyChon) });
+      nguon.push({ kieu: "canvas", id: await timTrenCanvas(muc.slice(7), tuyChon) });
     } else {
       const k = await thaLenCanvas(muc, tuyChon);
-      nguon.push({ kieu: "tha", src: k.src, path: k.path, canvas: `${k.canvasTruoc} → ${k.canvasSau}` });
+      nguon.push({ kieu: "tha", id: k.id, path: k.path, canvas: `${k.canvasTruoc} → ${k.canvasSau}` });
     }
   }
   chang.push({ chang: "NGUON", anh: nguon.map((n) => ({ kieu: n.kieu, canvas: n.canvas ?? null })) });
 
   /* Thứ tự `@1`, `@2`, … ĐỌC LẠI TỪ TRANG, không tin thứ tự mình bấm. */
-  const chon = await chonTheoThuTu(nguon.map((n) => n.src), tuyChon);
+  const chon = await chonTheoThuTu(nguon.map((n) => n.id), tuyChon);
   chang.push({ chang: "CHON", thuTuKiemDuoc: chon.thuTuKiemDuoc, daChon: chon.daChon.map((x) => x.so) });
 
   /* Câu trả lời ĐANG có trên trang, đọc TRƯỚC khi gửi — `W4` ở cuối từ chối nếu chữ không đổi.
@@ -152,7 +147,7 @@ export async function vongThamChieu(prompt, tuyChon = {}) {
   return {
     prompt, chang, thuMuc: w3.thuMuc, traLoi: w4.chu,
     thuMucDayDu: vungGhi ? duongDayDu(vungGhi, w3.thuMuc) : null,
-    thamChieu: chon.daChon.map((x) => ({ so: x.so, src: x.src })),
+    thamChieu: chon.daChon.map((x) => ({ so: x.so, id: x.id })),
   };
 }
 
@@ -177,7 +172,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     .then((k) => {
       console.log(JSON.stringify(k, null, 2));
       console.log("");
-      for (const t of k.thamChieu) console.log(`@${t.so}  ${t.src.slice(-46)}`);
+      for (const t of k.thamChieu) console.log(`@${t.so}  ${t.id}`);
       if (k.traLoi) console.log(`UDIN NÓI: ${k.traLoi}`);
       if (k.thuMucDayDu) {
         console.log(`ẢNH RA: ${k.thuMucDayDu}`);

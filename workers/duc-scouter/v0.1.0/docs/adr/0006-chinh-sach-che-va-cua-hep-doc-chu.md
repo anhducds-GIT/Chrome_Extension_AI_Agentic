@@ -10,7 +10,7 @@ deciders: Đức
 ## Bối cảnh
 
 Từ 07/09 lõi đọc của Scouter chạy theo một chính sách che tên `de-xuat-chat-v1`: chỉ trả
-**danh sách trắng** 25 thuộc tính, **cắt query + fragment** khỏi mọi `src`/`href`
+**danh sách trắng** 25 thuộc tính (→ **26** từ 17/09, xem [ADR-0009](0009-doc-duoc-data-image-id.md)), **cắt query + fragment** khỏi mọi `src`/`href`
 (`stripQuery`), **không trả chữ trong trang**, không trả `outerHTML`.
 
 **Chính sách đó chưa bao giờ được ai ký.** Nó nằm ở `BACKLOG.md` dưới dạng một đề xuất, trong

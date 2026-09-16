@@ -11,17 +11,28 @@
  * dòng đỏ nào. Nên mọi hàm ở đây đều kết thúc bằng **đọc lại con số trên trang**, chứ không bằng
  * lời báo của lệnh bấm (`scout.chon` tự khai là chưa kiểm — đọc `kiem_noi` của nó).
  *
- * ─── DANH TÍNH MỘT ẢNH: `src`, VÀ CHỖ NÓ KHÔNG ĐỦ ─────────────────────────
- * Đo 16/09: canvas không có thuộc tính nào đọc được để định danh — `data-image-id` CÓ tồn tại
- * nhưng nằm ngoài danh sách trắng của lõi đọc nên **giá trị bị che**, và `alt` của mọi ảnh đều là
- * `"Canvas image"`. Thứ duy nhất phân biệt được là `src`.
+ * ─── DANH TÍNH MỘT ẢNH: `data-image-id` (ĐỔI 17/09) ───────────────────────
+ * ~~Thứ duy nhất phân biệt được là `src`.~~ **Câu ấy hết đúng 17/09** — Đức chốt cho
+ * `data-image-id` vào danh sách trắng của lõi đọc, nên nay trang tự khai danh tính từng chỗ đặt.
  *
- * Nhưng `src` định danh **TẤM ẢNH**, không định danh **CHỖ ĐẶT**: đo thật thấy một ảnh nằm **5
- * chỗ** trên canvas cùng lúc, và khi ấy `src` không nói được chỗ nào. Ca đó phải **TỪ CHỐI** —
- * "bấm đại cái đầu tiên" ở đây nghĩa là chọn nhầm tham chiếu mà không ai biết.
+ * VÌ SAO PHẢI ĐỔI, nói bằng phép đo chứ không bằng thẩm mỹ: Udin **mã hoá lại** mọi ảnh người
+ * dùng thả vào thành WebP nhúng thẳng trong `src` (`data:image/webp;base64,…`), còn lõi đọc thì
+ * cắt mọi thuộc tính ở 200 ký tự. Hai ảnh KHÁC HẲN NHAU cho ra hai chuỗi 200 ký tự **y hệt**. Đo
+ * 17/09 trên trang thật: canvas mọc từ 18 lên 20 mà phép so `src` thấy **0 ảnh mới**, và lệnh
+ * báo *"trang chưa nhận"* — một câu SAI NGUYÊN NHÂN.
  *
- * Và lõi đọc **CẮT** `src` rồi gắn `…` vào cuối. Dấu ấy là chú thích cho người đọc, không phải
- * một phần của URL; để nguyên nó trong selector thì khớp 0 (đã dính 16/09).
+ * Chỗ sâu hơn đáng nhớ: **`src` bị cắt cũng là một cái tên.** 16/09 tôi bỏ phép nhận dạng theo
+ * TÊN TỆP vì nó khớp 0/8, thay bằng `src`, rồi rơi lại đúng họ lỗi ấy ở một lớp sâu hơn. Thứ
+ * chữa được là một mã ĐỊNH DANH do trang tự đặt, không phải một chuỗi ta cắt ngắn rồi đem so.
+ *
+ * Nó chữa luôn một khuyết tật khác: `src` định danh **TẤM ẢNH**, `data-image-id` định danh **CHỖ
+ * ĐẶT**. Một ảnh nằm 5 chỗ trên canvas (đo thật 16/09) thì `src` phải TỪ CHỐI vì không nói được
+ * chỗ nào; `data-image-id` trỏ đích danh từng chỗ.
+ *
+ * `src` còn đúng một việc: **tìm hộ Đức** khi anh gõ `canvas:<mẩu src>`. Phép tìm ấy để CHROME
+ * khớp CSS (`img[src*="…"]`) chứ không so chuỗi trong Node — Chrome khớp trên `src` THẬT, còn
+ * chuỗi Node cầm thì đã bị cắt. Lõi đọc gắn `…` vào cuối chỗ cắt; dấu ấy là chú thích cho người
+ * đọc, không phải một phần của URL (đã dính 16/09).
  */
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -43,19 +54,31 @@ export function sachSrc(src) {
 }
 
 /**
- * Selector trỏ tới HỘP chứa ảnh mang `src` này.
- *
  * Giá trị nhét vào một selector thuộc tính phải nằm gọn trong cặp nháy kép, nên có `"`, `\` hay
  * xuống dòng thì **TỪ CHỐI**, không đi thoát chuỗi cho khéo — cùng chốt với `lay-anh.mjs`: một
  * selector thoát sai là một selector trỏ đi đâu không ai biết.
  */
-export function hopCuaAnh(src) {
-  const s = sachSrc(src);
-  if (!s) throw new Error("Thiếu `src` để trỏ tới ảnh trên canvas.");
+function nhetDuocVaoSelector(gia, ten) {
+  const s = sachSrc(gia);
+  if (!s) throw new Error(`Thiếu \`${ten}\` để trỏ tới ảnh trên canvas.`);
   if (/["\\\n\r]/.test(s)) {
-    throw new Error(`\`src\` chứa ký tự không nhét được vào selector (" hoặc \\ hoặc xuống dòng): ${JSON.stringify(s.slice(0, 60))}.`);
+    throw new Error(`\`${ten}\` chứa ký tự không nhét được vào selector (" hoặc \\ hoặc xuống dòng): ${JSON.stringify(s.slice(0, 60))}.`);
   }
-  return `${SEL.hop}:has(img[src^="${s}"])`;
+  return s;
+}
+
+/** Selector trỏ tới ĐÚNG MỘT chỗ đặt trên canvas, theo mã trang tự gán. */
+export function hopTheoId(id) {
+  return `${SEL.hop}[data-image-id="${nhetDuocVaoSelector(id, "data-image-id")}"]`;
+}
+
+/**
+ * Selector tìm hộp theo một MẨU `src` — dùng `*=` để **Chrome** khớp trên `src` THẬT. Đừng thay
+ * bằng một phép `includes()` trong Node: chuỗi `src` phía này đã bị lõi đọc cắt ở 200 ký tự, và
+ * đúng chỗ ấy là chỗ đường cũ mù.
+ */
+export function hopTheoMauSrc(manh) {
+  return `${SEL.hop}:has(img[src*="${nhetDuocVaoSelector(manh, "src")}"])`;
 }
 
 function may(tuyChon) {
@@ -69,7 +92,36 @@ function may(tuyChon) {
   };
 }
 
-/** Tập `src` của mọi ảnh đang nằm trên canvas, đã bỏ dấu cắt. Dùng để biết ảnh MỚI là ảnh nào. */
+/**
+ * Mã của mọi CHỖ ĐẶT đang có trên canvas, theo thứ tự tài liệu. **Đây là phép đo danh tính** —
+ * thứ dùng để biết một lượt thả đã đẻ ra chỗ đặt nào.
+ *
+ * Hộp không có `data-image-id` thì **TỪ CHỐI cả lượt**, không lặng lẽ bỏ qua: bỏ qua nghĩa là
+ * phép so trước/sau đếm thiếu, và nó sẽ báo *"canvas không mọc thêm ảnh nào"* cho một lượt thả
+ * thành công — đúng câu sai nguyên nhân mà 17/09 đã tốn một lượt chạy.
+ */
+export async function idTrenCanvas(tuyChon = {}) {
+  const { goi } = may(tuyChon);
+  const tab = await may(tuyChon).tab();
+  const ra = [];
+  for (let offset = 0; ; offset += 200) {
+    const d = (await goi("scout.query", { target_id: tab, selector: SEL.hop, offset, limit: 200 }, tuyChon)).data;
+    for (const n of d.items || []) {
+      const id = n.attributes?.["data-image-id"];
+      if (!id) {
+        throw new Error(
+          "Một hộp trên canvas không có `data-image-id`. Hoặc trang đổi hình dạng, hoặc extension " +
+          "đang chạy bản cũ chưa có thuộc tính ấy trong danh sách trắng của lõi đọc (mở 17/09) — " +
+          "nạp lại extension rồi chạy lại. Chưa chọn gì.",
+        );
+      }
+      ra.push(String(id));
+    }
+    if (!d.hasMore) return ra;
+  }
+}
+
+/** Tập `src` của mọi ảnh đang nằm trên canvas, đã bỏ dấu cắt. Để NGƯỜI đọc, không để định danh. */
 export async function anhTrenCanvas(tuyChon = {}) {
   const { goi } = may(tuyChon);
   const tab = await may(tuyChon).tab();
@@ -79,6 +131,25 @@ export async function anhTrenCanvas(tuyChon = {}) {
     for (const n of d.items || []) if (n.attributes?.src) ra.push(sachSrc(n.attributes.src));
     if (!d.hasMore) return ra;
   }
+}
+
+/** `canvas:<mẩu src>` → mã của ĐÚNG MỘT chỗ đặt. Khớp ≠ 1 thì TỪ CHỐI. */
+export async function idTheoSrc(manh, tuyChon = {}) {
+  const { goi } = may(tuyChon);
+  const tab = await may(tuyChon).tab();
+  const selector = hopTheoMauSrc(manh);
+  const d = (await goi("scout.query", { target_id: tab, selector, offset: 0, limit: 4 }, tuyChon)).data;
+  if (d.matchCount !== 1) {
+    throw new Error(
+      `'canvas:${manh}' khớp ${d.matchCount} chỗ trên canvas, cần đúng 1. ` +
+      (d.matchCount > 1
+        ? "Cùng một tấm ảnh đang nằm nhiều chỗ — đưa một mẩu `src` dài hơn, hoặc đưa thẳng `data-image-id`."
+        : "Không chỗ nào mang mẩu ấy — xem danh sách bằng `node chon-tham-chieu.mjs`."),
+    );
+  }
+  const id = d.items?.[0]?.attributes?.["data-image-id"];
+  if (!id) throw new Error(`Hộp khớp 'canvas:${manh}' không có \`data-image-id\` — nạp lại extension rồi chạy lại.`);
+  return String(id);
 }
 
 /**
@@ -130,28 +201,34 @@ export async function boChonHet(tuyChon = {}) {
 /**
  * Chọn các ảnh THEO ĐÚNG THỨ TỰ đưa vào, và **đọc lại con số trang gán cho từng ảnh**.
  *
- * Trả về `[{ src, selector, so }]` với `so` là số ĐỌC ĐƯỢC trên trang — không phải số ta mong đợi.
+ * Trả về `[{ id, selector, so }]` với `so` là số ĐỌC ĐƯỢC trên trang — không phải số ta mong đợi.
  * Lệch một chỗ là ném, vì đó đúng là ca Đức chỉ ra: prompt `@1` trỏ nhầm ảnh mà không ai nhìn ra.
  *
- * @param {string[]} dsSrc `src` của từng ảnh, theo thứ tự muốn nó mang `@1`, `@2`, …
+ * @param {string[]} dsId `data-image-id` của từng chỗ đặt, theo thứ tự muốn nó mang `@1`, `@2`, …
  */
-export async function chonTheoThuTu(dsSrc, tuyChon = {}) {
-  if (!Array.isArray(dsSrc) || dsSrc.length === 0) throw new Error("Thiếu danh sách ảnh để chọn.");
+export async function chonTheoThuTu(dsId, tuyChon = {}) {
+  if (!Array.isArray(dsId) || dsId.length === 0) throw new Error("Thiếu danh sách ảnh để chọn.");
   const { goi, nghi, dem, chu } = may(tuyChon);
   const tab = await may(tuyChon).tab();
 
+  /* Hai mã trùng nhau nghĩa là người gọi xin chọn cùng một chỗ hai lần — trang sẽ bỏ chọn nó ở
+   * cú bấm thứ hai, và phép đếm cuối sẽ đỏ với một câu khó hiểu. Bắt ngay từ danh sách. */
+  if (new Set(dsId).size !== dsId.length) {
+    throw new Error(`Danh sách có mã trùng nhau (${dsId.join(", ")}) — mỗi tham chiếu phải là một chỗ đặt KHÁC nhau.`);
+  }
+
   const truoc = await boChonHet(tuyChon);
   const ra = [];
-  for (let i = 0; i < dsSrc.length; i++) {
+  for (let i = 0; i < dsId.length; i++) {
     const mong = i + 1;
-    const selector = hopCuaAnh(dsSrc[i]);
+    const selector = hopTheoId(dsId[i]);
     const khop = await dem(tab, selector);
     if (khop !== 1) {
       throw new Error(
         `Ảnh thứ ${mong} khớp ${khop} hộp trên canvas, cần đúng 1. ` +
         (khop > 1
-          ? "Cùng một tấm ảnh đang nằm nhiều chỗ trên canvas, nên `src` không nói được chỗ nào — chưa chọn gì. Xoá bớt bản trùng rồi chạy lại."
-          : "Không thấy ảnh này trên canvas — đưa nó lên canvas trước."),
+          ? "Hai chỗ đặt mang cùng một `data-image-id` — trang đổi hình dạng; chưa chọn gì."
+          : "Không thấy chỗ đặt này trên canvas — nó đã bị xoá, hoặc mã đã cũ. Đọc lại danh sách rồi chạy lại."),
       );
     }
 
@@ -183,12 +260,12 @@ export async function chonTheoThuTu(dsSrc, tuyChon = {}) {
         "trang chưa nhận cú bấm; CHƯA gửi prompt.",
       );
     }
-    ra.push({ src: sachSrc(dsSrc[i]), selector, so: null });
+    ra.push({ id: String(dsId[i]), selector, so: null });
   }
 
   const tong = await dem(tab, SEL.dangChon);
-  if (tong !== dsSrc.length) {
-    throw new Error(`Chọn xong ${dsSrc.length} ảnh mà trang đếm ra ${tong} ảnh đang chọn — tập chọn không khớp; chưa gửi prompt.`);
+  if (tong !== dsId.length) {
+    throw new Error(`Chọn xong ${dsId.length} ảnh mà trang đếm ra ${tong} ảnh đang chọn — tập chọn không khớp; chưa gửi prompt.`);
   }
 
   /* ─── THỨ TỰ, đọc lại từ trang ──────────────────────────────────────────
@@ -250,9 +327,14 @@ export function kiemPromptThamChieu(prompt, soAnh) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const doi = process.argv.slice(2);
-  (doi.length
-    ? chonTheoThuTu(doi.filter((a) => !a.startsWith("--")), { boChonCu: doi.includes("--bo-chon-cu") })
-    : anhTrenCanvas().then((ds) => ({ soAnh: ds.length, src: ds })))
+  const ma = doi.filter((a) => !a.startsWith("--"));
+  (ma.length
+    ? chonTheoThuTu(ma, { boChonCu: doi.includes("--bo-chon-cu") })
+    /* Không đưa mã nào = LIỆT KÊ. Mặc định liệt kê `data-image-id` vì đó là thứ đưa lại được cho
+     * chính lệnh này; `--src` để nhìn ảnh nào là ảnh nào. */
+    : doi.includes("--src")
+      ? anhTrenCanvas().then((ds) => ({ soAnh: ds.length, src: ds }))
+      : idTrenCanvas().then((ds) => ({ soChoDat: ds.length, id: ds })))
     .then((k) => console.log(JSON.stringify(k, null, 2)))
     .catch((e) => { console.error(e.message); process.exitCode = 1; });
 }

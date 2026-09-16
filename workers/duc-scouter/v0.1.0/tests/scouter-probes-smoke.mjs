@@ -71,6 +71,7 @@ function attrsOf(i) {
     "class", "ok primary",
     "href", "https://example.test/go?token=SECRET-DO-NOT-LEAK#frag",
     "data-secret", "SECRET-DO-NOT-LEAK",
+    "data-image-id", `anh-${i}`,
     "aria-label", `Nút số ${i}`
   ];
 }
@@ -213,6 +214,18 @@ const FAKE_TARGETS = [
   assert.ok(!JSON.stringify(mid).includes("SECRET-DO-NOT-LEAK"), "không mẩu bí mật nào được nằm trong báo cáo");
   assert.ok(item.attributes.href.startsWith("https://example.test/go"), "href giữ đường dẫn");
   assert.ok(!item.attributes.href.includes("token"), "href phải bị cắt query");
+
+  /* `data-image-id` MỞ 17/09 — Đức chốt. Hai vế phải cùng đúng, và vế thứ hai mới là vế giữ
+   * cho lượt nới này HẸP: cái đã khai thì đọc được GIÁ TRỊ, cái chưa khai vẫn chỉ hiện TÊN.
+   * Một bản vá lười — bỏ hẳn danh sách trắng, hoặc cho qua mọi `data-*` — làm vế đầu xanh y
+   * hệt, nên chỉ mình nó không phân biệt được hai nhánh. */
+  /* Suy từ `id` của chính phần tử ấy, đừng gõ cứng "anh-0": khối này đọc một LÁT ở giữa trang,
+   * nên số thứ tự phụ thuộc `offset` — một con số gõ cứng sẽ đỏ oan mỗi lần ai đó sửa lát cắt. */
+  assert.equal(item.attributes["data-image-id"], item.attributes.id.replace("btn-", "anh-"),
+    "`data-image-id` đã khai thì phải đọc được GIÁ TRỊ — danh tính ảnh trên canvas Udin dựa vào nó");
+  assert.ok(!item.redactedAttributes.includes("data-image-id"));
+  assert.ok(item.redactedAttributes.includes("data-secret"),
+    "và một `data-*` CHƯA khai vẫn phải bị che — nới cho cả họ `data-*` là mở bừa");
 }
 
 /* ---- ③ dom.query — luật vàng số 1 -------------------------------------- */

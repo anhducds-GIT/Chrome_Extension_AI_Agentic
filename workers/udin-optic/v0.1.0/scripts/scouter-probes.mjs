@@ -262,7 +262,28 @@ const SAFE_ATTRIBUTES = Object.freeze([
   "id", "class", "name", "type", "role", "href", "src", "alt", "title", "placeholder",
   "aria-label", "aria-labelledby", "aria-describedby", "aria-hidden", "aria-expanded",
   "disabled", "readonly", "checked", "selected", "hidden", "tabindex", "for",
-  "contenteditable", "data-testid", "data-test-id", "data-qa"
+  "contenteditable", "data-testid", "data-test-id", "data-qa",
+  /* MỞ 17/09 — Đức chốt, sau khi một phép đo cho thấy đường cũ MONG MANH chứ không sai.
+   *
+   * VÌ SAO CẦN: Udin mã hoá lại mọi ảnh người dùng thả vào canvas thành WebP nhúng thẳng trong
+   * `src` (`data:image/webp;base64,…`), và `cap()` dưới đây cắt mọi thuộc tính ở 200 ký tự. Hai
+   * ảnh KHÁC HẲN NHAU cho ra hai chuỗi 200 ký tự **y hệt** — cùng phần đầu RIFF/WEBP. Nên phép
+   * "ảnh mới = phần chênh của tập `src`" thấy 0 ảnh mới trong khi canvas vừa mọc thêm 2 (đo
+   * 17/09 trên trang thật). Nó báo đỏ chứ không trỏ nhầm, nhưng đỏ vì một lý do SAI — câu nó nói
+   * là *"trang chưa nhận"* trong khi trang đã nhận.
+   *
+   * Chỗ sâu hơn đáng ghi: `src` bị cắt **cũng là một cái tên**. Ngày 16/09 tôi đã bỏ phép nhận
+   * dạng theo TÊN TỆP vì nó khớp 0/8, rồi thay bằng phép so `src` — và rơi vào đúng họ lỗi ấy ở
+   * một lớp sâu hơn. Thứ chữa được nó là một mã ĐỊNH DANH do trang tự đặt, không phải một chuỗi
+   * ta cắt ngắn rồi đem so.
+   *
+   * VÌ SAO NÓ HẸP: cùng hình dạng với `data-testid`/`data-qa` đã có ở trên — một mã do ứng dụng
+   * tự sinh cho từng đối tượng trên canvas, không phải dữ liệu của người dùng, không phải chữ ký,
+   * không phải token. Nó KHÔNG nới `cap()` (vẫn 200 ký tự) và KHÔNG mở thêm thuộc tính nào khác:
+   * danh sách này vẫn là danh sách TRẮNG, mọi thứ ngoài nó vẫn chỉ hiện TÊN.
+   *
+   * Nới danh sách này = đổi luật an toàn ở đường ĐỌC = phải hỏi Đức, y như thêm một method. */
+  "data-image-id"
 ]);
 const URL_ATTRIBUTES = Object.freeze(["href", "src"]);
 

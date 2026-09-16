@@ -1,9 +1,12 @@
 /* Phép ghim cho vòng tham chiếu (`@1` / `@2`).
  *
- * Chốt của bộ này: **danh tính ảnh vừa thả học bằng PHẦN CHÊNH của canvas, không bằng tên tệp.**
- * Đo 16/09: ảnh trên canvas mang `persistent/…/img/…`, ảnh trong khung chat mang
- * `ephemeral/…/generated/batch-…` — khớp **0/8** theo tên. Một phép đối chiếu theo tên sẽ khớp 0
- * ở mọi lượt, và cái sai ấy đọc y hệt *"trang chưa nhận ảnh"*.
+ * Chốt của bộ này: **danh tính ảnh vừa thả học bằng PHẦN CHÊNH của tập `data-image-id`.**
+ * Hai bản trước lấy một CÁI TÊN làm danh tính và cả hai đều hỏng cùng kiểu:
+ *   · TÊN TỆP (16/09) — canvas giữ một bản khác, khớp **0/8**
+ *   · `src` (17/09 sáng) — Udin mã hoá lại ảnh thả vào thành `data:image/webp;base64,…`, lõi
+ *     đọc cắt ở 200 ký tự, nên hai ảnh khác hẳn nhau cho ra **hai chuỗi y hệt**; canvas mọc
+ *     18 → 20 mà phép so thấy 0 ảnh mới.
+ * Cả hai cái sai ấy đọc y hệt nhau trên màn hình: *"trang chưa nhận ảnh"*.
  */
 import assert from "node:assert/strict";
 import { vongThamChieu, thaLenCanvas, timTrenCanvas, NOI_THA } from "../vong-tham-chieu.mjs";
@@ -11,10 +14,14 @@ import { SEL as SEL_CHON } from "../chon-tham-chieu.mjs";
 import { SEL as SEL_GUI } from "../gui-prompt.mjs";
 
 const VUNG_GHI = "C:/vung-ghi-gia";
-const CU = "https://cdn.udin/persistent/img/1111-aaa.webp";
-const CU2 = "https://cdn.udin/persistent/img/2222-bbb.webp";
-const THA1 = "https://cdn.udin/persistent/img/9001-tha.webp";
-const THA2 = "https://cdn.udin/persistent/img/9002-tha.webp";
+/* Canvas là danh sách CHỖ ĐẶT `{ id, src }`. Hai chỗ thả vào cố ý mang **cùng một `src`** —
+ * đó chính là ca đã hạ đường cũ: Udin mã hoá lại ảnh thả vào, và hai bản mã hoá ấy giống hệt
+ * nhau trong 200 ký tự đầu. Phép so theo `src` thấy chúng là MỘT; theo `data-image-id` thì không. */
+const CU = { id: "ph-1111", src: "https://cdn.udin/persistent/img/1111-aaa.webp" };
+const CU2 = { id: "ph-2222", src: "https://cdn.udin/persistent/img/2222-bbb.webp" };
+const SRC_THA = "data:image/webp;base64,UklGRiJVTgBXRUJQVlA4WAoAAAAgAAAA";
+const THA1 = { id: "ph-9001", src: SRC_THA };
+const THA2 = { id: "ph-9002", src: SRC_THA };
 /* Hai câu trả lời PHẢI khác nhau: ca hỏng đắt nhất của `W4` là đọc lại câu của lượt TRƯỚC
  * rồi khai là câu của lượt NÀY, và chỉ một cặp chuỗi khác nhau mới phân biệt được hai nhánh. */
 const CHU_CU = "cau tra loi cua luot TRUOC";
@@ -30,12 +37,16 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
   const trang = { canvas: [...canvas], chon: [], chu: "", chay: false, vong: 0, ketQua: [], traLoi: CHU_CU };
   let luotTha = 0;
   const q = (n, items = [], hasMore = false) => ({ data: { matchCount: n, items, hasMore } });
-  const tienTo = (sel) => {
-    const m = sel.match(/^\.canvas-image-container:has\(img\[src\^="(.*?)"\]\)/);
+  const idCuaSel = (sel) => {
+    const m = sel.match(/^\.canvas-image-container\[data-image-id="(.*?)"\]/);
     return m ? m[1] : null;
   };
-  const demTienTo = (p) => trang.canvas.filter((s) => s.startsWith(p)).length;
-  const soCua = (src) => { const i = trang.chon.indexOf(src); return i < 0 ? null : String(i + 1); };
+  const mauCuaSel = (sel) => {
+    const m = sel.match(/^\.canvas-image-container:has\(img\[src\*="(.*?)"\]\)$/);
+    return m ? m[1] : null;
+  };
+  const demId = (id) => trang.canvas.filter((c) => c.id === id).length;
+  const soCua = (id) => { const i = trang.chon.indexOf(id); return i < 0 ? null : String(i + 1); };
 
   const goi = async (method, p) => {
     nk.push({ method, p });
@@ -44,7 +55,7 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
       luotTha += 1;
       if (!thaHong) {
         trang.canvas.push(moiMoiLuotTha[luotTha - 1]);
-        if (thaThua) trang.canvas.push(moiMoiLuotTha[luotTha - 1] + "-thua");
+        if (thaThua) trang.canvas.push({ id: moiMoiLuotTha[luotTha - 1].id + "-thua", src: SRC_THA });
       }
       return { action: "input.tha", data: { selector: p.selector, path: p.path, files: 1 } };
     }
@@ -52,22 +63,28 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
       const sel = p.selector;
       if (sel === ".concurrency-overlay") return q(0);
       if (sel === ".agent-message-item:last-child .markdown-content") return q(1);
+      if (sel === SEL_CHON.hop) {
+        return { data: { matchCount: trang.canvas.length, hasMore: false,
+                         items: trang.canvas.map((c) => ({ attributes: { "data-image-id": c.id } })) } };
+      }
       if (sel === SEL_CHON.anh) {
         return { data: { matchCount: trang.canvas.length, hasMore: false,
-                         items: trang.canvas.map((src) => ({ attributes: { src: src + "…" } })) } };
+                         items: trang.canvas.map((c) => ({ attributes: { src: c.src + "…" } })) } };
       }
       if (sel === SEL_CHON.dangChon) return q(trang.chon.length);
       if (sel === SEL_CHON.huyHieu) return q(trang.chon.length >= 2 ? trang.chon.length : 0);
-      { const m = sel.match(/^(\.canvas-image-container:has\(img\[src\^="(.*?)"\]\))\.selected$/);
-        if (m) { if (demTienTo(m[2]) !== 1) return q(0);
-          const src = trang.canvas.find((x) => x.startsWith(m[2]));
-          return q(trang.chon.includes(src) ? 1 : 0); } }
-      { const p2 = tienTo(sel);
-        if (p2 !== null) {
-          const n = demTienTo(p2);
+      { const mau = mauCuaSel(sel);
+        if (mau !== null) {
+          const hop = trang.canvas.filter((c) => c.src.includes(mau));
+          return q(hop.length, hop.map((c) => ({ attributes: { "data-image-id": c.id } })));
+        } }
+      { const id = idCuaSel(sel);
+        if (id !== null) {
+          const n = demId(id);
+          if (sel.endsWith(".selected")) return q(n === 1 && trang.chon.includes(id) ? 1 : 0);
           if (!sel.endsWith(SEL_CHON.huyHieu)) return q(n);
           if (n !== 1 || trang.chon.length < 2) return q(0);
-          return q(soCua(trang.canvas.find((s) => s.startsWith(p2))) === null ? 0 : 1);
+          return q(soCua(id) === null ? 0 : 1);
         } }
       if (sel === SEL_GUI.anhKetQua) return q(trang.ketQua.length, trang.ketQua.map((src) => ({ attributes: { src } })), false);
       { const m = sel.match(/^img\.batch-grid-image\[src\^="(.*)"\]$/);
@@ -88,17 +105,16 @@ function lam({ canvas = [CU, CU2], moiMoiLuotTha = [THA1, THA2], thaHong = false
         return { data: { selector: p.selector, matchCount: 1, text: trang.traLoi,
                          chars: trang.traLoi.length, truncated: false, maxChars: 5000 } };
       }
-      const p2 = tienTo(p.selector);
-      const so = p2 === null ? null : soCua(trang.canvas.find((s) => s.startsWith(p2)));
+      const id = idCuaSel(p.selector);
+      const so = id === null ? null : soCua(id);
       if (so === null) throw new Error("SELECTOR_AMBIGUOUS " + p.selector);
       return { data: { selector: p.selector, matchCount: 1, text: so, chars: 1, truncated: false } };
     }
     if (method === "scout.chon") {
-      const p2 = tienTo(p.selector);
-      const src = p2 === null ? null : trang.canvas.find((s) => s.startsWith(p2));
-      if (!src) throw new Error("khong tro duoc " + p.selector);
-      const i = trang.chon.indexOf(src);
-      if (i >= 0) trang.chon.splice(i, 1); else trang.chon.push(src);
+      const id = idCuaSel(p.selector);
+      if (id === null || demId(id) !== 1) throw new Error("khong tro duoc " + p.selector);
+      const i = trang.chon.indexOf(id);
+      if (i >= 0) trang.chon.splice(i, 1); else trang.chon.push(id);
       return { action: "input.chon", data: {} };
     }
     if (method === "scout.type") { trang.chu += p.text; return { data: { typed: p.text.length } }; }
@@ -133,9 +149,11 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
   /* `W4` phải trả câu MỚI, không phải câu đang có trên trang lúc bắt đầu. */
   assert.equal(k.traLoi, CHU_MOI);
   assert.deepEqual(k.thamChieu.map((x) => x.so), [1, 2]);
-  /* Thứ tự `@N` phải theo thứ tự người gọi đưa `--anh`, không theo thứ tự nào khác. */
-  assert.equal(k.thamChieu[0].src, THA1);
-  assert.equal(k.thamChieu[1].src, THA2);
+  /* Thứ tự `@N` phải theo thứ tự người gọi đưa `--anh`, không theo thứ tự nào khác.
+   * HAI ẢNH NÀY MANG CÙNG MỘT `src` — đó là cả điểm của khối: đường cũ (so `src`) thấy lượt thả
+   * thứ hai KHÔNG đẻ ra gì và báo "trang chưa nhận". */
+  assert.equal(k.thamChieu[0].id, THA1.id);
+  assert.equal(k.thamChieu[1].id, THA2.id);
   assert.equal(soLan(t.nk, "scout.tha"), 2);
   /* Thả vào `#root` — Udin không có lớp canvas riêng nào đọc được (đo 17/09). */
   assert.ok(t.nk.filter((g) => g.method === "scout.tha").every((g) => g.p.selector === NOI_THA));
@@ -151,35 +169,35 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
 
 // ⓒ thả mà canvas KHÔNG mọc thêm ảnh → ĐỎ, và không chọn, không gõ, không gửi
 { const t = lam({ thaHong: true });
-  await assert.rejects(() => vongThamChieu("style @1 onto @2", { ...t, anh: ["a.png", "b.png"] }), /canvas KHÔNG mọc thêm/);
+  await assert.rejects(() => vongThamChieu("style @1 onto @2", { ...t, anh: ["a.png", "b.png"] }), /canvas KHÔNG mọc thêm chỗ đặt nào/);
   assert.equal(soLan(t.nk, "scout.chon"), 0);
   assert.equal(soLan(t.nk, "scout.type"), 0); }
 
 // ⓓ một lượt thả mà canvas mọc thêm HAI ảnh → ĐỎ: không biết ảnh nào là của lượt này.
 //    Đây là ca mà "lấy ảnh mới nhất" sẽ đoán bừa và trỏ nhầm tham chiếu mà không báo gì.
 { const t = lam({ thaThua: true });
-  await assert.rejects(() => vongThamChieu("style @1 onto @2", { ...t, anh: ["a.png", "b.png"] }), /mọc thêm 2 ảnh/);
+  await assert.rejects(() => vongThamChieu("style @1 onto @2", { ...t, anh: ["a.png", "b.png"] }), /mọc thêm 2 chỗ đặt/);
   assert.equal(soLan(t.nk, "scout.chon"), 0); }
 
 // ⓔ `canvas:` — dùng ảnh ĐÃ có trên canvas, không thả gì
 { const t = lam();
   const k = await vongThamChieu("blend @1 with @2", { ...t, anh: ["canvas:1111-aaa", "canvas:2222-bbb"] });
   assert.equal(soLan(t.nk, "scout.tha"), 0, "ảnh đã trên canvas thì không thả lại");
-  assert.deepEqual(k.thamChieu.map((x) => x.src), [CU, CU2]); }
+  assert.deepEqual(k.thamChieu.map((x) => x.id), [CU.id, CU2.id]); }
 
 // ⓕ trộn hai dạng: một ảnh thả vào, một ảnh đã có — thứ tự `@N` vẫn theo thứ tự đưa vào
 { const t = lam();
   const k = await vongThamChieu("put @2 into the scene of @1", { ...t, anh: ["canvas:2222-bbb", "udin-optic/vao/a.png"] });
-  assert.deepEqual(k.thamChieu.map((x) => x.src), [CU2, THA1]);
+  assert.deepEqual(k.thamChieu.map((x) => x.id), [CU2.id, THA1.id]);
   assert.equal(soLan(t.nk, "scout.tha"), 1); }
 
-// ⓖ `canvas:` khớp nhiều ảnh → TỪ CHỐI, không đoán
+// ⓖ `canvas:` khớp nhiều chỗ → TỪ CHỐI, không đoán
 { const t = lam({ canvas: [CU, CU2] });
-  await assert.rejects(() => timTrenCanvas("persistent", t), /kh\u1edbp 2 \u1ea3nh/); }
+  await assert.rejects(() => timTrenCanvas("persistent", t), /khớp 2 chỗ/); }
 
 // ⓗ `canvas:` không khớp ảnh nào → TỪ CHỐI kèm lối ra
 { const t = lam();
-  await assert.rejects(() => timTrenCanvas("khong-co-dau", t), /Không có ảnh nào/); }
+  await assert.rejects(() => timTrenCanvas("khong-co-dau", t), /Không chỗ nào mang mẩu ấy/); }
 
 // ⓘ không đưa `--anh` nào → ĐỎ, và chỉ thẳng sang `e2e.mjs`
 { const t = lam();
@@ -191,10 +209,10 @@ const soLan = (nk, m) => nk.filter((g) => g.method === m).length;
   await assert.rejects(() => vongThamChieu("  ", { ...t, anh: ["a.png"] }), /chữ MỚI/);
   assert.equal(t.nk.length, 0); }
 
-// ⓚ `thaLenCanvas` trả đúng `src` MỚI, học bằng phần chênh — không bằng tên tệp
+// ⓚ `thaLenCanvas` trả đúng MÃ mới, học bằng phần chênh — không bằng tên tệp, không bằng `src`
 { const t = lam();
   const k = await thaLenCanvas("udin-optic/vao/ten-khac-han.png", t);
-  assert.equal(k.src, THA1, "danh tính học bằng phần chênh của canvas, tên tệp không dính dáng gì");
+  assert.equal(k.id, THA1.id, "danh tính học bằng phần chênh của tập mã; tên tệp và `src` không dính dáng gì");
   assert.equal(k.canvasTruoc, 2);
   assert.equal(k.canvasSau, 3); }
 

@@ -882,7 +882,7 @@ Chạy chặng ② trên một tab ChatGPT, **chỉ đọc**, không sửa một
 · **`G-88`** — luật cũ dựng chữ ký thuần `thẻ.class`, và trên trang dùng CSS tiện ích nó ra
   `a.interactive-bg-secondary.…print\:hidden`: dài, giòn, sai. Mà trang đã tự khai hết —
   `role="textbox"`, `type="file"`, `tabindex="-1"`, `type="submit"` — và **luật che không hề
-  cắt những thứ đó** (danh sách cho phép 24 tên, `id` · `data-testid` · `role` đều ở trong).
+  cắt những thứ đó** (danh sách cho phép ~~24~~ → **26 tên từ 17/09**, `id` · `data-testid` · `role` · `data-image-id` đều ở trong).
   Báo cáo không thiếu dữ liệu; nó thiếu một luật biết dùng. Sửa xong thì **cả hai trang** đều
   ra đúng ô nhập ở vị trí đầu.
 · **`G-89`** — `#composer-submit-button` khớp **0** khi ô prompt trống: ChatGPT **không vẽ** nút

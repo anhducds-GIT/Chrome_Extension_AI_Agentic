@@ -2250,3 +2250,32 @@ một cửa. `179/179` giết được, 0 sống sót.
 
 Bảng năng lực: hàng `W8` gạch tại chỗ hợp đồng cũ (`NO_FILE_CHOOSER`, `UPLOAD_MODE_UNCLEAR`,
 trình tự chặn–bấm–tắt) và viết hợp đồng mới bên dưới, không xoá chữ cũ.
+
+## 2026-09-17b · `claude-scouter-udine` — `data-image-id` vào danh sách trắng ([ADR-0009])
+
+**Việc.** Đức chốt thêm `data-image-id` vào `SAFE_ATTRIBUTES` của `de-xuat-chat-v1`. 25 → 26 tên.
+Lý do đầy đủ ở ADR-0009; ở đây ghi phần chạm vào gói này và phần đắt của bộ đo.
+
+**Phép đo đứng sau nó.** Danh tính ảnh trên canvas Udin từng học bằng `src`. Udin **mã hoá lại**
+ảnh người dùng thả vào thành `data:image/webp;base64,…`, còn `cap()` cắt mọi thuộc tính ở 200 ký
+tự — nên **hai ảnh khác hẳn nhau cho ra hai chuỗi 200 ký tự y hệt**. Đo trên trang thật: canvas
+mọc **18 → 20** mà phép so thấy **0 ảnh mới**, rồi lệnh báo *"trang chưa nhận"*. Báo đỏ, không
+trỏ nhầm — nhưng **sai nguyên nhân**, và câu sai ấy khoá hẳn một ca việc thật của Đức.
+
+**Chỗ sâu hơn đáng nhớ hơn cả bản vá:** `src` bị cắt **cũng là một cái tên**. Ngày 16/09 tôi bỏ
+phép nhận dạng theo TÊN TỆP vì nó khớp 0/8, thay bằng `src`, rồi rơi lại đúng họ lỗi ấy ở một
+lớp sâu hơn. Hai lần cùng một kiểu sai trong hai ngày. Thứ chữa được là một mã **định danh** do
+trang tự đặt, không phải một chuỗi ta cắt ngắn rồi đem so.
+
+**Ghim HAI CHIỀU, và chiều thứ hai mới là chiều giữ cho lượt nới này hẹp.** `M12` canh cái đã
+khai đọc được GIÁ TRỊ thật; `M13` canh lượt nới **không lan ra cả họ `data-*`**. Một bản vá lười
+kiểu ấy làm mọi phép ghim của `M12` xanh y hệt, nên chỉ mình `M12` không phân biệt được hai
+nhánh. Khối ghim ở `scouter-probes-smoke.mjs` cũng khẳng định cả hai vế: `data-image-id` ra giá
+trị, `data-secret` vẫn chỉ ra tên. `19/19` đột biến, 0 sống sót.
+
+**Không đổi, cố ý:** `MAX_ATTR_LENGTH` vẫn 200 (nới trần là đường sửa duy nhất khác, và nó kéo cả
+`data:` URI vào nhật ký) · vẫn là danh sách TRẮNG · nới nó vẫn là đổi luật an toàn, phải hỏi Đức.
+
+**Kèm theo, ngoài repo:** `START-BRIDGE_Scouter.ps1` nay nhận `-KhoiDongLai` như bộ của Udin —
+dừng tiến trình đang giữ cổng rồi bật lại, chỉ dừng tiến trình tên `node`. Chạy thật
+`31424 → 1928`, cùng cổng `32151`.

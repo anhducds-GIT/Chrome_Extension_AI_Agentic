@@ -822,3 +822,32 @@ chữ MỚI*. `W4` đứng CUỐI, sau lượt ghi đĩa — một chặng đọ
 
 **CHƯA làm:** Đức chưa nạp lại extension sau đợt này, nên chưa có lượt chạy thật nào của vòng bảy
 chặng. `S-31` (Udin không tự nạp lại được) vẫn mở.
+
+## 2026-09-17b · `claude-scouter-udine` — danh tính ảnh canvas chuyển sang `data-image-id`
+
+**Việc.** Đóng lỗ đo được sáng nay: ca ⒝ của Đức (*gửi ảnh từ ngoài vào rồi xin Udin improve*)
+gãy mỗi khi canvas đã có sẵn một ảnh thả. Nguyên nhân và quyết định ở [ADR-0009]; đây là phần mã.
+
+`chon-tham-chieu.mjs`: `hopCuaAnh(src)` → **`hopTheoId(id)`**, thêm `idTrenCanvas()` và
+`idTheoSrc(mẩu)`; `chonTheoThuTu` nhận danh sách **mã**. `vong-tham-chieu.mjs` học danh tính ảnh
+vừa thả bằng **phần chênh của tập mã**.
+
+**Ba chỗ đáng đọc trước khi sửa quanh đây:**
+
+⑴ **Hộp thiếu `data-image-id` thì TỪ CHỐI CẢ LƯỢT**, không lặng lẽ bỏ qua. Bỏ qua nghĩa là phép
+so trước/sau đếm thiếu, và ta quay lại đúng câu *"canvas không mọc thêm ảnh nào"* cho một lượt
+thả thành công. Câu từ chối nói thẳng việc phải làm — **đo trên dây thật** với extension bản cũ:
+*"…extension đang chạy bản cũ chưa có thuộc tính ấy… nạp lại extension rồi chạy lại."*
+
+⑵ **`idTheoSrc` để CHROME khớp CSS** (`img[src*="…"]`), không `includes()` trong Node. Chuỗi `src`
+phía Node đã bị cắt ở 200 ký tự — đúng chỗ đường cũ mù.
+
+⑶ **Lượt nới này MUA THÊM một ca, không chỉ vá một ca.** `src` định danh TẤM ẢNH, `data-image-id`
+định danh CHỖ ĐẶT. Một ảnh nằm 5 chỗ trên canvas (đo thật 16/09) thì đường cũ phải từ chối cả
+lượt; đường mới chọn được đích danh từng chỗ. Phép ghim ⓒ nay khẳng định đúng điều đó.
+
+**Đo.** Suite 36/36 + 17/17 · đột biến 179/179 + 19/19 · chọn tham chiếu 15/15 · vòng 11/11.
+Thêm hai ghim: hộp thiếu mã → đỏ; hai hộp **cùng một mã** → đỏ, không bấm cái đầu.
+
+**CHƯA làm:** chưa chạy sống ca ⒝ sau đợt này — cần Đức nạp lại extension một lần (lõi đọc đổi).
+`S-31` (Udin không tự nạp lại được) là thứ bắt ta phải dừng ở đây, và nó vẫn mở.
