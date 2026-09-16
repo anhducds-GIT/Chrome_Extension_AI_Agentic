@@ -26,6 +26,62 @@
 6. **Gặp câu chưa có đáp án thì ghi ra, đừng đoán cho tròn chuyện.** Một chẩn đoán sai có thẩm
    quyền đắt hơn một ô trống.
 
+## ĐỀ XUẤT 16/09 — chờ Đức chốt: làm đường GHI thôi nói dối, rồi mới ký `v1`
+
+> **Khối này là ĐỀ XUẤT, chưa phải luật.** Đức chốt xong thì xóa dòng này và nó thành chuỗi việc.
+
+### Vấn đề, đo bằng mã chứ không bằng trí nhớ (16/09)
+
+| đo gì | thấy gì |
+|---|---|
+| `scout.type` trả về gì | `typed: text.length` — **số phím nó GỬI ĐI**, không phải thứ trang nhận được |
+| `scout.clear` trả về gì | `steps: ["Ctrl+A","Delete"]` — cùng hình dạng: kể việc mình làm |
+| số chỗ **đọc lại** sau khi ghi, trong cả lõi ghi | **0** |
+
+Tức đường ghi **fail-open**: nó báo ĐẠT cho một việc có thể chưa xảy ra. Đó chính là `S-22`,
+và `S-22` **có hai nửa**:
+
+  ① *vì sao sự kiện không tới trang* — **Đức đã chốt ngừng điều tra** (bảng theo dõi, `T28`). Đóng.
+  ② *đường ghi thôi báo ĐẠT khi sự kiện không tới nơi* — **chưa ai làm**. Đây là nửa được đề xuất.
+
+Điều kiện đóng của `S-22` **cho phép đóng mà không cần biết nguyên nhân** — nó viết sẵn như vậy.
+
+### MỘT PHÂN BIỆT QUAN TRỌNG, đừng bỏ qua
+
+**Lượt E2E sáng 16/09 KHÔNG phải một lời nói dối.** Nó an toàn vì `W4` **đọc lại** câu trả lời
+và từ chối nếu chữ không đổi — tức **cả chuỗi tự kiểm ở cuối**. Thứ fail-open là **từng lệnh
+riêng lẻ**. Nguy hiểm rơi vào ai dùng `scout.type`/`scout.click` trực tiếp mà không có một
+`W4` ở cuối — tức `T35`, `T7`, và **mọi job mới**.
+
+### Bốn chặng, không chặng nào cần method Bridge MỚI
+
+**S1 · `scout.type` TỰ KIỂM.** Gõ xong thì **đọc lại giá trị ô nhập** bằng đường đọc đã có
+(`dom.text` / `DOM.getAttributeValue`). Khớp → `da_kiem: true`. Không khớp → **`WRITE_NOT_OBSERVED`**,
+không báo đạt. *Đóng khi:* đột biến *“bỏ lượt đọc lại”* bị giết, và một lượt E2E thật vẫn xanh.
+
+**S2 · `scout.click` KHAI THẬT.** Một cú bấm **không có dấu vết chung** để đọc lại, nên nó **không
+tự kiểm được** — và câu trả lời đúng là **nói ra điều đó**, không phải giả vờ. Trả `da_kiem: false`
+kèm một câu, và `README` nói thẳng. **Thêm một đường TỰ CHỌN:** người gọi đưa `cho_doi`
+(một selector phải xuất hiện hoặc biến mất sau cú bấm) → lúc đó `scout.click` **kiểm được**.
+*Đóng khi:* không đưa `cho_doi` thì kết quả **tự khai là chưa kiểm**; có đưa mà không xảy ra thì ĐỎ.
+
+**S3 · Mang sang Udin** (bản chép bị ghim so từng byte) + một lượt E2E thật để chứng minh
+không làm gãy gì. *Đóng khi:* suite hai bên xanh · đột biến 0 sống sót · E2E thật 4/4.
+
+**S4 · RỒI MỚI ký `v1`.** Đây là lý do thứ tự quan trọng: ký `v1` **trước** nghĩa là
+đóng dấu lên một lời hứa mà đường ghi chưa giữ được.
+
+### ĐẶT SAU, có lý do
+
+`T29` (`scout.upload` → `W8`) cần một **method Bridge MỚI** → đổi luật an toàn → phải hỏi Đức.
+`T35` (`W6` đưa ảnh vào canvas) là **một cú bấm** — nó đứng ngay trên `S1`/`S2`: làm nó
+trước thì không có cách nào biết nó chạy hay không.
+
+### ĐỨC CẦN CHỐT ĐÚNG MỘT CÂU
+
+**Làm `S1`–`S3` trước rồi ký `v1`** (khuyến nghị), **hay ký `v1` ngay** và để bốn chặng
+này thành `v1.1`? Đây là tuyên bố phiên bản nên nó là chữ ký của Đức, không phải một lượt chạy xanh.
+
 ## Bảng theo dõi — Đức nhìn một cái là biết đang ở đâu
 
 **Mục đích của mọi việc dưới đây, Đức đặt lại 14/09:** *hoàn thiện nốt Scouter, rồi mới tách Udin
