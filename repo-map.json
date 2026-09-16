@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-16",
+  "generated_at": "2026-09-17",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "CHO DUC NAP LAI EXTENSION — scout.tha (keo-tha, KHONG hop thoai) da viet xong va do xong tren Chrome ho so trong: trang nhan du dragenter/dragover/drop, 525119 byte khai VA doc that ra cung 525119, 0 hop thoai. Sau khi nap lai: chay thu scout.tha tren canvas that, roi thay scout.upload bang no trong moi luot dua anh tu ngoai vao. Anh ngoai vung ghi thi phai CHEP vao truoc (udin-optic/vao/). Sau do: noi tang chon @1/@2 vao vong-style.mjs.",
+      "next_step": "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -209,7 +209,7 @@
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "CHO DUC NAP LAI EXTENSION — scout.tha (keo-tha, KHONG hop thoai) da viet xong va do xong tren Chrome ho so trong: trang nhan du dragenter/dragover/drop, 525119 byte khai VA doc that ra cung 525119, 0 hop thoai. Sau khi nap lai: chay thu scout.tha tren canvas that, roi thay scout.upload bang no trong moi luot dua anh tu ngoai vao. Anh ngoai vung ghi thi phai CHEP vao truoc (udin-optic/vao/). Sau do: noi tang chon @1/@2 vao vong-style.mjs.",
+      "title": "scout.tha DA CHAY THAT 17/09: anh ngoai vao canvas 17->18, 0 hop thoai. Tha vao #root (Udin khong co lop canvas rieng nao doc duoc). Viec ke: thay scout.upload bang scout.tha trong vong-style.mjs, roi noi tang chon @1/@2 vao de chay tron mot luot 'apply style of @1 to @2' that. LUU Y: sua tep may chu = KHOI DONG LAI TIEN TRINH may chu, nap lai extension khong du.",
       "rank": 5,
       "claim": null
     }
