@@ -126,8 +126,8 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
-      "human_action": "khong",
+      "next_step": "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang.",
+      "human_action": "@Đức:chốt — D4: cho hay khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": "2026-09-16",
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "W5 XONG + CHAY THAT 16/09: chon-che-do.mjs, Agent->Manual Gen->Agent, 15 dot bien tay giet duoc het. Bang W nay 7/8 DAT, con dung W8. Cot Can cua hang W5 khai SAI (O3 scout.a11y — lenh goi nay khong co tren day) va da gach tai cho o CAPABILITIES.md. Viec ke KHONG o goi nay: S-27 (scout.clear vao duong tu kiem) ben Scouter, roi T29/W8 scout.upload — cho ay PHAI HOI DUC vi can method CDP moi.",
-      "human_action": "khong",
+      "next_step": "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter).",
+      "human_action": "@Đức:bấm — nap lai extension Udin MOT lan de scout.clear tu kiem chay tu chinh goi nay. Khong gap: khong lenh nao hong, chi la lenh xoa van bao dat theo kieu cu cho toi luc do.",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "SCOUTER v1 da ky 16/09 (ADR-0008). W6 roi W5 XONG cung ngay, va HAI HANG LIEN TIEP do bi hoan vi mot LY DO SAI (S-22) ma khong ai di kiem lai: W6 bi chan boi mot thao tac khong ton tai, W5 boi mot cot Can khai sai (O3 scout.a11y — lenh goi Udin khong co tren day). Bang W nay 7/8. LO TRINH CON LAI o khoi SAU COMPACT dau CHUOI-VIEC.md: (2) S-27 scout.clear vao duong tu kiem — re nhat, khong hoi ai; (3) DIEM DUNG: T29/W8 scout.upload can method CDP moi nen PHAI HOI DUC — dong nang luc CUOI CUNG; (4) don so T21-5, S-04, T6, T10.",
+      "title": "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "W5 XONG + CHAY THAT 16/09: chon-che-do.mjs, Agent->Manual Gen->Agent, 15 dot bien tay giet duoc het. Bang W nay 7/8 DAT, con dung W8. Cot Can cua hang W5 khai SAI (O3 scout.a11y — lenh goi nay khong co tren day) va da gach tai cho o CAPABILITIES.md. Viec ke KHONG o goi nay: S-27 (scout.clear vao duong tu kiem) ben Scouter, roi T29/W8 scout.upload — cho ay PHAI HOI DUC vi can method CDP moi.",
+      "title": "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter).",
       "rank": 5,
       "claim": null
     }
