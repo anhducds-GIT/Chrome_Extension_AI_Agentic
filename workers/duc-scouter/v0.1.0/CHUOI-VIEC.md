@@ -26,9 +26,10 @@
 6. **Gặp câu chưa có đáp án thì ghi ra, đừng đoán cho tròn chuyện.** Một chẩn đoán sai có thẩm
    quyền đắt hơn một ô trống.
 
-## ĐỀ XUẤT 16/09 — chờ Đức chốt: làm đường GHI thôi nói dối, rồi mới ký `v1`
+## CHUỖI ĐANG CHẠY — làm đường GHI thôi nói dối, rồi mới ký `v1`
 
-> **Khối này là ĐỀ XUẤT, chưa phải luật.** Đức chốt xong thì xóa dòng này và nó thành chuỗi việc.
+> **Đức chốt 16/09: *“sửa trước, rồi ký”*.** Khối này là chuỗi việc đang chạy, không còn là đề xuất.
+> Chạy một mạch `S1`→`S3`; còn **đúng một điểm dừng**, ở cuối: chữ ký của Đức cho `v1`.
 
 ### Vấn đề, đo bằng mã chứ không bằng trí nhớ (16/09)
 
@@ -77,10 +78,34 @@ không làm gãy gì. *Đóng khi:* suite hai bên xanh · đột biến 0 sốn
 `T35` (`W6` đưa ảnh vào canvas) là **một cú bấm** — nó đứng ngay trên `S1`/`S2`: làm nó
 trước thì không có cách nào biết nó chạy hay không.
 
-### ĐỨC CẦN CHỐT ĐÚNG MỘT CÂU
+### ĐÃ CHỐT 16/09
 
-**Làm `S1`–`S3` trước rồi ký `v1`** (khuyến nghị), **hay ký `v1` ngay** và để bốn chặng
-này thành `v1.1`? Đây là tuyên bố phiên bản nên nó là chữ ký của Đức, không phải một lượt chạy xanh.
+Đức chọn **sửa trước rồi ký**. Lý do anh nhận: ký `v1` là đóng dấu *“bộ đồ nghề này chạy
+được”*, mà hôm nay đường ghi chưa giữ được lời hứa đó.
+
+**Ba quyết định lấy trước để chuỗi không phải dừng hỏi:**
+
+**① Không thêm method Bridge nào.** `S1` dùng đường đọc đã có; `S2` thêm một **tham số** cho
+`scout.click`, không phải một lệnh mới. Từ vựng giữ nguyên **24** (Scouter) và **12** (Udin) —
+cả hai đều là hợp đồng `deepEqual`, thêm một chữ cũng đỏ.
+
+**② Trường mới trong kết quả là thêm, không phải đổi.** Lượt gọi cũ không đọc trường đó vẫn chạy y
+như cũ. **Nhưng** khi đọc lại mà **lệch**, `scout.type` phải **NÉM**, không được trả về kèm một
+cờ buồn — một phong bì thành công chở một thất bại là thứ người gọi phải **nhớ mà bóc**, và sớm muộn
+sẽ có người quên. Đây đúng lý lẽ `seed-core` đã dùng cho `runProbe`.
+
+**③ Ô nhập giàu (contenteditable) không được làm `S1` dừng.** Trang Udin dùng loại ô đó. Nếu đọc
+lại không ra chữ thì **khai là chưa kiểm được**, KHÔNG ném và cũng KHÔNG im lặng báo đạt — hai thái
+cực đều sai. Ba trạng thái: **khớp** · **lệch (ném)** · **không đọc được (khai thật)**.
+
+### Thứ KHÔNG làm trong chuỗi này
+
+**Đừng đi tìm nguyên nhân `S-22`.** Đức đã chốt ngừng điều tra (`T28`), và chuỗi này **không
+cần** biết nguyên nhân — nó chỉ làm kết quả **thôi nói dối**. Một lượt điều tra mới là một lượt
+mở lại một việc đã đóng có chủ đích.
+
+**Đừng nới thời gian chờ.** Nếu đọc lại thấy lệch, câu trả lời là **báo lệch**, không phải chờ lâu
+hơn rồi đọc lại cho tới khi nó khớp — `S-22` đã ghi rõ: nới hạn chờ là **sai hoàn toàn hướng**.
 
 ## Bảng theo dõi — Đức nhìn một cái là biết đang ở đâu
 

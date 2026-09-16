@@ -5,8 +5,8 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "U5 XONG 16/09: bang ben Scouter nay co co chu, thu phong trang va nut Kiem tra ket noi (mang tu udin-optic ve, hai loi vao bang so tung byte). S-26 DONG: tach M5 lam ba thi lo ra dom.text va dom.wait KHONG CO CHOT nao — da dung chot rieng, mo luot quet tu 4 len 9 phep do, nay 16/16 giet duoc. CHO DUC CHOT MOT CAU o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) truoc roi ky v1, hay ky v1 ngay va de bon chang do thanh v1.1."
-human_action: "@Đức:chốt — mot cau o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) TRUOC roi ky Scouter v1, hay ky v1 ngay va de bon chang do thanh v1.1. Da nap lai extension xong; khong con viec ky thuat nao dang cho."
+next_step: "Duc chot 16/09: SUA TRUOC ROI KY. Chuoi S1..S4 o dau CHUOI-VIEC.md, chay mot mach S1->S3, con dung mot diem dung o cuoi la chu ky v1. S1: scout.type doc lai o nhap sau khi go — khop / lech thi NEM / khong doc duoc thi khai that. S2: scout.click khai da_kiem:false, them tham so cho_doi de kiem duoc. S3: mang sang Udin + mot luot E2E that. Khong chang nao them method Bridge."
+human_action: "khong"
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."

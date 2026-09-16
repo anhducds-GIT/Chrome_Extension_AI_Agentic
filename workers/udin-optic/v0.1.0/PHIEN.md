@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "U0..U5 XONG va U4 DA NGHIEM THU BANG DIA 16/09 (4 tep JPG that trong anh-ra/udin-optic/xe-dien-2026/<luot>/, luot chay cu khong gay). Con lai: Duc nhin ba thu tren bang ben (co chu / thu phong trang / nut Kiem tra ket noi) roi ky Scouter v1 — DIEM DUNG (2)."
-- human_action: "@Đức:chốt — nhin ba thu tren bang ben roi ky Scouter v1. Da nap lai xong; U4 nghiem thu dat bang dia. Khong con viec ky thuat nao dang cho."
+- next_step: "U0..U5 xong, U4 da nghiem thu bang DIA 16/09. Viec ke KHONG o goi nay ma o duc-scouter: chuoi S1..S4 (duong ghi thoi bao DAT khi trang khong nhan). Goi nay nhan ban chep o chang S3, roi mot luot E2E that de chung minh khong gay gi."
+- human_action: "khong"

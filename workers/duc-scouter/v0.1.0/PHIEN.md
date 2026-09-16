@@ -85,5 +85,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "U5 XONG 16/09: bang ben Scouter nay co co chu, thu phong trang va nut Kiem tra ket noi (mang tu udin-optic ve, hai loi vao bang so tung byte). S-26 DONG: tach M5 lam ba thi lo ra dom.text va dom.wait KHONG CO CHOT nao — da dung chot rieng, mo luot quet tu 4 len 9 phep do, nay 16/16 giet duoc. CHO DUC CHOT MOT CAU o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) truoc roi ky v1, hay ky v1 ngay va de bon chang do thanh v1.1."
-- human_action: "@Đức:chốt — mot cau o khoi DE XUAT dau CHUOI-VIEC.md: lam S1..S3 (duong ghi thoi bao DAT khi su kien khong toi noi) TRUOC roi ky Scouter v1, hay ky v1 ngay va de bon chang do thanh v1.1. Da nap lai extension xong; khong con viec ky thuat nao dang cho."
+- next_step: "Duc chot 16/09: SUA TRUOC ROI KY. Chuoi S1..S4 o dau CHUOI-VIEC.md, chay mot mach S1->S3, con dung mot diem dung o cuoi la chu ky v1. S1: scout.type doc lai o nhap sau khi go — khop / lech thi NEM / khong doc duoc thi khai that. S2: scout.click khai da_kiem:false, them tham so cho_doi de kiem duoc. S3: mang sang Udin + mot luot E2E that. Khong chang nao them method Bridge."
+- human_action: "khong"

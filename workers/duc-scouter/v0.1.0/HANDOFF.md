@@ -1768,3 +1768,11 @@ riêng lẻ**, và nguy hiểm rơi vào ai dùng chúng trực tiếp mà khôn
 Bốn chặng đề xuất ở đầu `CHUOI-VIEC.md`, **không chặng nào cần method Bridge mới**. Được đánh
 dấu **ĐỀ XUẤT, chưa phải luật** — chờ Đức chốt đúng một câu: làm `S1`–`S3` trước rồi ký `v1`,
 hay ký `v1` ngay và để chúng thành `v1.1`.
+
+## 2026-09-16f · Đức chốt: **sửa đường ghi trước, rồi mới ký `v1`**
+
+Chuỗi `S1`–`S4` nay là **chuỗi việc đang chạy**, không còn là đề xuất. Chạy một mạch `S1`→`S3`; còn **đúng một điểm dừng**, ở cuối: chữ ký của Đức.
+
+**Ba quyết định lấy trước để chuỗi không phải dừng hỏi:** ① không thêm method nào — từ vựng giữ **24** và **12**, cả hai là hợp đồng `deepEqual`. ② lệch thì **NÉM**, không trả về kèm một cờ buồn — phong bì thành công chở thất bại là thứ người gọi phải nhớ mà bóc. ③ ô nhập giàu (trang Udin dùng loại đó) không được làm `S1` dừng: **ba** trạng thái — khớp · lệch (ném) · không đọc được (khai thật).
+
+**Hai thứ KHÔNG làm:** đi tìm nguyên nhân `S-22` (Đức đã đóng, `T28`) · nới thời gian chờ khi đọc lại thấy lệch — `S-22` ghi rõ đó là **sai hoàn toàn hướng**.
