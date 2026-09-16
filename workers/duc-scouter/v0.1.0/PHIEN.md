@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "T29 XONG phan NANG LUC: scout.upload co that, chay that tren Chrome sach (dung ten, dung 54 byte, dung o selector chi). Phat hien ngoai tai lieu CDP: Chrome NHAN ca duong dan KHONG TON TAI va gan mot tep rong 0 byte ma khong bao loi — nen may chu phai statSync. NHUNG W8 VAN CHAN boi mot ly do MOI: trang Udin KHONG co input[type=file] nao, ca khi menu Add to canvas mo. Duong do an toan can Page.setInterceptFileChooserDialog — mot cau hoi nua cho Duc. T10 dong cung ngay."
-- human_action: "@Đức:chốt — W8 vap mot tien de moi (trang Udin khong co o chon tep). Doc muc W8 o docs/CAPABILITIES.md. Cau hoi: cho mo Page.setInterceptFileChooserDialog de DO an toan xem Udin mo cai gi khi bam Image, khong dung hop thoai len man hinh anh?"
+- next_step: "T29 XONG. Duc chot mo Page.setInterceptFileChooserDialog sau khi DO: no chay khong can Page.enable, khong can kenh su kien, va o nhan file nam lai trong DOM khi hop thoai bi chan. scout.upload nay co hai duong: selector (o co san) va mo_bang (nut phai bam de trang dung o ra — ca Udin). Duong mo_bang CHAN truoc BAM sau TAT trong finally. 181/181 dot bien. CON THIEU dung mot luot nap lai extension Udin de chay that W8. No moi S-31: goi Udin khong tu nap lai duoc, hom nay ton 3 luot bam cua Duc."
+- human_action: "@Đức:bấm — nap lai extension Udin MOT lan nua (lan cuoi cua viec nay). Sau do W8 chay tu dong hoan toan: lay anh Udin da tao, dua nguoc vao, xin style khac."

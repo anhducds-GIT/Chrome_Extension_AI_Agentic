@@ -126,8 +126,8 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "T29 XONG phan NANG LUC: scout.upload co that, chay that tren Chrome sach (dung ten, dung 54 byte, dung o selector chi). Phat hien ngoai tai lieu CDP: Chrome NHAN ca duong dan KHONG TON TAI va gan mot tep rong 0 byte ma khong bao loi — nen may chu phai statSync. NHUNG W8 VAN CHAN boi mot ly do MOI: trang Udin KHONG co input[type=file] nao, ca khi menu Add to canvas mo. Duong do an toan can Page.setInterceptFileChooserDialog — mot cau hoi nua cho Duc. T10 dong cung ngay.",
-      "human_action": "@Đức:chốt — W8 vap mot tien de moi (trang Udin khong co o chon tep). Doc muc W8 o docs/CAPABILITIES.md. Cau hoi: cho mo Page.setInterceptFileChooserDialog de DO an toan xem Udin mo cai gi khi bam Image, khong dung hop thoai len man hinh anh?",
+      "next_step": "T29 XONG. Duc chot mo Page.setInterceptFileChooserDialog sau khi DO: no chay khong can Page.enable, khong can kenh su kien, va o nhan file nam lai trong DOM khi hop thoai bi chan. scout.upload nay co hai duong: selector (o co san) va mo_bang (nut phai bam de trang dung o ra — ca Udin). Duong mo_bang CHAN truoc BAM sau TAT trong finally. 181/181 dot bien. CON THIEU dung mot luot nap lai extension Udin de chay that W8. No moi S-31: goi Udin khong tu nap lai duoc, hom nay ton 3 luot bam cua Duc.",
+      "human_action": "@Đức:bấm — nap lai extension Udin MOT lan nua (lan cuoi cua viec nay). Sau do W8 chay tu dong hoan toan: lay anh Udin da tao, dua nguoc vao, xin style khac.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": "2026-09-16",
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "scout.upload len day (12->13). Lop bao ve chay that: .., duong tuyet doi, C:x.txt deu bi MAY CHU chan, khong cai nao cham toi extension. CAN DUC NAP LAI extension Udin mot lan de lenh nay song tren day. W8 VAN CHAN: trang khong co input[type=file] nao.",
-      "human_action": "@Đức:bấm — nap lai extension Udin mot lan (goi nay co y khong co scout.reload). May chu Bridge da duoc khoi dong lai voi ma moi roi.",
+      "next_step": "scout.upload nay co them duong `mo_bang`: bam mot nut de trang dung o chon tep ra, CHAN hop thoai truoc nen no khong hien len man hinh Duc. Do la duong duy nhat chay duoc tren trang nay — o <input type=file> cua Udin duoc dung TAM roi xoa di. CHO MOT LUOT NAP LAI extension.",
+      "human_action": "@Đức:bấm — nap lai extension Udin mot lan nua, lan cuoi cua viec nay.",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "T29 XONG phan NANG LUC: scout.upload co that, chay that tren Chrome sach (dung ten, dung 54 byte, dung o selector chi). Phat hien ngoai tai lieu CDP: Chrome NHAN ca duong dan KHONG TON TAI va gan mot tep rong 0 byte ma khong bao loi — nen may chu phai statSync. NHUNG W8 VAN CHAN boi mot ly do MOI: trang Udin KHONG co input[type=file] nao, ca khi menu Add to canvas mo. Duong do an toan can Page.setInterceptFileChooserDialog — mot cau hoi nua cho Duc. T10 dong cung ngay.",
+      "title": "T29 XONG. Duc chot mo Page.setInterceptFileChooserDialog sau khi DO: no chay khong can Page.enable, khong can kenh su kien, va o nhan file nam lai trong DOM khi hop thoai bi chan. scout.upload nay co hai duong: selector (o co san) va mo_bang (nut phai bam de trang dung o ra — ca Udin). Duong mo_bang CHAN truoc BAM sau TAT trong finally. 181/181 dot bien. CON THIEU dung mot luot nap lai extension Udin de chay that W8. No moi S-31: goi Udin khong tu nap lai duoc, hom nay ton 3 luot bam cua Duc.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "scout.upload len day (12->13). Lop bao ve chay that: .., duong tuyet doi, C:x.txt deu bi MAY CHU chan, khong cai nao cham toi extension. CAN DUC NAP LAI extension Udin mot lan de lenh nay song tren day. W8 VAN CHAN: trang khong co input[type=file] nao.",
+      "title": "scout.upload nay co them duong `mo_bang`: bam mot nut de trang dung o chon tep ra, CHAN hop thoai truoc nen no khong hien len man hinh Duc. Do la duong duy nhat chay duoc tren trang nay — o <input type=file> cua Udin duoc dung TAM roi xoa di. CHO MOT LUOT NAP LAI extension.",
       "rank": 5,
       "claim": null
     }
