@@ -106,6 +106,10 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     ["scripts/scouter-probes.mjs", "scripts/scouter-probes.mjs"],
     ["scripts/scouter-actions-core.mjs", "scripts/scouter-actions-core.mjs"],
     ["scripts/scouter-seed-core.mjs", "scripts/scouter-seed-core.mjs"],
+    /* `tu-kiem-ghi.mjs` — phần PHÁN của đường ghi tự kiểm (`S1`/`S2`, 16/09). Nó sống ở đây vì
+     * `scouter-seed-core.mjs` import nó: một bản chép lệch ở tệp này nghĩa là hai gói phán khác
+     * nhau về cùng một lượt gõ, mà cả hai vẫn chạy được — đúng kiểu hỏng im lặng. */
+    ["scripts/tu-kiem-ghi.mjs", "scripts/tu-kiem-ghi.mjs"],
     ["scripts/scouter-transport-loopback.mjs", "scripts/scouter-transport-loopback.mjs"],
     ["scripts/scouter-journal-core.mjs", "scripts/scouter-journal-core.mjs"],
     ["bridge/file-core.mjs", "bridge/file-core.mjs"],

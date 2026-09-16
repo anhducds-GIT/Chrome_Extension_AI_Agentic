@@ -53,6 +53,15 @@ export const ERROR_DEFINITIONS = Object.freeze({
    * `WRITE_BLOCKED` nghĩa là CHƯA HỀ THỬ vì cái phanh đóng. Gộp hai mã lại thì người ở đầu dây
    * kia không phân biệt được "nút không bấm được" với "anh chưa mở khoá", và sẽ đi sửa nhầm chỗ. */
   WRITE_BLOCKED: { retryable: false, message: "The write path is closed; no input was dispatched." },
+  /* HAI MÃ CỦA ĐƯỜNG GHI TỰ KIỂM (`S1`/`S2`, 16/09). Chúng KHÁC `ACTION_FAILED` ở chỗ quan
+   * trọng nhất: sự kiện ĐÃ bắn đi, lệnh ĐÃ chạy trọn — thứ thiếu là **bằng chứng trang đã
+   * nhận**. Gộp vào `ACTION_FAILED` thì người gọi đi tìm lỗi ở lệnh, trong khi lệnh không hỏng.
+   *
+   * `retryable: false` là cố ý, và đây là chỗ dễ làm sai nhất: gõ lại một ô KHÔNG tự xoá chữ
+   * cũ nghĩa là **gõ hai lần** vào ô đó. Một mã "thử lại được" ở đây sẽ sinh ra đúng cái hỏng
+   * mà `S-16` đã ghi. Thử lại là quyết định của người gọi, sau khi họ nhìn lại trang. */
+  WRITE_NOT_OBSERVED: { retryable: false, message: "Keys were dispatched but the field never showed them." },
+  CLICK_NOT_OBSERVED: { retryable: false, message: "The click was dispatched but the expected change never happened." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The extension could not complete the request." }
 });
@@ -108,9 +117,22 @@ function requiredTargetId(value) {
   return value;
 }
 
+/* Trần chờ SAU một cú bấm (`S2`). 20.000ms chứ không phải 30.000 của `scout.wait`, và con số
+ * này có ràng buộc số học: `deadline_ms` của `scout.click` là 34.000, còn lượt bấm (cuộn vào
+ * tầm nhìn, đo hộp, hỏi-điểm, ba khung chuột) đã ăn một phần. Cho phép chờ kịch 30.000 là mở
+ * lại đúng `S-16`: máy chủ bỏ cuộc trước, extension vẫn đang chờ, và hai đầu tin hai chuyện. */
+const MAX_CHO_SAU_BAM_MS = 20000;
+
 function requiredSelector(value) {
-  if (typeof value !== "string" || value.trim() === "") invalidParams("params.selector", "expected a non-empty string");
-  if (value.length > 1024) invalidParams("params.selector", "expected at most 1024 characters");
+  return selectorTai(value, "params.selector");
+}
+
+/* Cùng luật selector, nhưng NÓI ĐÚNG TÊN TRƯỜNG đang sai. `scout.click` nay có HAI selector
+ * (`selector` và `wait_for`), và một câu lỗi luôn trỏ vào `params.selector` sẽ bắt người gọi
+ * đi sửa đúng cái trường đang đúng. */
+function selectorTai(value, duong) {
+  if (typeof value !== "string" || value.trim() === "") invalidParams(duong, "expected a non-empty string");
+  if (value.length > 1024) invalidParams(duong, "expected at most 1024 characters");
   /* Không kiểm cú pháp CSS ở đây: engine CSS của Chrome là trọng tài duy nhất đúng, và
    * `scouter-probes.mjs` đã trả `SELECTOR_INVALID` cho selector sai. Selector đi làm THAM SỐ
    * giao thức, không bao giờ đi qua một parser JavaScript nào — xem khối "SELECTOR ĐI ĐƯỜNG
@@ -370,16 +392,36 @@ const METHOD_ENTRIES = [
    * `tests/scouter-bridge-smoke.mjs` so TỪNG method với ngưỡng đọc thẳng từ lõi máy chủ, nên
    * mục này không tái phát bằng một lượt gõ tay nữa. */
   registryEntry({
-    name: "scout.click", read_only: false, deadline_ms: 30000,
-    description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller. Optional button (left|right|middle) and click_count (1..3) for right-click and double-click; omitting both behaves exactly as before.",
-    params_schema: { target_id: "string", selector: "string", button: "left|right|middle?", click_count: "integer:1..3?" },
+    name: "scout.click", read_only: false, deadline_ms: 34000,
+    description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller. A click leaves no universal trace, so by itself this returns da_kiem:false and says so: it proves the event was dispatched, NOT that the page reacted. Pass wait_for (a selector that must appear, or disappear with wait_state:absent) to make it verifiable — then it fails with CLICK_NOT_OBSERVED instead of quietly succeeding. Optional button (left|right|middle) and click_count (1..3) for right-click and double-click; omitting all of them behaves exactly as before.",
+    params_schema: {
+      target_id: "string", selector: "string", button: "left|right|middle?", click_count: "integer:1..3?",
+      wait_for: "string?", wait_state: "present|absent?", wait_timeout_ms: "integer:100..20000?"
+    },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "selector", "button", "click_count"]);
+      const params = objectParams(raw, ["target_id", "selector", "button", "click_count",
+        "wait_for", "wait_state", "wait_timeout_ms"]);
+      /* `wait_state` CỐ Ý không nhận `usable`, dù `scout.wait` có nó. Ở đây ta hỏi *"cú bấm có
+       * làm trang đổi không"*, và `usable` trả lời một câu khác — *"cái đó có bấm được không"*.
+       * Nhận nó vào là mời người gọi kiểm một thứ rồi tưởng mình đã kiểm thứ kia. */
+      if (params.wait_state !== undefined && params.wait_state !== null
+        && params.wait_state !== "present" && params.wait_state !== "absent") {
+        invalidParams("params.wait_state", "expected present or absent");
+      }
+      if ((params.wait_state !== undefined && params.wait_state !== null
+        || params.wait_timeout_ms !== undefined && params.wait_timeout_ms !== null)
+        && (params.wait_for === undefined || params.wait_for === null)) {
+        invalidParams("params.wait_for", "required when wait_state or wait_timeout_ms is given");
+      }
       return {
         target_id: requiredTargetId(params.target_id),
         selector: requiredSelector(params.selector),
         button: optionalMouseButton(params.button),
-        click_count: optionalInt(params.click_count, "params.click_count", 1, 3)
+        click_count: optionalInt(params.click_count, "params.click_count", 1, 3),
+        wait_for: params.wait_for === undefined || params.wait_for === null
+          ? undefined : selectorTai(params.wait_for, "params.wait_for"),
+        wait_state: params.wait_state ?? undefined,
+        wait_timeout_ms: optionalInt(params.wait_timeout_ms, "params.wait_timeout_ms", 100, MAX_CHO_SAU_BAM_MS)
       };
     }
   }),
@@ -388,7 +430,7 @@ const METHOD_ENTRIES = [
    * chúng, vì cả hai chỉ hứa *"đã bắn sự kiện"*. */
   registryEntry({
     name: "scout.type", read_only: false, deadline_ms: 34000,
-    description: "Type a string into one element with the browser's real keyboard, one key at a time. Refuses control characters: Enter and Tab go through scout.key. Does not clear the field first.",
+    description: "Type a string into one element with the browser's real keyboard, one key at a time, then READ THE FIELD BACK and refuse to call it done if the text is not there. Refuses control characters: Enter and Tab go through scout.key. Does not clear the field first. Three outcomes, never two: da_kiem:true when the read-back shows the text arrived; WRITE_NOT_OBSERVED when it does not; da_kiem:false with a sentence when the field cannot be read back at all (a password field masks its value, the accessibility value was truncated, the element vanished). Do NOT retry on WRITE_NOT_OBSERVED without looking at the page: this command does not clear the field, so a blind retry types the text twice.",
     params_schema: { target_id: "string", selector: "string", text: "string" },
     params_validator: (raw) => {
       const params = objectParams(raw, ["target_id", "selector", "text"]);

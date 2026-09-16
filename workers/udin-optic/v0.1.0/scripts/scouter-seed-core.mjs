@@ -18,6 +18,16 @@
  * hai thì không con đột biến nào canh.
  */
 
+/* Phần THUẦN LOGIC của đường ghi tự kiểm (`S1`, `S2`). File này chỉ đi LẤY hai bản đọc rồi
+ * đưa sang đó phán — chỗ phán không biết `chrome`, nên nó ghim được mà không cần trình duyệt. */
+import { xetDocLai, CAU_BAM_KHONG_KIEM, MA_KHONG_QUAN_SAT } from "./tu-kiem-ghi.mjs";
+
+/* Trần nút khi kéo cây trợ năng để ĐỌC LẠI — đặt kịch trần của lõi đọc (`MAX_AX_NODES`), cố ý.
+ * Trần mặc định 400 nút là con số hợp lý cho một người ĐANG ĐỌC trang; ở đây ta không đọc
+ * trang, ta đi tìm ĐÚNG MỘT nút đã biết số. Cắt sớm thì nút của ta rơi ra ngoài và lượt gõ bị
+ * khai *"không đọc được"* — một câu trả lời sai vì lý do hành chính. */
+const MAX_AX_DOC_LAI = 1500;
+
 /* Bốn phép dò, ánh xạ từ tên method Bridge sang tên phép dò của lõi. Bảng này CỐ Ý là dữ
  * liệu, không phải chuỗi ghép: không có đường nào để một tên từ ngoài dây trở thành tên phép
  * dò. Người gọi chọn được method nào có trong bảng, hết. */
@@ -316,6 +326,79 @@ export function createSeedHandlers(deps = {}) {
     return { probe: name, data: result.data, cdp: result.cdp || [] };
   }
 
+  /* ---- `S1` · ĐỌC LẠI Ô NHẬP, bằng ĐÚNG đường đọc đã có --------------------
+   *
+   * ═══ PHÉP ĐO 16/09, và nó ĐẢO NGƯỢC điều ai cũng tưởng ═══
+   * Gõ `"xin chao 123"` vào bốn loại ô rồi đọc lại, trên Chrome thật:
+   *
+   *   | ô                        | `dom.text` | giá trị trợ năng |
+   *   |--------------------------|------------|------------------|
+   *   | `<input type="text">`    | `""`       | `"xin chao 123"` |
+   *   | `<textarea>`             | `""`       | `"xin chao 123"` |
+   *   | `<div contenteditable>`  | `"xin chao 123"` | `"xin chao 123"` |
+   *   | `<input type="password">`| `""`       | `"••••••••••••"` |
+   *
+   * Tức `dom.text` — đường mà kế hoạch gọi tên — đọc lại được ĐÚNG ô giàu (contenteditable),
+   * và KHÔNG đọc được ô nhập thường. Lý do không phải một khuyết tật: `<input>` giữ chữ ở
+   * **thuộc tính đối tượng**, không phải ở nút con, nên `DOM.describeNode` không thấy gì; còn
+   * `contenteditable` thì chữ NẰM THẬT trong cây. Đó là một sự thật của DOM, không phải mẹo —
+   * nên `chonCachDoc` bên dưới chọn đường theo TÊN THẺ, không đoán.
+   *
+   * Hệ quả cho Udin: ô prompt của Udin là `contenteditable`, nên nó đi đường RẺ và KHÔNG bao
+   * giờ phải kéo cả cây trợ năng.
+   *
+   * ═══ KHÔNG MỞ THÊM MỘT CỬA CDP NÀO ═══
+   * Cả hai đường đều là phép dò ĐANG CÓ (`dom.query`, `dom.text`, `a11y.tree`). Đường hiển
+   * nhiên hơn — `Accessibility.getPartialAXTree` cho ĐÚNG MỘT nút — sẽ rẻ hơn hẳn, nhưng nó
+   * là một method CDP MỚI, tức đổi luật an toàn, tức phải hỏi Đức. Chưa hỏi thì chưa mở.
+   *
+   * ═══ LƯỢT ĐỌC LẠI KHÔNG TIÊU TRẦN GHI ═══
+   * Nó đi qua `runProbe`, không qua `runAction`. Bắt người gọi trả thêm hạn mức ghi cho một
+   * lượt ĐỌC mà chính máy tự thêm vào là đổi giá một lệnh sau lưng họ. */
+  const THE_GIU_CHU_RIENG = Object.freeze(["INPUT", "TEXTAREA"]);
+
+  async function nhanDangO(target, selector) {
+    try {
+      const kq = await runProbe("scout.query", target, { selector, limit: 1, offset: 0 });
+      const mot = (kq.data?.items || [])[0];
+      if (kq.data?.matchCount !== 1 || !mot) return null;
+      return { the: String(mot.nodeName || "").toUpperCase(), backendNodeId: mot.backendNodeId ?? null };
+    } catch (_error) {
+      /* Không nhận dạng được ô thì lượt gõ VẪN CHẠY, chỉ là không có bằng chứng. Ném ở đây là
+       * để một lượt ĐỌC hỏng giết một lượt GHI hoàn toàn hợp lệ. */
+      return null;
+    }
+  }
+
+  /** Bản đọc một ô: `{ docDuoc, gia, cat }` — đúng hình dạng `xetDocLai` chờ. */
+  async function docO(target, selector, cach, backendNodeId) {
+    /* KHÔNG NHẬN DẠNG ĐƯỢC PHẦN TỬ thì KHÔNG ĐỌC. `backendNodeId` chỉ có khi `dom.query` khớp
+     * ĐÚNG MỘT phần tử; thiếu nó nghĩa là ta không biết mình sắp đọc cái gì, và một bản đọc
+     * không biết của ai thì không chứng minh được gì. Khai "không đọc được" — đó là sự thật. */
+    if (backendNodeId === null || backendNodeId === undefined) return { docDuoc: false, gia: "", cat: false };
+    try {
+      if (cach === "dom.text") {
+        const kq = await runProbe("scout.text", target, { selector });
+        return { docDuoc: true, gia: kq.data?.text ?? "", cat: kq.data?.truncated === true };
+      }
+      /* Đường trợ năng: kéo cây rồi tìm ĐÚNG nút của mình bằng `backendNodeId`. Đối chiếu theo
+       * TÊN là đoán — hai ô cùng nhãn trên một trang là chuyện thường. */
+      const kq = await runProbe("scout.a11y", target, { limit: MAX_AX_DOC_LAI });
+      const nut = (kq.data?.nodes || []).find((n) => n.backend_node_id === backendNodeId);
+      if (!nut) return { docDuoc: false, gia: "", cat: false };
+      /* `cat`: giá trị trợ năng có trần riêng (`MAX_ATTR_LENGTH` bên lõi đọc) và nó gắn `…` ở
+       * cuối khi đã cắt. Cây bị cắt bớt NÚT thì cũng tính là cụt — nút của ta có thể còn đây
+       * nhưng ta không có quyền coi bản đọc ấy là đầy đủ. */
+      return {
+        docDuoc: true,
+        gia: nut.value ?? "",
+        cat: String(nut.value ?? "").endsWith("…") || kq.data?.truncated === true
+      };
+    } catch (_error) {
+      return { docDuoc: false, gia: "", cat: false };
+    }
+  }
+
   async function lastReloadAt() {
     try {
       const stored = await chromeApi.storage.local.get([RELOAD_STORAGE_KEY]);
@@ -416,11 +499,45 @@ export function createSeedHandlers(deps = {}) {
       return await runAction("scout.navigate", target, { url: params.url, timeout_ms: params.timeout_ms });
     },
 
+    /* `scout.click` — KHAI THẬT, và kiểm được KHI NGƯỜI GỌI ĐƯA MỐC (`S2`, 16/09).
+     *
+     * Một cú bấm KHÔNG có dấu vết chung nào để đọc lại: nó có thể mở một menu, gửi một biểu
+     * mẫu, đổi một cái ô, hoặc không làm gì cả — và cả bốn trông giống hệt nhau từ phía ngoài.
+     * Nên câu trả lời đúng là NÓI RA điều đó, không phải giả vờ có bằng chứng.
+     *
+     * `wait_for` biến nó thành kiểm được: người gọi biết trang, họ nói *"bấm xong thì cái này
+     * phải hiện ra"* (hoặc `wait_state: "absent"` — phải biến mất), và lúc đó cú bấm có một
+     * mốc để đối chiếu. Không hiện → **ĐỎ**, không phải một cái cờ buồn trong phong bì đạt.
+     *
+     * VÌ SAO LÀ THAM SỐ CHỨ KHÔNG PHẢI MỘT LỆNH MỚI: từ vựng là hợp đồng `deepEqual` ở cả hai
+     * gói, và một `scout.clickAndWait` là chép ba cái chốt của lượt bấm sang chỗ thứ hai —
+     * chỗ thứ hai là chỗ người ta quên cập nhật. Cùng lý lẽ với `button`/`click_count` (14/09).
+     *
+     * Không khai `wait_for` thì cư xử Y HỆT như trước, chỉ thêm một lời khai thật trong kết quả. */
     async "scout.click"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runAction("scout.click", target, {
+      const ra = await runAction("scout.click", target, {
         selector: params.selector, button: params.button, click_count: params.click_count
       });
+      if (params.wait_for === undefined || params.wait_for === null) {
+        return { ...ra, da_kiem: false, kiem_bang: null, kiem_noi: CAU_BAM_KHONG_KIEM };
+      }
+      const trangThai = params.wait_state === undefined || params.wait_state === null ? "present" : params.wait_state;
+      const cho = await runProbe("scout.wait", target, {
+        selector: params.wait_for, state: trangThai, timeoutMs: params.wait_timeout_ms
+      });
+      if (cho.data?.satisfied !== true) {
+        throw new BridgeProtocolError("CLICK_NOT_OBSERVED",
+          `Đã bấm, nhưng sau ${cho.data?.waitedMs ?? "?"}ms mà '${params.wait_for}' vẫn chưa ` +
+          `${trangThai === "absent" ? "biến mất" : "xuất hiện"} (khớp ${cho.data?.matchCount ?? "?"} phần tử). ` +
+          "Cú bấm có thể đã trúng một lớp phủ, hoặc trang không phản ứng như người gọi tưởng.",
+          { action: "input.click", wait_for: params.wait_for, wait_state: trangThai });
+      }
+      return {
+        ...ra, da_kiem: true, kiem_bang: "dom.wait",
+        kiem_noi: `Bấm xong thì '${params.wait_for}' đã ${trangThai === "absent" ? "biến mất" : "xuất hiện"} ` +
+          `sau ${cho.data?.waitedMs ?? "?"}ms — trang có phản ứng.`
+      };
     },
 
     /* Ba lệnh "đi lại" ([ADR-0007]). Cả ba đi qua `runAction`, nên cả ba chui qua cái phanh và
@@ -442,9 +559,34 @@ export function createSeedHandlers(deps = {}) {
       });
     },
 
+    /* `scout.type` — GÕ RỒI ĐỌC LẠI (`S1`, 16/09). Trước hôm nay nó trả `typed: text.length`,
+     * tức **số phím nó GỬI ĐI**, và báo ĐẠT cho một việc có thể chưa xảy ra. Nay nó đi tìm
+     * bằng chứng trên trang, và ba câu trả lời chứ không phải hai — xem `tu-kiem-ghi.mjs`.
+     *
+     * THỨ TỰ QUAN TRỌNG: bản đọc TRƯỚC phải lấy trước lượt gõ. Không có nó thì chỉ còn phép
+     * "có chứa", và "có chứa" ĐẠT cả khi chữ ấy vốn đã nằm sẵn trong ô. */
     async "scout.type"(params) {
       const target = await resolveTarget(params.target_id);
-      return await runAction("scout.type", target, { selector: params.selector, text: params.text });
+      const o = await nhanDangO(target, params.selector);
+      const cach = o && THE_GIU_CHU_RIENG.includes(o.the) ? "a11y" : "dom.text";
+      const nut = o ? o.backendNodeId : null;
+      const truoc = await docO(target, params.selector, cach, nut);
+
+      const ra = await runAction("scout.type", target, { selector: params.selector, text: params.text });
+
+      const sau = await docO(target, params.selector, cach, nut);
+      /* `xetDocLai` NÉM ở nhánh lệch. Bọc lại thành lỗi Bridge để người ở đầu dây kia nhận đúng
+       * một mã có tên, thay vì một lỗi không thuộc từ vựng nào. */
+      let phan;
+      try {
+        phan = xetDocLai({ daGo: params.text, truoc, sau, cach });
+      } catch (error) {
+        if (error?.code === MA_KHONG_QUAN_SAT) {
+          throw new BridgeProtocolError(MA_KHONG_QUAN_SAT, error.message, { action: "input.type" });
+        }
+        throw error;
+      }
+      return { ...ra, ...phan };
     },
 
     async "scout.key"(params) {
