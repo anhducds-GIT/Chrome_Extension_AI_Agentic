@@ -201,4 +201,46 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     "background.js và bridge-core.mjs đang khai HAI tên seed khác nhau — một ghế hai tên thì `bridge.sessions` mất nghĩa");
 }
 
-console.log("  · be-mat-hep: 7 khối xanh");
+/* ---- ⑻ MÃ LỖI VƯỢT BIÊN: `tu-kiem-ghi.mjs` NÉM, gói này phải BIẾT --------
+ * Khối này ra đời từ một lỗ thật, 16/09. `tu-kiem-ghi.mjs` là tệp CHÉP TỪNG BYTE, nên khi
+ * `S-27` thêm mã `CLEAR_NOT_OBSERVED` vào nó, bản chép sang đây có ngay. Nhưng
+ * `bridge-core.mjs` của gói này **CỐ Ý KHÁC** — nó không nằm trong bảng `CẶP`, nên không phép
+ * so byte nào chạm tới nó, và nó **không được khai mã mới**. Suite vẫn xanh trọn vẹn.
+ *
+ * Hậu quả: lượt xoá nào thất bại trên gói này sẽ dựng `BridgeProtocolError("CLEAR_NOT_OBSERVED")`,
+ * mà chỗ dựng TỪ CHỐI mã lạ — nên nó ném `TypeError` thay vì trả một mã có tên. Hỏng to tiếng
+ * chứ không hỏng im lặng, nhưng vẫn hỏng, và **chỉ hỏng ở đúng nhánh thất bại** — nhánh mà
+ * không lượt chạy bình thường nào đi qua.
+ *
+ * Đây là cái giá của *“chép thì ghim, khác thì không”*: một mã lỗi sống ở tệp CHÉP nhưng phải
+ * được khai ở tệp KHÁC. Không bảng `CẶP` nào bắc qua khe ấy — nên khối này bắc. */
+{
+  const tk = await import("../scripts/tu-kiem-ghi.mjs");
+  const core = await import("../scripts/bridge-core.mjs");
+
+  /* Lấy mọi hằng số mã lỗi mà phần phán dùng chung EXPORT ra. Đọc từ `tu-kiem-ghi.mjs` chứ
+   * KHÔNG gõ lại danh sách ở đây: gõ lại là dựng bản thứ hai của cùng một sự thật, và bản thứ
+   * hai thì lần sau thêm mã mới sẽ lại không ai sửa — đúng con đường vừa đẻ ra cái lỗ này. */
+  const maVuotBien = Object.entries(tk)
+    .filter(([ten, gia]) => ten.startsWith("MA_") && typeof gia === "string")
+    .map(([ten, gia]) => [ten, gia]);
+
+  assert.ok(maVuotBien.length >= 2,
+    `phần phán dùng chung phải export ít nhất hai hằng số MA_* — thấy ${maVuotBien.length}. ` +
+    "Khớp 0 nghĩa là khối này đang canh hư không, KHÔNG phải mọi thứ đều ổn");
+
+  for (const [ten, ma] of maVuotBien) {
+    assert.ok(Object.hasOwn(core.ERROR_DEFINITIONS, ma),
+      `\`tu-kiem-ghi.mjs\` ném \`${ma}\` (${ten}) mà \`bridge-core.mjs\` của gói này KHÔNG khai nó. ` +
+      "Tệp phán là bản chép từng byte nên nó tự có mã mới; `bridge-core.mjs` thì CỐ Ý khác nên " +
+      "không bảng CẶP nào nhắc. Khai mã vào `ERROR_DEFINITIONS`, đừng sửa khối này.");
+
+    /* Và khai suông chưa đủ — thử dựng thật, vì đó mới là thứ chạy lúc thất bại. */
+    assert.doesNotThrow(() => new core.BridgeProtocolError(ma, "thu dung"),
+      `dựng \`BridgeProtocolError("${ma}")\` vẫn ném — mã đã khai nhưng khai hỏng`);
+    assert.equal(core.ERROR_DEFINITIONS[ma].retryable, false,
+      `\`${ma}\` phải là KHÔNG thử lại được: lượt thử lại bắn đúng thao tác vừa thất bại`);
+  }
+}
+
+console.log("  · be-mat-hep: 8 khối xanh");

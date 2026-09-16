@@ -61,11 +61,25 @@
   · **đóng khi:** `scout.clear` trả `da_kiem` theo cùng ba trạng thái của `S1`, một con đột
   biến *“bỏ lượt đọc lại”* bị giết, và mục *KHÔNG hứa gì* của `ADR-0008` bớt đi dòng ấy.~~
 
-- **S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**, chứ không
-  chờ xác nhận khung đã rời socket. Muốn chắc thì transport phải có móc "đã gửi xong".
+- ~~**S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**~~ —
+  **ĐÓNG 16/09 bằng vế thứ hai của chính điều kiện đóng.**
+
+  **Số đo, trên extension THẬT qua Bridge THẬT (ghế `Dummy_Scout`, 16/09):** **7 lượt reload,
+  0 lượt mất phản hồi.** Khứ hồi trọn vẹn của lượt gọi: **11,1 / 13,3 / 17,1 ms** (nhỏ nhất /
+  giữa / lớn nhất) trên một trần **250 ms** — **biên 15 lần** tính theo lượt chậm nhất.
+
+  **Vì sao con số ấy đủ, dù nó chỉ là 7 lượt.** Khứ hồi là một **chặn TRÊN** của thời gian
+  "khung đã rời socket": nó đã gồm cả chặng máy chủ xử lý và chặng quay về tới người gọi, mà
+  thứ cuộc đua thật sự cần chỉ là chặng đầu. Và cái hẹn 250 ms là `setTimeout`, nên nó **không
+  thể** nổ trước khi công việc hiện tại chạy xong — lượt gửi luôn được PHÁT ĐI trước, câu hỏi
+  chỉ còn là đã xả xong chưa.
+
+  **Điều nó KHÔNG chứng minh, ghi thẳng ra:** 7 lượt trên một máy, một vòng loopback, lúc máy
+  rảnh. Nó không nói móc *"đã gửi xong"* là vô dụng; nó nói **đừng xây móc ấy trước khi có một
+  lượt hỏng thật** — và nếu có, đây là con số để so.
   **[ĐỌC]** `RELOAD_DELAY_MS` trong `scripts/scouter-seed-core.mjs`.
   · **đóng khi:** có một lượt reload thật bị mất phản hồi (thì làm móc), hoặc chạy đủ nhiều lượt
-  mà không mất lần nào (thì đóng bằng một dòng ghi số lượt đã đo).
+  mà không mất lần nào (thì đóng bằng một dòng ghi số lượt đã đo). **← vế sau, 16/09.**
 
 ## ĐÓNG · S-01 (2026-09-07, `claude-scouter-s01`) — Scouter bấm và gõ như tay người
 
@@ -581,7 +595,23 @@ mà là treo RỒI NÓI SAI NGUYÊN NHÂN.
 
 Ghim: `scouter-actions-smoke.mjs` khối ⑨b (năm ca). Đột biến `HN1..HN4`, giết được cả bốn.
 
-## MỞ · S-20 (2026-09-12, `claude-scouter-udine`) — không NGHE được mạng trong lúc BẤM trên cùng một tab
+## ĐÓNG · S-20 (2026-09-12 → 16/09, `claude-scouter-udine`) — không NGHE được mạng trong lúc BẤM trên cùng một tab
+
+**Đóng bằng vế thứ hai của chính điều kiện đóng: *chấp nhận giới hạn và ghi thẳng vào `README.md`*.**
+Mục *“Thứ Scouter KHÔNG nghe được”* trong `README.md` là chỗ nó được ghi.
+
+**Và nó đóng bằng một PHÉP ĐẾM, không bằng một sở thích.** `T6` treo từ 12/09 với điều kiện *“T7
+cho biết có thật cần không”*. Đếm 16/09: **không một adapter, pilot hay việc nào gọi
+`scout.network`** — mọi chỗ khớp trong repo đều là chính nơi định nghĩa nó. `T7` khép 14/09 mà
+không cần; `T21` tách gói xong mà không cần; bảy `W` ĐẠT mà không cần; và `udin-optic` **cắt hẳn**
+lệnh này khỏi 12 method của nó. Xây đường ⒜ lúc này là mở `Network.enable` vào lõi GHI cho một
+nhu cầu **chưa ai có** — đúng thứ `ROADMAP` mục ④ cấm.
+
+**Mở lại khi nào:** có một việc thật cần nghe lưu lượng do chính lượt bấm gây ra. Lúc ấy đường ⒜
+đã cân sẵn ở `CHUOI-VIEC.md` mục `T6`, và **phép đếm ở trên là chỗ bắt đầu** — đếm lại số chỗ gọi
+trước khi mở, đừng mở theo trí nhớ.
+
+<!-- nguyên văn lời khai lúc mở, giữ để đối chiếu -->
 
 `runProbe` và `runAction` đều gắn-rồi-nhả debugger, và đó là chốt tốt (dải băng vàng chỉ hiện
 đúng lúc làm việc). Hệ quả không lường trước: `scout.network` giữ debugger suốt cửa sổ nghe, nên
@@ -594,6 +624,7 @@ lượt gọi quan trọng nhất — cái bắn ra ngay lúc bấm — đã đi
 · **đóng khi:** hoặc `scout.network` nhận một tham số "làm việc này trước rồi nghe" để một lượt
 gọi làm cả hai dưới một lần gắn, hoặc gói chấp nhận giới hạn và ghi thẳng nó vào `README.md`.
 **Đừng chữa bằng cách bỏ gắn-rồi-nhả** — đó là nới một lớp bảo vệ để lấy tiện lợi.
+· **đã đóng 16/09 bằng vế thứ hai** — xem khối ở đầu mục này.
 
 ## MỞ · S-21 (2026-09-12, `claude-scouter-udine`) — một target thỉnh thoảng KHÔNG trả lời được câu hỏi hình học
 

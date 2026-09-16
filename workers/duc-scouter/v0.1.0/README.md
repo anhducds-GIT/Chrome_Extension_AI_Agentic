@@ -192,6 +192,42 @@ chúng là **cây trợ năng**. Ô `contenteditable` thì ngược lại: chữ
 **Từ vựng KHÔNG đổi:** vẫn 24 method. `wait_for` là một **tham số** của `scout.click`, không phải
 một lệnh mới — và không lượt gọi cũ nào phải sửa.
 
+**`scout.clear` cũng tự kiểm, từ 16/09** (`S-27`) — nó đọc lại ô và **ĐỎ**
+(`CLEAR_NOT_OBSERVED`) khi ô còn chữ. Hai chỗ nó **cố ý** khác `scout.type`, và cả hai đều từ
+phép đo chứ không từ tiện tay:
+
+- **Ô che nội dung (kiểu mật khẩu) KIỂM ĐƯỢC ở đây.** Ô ấy chỉ mù một chiều: nó không cho đối
+  chiếu *“chữ vừa gõ có tới không”*, nhưng trả lời rất rõ *“ô còn chữ không”* — thấy dấu che tức
+  là **còn chữ**, mà xoá sạch rồi thì nó đọc ra chuỗi rỗng y như mọi ô khác.
+- **Bản đọc bị cắt ở trần cũng là một câu trả lời**, không phải một ô mù: cắt nghĩa là ô **có
+  chữ**, tức chưa sạch.
+
+Đọc `kiem_noi` cả khi ĐẠT: nó nói ô có thật sự chứa gì trước đó không. Xoá một ô **vốn đã rỗng**
+thì trạng thái đích vẫn đạt, nhưng lượt ấy **không** chứng minh hai phím đã tới trang.
+
+## Thứ Scouter KHÔNG nghe được: lưu lượng do CHÍNH NÓ gây ra
+
+**`scout.network` không nghe được lượt gọi mạng mà chính `scout.click` vừa bắn ra**, và đây là
+một **giới hạn đã chốt** (`S-20` / `T6`, 16/09), không phải một lỗi đang chờ vá.
+
+Lý do nằm ở một chốt tốt: `runProbe` và `runAction` **gắn rồi nhả** debugger quanh từng lượt gọi,
+nên dải băng vàng *“đang gỡ lỗi”* chỉ hiện đúng lúc làm việc. Nhưng `scout.network` phải **giữ**
+debugger suốt cửa sổ nghe, nên một lượt `scout.click` trên **cùng tab** trong lúc đó bị từ chối
+`TARGET_ALREADY_ATTACHED`. Bấm xong rồi mới nghe thì lượt gọi đáng giá nhất đã đi mất — đo 12/09:
+bấm rồi nghe 25 giây thu về **0 lượt**, trong khi cùng cái tai ấy nghe một lượt tải trang thu về
+**30 lượt**.
+
+**Vì sao chốt là chấp nhận, chứ không phải chữa:** đếm ngày 16/09, **không một adapter, pilot hay
+việc nào trong repo gọi `scout.network`** — mọi chỗ khớp đều là chính nơi định nghĩa nó. Cả vòng
+tự cải tiến (`T7`), cả lượt tách `udin-optic` thành gói riêng, cả bảy workflow `W` đã ĐẠT đều
+xong mà chưa lần nào cần tới nó. Gói `udin-optic` còn **cắt hẳn** lệnh này khỏi dây của mình.
+
+Đường chữa có thật và đã cân: cho `scout.click` một tham số *“bấm rồi nghe, dưới một lần gắn”*.
+Nó bắt phải khai `Network.enable` vào danh sách method CDP của **lõi GHI** — tức nới bề mặt an
+toàn cho một nhu cầu **chưa ai có**. Mở khi có việc thật cần, và lúc đó con số ở trên là chỗ bắt
+đầu. **Đừng chữa bằng cách bỏ gắn-rồi-nhả** — đó là nới một lớp bảo vệ để lấy tiện lợi, và dải
+băng vàng sẽ đứng mãi trên tab của Đức.
+
 ## Tự kiểm
 
 ```bash

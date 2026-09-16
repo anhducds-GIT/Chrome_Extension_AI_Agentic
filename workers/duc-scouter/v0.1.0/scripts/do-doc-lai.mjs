@@ -53,6 +53,7 @@ const TRANG = `<!doctype html><meta charset="utf-8"><title>do doc lai</title>
 <textarea id="b" aria-label="o textarea"></textarea>
 <div id="c" contenteditable="true" role="textbox" aria-label="o giau" style="border:1px solid"></div>
 <input id="d" type="password" aria-label="o mat khau">
+<input id="e" type="text" readonly value="khong ai xoa duoc chu nay" aria-label="o chi doc">
 `;
 
 /* Điều CHỜ ĐỢI ở từng ô. Khai ở đây, cạnh trang thử, để ai đọc báo cáo biết ngay chỗ nào là
@@ -65,7 +66,15 @@ const CHO_DOI = [
    * `xetDocLai` không đối chiếu được (dấu che) → `da_kiem: false`; `xetXoaSach` thì đối chiếu
    * được, vì sau khi xoá ô ấy đọc ra `""` y như mọi ô khác → `da_kiem: true`. Một dòng bảng
    * khai cả hai kỳ vọng thì không ai chép nhầm kỳ vọng của lệnh này sang lệnh kia. */
-  { sel: "#d", ten: "<input type=password>", cach: "a11y", daKiem: false, vi: /che nội dung/, xoaKiem: true }
+  { sel: "#d", ten: "<input type=password>", cach: "a11y", daKiem: false, vi: /che nội dung/, xoaKiem: true },
+  /* Ô CHỈ-ĐỌC — hàng DUY NHẤT ở đây chờ một nhánh ĐỎ, và nó có mặt vì ba hàng trên không
+   * chứng minh được gì về nhánh ấy. Bốn hàng kia đều là ô ghi được, nên cả hai lệnh đều ĐẠT
+   * và một bản `xetXoaSach` **luôn trả `da_kiem: true`** sẽ xanh trọn vẹn qua cả bốn. Trên
+   * Chrome thật, `Ctrl+A` rồi `Delete` bắn vào ô `readonly` chạy trọn mà không xoá được gì —
+   * tức đúng hình dạng mà `S-27` sinh ra để bắt. Lượt GÕ vào ô này cũng lệch, nên nó là hàng
+   * duy nhất chờ `WRITE_NOT_OBSERVED` luôn: một trang thử mà mọi ô đều ngoan thì nó chỉ ghim
+   * được một nửa số nhánh. */
+  { sel: "#e", ten: "<input readonly>", cach: "a11y", daKiem: null, nemGo: MA_KHONG_QUAN_SAT, xoaKiem: null, chonemXoa: MA_XOA_KHONG_SACH }
 ];
 
 function timChrome() {
@@ -207,20 +216,34 @@ export function ketLuan(tho) {
   const loi = [];
   for (const d of tho.dong) {
     if (!d.goOk) { loi.push(`${d.ten}: lượt gõ không chạy được`); continue; }
-    if (d.nem) {
+    /* Hàng nào KHAI SẴN là phải ném thì lượt ném là ĐẠT, còn KHÔNG ném mới là lỗi. Viết theo
+     * chiều này chứ không thêm một ngoại lệ cho `#e`: một bảng kỳ vọng mà có ô "trừ hàng này
+     * ra" thì hàng ấy thôi được canh. */
+    if (d.nemGo) {
+      if (!d.nem) loi.push(`${d.ten}: lượt gõ PHẢI bị phán lệch (${d.nemGo}) mà nó lại báo đạt`);
+      else if (d.nem.code !== d.nemGo) loi.push(`${d.ten}: lượt gõ ném ${d.nem.code}, chờ ${d.nemGo}`);
+    } else if (d.nem) {
       loi.push(`${d.ten}: bị phán LỆCH (${d.nem.code}) — chữ đã gõ mà đường '${d.cach}' không thấy`);
       continue;
     }
     if (d.cach !== d.cachDung) loi.push(`${d.ten}: chọn đường '${d.cach}', đã đo là phải '${d.cachDung}'`);
-    if (d.phan.da_kiem !== d.daKiem) {
+    if (d.daKiem !== null && d.phan && d.phan.da_kiem !== d.daKiem) {
       loi.push(`${d.ten}: da_kiem=${d.phan.da_kiem}, chờ ${d.daKiem} — ${d.phan.kiem_noi}`);
     }
-    if (d.vi && !d.vi.test(d.phan.kiem_noi)) loi.push(`${d.ten}: câu khai không nói đúng lý do — ${d.phan.kiem_noi}`);
+    if (d.vi && d.phan && !d.vi.test(d.phan.kiem_noi)) loi.push(`${d.ten}: câu khai không nói đúng lý do — ${d.phan.kiem_noi}`);
 
     /* ---- chấm lượt XOÁ ---------------------------------------------------- */
     if (!d.xoaOk) { loi.push(`${d.ten}: lượt xoá không chạy được`); continue; }
+    if (d.chonemXoa) {
+      /* NHÁNH ĐỎ LÀ MỘT KỲ VỌNG, KHÔNG PHẢI MỘT LỖI. Đây là hàng duy nhất chứng minh trên
+       * Chrome thật rằng `xetXoaSach` BIẾT NÓI KHÔNG — ba hàng kia chỉ chứng minh nó biết
+       * nói có, và một bản luôn-nói-có sẽ xanh qua cả ba. */
+      if (!d.nemXoa) loi.push(`${d.ten}: lượt xoá PHẢI ném ${d.chonemXoa} mà nó báo đạt — ô này KHÔNG xoá được`);
+      else if (d.nemXoa.code !== d.chonemXoa) loi.push(`${d.ten}: lượt xoá ném ${d.nemXoa.code}, chờ ${d.chonemXoa}`);
+      continue;
+    }
     if (d.nemXoa) { loi.push(`${d.ten}: xoá rồi mà bị phán CÒN CHỮ (${d.nemXoa.code})`); continue; }
-    if (d.phanXoa.da_kiem !== d.xoaKiem) {
+    if (d.xoaKiem !== null && d.phanXoa.da_kiem !== d.xoaKiem) {
       loi.push(`${d.ten}: xoá → da_kiem=${d.phanXoa.da_kiem}, chờ ${d.xoaKiem} — ${d.phanXoa.kiem_noi}`);
     }
     /* Con số THẬT mà cả `xetXoaSach` đứng lên: ô đã xoá đọc ra ĐÚNG chuỗi rỗng, không phải
@@ -236,13 +259,13 @@ export function ketLuan(tho) {
 export function inRa(tho) {
   const ra = [`PHÉP ĐO ĐỌC LẠI Ô NHẬP (gõ `+"`S1`"+` · xoá `+"`S-27`"+`) — Chrome ${tho.chrome}`, ""];
   for (const d of tho.dong) {
-    const noi = d.nem ? `LỆCH (${d.nem.code})` : `da_kiem=${d.phan.da_kiem} qua '${d.cach}'`;
+    const noi = d.nem ? `LỆCH (${d.nem.code})` : `da_kiem=${d.phan?.da_kiem} qua '${d.cach}'`;
     const noiXoa = d.nemXoa ? `CÒN CHỮ (${d.nemXoa.code})` : `da_kiem=${d.phanXoa?.da_kiem}`;
     ra.push(`   ${d.ten.padEnd(24)} thẻ ${String(d.the).padEnd(9)} → gõ: ${noi.padEnd(30)} xoá: ${noiXoa}`);
   }
   const k = ketLuan(tho);
   ra.push("");
-  ra.push(k.dat ? "ĐẠT — bốn loại ô đều cho đúng câu trả lời đã đo, cho CẢ lượt gõ lẫn lượt xoá." : "KHÔNG ĐẠT:");
+  ra.push(k.dat ? "ĐẠT — năm loại ô đều cho đúng câu trả lời đã đo, cho CẢ lượt gõ lẫn lượt xoá." : "KHÔNG ĐẠT:");
   for (const l of k.loi) ra.push(`   · ${l}`);
   return ra.join("\n");
 }

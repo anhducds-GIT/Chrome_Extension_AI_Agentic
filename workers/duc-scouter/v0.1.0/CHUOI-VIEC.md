@@ -198,7 +198,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T9** | Đóng gói `v1` | — | đường cài đặt XONG 15/09; chờ Đức chốt phiên bản |
 | **T21** | **Tách Udin thành EXTENSION riêng** | — | **CHẶNG ①②③④ ĐÓNG 15/09.** Gói `workers/udin-optic/` sống riêng: 12 method, quyền một trang, 4 ảnh xuống đĩa từ extension của chính nó, **và `git status workers/duc-scouter` SẠCH**. Còn chặng ⑤ dọn sổ |
 | **T7** | Đóng vòng tự cải tiến MỘT lần | — | ✅ **KHÉP 14/09** — `pilots/t7-tu-sinh/` |
-| **T6** | `S-20` — nghe mạng trong lúc bấm | T7 cho biết có thật cần không | chưa bắt đầu |
+| **T6** | `S-20` — nghe mạng trong lúc bấm | ~~T7 cho biết có thật cần không~~ | **ĐÓNG 16/09 bằng đường ⒝** — chấp nhận giới hạn, ghi thẳng vào `README.md`. Đóng bằng một **phép đếm**: **0 chỗ gọi `scout.network`** trong cả repo (mọi chỗ khớp là chính nơi định nghĩa nó); `T7` khép, `T21` tách xong, bảy `W` ĐẠT — đều không cần nó. Đường ⒜ vẫn nằm sẵn ở mục `T6` cho ngày có việc thật |
 | **T10** | `S-21` — target không trả lời câu hỏi hình học | — | giả thuyết ⒜ đã chết (`G-41`) |
 | ~~T13 T15 T22 T18 T17~~ | grab · E2E · quá-giờ · `scout.text` · ghim bảng | — | **XONG 14/09** |
 | ~~T14 D3 D2 T12 T1–T4 T11~~ | `S-22` · `scout.focus` · tên ghế · `scout.fetch` · `S-16`…`S-19` `S-23` | — | **đóng 12–14/09** |
@@ -590,7 +590,17 @@ mất — đo 12/09: bấm rồi nghe = **0**, nghe lượt tải = **30**.
 **Khuyên ⒝ trước, ⒜ sau** — và chỉ làm ⒜ khi T5 hoặc T7 chứng minh có việc thật cần nó. Xây
 sẵn cho một nhu cầu tưởng tượng là đúng thứ `ROADMAP` mục ④ cấm.
 
-· **đóng khi:** chọn được một đường, và lý do ghi vào `BACKLOG.md` dưới `S-20`.
+· ~~**đóng khi:** chọn được một đường, và lý do ghi vào `BACKLOG.md` dưới `S-20`.~~
+**✅ ĐÓNG 16/09 — chọn ⒝.**
+
+**Lý do là một phép đếm, không phải một sở thích.** Việc này treo bốn ngày với điều kiện *“T7 cho
+biết có thật cần không”*, và `T7` khép 14/09 mà chưa ai quay lại hỏi nó. Đếm 16/09: **0 chỗ gọi
+`scout.network`** trong cả repo — mọi chỗ khớp đều là chính nơi định nghĩa lệnh. `T7` khép không
+cần nó, `T21` tách gói không cần nó, bảy workflow `W` ĐẠT không cần nó, và `udin-optic` **cắt hẳn**
+nó khỏi 12 method của mình.
+
+Giới hạn đã ghi vào `README.md` mục *“Thứ Scouter KHÔNG nghe được”*, kèm cả con số 0/30 của phép
+đo 12/09 và đường ⒜ để dành. **Mở lại thì đếm lại**, đừng mở theo trí nhớ.
 
 ## T7 · Đóng vòng tự cải tiến MỘT lần  ⟵ ✅ **ĐÃ KHÉP 14/09**
 

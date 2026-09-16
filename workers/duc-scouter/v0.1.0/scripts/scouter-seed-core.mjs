@@ -196,7 +196,12 @@ const RELOAD_STORAGE_KEY = "scouter.reload.last.v1";
  * nên gọi nó trong handler là cắt đứt phong bì phản hồi trước khi nó rời socket, và người gọi
  * chỉ thấy một kết nối chết — không phân biệt được với Scouter hỏng.
  * ponytail: độ trễ cố định, không phải xác nhận đã gửi. Muốn chắc chắn thì phải có móc
- * "khung đã rời socket" ở transport; đổi khi có một lượt reload thật bị mất phản hồi. */
+ * "khung đã rời socket" ở transport; đổi khi có một lượt reload thật bị mất phản hồi.
+ *
+ * ĐÃ ĐO 16/09 (`S-04`, ghế `Dummy_Scout`, extension thật qua Bridge thật): **7 lượt reload,
+ * 0 lượt mất phản hồi**, khứ hồi trọn vẹn 11,1–17,1 ms — **biên 15 lần** so với 250. Khứ hồi
+ * là chặn TRÊN của thời gian khung rời socket (nó gồm cả chặng về), nên biên thật còn rộng hơn.
+ * Đừng hạ con số này xuống dưới ~50 mà không đo lại trên máy chậm hơn. */
 const RELOAD_DELAY_MS = 250;
 
 /**
