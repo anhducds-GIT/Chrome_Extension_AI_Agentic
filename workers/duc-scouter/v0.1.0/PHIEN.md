@@ -87,4 +87,4 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 - lifecycle: active
 - last_verified: 2026-09-16
 - next_step: "CON DUNG MOT VIEC va no cho DUC: muc D4 o CHUOI-VIEC.md — cho them DOM.setFileInputFiles vao WRITE_CDP_METHODS de lam T29/W8. Doc D4, tra loi mot chu. Dem 16/09 dong: S-27 (nghiem thu THAT ca ba nhanh) · S-04 · T6 · T21 chang 5. CON MO: T10/S-21 — chi can Duc mo giup MOT tab trang."
-- human_action: "D4 — chot cho/khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10."
+- human_action: "@Đức:chốt — D4: cho hay khong cho them DOM.setFileInputFiles (T29/W8). Doc muc D4 o CHUOI-VIEC.md. Va neu tien: mo giup MOT tab trang de lam T10."
