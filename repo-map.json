@@ -123,15 +123,15 @@
     {
       "id": "duc-scouter",
       "path": "workers/duc-scouter/v0.1.0",
-      "lifecycle": "building",
+      "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "S1 S2 S3 XONG va da nghiem thu TREN DAY THAT 16/09. scout.type doc lai o nhap (khop / lech thi nem WRITE_NOT_OBSERVED / khong doc duoc thi khai that); scout.click khai da_kiem:false va nhan wait_for de kiem duoc — ca ba nhanh do tren day that, dung. Tu vung khong doi (24/12). Gia cua luot doc lai: ~390ms moi lenh go tren trang Udin, doi chung scout.query tran 15ms — RE, nen khong can mo them method CDP nao. E2E that 4/4. CON DUNG MOT VIEC: Duc ky Scouter v1.",
-      "human_action": "@Đức:chốt — ky Scouter v1. Da nap lai, da mo khoa, E2E that da chay va dat. Khong con viec ky thuat nao dang cho.",
+      "next_step": "SCOUTER v1 — Duc ky 16/09 (ADR-0008 cua goi). manifest khai 1.0.0; thu muc van la v0.1.0 vi do la mot DUONG DAN, khong phai mot phien ban (muoi phep ghim so tung byte, package.json, va bo khoi dong ngoai repo deu dung ten do). v1 hua NAM dieu va KHONG hua BON dieu — doc ADR-0008. Viec ke duoc mo khoa boi chinh S1/S2: T35 (W6 dua anh vao canvas) tung bi dat sau vi no la mot cu bam ma khong co cach nao biet no chay hay khong; nay scout.click co wait_for. Con T29 (scout.upload) van can mot method Bridge MOI nen van phai hoi Duc.",
+      "human_action": "khong",
       "priority_rank": 4,
       "superseded_by": null,
-      "last_verified": null,
-      "last_verified_commit": null,
+      "last_verified": "2026-09-16",
+      "last_verified_commit": "bf3ff4413e3a384495356b161ed751f6d98121d9",
       "open_item": "Cau \\\"Scouter la bo do nghe chung\\\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
     },
     {
@@ -154,8 +154,8 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1.",
-      "human_action": "@Đức:chốt — ky Scouter v1 (viec o goi duc-scouter). Goi nay khong con viec nao dang cho.",
+      "next_step": "S3 XONG va da nghiem thu bang DIA 16/09; Scouter da duoc Duc ky v1 nen ban chep o goi nay dang dung tren mot nen da chot. Viec ke cua goi: T35 — W6 dua anh vao canvas — nay LAM DUOC vi scout.click da co wait_for, tuc cu bam co mot moc de doi chieu. Truoc S2 thi khong co cach nao biet cu bam do chay hay khong, va do dung la ly do T35 bi dat sau.",
+      "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
       "last_verified": null,
@@ -202,14 +202,14 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "S1 S2 S3 XONG va da nghiem thu TREN DAY THAT 16/09. scout.type doc lai o nhap (khop / lech thi nem WRITE_NOT_OBSERVED / khong doc duoc thi khai that); scout.click khai da_kiem:false va nhan wait_for de kiem duoc — ca ba nhanh do tren day that, dung. Tu vung khong doi (24/12). Gia cua luot doc lai: ~390ms moi lenh go tren trang Udin, doi chung scout.query tran 15ms — RE, nen khong can mo them method CDP nao. E2E that 4/4. CON DUNG MOT VIEC: Duc ky Scouter v1.",
+      "title": "SCOUTER v1 — Duc ky 16/09 (ADR-0008 cua goi). manifest khai 1.0.0; thu muc van la v0.1.0 vi do la mot DUONG DAN, khong phai mot phien ban (muoi phep ghim so tung byte, package.json, va bo khoi dong ngoai repo deu dung ten do). v1 hua NAM dieu va KHONG hua BON dieu — doc ADR-0008. Viec ke duoc mo khoa boi chinh S1/S2: T35 (W6 dua anh vao canvas) tung bi dat sau vi no la mot cu bam ma khong co cach nao biet no chay hay khong; nay scout.click co wait_for. Con T29 (scout.upload) van can mot method Bridge MOI nen van phai hoi Duc.",
       "rank": 4,
       "claim": null
     },
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "S3 XONG va da nghiem thu bang DIA 16/09: E2E that voi --du-an s1-nghiem-thu ra 4 tep JPEG thuc, co khop tung byte, ban .webp goc con nguyen. scout.type tren o prompt tra da_kiem:true qua duong tro nang, ~404ms mot luot — trang canvas nang khong lam duong nay dat. Chot G-29 cu van dung nguyen cho, chua bo lop nao. Viec ke khong o goi nay: cho Duc ky Scouter v1.",
+      "title": "S3 XONG va da nghiem thu bang DIA 16/09; Scouter da duoc Duc ky v1 nen ban chep o goi nay dang dung tren mot nen da chot. Viec ke cua goi: T35 — W6 dua anh vao canvas — nay LAM DUOC vi scout.click da co wait_for, tuc cu bam co mot moc de doi chieu. Truoc S2 thi khong co cach nao biet cu bam do chay hay khong, va do dung la ly do T35 bi dat sau.",
       "rank": 5,
       "claim": null
     }
