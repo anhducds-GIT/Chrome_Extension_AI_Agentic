@@ -2094,3 +2094,22 @@ chỗ. Ghi thành luật ⑸ ở `CHUOI-VIEC.md`, và `TRIALS.md` có hàng riê
 Please try again in a few minutes when other users finish their sessions.”*. Đo **~25 phút** và
 **6 lượt bấm `Try Again`** cách nhau một phút: không tắt được nó. Nên dấu hiệu ấy nghĩa là
 **ĐỢI**, không phải **BẤM THÊM** — và nó không phải một chặng hỏng của gói này.
+
+
+## 16/09 (tối, muộn) — `input.upload` bật hộp thoại thật, và bảng năng lực khai ngược
+
+**Việc ở gói `udin-optic`** (`R1` khép vòng; nhật ký đầy đủ ở HANDOFF của gói ấy). Ghi ở đây phần
+thuộc về seed.
+
+**`input.upload` qua `mo_bang` VẪN bật hộp thoại `Open` của Windows trên máy Đức.** Hàng `W8` khai
+ngược, và lời khai ấy chưa bao giờ được đo — nó suy ra từ sự im lặng. Đức gửi ảnh chụp. Đã gạch tại
+chỗ ở `CAPABILITIES.md`.
+
+**Không tái hiện được trên Chrome hồ sơ trống.** Ba lượt đo, ba giả thuyết, đều trượt: tắt chặn sớm
+trong `finally` · trang bấm trễ (React) · thiếu `Page.enable`. Cả ba: trang nhận file, 0 hộp thoại.
+Nên `Page.setInterceptFileChooserDialog` **chạy đúng qua ống điều khiển thô**; khác biệt nằm ở đường
+`chrome.debugger` của extension, và đó là phép đo kế tiếp.
+
+**Hỏng theo kiểu IM LẶNG**, nên nó không tự lộ: ô chọn tệp sống trong lúc hộp thoại treo, nên
+`DOM.setFileInputFiles` vẫn ăn và lượt chạy vẫn trả `ok`. Cái giá nằm trên màn hình Đức, không nằm
+trong kết quả lệnh.

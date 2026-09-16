@@ -43,12 +43,30 @@ Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout
 
 ### Việc còn lại, theo đúng thứ tự nên làm
 
-**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. MÃ XONG, VÒNG SỐNG CHƯA KHÉP.**
+**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. ĐÃ KHÉP 16/09 tối, CÒN MỘT VẾT.**
 `tu-dong/vong-style.mjs` đã có, nối đúng các chặng đã ĐẠT: chọn ảnh lượt trước → đính kèm →
 prompt style mới → gửi → chờ → ảnh mới về đĩa → JPG. **16 khối ghim · 16 đột biến, 0 sống sót ·
 lượt chọn ảnh chạy thật trên vùng ghi.** Không mở method nào mới.
 
-**Còn thiếu đúng một thứ: một lượt chạy SỐNG trọn vòng.** Lượt thử tối 16/09 dừng ở chặng đính
+**ĐÃ CHẠY SỐNG TRỌN VÒNG 16/09 tối.** Lấy tấm `01-batch-…sn3w1x3b.jpg` của lượt sáng, đính kèm
+ngược vào Udin, xin *"1950s enamel travel poster"* → **4 ảnh mới** về đĩa và đã đổi JPG
+(`xe-dien-2026/2026-09-16T13-51-37-688Z`), canvas **2 → 7**.
+
+**CÒN MỘT VẾT, và nó là vết của tôi:** chặng đính kèm **vẫn bật lên hộp thoại `Open` của Windows**
+trên máy Đức, và Đức phải bấm **Cancel**. Lượt tải lên vẫn thành công dù có hộp thoại, nên nó hỏng
+theo kiểu **im lặng** — đó đúng là kiểu hỏng đắt nhất. Câu *"không một cú bấm nào của người"* ở hàng
+`W8` **sai**, đã gạch tại chỗ trong `CAPABILITIES.md`.
+
+**Ba giả thuyết đã đo và ĐỀU TRƯỢT** (`scripts` tạm, Chrome hồ sơ trống, không đụng tab của Đức):
+⒜ tắt chặn trong `finally` khi yêu cầu còn treo · ⒝ trang bấm TRỄ (React) nên chạy đua ·
+⒞ thiếu `Page.enable`. Cả ba lượt đều: trang nhận file, pill hiện, **0 hộp thoại**. Nên khác biệt
+nằm ở đường `chrome.debugger` của extension, **chưa đo được**, và đó là việc kế.
+
+**Đường DÁN đã đóng, đo xong 16/09 tối:** Udin bỏ qua cả tệp lẫn ảnh bitmap trên clipboard hệ điều
+hành. Đức đo thêm một vế quyết định: copy–paste **trong nội bộ canvas Udin thì được**. Tức paste là
+tính năng riêng của ứng dụng, không phải một đường nhập tệp — đừng quay lại đường này.
+
+~~Lượt thử tối 16/09 dừng ở chặng đính
 kèm vì **Udin đang ĐẦY CHỖ** — lý do nằm ngoài repo, không phải trong mã. Dấu hiệu nhận ra:
 `.concurrency-overlay` có mặt và đọc ra *“User Limit Reached · Please try again in a few minutes
 when other users finish their sessions.”*. Đo: **~25 phút** và **6 lượt bấm `Try Again`** cách

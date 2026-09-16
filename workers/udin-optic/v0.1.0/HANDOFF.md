@@ -602,3 +602,31 @@ Một dòng ĐẠT là một ĐIỂM, không phải một đường — nên l�
 
 **Làm tiếp:** đợi Udin rỗng chỗ rồi chạy một lượt với prompt CHƯA DÙNG BAO GIỜ —
 `vong-style.mjs "<prompt>" --du-an xe-dien-2026 --xoa-pill-cu --mo`.
+
+
+## 16/09 (tối, muộn) — `R1` khép vòng, và Đức lật một lời khai của tôi
+
+**Vòng đã chạy sống trọn vẹn.** `vong-style.mjs` lấy `01-batch-…sn3w1x3b.jpg` của lượt sáng, đính
+kèm ngược vào Udin, xin *"1950s enamel travel poster"* → **4 ảnh mới** về đĩa, đã đổi JPG, canvas
+**2 → 7**, ảnh đính kèm `0 → 1`. Thư mục: `xe-dien-2026/2026-09-16T13-51-37-688Z`.
+
+**CÒN MỘT VẾT, và nó là vết của tôi.** Chặng đính kèm **vẫn bật lên hộp thoại `Open` của Windows**
+và Đức phải bấm **Cancel**. Câu *"hộp thoại hệ điều hành không hiện lên màn hình Đức"* ở hàng `W8`
+**chưa bao giờ được đo** — tôi suy ra từ việc Đức không kêu, rồi viết nó vào bảng năng lực như một
+phép đo. Đã gạch tại chỗ ở `CAPABILITIES.md`.
+
+**Vì sao nó sống được lâu:** lượt tải lên **vẫn thành công** dù hộp thoại bật lên — ô chọn tệp sống
+trong lúc hộp thoại treo, nên `DOM.setFileInputFiles` vẫn ăn. Cái giá không nằm trong kết quả, nó
+nằm trên màn hình Đức. Đúng kiểu hỏng đắt nhất.
+
+**Ba giả thuyết đã đo, ĐỀU TRƯỢT** (Chrome hồ sơ trống, không đụng tab Đức): tắt chặn sớm trong
+`finally` · trang bấm TRỄ nên chạy đua · thiếu `Page.enable`. Cả ba lượt: trang nhận file, pill
+hiện, **0 hộp thoại**. Khác biệt còn lại nằm ở đường `chrome.debugger` của extension — chưa đo.
+
+**Đường DÁN đã đo và ĐÓNG.** Udin bỏ qua cả tệp lẫn ảnh bitmap trên clipboard hệ điều hành. Đức đo
+thêm vế quyết định: copy–paste **trong nội bộ canvas Udin thì được**. Nên paste là tính năng riêng
+của ứng dụng, không phải đường nhập tệp — đừng quay lại.
+
+**Hai lần trong một tối tôi dùng sai dụng cụ đo**, và cả hai đều cho ra *"không có hộp thoại"*:
+`MainWindowTitle` không thấy cửa sổ CON của Chrome; bộ lấy mẫu "mỗi 400 ms" thực ra chỉ lấy được 7
+mẫu vì mỗi lượt gọi PowerShell tốn hơn một giây. Ảnh chụp của Đức mới là phép đo đúng.
