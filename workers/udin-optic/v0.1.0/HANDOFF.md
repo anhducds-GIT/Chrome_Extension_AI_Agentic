@@ -494,3 +494,22 @@ lại được — cần Đức nạp lại một lần. Bằng chứng gián ti
 và phần mã bên dưới là bản chép từng byte có phép ghim canh.
 
 **Bảng `W` nay 7/8**, còn `W8` — chờ `D4` bên Scouter.
+
+## 2026-09-16 · `claude-scouter-udine` — `S-27` chạy thật TỪ CHÍNH GÓI NÀY
+
+Đức nạp lại extension. Chạy trên `textarea.agent-textarea` của trang Udin, qua dây của gói này:
+
+- gõ 15 ký tự → `da_kiem: true`, *“xuất hiện 0 lần trước và 1 lần sau khi gõ”*;
+- **xoá ô đang có 15 ký tự** → `da_kiem: true`, *“ô có 15 ký tự trước khi xoá và rỗng sau khi
+  xoá — hai phím đã tới trang và ô đã sạch”*;
+- **xoá lại ô đã rỗng** → `da_kiem: true` nhưng **câu KHÁC**: *“vốn đã rỗng — lượt này xác nhận
+  TRẠNG THÁI của ô, KHÔNG chứng minh hai phím đã tới trang”*.
+
+Hai câu khác nhau ở hai nhánh chính là thứ khối ghim ⑬⒝ canh, và nay nó đúng **trên dây thật**
+chứ không chỉ trong máy giả. Ô prompt trả về rỗng như lúc gặp.
+
+**Đường ghi của gói này không còn lệnh nào nói dối.** `scout.type`, `scout.click` và
+`scout.clear` đều tự kiểm hoặc khai thẳng là chưa kiểm được.
+
+**`W8` hoãn có chủ ý** (`D4` bên Scouter, chốt 16/09): không việc nào đang chạy cần đưa tệp vào
+trang. Mốc mở là ngày Đức cần đưa một **ảnh tham chiếu** vào Udin. Bảng `W` giữ **7/8**.

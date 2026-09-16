@@ -1932,3 +1932,30 @@ tệp KHÁC.** Không bảng `CẶP` nào bắc qua khe đó, vì `CẶP` chỉ 
 **`T6`/`S-20` đóng bằng đường ⒝:** đếm được **0 chỗ gọi `scout.network`** trong cả repo.
 
 **Còn đúng một việc, và nó chờ Đức: `D4`** — mở `DOM.setFileInputFiles` cho `T29`/`W8`.
+
+## 2026-09-16 · `claude-scouter-udine` — `D4` chốt: **chưa mở** `DOM.setFileInputFiles`
+
+**Đức nói không hiểu câu hỏi và giao lại cho tôi quyết.** Đó là lỗi của bản viết, không phải của
+anh: `D4` bản đầu là một hồ sơ kỹ thuật (bảng bốn dạng vượt rào, `WRITE_CDP_METHODS`,
+`trongGoc`) chứ không phải một câu hỏi người chủ trả lời được. **Một câu hỏi mà người chốt không
+đọc nổi thì nó không phải câu hỏi, nó là một chỗ tắc.**
+
+**Chốt: CHƯA MỞ**, và lý do là đúng cái thước đã đóng `T6` cùng ngày. `T6` đóng vì đếm được
+**0 chỗ gọi `scout.network`**. Đếm `W8` bằng thước ấy: **0 việc đang chạy cần đưa tệp vào
+trang**, và `W8` vốn được xếp **NGOÀI** danh sách `W` bắt buộc từ 14/09. Dùng hai thước khác
+nhau cho hai việc giống nhau trong cùng một ngày thì cái thước ấy là một cái cớ, không phải luật.
+
+Cộng thêm một chuyện không đối xứng: đây là **cửa đầu tiên đi từ ĐĨA ra một TRANG WEB** — mọi
+thứ Scouter có tới nay đều đi chiều ngược lại. Cửa mở vì *“sắp tới chắc sẽ cần”* thì không có
+ngày nào nó hỏng để nhắc ai đóng lại.
+
+**Lời chốt này an toàn vì mở lại RẺ.** Phần nguy hiểm nhất đã xây xong và đã ghim (`trongGoc`
+chặn đường tuyệt đối · `C:x.txt` · `..` · liên kết mềm). Còn lại một dòng khai method và một
+lượt chạy thật — nửa buổi.
+
+**Mốc mở, viết thành một câu Đức trả lời được:** *ngày anh cần đưa một **ảnh tham chiếu** của
+mình vào Udin để nó sinh ảnh theo ảnh đó.* Anh nói câu ấy là làm ngay, không cân lại gì.
+
+**`S-27` nay chạy thật từ CẢ HAI gói.** Sau khi Đức nạp lại Udin: ô 15 ký tự → `da_kiem: true`
+*“hai phím đã tới trang”*; xoá lại ô rỗng → `da_kiem: true` kèm câu KHÁC. Hết việc mở, trừ
+`T10`/`S-21` — chỉ thiếu một tab trắng.

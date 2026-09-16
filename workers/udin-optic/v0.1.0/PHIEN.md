@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "scout.clear cua goi nay DA tu kiem (ban chep tung byte) va bridge-core.mjs da khai CLEAR_NOT_OBSERVED. CHUA chay that TU extension nay: goi nay co y khong co scout.reload nen can Duc nap lai MOT lan. Bang W: 7/8, con W8 (cho D4 ben Scouter)."
-- human_action: "@Đức:bấm — nap lai extension Udin MOT lan de scout.clear tu kiem chay tu chinh goi nay. Khong gap: khong lenh nao hong, chi la lenh xoa van bao dat theo kieu cu cho toi luc do."
+- next_step: "scout.clear tu kiem DA CHAY THAT TU CHINH GOI NAY 16/09 sau khi Duc nap lai: o co 15 ky tu -> da_kiem true (hai phim da toi trang); xoa lai o da rong -> da_kiem true nhung CAU KHAC. Duong ghi cua goi khong con lenh nao noi doi. Bang W: 7/8; W8 HOAN CO CHU Y (D4 ben Scouter, moc mo la ngay Duc can dua anh tham chieu vao Udin)."
+- human_action: "khong"

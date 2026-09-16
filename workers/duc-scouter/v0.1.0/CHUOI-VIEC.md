@@ -53,13 +53,12 @@ Và nó lật một cột: hàng `W5` khai cần `O3` (`scout.a11y`), **lệnh g
 vì ai nới phép kiểm). Món ngoài dự tính: **ô mật khẩu kiểm được ở lượt xoá**, dù không kiểm
 được ở lượt gõ.
 
-**③ 🛑 `T29` / `W8` — `scout.upload`. VIỆC DUY NHẤT CÒN LẠI, và nó chờ ĐỨC.**
-Gói quyết định đã viết xong 16/09 ở mục **`D4`** của chính file này — đọc mục đó, trả lời một
-chữ. Rút gọn: phần nguy hiểm nhất **đã có sẵn** (`trongGoc` của `bridge/file-core.mjs` chặn
-đường tuyệt đối · `C:x.txt` · `..` · liên kết mềm trỏ ra ngoài), nên chỉ còn **một** dòng phải
-hỏi: thêm `DOM.setFileInputFiles` vào `WRITE_CDP_METHODS`. Cái mới về rủi ro là **hướng đi của
-byte** — lần đầu có đường từ đĩa ra một trang web. Nó mở khoá `W8` và ba mục
-`Image`/`Video`/`3D Model` của menu `W6`.
+**③ ~~`T29` / `W8`~~ — HOÃN CÓ CHỦ Ý, chốt 16/09 ở mục `D4`.** Đếm bằng đúng thước đã đóng
+`T6`: **không việc nào đang chạy cần đưa tệp vào trang**, và `W8` vốn nằm NGOÀI danh sách `W`
+bắt buộc. Cửa này là cửa đầu tiên đi từ **đĩa ra một trang web**, nên nó không được mở vì
+*“sắp tới chắc sẽ cần”*.
+**Mốc mở, một câu:** ngày Đức cần đưa một **ảnh tham chiếu** của anh vào Udin. Lúc ấy nó rẻ —
+phần đường dẫn đã xây và đã ghim, còn lại một dòng khai method và một lượt chạy thật.
 
 **~~④ Dọn sổ~~ XONG 16/09**, trừ một mục:
 · ~~`T21` chặng ⑤~~ — sáu mục của danh sách dọn nhà đều đã xong, kiểm từng cái 16/09.
@@ -199,7 +198,7 @@ Optic ra — để sau khi tách không phải sửa sâu vào Scouter nữa.* N
 | **T34** | `W4` — đọc câu trả lời chữ của agent | T33 | **XONG + CHẠY THẬT 14/09** — `doc-tra-loi.mjs`, nay là chặng thứ tư của E2E. Đọc đúng câu trả lời cho prompt vừa gửi (`G-76`) |
 | **T35** | ~~`W6` đưa một ảnh vào canvas~~ → **thêm một KHUNG vào canvas** | — | **XONG + CHẠY THẬT 16/09** — `them-khung.mjs`, 8 → 9 khung. **Hai tiền đề của chính dòng này bị lật:** thao tác *“đưa ảnh lên canvas”* **không tồn tại** (ảnh kết quả đã ở trên canvas), và `S-22` **không** bít nó — cú bấm tới trang bốn lần liên tiếp hôm nay. 6 đột biến tay, giết được hết |
 | **T36** | `W7` — gửi prompt lần hai trên cùng ô | T33 | **XONG + CHẠY THẬT 14/09** — cờ `xoaOCu` trong `gui-prompt.mjs`; **lời từ chối cũ giữ nguyên làm mặc định** (`G-77`) |
-| **T29** | `scout.upload` (`I9`) → `W8` | 🛑 **`D4` — chờ Đức chốt** | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng. Gói quyết định viết xong 16/09 ở mục `D4`: phần đường dẫn **đã có sẵn** (`trongGoc` của `file-core.mjs`, chặn cả bốn dạng vượt rào), nên chỉ còn **một** dòng phải hỏi — thêm `DOM.setFileInputFiles` vào `WRITE_CDP_METHODS` |
+| **T29** | `scout.upload` (`I9`) → `W8` | **HOÃN CÓ CHỦ Ý** (`D4` chốt 16/09) | **dòng năng lực CUỐI CÙNG** của danh sách đóng băng. Gói quyết định viết xong 16/09 ở mục `D4`: phần đường dẫn **đã có sẵn** (`trongGoc` của `file-core.mjs`, chặn cả bốn dạng vượt rào), nên chỉ còn **một** dòng phải hỏi — thêm `DOM.setFileInputFiles` vào `WRITE_CDP_METHODS` |
 | **T30** | `N5` lùi / tiến — `scout.history` | — | **XONG + CHẠY THẬT 14/09**: Udin → trang thử → `back` về đúng Udin |
 | **T31** | Sau `T24`: **nâng lại trần khúc** của `scout.grab` | T24 | **XONG + ĐO THẬT 14/09**: 64 KiB → **512 KiB**; ảnh 688.088 byte về **2 khúc** thay vì 14, ghép lại khớp từng byte trên đĩa |
 | **T32** | **Chạy thật cả chặng ②** | — | **XONG 14/09.** Bốn lên `ĐÃ CHỨNG MINH` (`O13` `N5` `I5` `O5`); hai dừng ở `CÓ` vì `S-22` (`I6` `I7`). Đường chia đúng bằng *lệnh DOM* / *sự kiện chuột* |
@@ -476,14 +475,46 @@ method, trong khi T2 còn cần lõi đọc biết hộp của phần tử nằm
 chừng (D1b). Bài học: khi một việc nói *"dùng cùng phép hỏi của việc kia"*, đếm lại **cả** số
 method mỗi bên cần, đừng cho rằng hai bên cần y hệt nhau.
 
-## D4 · Đức chốt — mở `DOM.setFileInputFiles` để làm `T29` / `W8`  ⟵ 🛑 **ĐANG CHỜ ANH**
+## ~~D4~~ · `DOM.setFileInputFiles` cho `T29`/`W8` — **CHỐT 16/09: CHƯA MỞ, và đây là lý do**
 
-> **Câu hỏi, đúng một câu:** cho Scouter thêm **một** method CDP — `DOM.setFileInputFiles` — vào
-> danh sách của lõi GHI, để nó đưa được một tệp **từ vùng ghi Bridge** vào một ô `<input type=file>`
-> trên trang?
->
-> **Đây là dòng năng lực CUỐI CÙNG của danh sách đóng băng.** Gật thì `W8` chạy được và ba mục
-> `Image` / `Video` / `3D Model` của menu *Add to canvas* mở ra. Lắc thì mọi thứ khác vẫn đứng.
+> **Đức nói không hiểu câu hỏi và giao lại cho tôi quyết.** *“Đức đọc không hiểu = lỗi hệ thống”* —
+> nên phần dưới giữ nguyên làm hồ sơ, còn khối này là lời chốt.
+
+### Chốt: **CHƯA MỞ.** Mở vào ngày có một việc thật cần nó.
+
+**Lý do, và nó là đúng cái thước tôi vừa dùng cách đây một giờ.** Sáng nay `T6` đóng bằng một
+phép đếm: **0 chỗ gọi `scout.network`** trong cả repo, nên không xây đường ⒜ cho một nhu cầu
+chưa ai có. Đếm lại `W8` bằng đúng thước ấy thì ra **cùng một con số 0**:
+
+| hỏi gì | trả lời |
+|---|---|
+| việc nào đang chạy cần đưa tệp vào trang? | **không có** — `W1`→`W4` và E2E không đụng tới |
+| `W8` có trong danh sách `W` **bắt buộc** Đức chốt không? | **không** — `CAPABILITIES` đã xếp nó *“để NGOÀI”* từ 14/09 |
+| không mở thì có gì hỏng không? | **không** — bảng `W` dừng ở 7/8, mọi thứ khác đã đóng |
+
+Dùng hai thước khác nhau cho hai việc giống nhau trong cùng một ngày thì cái thước ấy không
+phải một luật, nó là một cái cớ.
+
+**Và cái giá của việc mở thì không đối xứng.** Đây là **cánh cửa đầu tiên đi từ ĐĨA ra một
+TRANG WEB** — mọi thứ Scouter có tới hôm nay đều đi chiều ngược lại (trang → đĩa). Một cánh cửa
+mở ra vì *“sắp tới chắc sẽ cần”* thì không ai đóng lại, vì không có ngày nào nó hỏng để nhắc.
+
+**Mở lại RẺ, và đó là phần làm lời chốt này an toàn.** Phần nguy hiểm nhất **đã xây xong và đã
+ghim** — `trongGoc()` ở `bridge/file-core.mjs` chặn cả bốn dạng vượt rào (bảng bên dưới). Còn
+lại đúng một dòng khai method và một lượt chạy thật. **Nửa buổi, không phải một chặng.**
+
+### Mở khi nào — một câu, không phải một hồ sơ
+
+> **Ngày Đức cần đưa một ẢNH THAM CHIẾU của mình vào Udin để nó sinh ảnh theo ảnh đó.**
+
+Đó là việc thật duy nhất mà `W8` phục vụ. Anh nói một câu *“tôi cần đưa ảnh mẫu vào Udin”* là
+tôi làm ngay — không phải hỏi lại `D4`, không phải cân lại gì, chính câu ấy **là** cái chốt.
+
+### Ba điều KHÔNG phải lý do hoãn, ghi ra để lượt sau khỏi cân lại
+
+⑴ **Không phải vì sợ lộ file.** `file.read` đã đọc được mọi tệp dưới vùng ghi từ 07/09.
+⑵ **Không phải vì đường dẫn chưa an toàn.** Nó an toàn rồi, và đã có phép ghim.
+⑶ **Không phải vì khó.** Nó dễ — đó chính là lý do phải cẩn thận với cái *“cứ mở sẵn đi”*.
 
 ### Thứ đã làm sẵn, để câu trả lời của anh chỉ còn là một chữ
 
@@ -538,8 +569,8 @@ Không có gì hỏng. `W8` ở lại `CHẶN`, ba mục cần tệp của menu 
 rủi ro, và bảng `W` dừng ở **7/8**. Mọi việc khác đã đóng. Đây là một cánh cửa để mở khi cần,
 không phải một chỗ đang rò.
 
-· **đóng khi:** anh trả lời. **@Đức:chốt**
-· **đóng thế nào nếu ĐƯỢC:** `..`, đường tuyệt đối và `C:x.txt` bị từ chối **ở máy chủ** (đã có
+· ~~**đóng khi:** anh trả lời.~~ **ĐÃ CHỐT 16/09: chưa mở** — xem khối đầu mục.
+· **đóng thế nào nếu sau này ĐƯỢC:** `..`, đường tuyệt đối và `C:x.txt` bị từ chối **ở máy chủ** (đã có
 phép ghim, thêm phép ghim cho đường mới) · phần tử không phải `<input type=file>` thì từ chối ·
 **một lượt chạy thật** đưa được một ảnh từ vùng ghi vào trang.
 
