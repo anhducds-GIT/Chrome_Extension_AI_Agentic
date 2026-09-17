@@ -2560,3 +2560,24 @@ phải một phép kiểm.**
 và khoanh lần chết trong 30 giây, **không** nói được *ai* giết — muốn biết phải bật kiểm toán tiến trình
 của Windows, **đổi cài đặt hệ thống, việc của Đức**. Đừng ghi *“X giết máy chủ”* từ dữ liệu này.
 **Nhật ký chưa chạy trên máy chủ đang bật** — nó vào việc từ lượt bật Bridge kế tiếp.
+
+## 2026-09-17o · `claude-scouter-udine` — lộ trình `A1`–`A5`: quay bộ đo vào chính nó
+
+Lộ trình `N1`–`N5` đã cạn phần AI tự làm được. Đức giao tự chọn hướng. **Chọn: kiểm lại chính bộ đo**,
+vì phiên 17/09 cho thấy thứ tốn tiền không phải mã sai mà là **màu xanh giả** và **dòng cũ không ai đọc lại**.
+
+**Đo trước khi viết — và nó lật một mục của chính lộ trình đang soạn.** Bản nháp định ghi *“169 quyết định
+mồ côi, phải dọn”*. Đo ra: **164 trong 169 nằm ở `.claude/worktrees/nifty-benz-a66fbf/`** — một worktree
+mà `git ls-files` đếm **0 file**. Repo thật chỉ có ~5. `rule-compile.mjs` quét **ĐĨA** trong khi repo được
+định nghĩa bởi **GIT** — cùng họ `worktree-hostile-checks`. Thành `A2`, và giờ nó là một lượt sửa bộ quét
+chứ không phải 169 lượt viết trích dẫn.
+**Đối chứng để khỏi vơ đũa:** `can-nang.mjs` đọc từ git nên nó **không** bị thổi — ba con số ngân sách
+ở `A4` là thật. Một phép đo sai không làm mọi phép đo cạnh nó sai theo.
+
+**Năm mục, đều có số đứng sau:** `A1` sáu hàng cổng **chưa đỏ lần nào qua 300 lượt chạy** — dựng ca hỏng
+cho từng cái, cái nào không dựng nổi thì nó chưa bao giờ là phép kiểm · `A2` ở trên · `A3` B16 đỏ, 20 ADR
+không có nhà · `A4` ba chỗ quá ngân sách (tài liệu **9.958/2.200**, HANDOFF **877/600**, bộ kiểm
+**199/180 giây**) — **bớt trước, đừng nới số** · `A5` 22 nơi chứa luật quá hạn rà từ 09/09.
+
+**`A1` đặt trước `Đ2` (audit độc lập) có lý do:** giao cho một AI khác một bộ đo **chưa biết có đỏ được
+không** thì nó audit trên cát. Kiểm lại người kiểm trước đã.

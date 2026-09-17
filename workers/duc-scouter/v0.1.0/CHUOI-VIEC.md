@@ -33,83 +33,91 @@
 
 ### Đang ở đâu — một câu
 
-**Ba câu hỏi lớn của lộ trình đều đã trả lời xong, bằng lượt chạy thật chứ không bằng lời khai.**
-`R1` (một lệnh chạy trọn vòng việc thật) · `R2` (vòng tự cải tiến khép, `T7` → `MASTERED`) ·
-`R3` (seed chạy trên **trang thứ hai khác loại** — `tldraw` — mà **không sửa một dòng nào**, và
-đã khép cả trên Chrome sạch lẫn **qua dây extension**). `Scouter v1` ký ở ADR-0008, `Udin v1` ký
-ở `udin-optic/v0.1.0/docs/adr/0001`.
+**Ba câu hỏi lớn đã trả lời xong bằng lượt chạy thật**, `Scouter v1` + `Udin v1` đã ký, và sổ nợ
+Scouter nay còn **đúng một mục mở** (`S-31`, việc của AI). Lộ trình `N1`–`N5` đã cạn: `N3` và `N4`
+đóng 17/09, `N2` **chết** (Đức duyệt `alarms` từ 07/09), `N1` còn mở nhưng **chờ dữ liệu chứ không
+chờ mã**, `N5` chờ Udin có tính năng video.
 
-**Nên giai đoạn tới KHÔNG phải mở năng lực, cũng không phải chứng minh gì nữa.** Nó là **dọn chỗ
-hỏng hằng ngày** — hai thứ làm Đức mất buổi, và một lượt rà sổ.
+**Nên giai đoạn tới KHÔNG mở năng lực nào. Nó kiểm lại CHÍNH BỘ ĐO.**
+Ngày 17/09 trả một bài học đắt, lặp bốn lần trong một phiên: thứ tốn tiền **không phải mã sai** —
+mã sai thì bộ đo bắt được. Thứ tốn tiền là **màu xanh giả** và **dòng cũ không ai đọc lại**: một
+mục đóng 07/09 mà mười ngày sau vẫn đẩy cho Đức quyết; một con đột biến sống sót vì phép ghim
+*giải thích* thay vì *assert*; một kết luận sai công bố ra bốn nơi trước khi kiểm.
 
 ### Việc còn lại — theo thứ tự nên làm
 
-**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. DẤU VẾT ĐÃ GIỮ ĐƯỢC 17/09; nguyên nhân chờ lần chết sau.**
-~~*“`Start-Process` chạy từ PowerShell của phiên AI bị dọn theo tiến trình cha”*~~ — **SAI, đã đo** (`G-98`):
-ba máy chủ đang sống đều có cha **đã chết**, kể cả một cái do chính Đức bật. **Đừng dựng gì trên dòng đã gạch.**
+**① `A1` — SÁU PHÉP KIỂM CHƯA TỪNG ĐỎ. Làm trước, vì nó quyết định mọi màu xanh còn lại.**
+`can-nang.mjs` đếm được: qua **300 lượt chạy cổng**, sáu hàng này **chưa đỏ lần nào** —
+*Bất biến quyền sở hữu ba tầng · Không có secret lọt vào repo · Luật biên dịch sạch · Mọi lệnh git
+đọc được · Nhãn lane trong commit · Vùng CHỈ-THÊM không bị viết lại*.
+**"Chưa từng đỏ" KHÔNG phải "hỏng"** — vài cái không đỏ vì repo thật sự sạch, và đó là tin tốt.
+Câu phải hỏi là câu chính công cụ đã ghi: ***dựng nổi ca hỏng cho nó không?***
+**Cách làm, đã có tiền lệ:** chép repo sang một thư mục bỏ đi, bẻ gãy đúng một thứ, chạy lại hàng
+ấy. Kỹ thuật này dùng thật 16/09 (`worktree-hostile-checks`; và `git hook run -- /nonexistent` để
+chứng minh một hook có chạy). **Đừng bẻ trong cây làm việc thật.**
+**Đóng khi:** mỗi hàng có một ca hỏng **chạy được** làm nó đỏ — hoặc được khai thẳng là *không
+dựng nổi ca hỏng*, và khi ấy nó chưa bao giờ là phép kiểm, phải viết lại hoặc bỏ.
 
-**ĐÃ XONG — hai nửa, cả hai đo được:**
-· Câu báo `fetch failed` nay tách `ECONNREFUSED` (*không ai nghe* — bật máy chủ, kèm thư mục START-BRIDGE)
-  khỏi ca còn lại (*có người nghe, đứt giữa chừng* — bật lại **không** chữa được).
-· **Nhật ký đời sống** (`_shared/bridge-host/nhat-ky-doi-song.mjs`): một tệp **ghi đè**, cạnh tệp ghép cặp,
-  nhịp 30 giây. Chết tử tế → `tat_sach: true` kèm mã thoát. **Bị giết → không dòng nào**, và chính sự im lặng
-  ấy là thứ phân biệt hai nhánh — lượt bật sau **tự in ra** lượt trước chết lúc nào, pid nào, sống bao lâu.
-  Đo thật 17/09: giết một tiến trình bằng `Stop-Process -Force` → lượt sau báo đúng; đóng tử tế → **im lặng**.
-  7 khối ghim, 7 đột biến tay chết cả 7.
+**② `A2` — SỔ LUẬT ĐANG ĐẾM MỘT CÂY KHÁC. Rẻ nhất, và nó làm con số kia đọc được.**
+Đo 17/09: `rule-compile.mjs` báo **169 quyết định mồ côi**, nhưng **164 trong số đó nằm ở
+`.claude/worktrees/nifty-benz-a66fbf/`** — một worktree mà **git không track một file nào**
+(`git ls-files` đếm 0). Repo thật chỉ có ~**5**.
+Cùng họ `worktree-hostile-checks`: bộ đo quét ĐĨA trong khi repo được định nghĩa bởi GIT.
+**Đối chứng để khỏi vơ đũa:** `can-nang.mjs` đọc từ git nên nó **KHÔNG** bị thổi — ba con số ngân
+sách ở `A4` là thật, đừng gạch chúng theo.
+**Đóng khi:** bộ quét bỏ qua `.claude/worktrees/`, con số mồ côi đo lại, và **5 mục thật** kia
+được xử từng cái.
 
-**CÒN LẠI, và nó chờ MỘT LẦN CHẾT NỮA chứ không chờ thêm mã:** nguyên nhân. Nhật ký nói được
-*“bị giết từ ngoài”* và khoanh lần chết trong một cửa sổ 30 giây — **không** nói được *ai* giết.
-Muốn biết tên tiến trình ra lệnh thì phải bật **kiểm toán tiến trình của Windows** hoặc cài Sysmon —
-**đổi cài đặt hệ thống, việc của Đức.** Ứng viên rẻ nhất vẫn chưa đo: chính bộ khởi động —
-`-KhoiDongLai` gọi `Stop-Process -Force`, đúng một cú giết không để lại byte nào.
-**Đóng khi:** một lần chết thật nữa xảy ra và nhật ký nói được nó xảy ra lúc nào, rồi đối chiếu mốc ấy
-với việc đang làm; **hoặc** máy chủ sống qua một lượt chạy dài mà không ai bật lại.
-**LưU Ý cho Đức:** nhật ký **chưa chạy trên máy chủ đang bật** — nó vào việc từ lượt bật Bridge **kế tiếp**.
+**③ `A3` — B16 ĐỎ: 20 ADR không có nhà.**
+`repo có 20 ADR mà chưa khai luat.chu_de — mọi luật đều không có nhà`. B16 thuộc nhóm **chỉ cảnh
+báo**, nên nó đỏ mà cổng vẫn xanh — đúng kiểu nợ sống lâu. Đường sửa có sẵn và `--de-xuat` **chạy
+được** (đã thử): khai `luat.chu_de` vào `.repo-structure.json`, rồi thêm `chu_de:` vào frontmatter
+từng ADR (B12 cho phép sửa frontmatter).
+**Đóng khi:** B16 xanh mà **không** hạ nó xuống hạng nhẹ hơn và **không** nới một ngưỡng nào.
 
-**② `N3` — RÀ SỔ NỢ. ĐÃ XONG 17/09, và nó tìm thấy **bốn** mục chết chứ không phải hai.**
-Đọc **điều kiện đóng của chính từng mục**, không đếm: `S-01` và `S-02` đóng từ **07/09** mà dòng đầu
-mục chưa ai gạch · `S-22` Đức chốt đóng **14/09** nhưng lời đóng viết ở SỔ GIẢ THUYẾT nên ở sổ nợ
-nó vẫn ghi `MỞ` · `S-24` đường ⓜ (`scout.grab`) làm xong **14/09**, chạy hàng ngày trong `W3`, vẫn ghi `MỞ`.
-**Nay sổ nợ Scouter còn đúng MỘT mục mở: `S-31`** — và nó là việc của tôi, không phải của Đức.
+**④ `A4` — BA CHỖ QUÁ NGÂN SÁCH, và đừng nới số.**
+`Tổng tài liệu` **9.958/2.200 dòng** (4,5×) · `HANDOFF.md` **877/600** · `thời gian chạy trọn bộ
+kiểm` **199/180 giây**.
+Chỗ an toàn nhất làm trước: HANDOFF có sẵn đường **DỜI CHỖ, không xoá** — chuyển lượt cũ sang
+`docs/archive/HANDOFF-<năm>-<tháng>.md`, giữ nguyên chữ.
+Chỗ 9.958 dòng thì **đo trước khi động**: `draft.md` **3.294 dòng** nằm ngay gốc repo, và hai
+`docs/studies/*` cộng lại **2.953** — hỏi từng cái *"ai còn đọc nó"* trước khi hỏi *"ngưỡng có
+đúng không"*.
+**Luật của mục này:** *"Trước khi nới ngân sách, hãy thử BỚT"* — một ngưỡng chỉ báo cáo thì sớm
+muộn bị nâng, kể cả bởi tôi.
+**Đóng khi:** cả ba về trong trần **bằng cách bớt**, hoặc một trần đổi kèm ADR nói rõ vì sao con
+số cũ sai — không phải vì nó đang vướng.
 
-> **Bài học đắt nhất của cả lượt này** không phải bốn mục cũ: `N2` bên dưới — mục tôi viết **sáng nay**
-> để hỏi Đức — hỏi đúng một quyết định anh **đã chốt mười ngày trước** và đã chạy trong cả hai
-> extension. Tức một lộ trình viết ra để chặn dòng cũ **tự đẻ thêm một dòng cũ**, trong cùng một ngày.
-> **Viết một mục “chờ Đức” là một lời khai, và lời khai nào cũng phải đo trước khi viết.** Một lệnh
-> `grep alarms manifest.json` là đủ để không ai mất thời gian.
+**⑤ `A5` — 22 CHỖ QUÁ HẠN RÀ + 1 LUẬT TRÙNG.**
+22 nơi chứa luật rà lần cuối **09/09**, quá hạn 7 ngày. Đây đúng là thứ sinh ra dòng cũ mà cả
+phiên 17/09 phải đi dọn, nên nó **không phải việc vặt**.
+**Đóng khi:** mỗi nơi được đọc và đổi `ra_soat`, hoặc khai thẳng là không còn ai đọc nó nữa.
 
-**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI. ĐÓNG 17/09.**
-Đức mở tab `tldraw.com`. Ba lệnh chạy sống, số đã vào `TRIALS.md`:
-· `scout.text` **122ms** → `"100%"`, 4 ký tự.
-· `scout.grab` **1020ms** → HTTP 200, **287.003 byte**, URL thật không ra khỏi trình duyệt.
-· `scout.type` → gõ tới trang, và **tự kiểm đúng hợp đồng**: `da_kiem: true`, `kiem_bang: "dom.text"`.
-tldraw không có ô nhập nào, nên ô ấy dựng bằng chính bộ lệnh: `tools.text` → `canvas` → `contenteditable` 0→1.
-**Câu *“seed dùng lại được”* nay đúng cho **sáu** lệnh trên trang thứ hai, không phải ba.**
-
-> **Và một dòng phải để lại ở đây:** giữa chừng tôi báo *“`scout.type` thiếu `da_kiem`”* rồi dựng tiếp
-> *“bản nạp cũ hơn repo”* và *“`Scouter v1` ký trên mã chưa từng chạy”*. **Cả ba đều SAI** (`G-99`).
-> `da_kiem` luôn có, nó nằm **cạnh** `data` chứ không **trong** `data`, còn tôi thì in `r.data`.
-> **Giá phải trả: Đức nạp lại extension cho một lỗi không nằm trong extension.**
-> Khi một trường *“biến mất”* — **nghi cách đọc trước khi nghi cái máy**, và in cả vật trước khi thu hẹp.
+**`N1` — VẪN MỞ, nhưng chờ DỮ LIỆU chứ không chờ mã.** Nhật ký đời sống đã dựng và đã đo thật
+(giết bằng `Stop-Process -Force` → lượt sau báo đúng; đóng tử tế → im lặng). Nó **vào việc từ lượt
+bật Bridge kế tiếp**. Chờ một lần chết thật rồi đọc nó.
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 
-~~**`N2` — EXTENSION RỤNG KẾT NỐI (`S-02`), đợi Đức duyệt quyền `alarms`**~~ — **KHÔNG CÒN.**
-Đức duyệt **07/09**, `S-02` đóng cùng ngày, [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md)
-ghi quyết định. Đo 17/09: cả `duc-scouter` lẫn `udin-optic` khai `alarms` trong manifest và gọi
-`chrome.alarms.create` + `onAlarm` thật trong `background`. **Đừng hỏi lại.**
+**`Đ1` — ĐẨY.** Nhiều commit đang nằm local: `safe-push` từ chối vì chúng nằm sau một commit của
+lane `claude-gpt-chay-het-job`, và đẩy là việc của họ lên theo. Đức chốt `--carry` thì đẩy được.
 
-**`N5` — NHÓM VIDEO trong bảng "Udin làm được gì".** Đức nêu trước 17/09: sẽ có tính năng tạo
-video. Bảng đã dựng sẵn hình dạng nhóm — thêm **một** khối `[data-nhom="video"]`, không đụng nhóm
-cũ, và `tests/huong-dan-smoke.mjs` **cố ý không kiểm tên nhóm** nên nhóm mới không làm bộ đo đỏ.
-**Chưa làm gì cho tới khi Udin thật sự có tính năng video.**
+**`Đ2` — AUDIT TỔNG THỂ + ĐỘC LẬP.** Đức đặt hàng 17/09, làm **sau khi `A1`–`A5` xong**. Thứ tự ấy
+cố ý: `A1` là *kiểm lại người kiểm*, và giao cho một AI khác một bộ đo chưa biết có đỏ được không
+thì nó audit trên cát. **Cần Đức mở kênh** (Codex / GPT) — AI không tự gửi gì ra ngoài.
+
+**`N5` — NHÓM VIDEO** trong bảng *Udin làm được gì*. Hình dạng nhóm đã dựng sẵn, thêm đúng một
+khối `[data-nhom="video"]`. **Chưa làm gì cho tới khi Udin thật sự có tính năng video.**
+
+**`Đ3` — KIỂM TOÁN TIẾN TRÌNH WINDOWS.** Chỉ hỏi **nếu** máy chủ Bridge còn chết sau khi nhật ký
+đời sống vào việc. Đổi cài đặt hệ thống, và nó chỉ đáng khi đã có một lần chết bắt được.
 
 ### Việc của TÔI, không phải của Đức — ghi ra để khỏi đẩy nhầm
 
-`S-31` (Udin không tự nạp lại được) **không chờ Đức**. Sổ nợ đã chốt đường mặc định ⒝ — *gộp mọi
-lượt sửa mã extension của một phiên, xin nạp lại **đúng một lần** ở cuối*. 17/09 tôi phá nó (xin
-hai lượt trong một phiên) và còn đẩy nhầm nó thành câu hỏi cho Đức.
-
+`S-31` (Udin không tự nạp lại được) **không chờ Đức**. Đường mặc định ⒝ đã chốt: *gộp mọi lượt sửa
+mã extension của một phiên, xin nạp lại **đúng một lần** ở cuối*. 17/09 tôi phá nó hai lần — một
+lần xin hai lượt trong một phiên, một lần bắt Đức nạp lại cho **một lỗi không nằm trong extension**
+(`G-99`).
 
 ### NĂM thứ ĐỪNG làm lại — mỗi cái đã tốn một lần
 
