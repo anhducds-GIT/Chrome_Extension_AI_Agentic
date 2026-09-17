@@ -937,3 +937,33 @@ dòng / chiều cao dựng**, chưa kiểm. Muốn nghiệm thu `~~B-99~~` thì 
 sự bị gấp** — kiểm bằng `dom-probe`, đếm nút, đừng tin độ dài.
 
 Suite **144/144** · đột biến **8/8**.
+
+## 2026-09-17 (lượt 3) · `claude-gpt-chay-het-job` — nút "Change Folder" không mở được hộp chọn (`B-101`)
+
+**Đức báo.** Bấm nút chọn thư mục ở mục **3. OUTPUT DESTINATION** thì không có gì xảy ra, chỉ hiện
+lại dòng *"Đã xin lại quyền cho thư mục đã nhớ: `Pilot-09_…`. Không phải chọn lại."* — không đổi
+được thư mục đích.
+
+**Gốc lỗi: nhãn nút và việc nút làm ở hai nơi không biết nhau.** `renderOutput` tính nhãn bằng một
+ternary tại chỗ, còn `choosePrimaryDestination()` thì **luôn** gọi `reauthorizeSole()` trước và
+`return` ngay khi xin lại được. Đường tắt đó là `~~B-53~~`, dựng cho ca *"vừa nạp lại, handle còn
+trong IndexedDB"* — nhưng nó không nhìn trạng thái phiên. Đã gắn được thư mục rồi thì nó nuốt
+**mọi** cú bấm về sau; hộp chọn không bao giờ mở ra nữa.
+
+**Vá.** Hàm thuần `DacSidepanelUiSemantics.folderButtonIntent(permissionState, imageLocation)` trả
+`{ label, reauthorizeFirst }`; **nhãn và nhánh xin-lại-quyền cùng đọc nó**. Cầm handle sống ⇒ đi
+thẳng ra `showDirectoryPicker`. Chưa gắn hoặc mất quyền ⇒ vẫn xin lại trước, giữ lợi của `~~B-53~~`.
+
+**Thêm một thứ không tính trước.** Ca đổi thư mục nay không còn `await` nào trước
+`showDirectoryPicker`, nên cái giá `B-53` tự khai — *"Chrome CÓ THỂ coi là hết user gesture"* —
+biến mất ở đúng ca hay bấm nhất.
+
+**Đo.** `tests/nut-doi-thu-muc-smoke.mjs` 13/13; đột biến **8/8**, kể cả ca khó *"số lời gọi
+`reauthorizeSole` vẫn bằng 1 nhưng bị chuyển ra NGOÀI nhánh gate"*. Suite vùng **144 → 145**.
+
+**Suýt tự khớp văn mình.** Phép ghim đầu đếm chuỗi `"Change Folder"` và đòi bằng 0 — nhưng chú
+thích của chính tôi và câu báo cho Đức đều chứa chuỗi đó. Đổi sang đếm **số chỗ gán
+`destinationFolderBtn.textContent`** cộng một phép đòi chỗ gán đó đọc `folderButtonIntent`.
+
+**CHƯA NGHIỆM THU LIVE** — tôi không nạp lại được extension. Đức nạp lại rồi bấm hai lần; lần hai
+phải mở hộp chọn.

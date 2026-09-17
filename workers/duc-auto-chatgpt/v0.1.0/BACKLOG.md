@@ -2605,6 +2605,32 @@ còn sót vẫn mở được cổng. Suite **132/132**, thử phá **10/10 đ�
 - **đóng khi:** ~~Đức chốt, vá xong, và có phép ghim cho **cả hai** ca.~~ Còn lại **một** việc:
   nghiệm thu **live** một job có ảnh mẫu — suite và thử phá không thay được lượt chạy thật.
 
+### ~~B-101~~ · (P1) ĐÃ VÁ 17/09 — nút "Change Folder" ở mục 3 không mở được hộp chọn
+
+Đức báo 17/09: bấm nút chọn thư mục ở **3. OUTPUT DESTINATION** thì không có gì xảy ra, chỉ hiện
+lại một dòng *"Đã xin lại quyền cho thư mục đã nhớ: Pilot-09_Test-Codex-Bridge-to-Extension.
+Không phải chọn lại."* — tức là không đổi được thư mục đích.
+
+**Gốc lỗi: chữ trên nút và việc nút làm ở hai nơi không biết nhau.** `renderOutput` tính nhãn
+(`Re-authorize` / `Change Folder` / `Choose Folder`) bằng một ternary tại chỗ, còn
+`choosePrimaryDestination()` thì **luôn** gọi `DacOutputProfiles.reauthorizeSole()` trước và
+`return` ngay khi xin lại được. Đường tắt ấy là `~~B-53~~`, dựng cho ca "vừa nạp lại, handle còn
+trong IndexedDB" — nhưng nó không hề nhìn trạng thái phiên, nên một khi đã gắn được thư mục thì
+nó nuốt **mọi** cú bấm về sau. Hộp chọn không bao giờ mở ra nữa.
+
+**Vá:** một hàm thuần `DacSidepanelUiSemantics.folderButtonIntent(permissionState, imageLocation)`
+trả `{ label, reauthorizeFirst }`; cả nhãn lẫn nhánh xin-lại-quyền cùng đọc nó. Đã cầm handle sống
+⇒ `reauthorizeFirst: false`, đi thẳng ra `showDirectoryPicker`. Chưa gắn hoặc mất quyền ⇒ vẫn xin
+lại trước, giữ nguyên cái lợi của `~~B-53~~`.
+
+**Được thêm một thứ:** ca đổi thư mục nay không còn đi qua `await` nào trước `showDirectoryPicker`,
+nên cái giá mà chú thích `B-53` tự khai — "Chrome CÓ THỂ coi là hết user gesture" — biến mất ở
+đúng ca hay bấm nhất.
+
+Ghim: `tests/nut-doi-thu-muc-smoke.mjs` 13/13, đột biến 8/8 (kể cả ca *"đếm vẫn bằng 1 nhưng lời
+gọi bị chuyển ra ngoài nhánh"*). `tests/validation-output-ux-static.mjs` đổi theo, vì nó đang ghim
+đúng cái ternary vừa bị gỡ.
+
 ### B-100 · (P2) Sáu chỗ còn gây nhầm lẫn — Đức nêu 17/09 sau lượt chạy 8/8 vòng
 
 Gom từ đúng một buổi vận hành thật. Mỗi mục là một thứ ĐÃ làm người đọc hiểu sai, không phải
