@@ -240,9 +240,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS)) {
    * và "không kiểm được" đọc y hệt nhau. */
   try {
     const cu = JSON.parse(execSync("git show HEAD:.repo-structure.json", { cwd: ROOT, encoding: "utf8" }))?.budget ?? {};
+    /* KHOÁ MỚI CŨNG PHẢI KỂ RA — audit vòng 2, 17/09. Bản đầu lọc `typeof cu[k] === "number"`,
+       nên **thêm hẳn một mục ngân sách mới** với con số tuỳ ý thì `cu[k]` vắng mặt và lượt so
+       im lặng bỏ qua. Đó là đúng cái cửa mà cả khối này sinh ra để đóng, chỉ đi vòng một bước.
+       Khoá BỊ XOÁ thì không kể: bỏ một thước là siết, không phải nới. */
+    const them = Object.entries(NS)
+      .filter(([k, v]) => typeof v === "number" && !(k in cu) && k in (JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"))?.budget ?? {}))
+      .map(([k, v]) => `${k} (MỚI) = ${v}`);
     const noi = Object.entries(NS)
       .filter(([k, v]) => typeof cu[k] === "number" && typeof v === "number" && v > cu[k])
-      .map(([k, v]) => `${k} ${cu[k]} → ${v}`);
+      .map(([k, v]) => `${k} ${cu[k]} → ${v}`)
+      .concat(them);
     if (noi.length) {
       canh.push(`TRẦN VỪA BỊ NỚI: ${noi.join(" · ")}`);
       console.log(`  ✗ ${"Trần so với HEAD".padEnd(34)} NỚI LÊN: ${noi.join(" · ")}`);
@@ -250,7 +258,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS)) {
       console.log("      không phải vì nó đang vướng. Hạ lại, hoặc viết ADR rồi nói ra ở HANDOFF.");
     }
   } catch (e) {
-    console.log(`  · Trần so với HEAD: KHÔNG ĐO ĐƯỢC (${String(e.message).split(NL)[0].slice(0, 60)})`);
+    /* "KHÔNG ĐO ĐƯỢC" KHÔNG PHẢI "ĐẠT" — audit vòng 2 nêu, và đó là luật ba-trạng-thái của
+       chính repo này. Bản đầu chỉ in một dòng rồi vẫn thoát 0, tức một lượt chạy mù đọc y hệt
+       một lượt chạy sạch. Nay nó vào `canh`, nên mã thoát nói thật. */
+    const vi = String(e.message).split(NL)[0].slice(0, 60);
+    canh.push(`KHÔNG so được trần với HEAD (${vi})`);
+    console.log(`  ✗ ${"Trần so với HEAD".padEnd(34)} KHÔNG ĐO ĐƯỢC — ${vi}`);
+    console.log("      Không đo được thì không được tính là đạt. Kho chưa có commit nào, hay");
+    console.log("      `git show HEAD:.repo-structure.json` không đọc được?");
   }
 
   /* ĐO BẰNG TOKEN, không bằng dòng — Đức chốt 09/09. Dùng chung `napContext` với cổng đóng

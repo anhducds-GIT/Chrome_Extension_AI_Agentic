@@ -88,6 +88,16 @@ function dungKho(ten, { remote = false } = {}) {
   writeFileSync(join(fx, "package.json"),
     JSON.stringify({ name: "fx", private: true, type: "module", scripts: { test: "node -e 0" } }), "utf8");
   writeFileSync(join(fx, "evidence", "cu.md"), `# bang chung cu${NL}- dong mot${NL}`, "utf8");
+
+  /* MỘT FILE CHO MỖI ĐUÔI HAY BỊ BỎ QUA — và đây là chỗ lượt đo bao phủ có răng hay không.
+   * Audit vòng 2 dựng đúng một đường vòng: thêm `if (file.endsWith(".env")) continue;` vào vòng
+   * quét secret. Bảy khối vẫn xanh, vì fixture khi ấy KHÔNG có file `.env` nào — con số bao phủ
+   * vẫn N/N, và phép đo bao phủ nói đúng về một tập không chứa thứ vừa bị bỏ.
+   * Nên fixture phải MANG SẴN những đuôi ấy. Chúng trống rỗng, vô hại, và làm mọi lượt bỏ qua
+   * theo đuôi file lộ ra ngay ở con số. Thêm một đuôi mới đáng ngờ thì thêm một dòng ở đây. */
+  for (const ten of [".env", "cau-hinh.yaml", "cau-hinh.toml", "cai-dat.ini", "ghi-chu.txt", "chay.sh", "doi.py", "app.cfg"]) {
+    writeFileSync(join(fx, ten), `khong co gi o day${NL}`, "utf8");
+  }
   at("add", "-A");
   at("commit", "-q", "-m", `nen${NL}${NL}Lane: ${NHAN}`);
 
@@ -145,6 +155,18 @@ function doHaiVe(k, tenHang, be) {
 {
   const k = dungKho("secret");
   try {
+    /* ĐỌC BAO NHIÊU TRÊN BAO NHIÊU — audit vòng 2 nêu đúng một đường vòng mà cả bảy khối mù:
+     * thêm `if (file.endsWith(".env")) continue;` vào vòng quét. Fixture của khối này là
+     * `cau-hinh.yml` nên nó vẫn đỏ đúng lúc phải đỏ, và một `.env` mang token thật thì đi lọt.
+     * Đếm từng đuôi file là cuộc đua không bao giờ thắng. Đo CON SỐ BAO PHỦ thì thắng: kho tạm
+     * không có file nhị phân nào, nên phép quét phải khai **đọc đủ N trên N**. Bất kỳ lượt bỏ
+     * qua lặng lẽ nào — theo đuôi, theo thư mục, theo kích thước — đều làm hai số lệch nhau. */
+    const nen = k.hang("Không có secret lọt vào repo");
+    const dem = /Đọc thật (\d+)\/(\d+) file/.exec(nen);
+    assert.ok(dem, `không đọc được con số bao phủ từ báo cáo — đổi câu chữ rồi? Hàng đọc được: ${nen}`);
+    assert.equal(dem[1], dem[2],
+      `phép quét khai đọc ${dem[1]}/${dem[2]} file: có lượt BỎ QUA lặng lẽ. Kho tạm không có file nhị phân nào, nên mọi file được track đều phải được soi`);
+
     doHaiVe(k, "Không có secret lọt vào repo", () => {
       const giaDang = "gh" + "p_" + "Kq7Wn3Bd5Rm2Vy8Hs4Jc6Lp0Zg9Ar4Nd";
       writeFileSync(join(k.fx, "cau-hinh.yml"), `khoa: ${giaDang}${NL}`, "utf8");

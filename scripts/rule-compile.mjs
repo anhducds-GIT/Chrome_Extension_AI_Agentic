@@ -167,6 +167,32 @@ export function vanTay(dong) {
   return [...new Set(tu)].sort().join(" ");
 }
 
+/**
+ * Cùng phép chuẩn hoá của `vanTay`, **nhưng GIỮ THỨ TỰ TỪ** và không khử trùng lặp.
+ *
+ * Sinh ra 17/09 sau vòng 2 của audit độc lập. `vanTay` cố ý bỏ thứ tự — đó là điều khiến nó bắt
+ * được hai câu nói cùng một thứ bằng hai cách sắp xếp. Nhưng lượt MIỄN thì không được phép rộng
+ * như thế: Codex dựng được ca thật, thay cả hai bản trùng bằng một câu **ngược nghĩa** cùng bộ từ
+ * (*"xoá A trước khi thêm B"* → *"thêm B trước khi xoá A"*) và lượt miễn vẫn che.
+ *
+ * Nên lượt miễn so bằng thước này: bỏ markdown, dấu, hoa thường — thứ khác nhau vô hại giữa hai
+ * bản chép — mà **giữ trật tự**, thứ mang nghĩa. Đổi nghĩa ⇒ hết miễn ⇒ quay lại hỏi.
+ */
+export function cauChuan(dong) {
+  return String(dong ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "d")
+    .toLowerCase()
+    .replace(/`[^`]*`/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2)
+    .join(" ");
+}
+
 /* Dòng nào ĐÁNG coi là một câu luật: gạch đầu dòng hoặc mục đánh số. Bỏ bảng, khối mã và
    trích dẫn — ba chỗ đó là ví dụ và bối cảnh, không phải câu luật. */
 export function dongLuat(text) {
@@ -299,26 +325,46 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
      Nay phải khớp **cả tập file**: đúng những file đã khai, không thừa không thiếu. Bản chép thứ
      ba làm tập file lệch đi ⇒ lượt miễn hết hiệu lực ⇒ nhóm quay lại bảng. Khai thiếu `o` thì
      KHÔNG miễn gì cả và nói ra — một khai báo hỏng phải ồn, không được im. */
+  /* ─── BA CHỖ BẢN VÁ VÒNG 1 CÒN HỞ, audit vòng 2 bác ───────────────────────
+   * ⒜ **Khai hỏng chỉ bị soi KHI nhóm ấy đang trùng.** Bản trước gọi `duocMien` bên trong vòng
+   *   lặp, nên một lượt khai hỏng mà hôm nay chỉ khớp MỘT file (hoặc không file nào) thì không
+   *   ai gọi tới nó và nó im hoàn toàn. Nay **soi cả bảng khai TRƯỚC**, không phụ thuộc hôm nay
+   *   tìm thấy gì — một lượt khai chỉ đúng khi có người trùng thì nó là bẫy nằm chờ.
+   * ⒝ **`ly_do` chưa bị bắt buộc.** Khai `{ o: [...] }` trống lý do vẫn miễn được. Lý do là cả
+   *   giá trị của lượt miễn: không có nó thì không ai biết Đức chốt cái gì.
+   * ⒞ **Vân tay + tập file VẪN chưa bằng "câu Đức đã duyệt".** Codex dựng được ca thật: thay CẢ
+   *   HAI bản bằng một câu NGƯỢC NGHĨA cùng bộ từ (*"xoá A trước khi thêm B"* → *"thêm B trước
+   *   khi xoá A"*) — `vanTay()` bỏ thứ tự từ nên vân tay y hệt, tập file y hệt, và lượt miễn vẫn
+   *   che. Nay phải khai `cau` = **đúng câu đã duyệt**, và mọi bản trùng phải khớp từng ký tự
+   *   sau khi bỏ khoảng trắng thừa. Đổi chữ ⇒ hết miễn ⇒ quay lại hỏi. */
   const trungCoY = new Map(Object.entries(dangKy.trung_co_y ?? {}));
   const khaiHong = [];
-  const duocMien = (vanTayNhom, cacFile) => {
-    if (!trungCoY.has(vanTayNhom)) return false;
+  for (const [khoa, khai] of trungCoY) {
+    const thieu = [];
+    if (typeof khai?.ly_do !== "string" || !khai.ly_do.trim()) thieu.push("ly_do");
+    if (!Array.isArray(khai?.o) || !khai.o.length || !khai.o.every((f) => typeof f === "string" && f)) thieu.push("o");
+    if (typeof khai?.cau !== "string" || !khai.cau.trim()) thieu.push("cau");
+    if (thieu.length) khaiHong.push(`${khoa} (thiếu ${thieu.join(", ")})`);
+  }
+  const duocMien = (vanTayNhom, cacFile, cacCau) => {
     const khai = trungCoY.get(vanTayNhom);
-    const o = Array.isArray(khai?.o) ? khai.o : null;
-    if (!o) { khaiHong.push(vanTayNhom); return false; }
-    const daKhai = new Set(o);
-    return daKhai.size === cacFile.size && [...cacFile].every((f) => daKhai.has(f));
+    if (!khai || typeof khai.ly_do !== "string" || !Array.isArray(khai.o) || typeof khai.cau !== "string") return false;
+    const daKhai = new Set(khai.o);
+    if (daKhai.size !== cacFile.size || ![...cacFile].every((f) => daKhai.has(f))) return false;
+    const cauDuyet = cauChuan(khai.cau);
+    if (!cauDuyet) return false;
+    return cacCau.every((c) => cauChuan(c) === cauDuyet);
   };
   const trung = [];
   for (const [v, cho] of theoVanTay) {
     const cacFile = new Set(cho.map((c) => c.file));
-    if (cacFile.size > 1 && !duocMien(v, cacFile)) trung.push(cho);
+    if (cacFile.size > 1 && !duocMien(v, cacFile, cho.map((c) => c.noiDung))) trung.push(cho);
   }
   if (khaiHong.length) {
     /* Không ném: bộ này còn ba phép kiểm khác phải chạy xong. Nhưng phải hiện ra ở nhóm ③, vì
        một lượt miễn khai hỏng đọc y hệt một lượt miễn đang chạy. */
     trung.unshift([{ file: ".repo-structure.json", dong: 0,
-      noiDung: `KHAI_MIEN_HONG: luat.trung_co_y[${khaiHong.join(", ")}] thiếu mảng \`o\` (danh sách file được phép trùng) — KHÔNG miễn gì cả.` }]);
+      noiDung: `KHAI_MIEN_HONG: luat.trung_co_y — ${khaiHong.join(" · ")}. Mỗi lượt miễn phải khai đủ \`ly_do\` + \`o\` (các file) + \`cau\` (đúng câu Đức đã duyệt). Thiếu một thứ là KHÔNG miễn gì cả.` }]);
   }
 
   /* ④ — hạn rà soát. Giới hạn ⑨ của `AGENTS.md` nói HẰNG TUẦN; trước file này nó chỉ là chữ. */

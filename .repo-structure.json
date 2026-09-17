@@ -371,7 +371,9 @@
         "o": [
           "workers/hnx-fetch/AGENTS.md",
           "workers/hnx-fetch/PROTOCOL.md"
-        ]
+        ],
+        "cau": "3. Xoa hoac sua du lieu goc trong thu muc Drive cua Duc",
+        "_cau_doc": "DUNG CAU Duc da duyet. So bang cauChuan(): bo markdown/dau/hoa-thuong nhung GIU THU TU TU. Sua nghia mot trong hai ban (vi du dao trat tu menh de) la het mien va cap ay quay lai bang — van tay khong canh duoc chieu do, audit vong 2 (17/09) dung ca that de chung minh."
       }
     },
     "khoi_sinh": {

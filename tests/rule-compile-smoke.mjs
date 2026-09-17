@@ -16,7 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  bienDich, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE,
+  bienDich, cauChuan, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE,
   sinhKhoi, thayKhoi, MOC_DAU, MOC_CUOI, dungBoGoi,
 } from "../scripts/rule-compile.mjs";
 
@@ -338,7 +338,7 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
  * Ba vế dưới đây là ba nửa của cùng một câu hỏi, và **thiếu vế ⒝ thì bản hỏng vẫn xanh**. */
 {
   const vt = vanTay(CAU);
-  const dangKyMien = { ...dangKySach, trung_co_y: { [vt]: { ly_do: "Đức chốt", o: ["AGENTS.md", "docs/protocols/X.md"] } } };
+  const dangKyMien = { ...dangKySach, trung_co_y: { [vt]: { ly_do: "Đức chốt", o: ["AGENTS.md", "docs/protocols/X.md"], cau: CAU } } };
   const hai = [
     { duongDan: "AGENTS.md", noiDung: CAU },
     { duongDan: "docs/protocols/X.md", noiDung: CAU },
@@ -361,6 +361,49 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
   assert.ok(JSON.stringify(kqHong.trung).includes("KHAI_MIEN_HONG"), "và phải kể ra là khai hỏng, đừng im");
 
   ok("③ lượt miễn trùng cố ý hẹp đúng bằng tập file đã khai (bản chép thứ ba vẫn bị bắt)");
+}
+
+/* ---- ③ BA LỖ CÒN LẠI CỦA LƯỢT MIỄN — audit độc lập VÒNG HAI, 17/09 -------
+ * Vòng 1 đóng chiều "thêm bản chép". Vòng 2 dựng được ba đường vòng qua chính bản vá ấy, và cả
+ * ba đều chạy thật trên máy nó. Mỗi khối dưới là một đường, viết đúng thứ tự nó tìm ra. */
+{
+  const vt = vanTay(CAU);
+  const dayDu = { ly_do: "Đức chốt", o: ["A.md", "B.md"], cau: CAU };
+  const hai = [{ duongDan: "A.md", noiDung: CAU }, { duongDan: "B.md", noiDung: CAU }];
+
+  /* ⒜ KHAI HỎNG NẰM CHỜ. Bản vòng 1 chỉ soi lượt khai KHI nhóm ấy đang trùng — nên một lượt
+     khai hỏng mà hôm nay chỉ khớp MỘT file thì không ai gọi tới, và nó im hoàn toàn. Nó là một
+     cái bẫy nằm chờ tới ngày có người chép bản thứ hai. */
+  const motFile = bienDich({ soCai, banHieuLuc: [hai[0]], dangKy: { ...dangKySach, trung_co_y: { [vt]: { o: ["A.md"] } } }, homNay: HOM_NAY });
+  assert.ok(JSON.stringify(motFile.trung).includes("KHAI_MIEN_HONG"),
+    "khai hỏng phải bị soi NGAY, kể cả khi hôm nay chưa nhóm nào trùng — nếu không nó là bẫy nằm chờ");
+
+  /* ⒝ THIẾU `ly_do` mà vẫn miễn. Lý do là cả giá trị của lượt miễn: không có nó thì không ai
+     biết Đức đã chốt cái gì, và lượt miễn thành một cái công tắc không tên. */
+  const thieuLyDo = bienDich({ soCai, banHieuLuc: hai, dangKy: { ...dangKySach, trung_co_y: { [vt]: { o: ["A.md", "B.md"], cau: CAU } } }, homNay: HOM_NAY });
+  assert.ok(thieuLyDo.trung.length >= 1, "thiếu `ly_do` thì KHÔNG được miễn");
+
+  /* ⒞ ĐẢO TRẬT TỰ MỆNH ĐỀ — đường vòng đắt nhất vòng 2 tìm ra, và nó chạy được.
+     `vanTay()` bỏ thứ tự từ (cố ý, để bắt hai cách nói cùng một thứ). Nhưng thế nghĩa là thay
+     CẢ HAI bản bằng một câu NGƯỢC NGHĨA cùng bộ từ thì vân tay y hệt, tập file y hệt, và lượt
+     miễn vẫn che. Nay `cau` so bằng `cauChuan()` — giữ trật tự — nên đổi nghĩa là hết miễn. */
+  const xuoi = "- luôn xoá alpha trước khi thêm beta để giữ trạng thái sản xuất luôn ổn định";
+  const nguoc = "- luôn thêm beta trước khi xoá alpha để giữ trạng thái sản xuất luôn ổn định";
+  assert.equal(vanTay(xuoi), vanTay(nguoc), "tiền đề của khối này: hai câu NGƯỢC NGHĨA cùng vân tay");
+  assert.notEqual(cauChuan(xuoi), cauChuan(nguoc), "nhưng `cauChuan` phải phân biệt được — nó giữ trật tự");
+  const daoNghia = bienDich({
+    soCai,
+    banHieuLuc: [{ duongDan: "A.md", noiDung: nguoc }, { duongDan: "B.md", noiDung: nguoc }],
+    dangKy: { ...dangKySach, trung_co_y: { [vanTay(xuoi)]: { ly_do: "Đức duyệt câu XUÔI", o: ["A.md", "B.md"], cau: xuoi } } },
+    homNay: HOM_NAY,
+  });
+  assert.equal(daoNghia.trung.length, 1, "đảo nghĩa hai bản thì lượt miễn phải HẾT hiệu lực");
+
+  /* ĐỐI CHỨNG: khai đủ và đúng câu thì vẫn im — thiếu vế này thì một bản LUÔN báo cũng xanh. */
+  assert.equal(bienDich({ soCai, banHieuLuc: hai, dangKy: { ...dangKySach, trung_co_y: { [vt]: dayDu } }, homNay: HOM_NAY }).trung.length, 0,
+    "khai đủ `ly_do` + `o` + `cau` đúng thì vẫn phải được miễn");
+
+  ok("③ lượt miễn: khai hỏng bị soi ngay · thiếu `ly_do` không miễn · đảo nghĩa hết miễn");
 }
 
 {
