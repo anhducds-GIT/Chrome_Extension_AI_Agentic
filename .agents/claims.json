@@ -103,35 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "ddc019a1c2137690",
-  "tam": {
-    "workers/_shared/goi-bridge/goi-bridge.mjs": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T08:52:10.763Z"
-    },
-    "workers/_shared/goi-bridge/tests/goi-bridge-smoke.mjs": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T08:52:10.763Z"
-    },
-    "workers/duc-scouter/v0.1.0/docs/GIA-THUYET.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T08:52:10.763Z"
-    },
-    "workers/duc-scouter/v0.1.0/CHUOI-VIEC.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T08:54:42.848Z"
-    },
-    "workers/duc-scouter/v0.1.0/BACKLOG.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T09:06:24.369Z"
-    },
-    "workers/duc-scouter/v0.1.0/HANDOFF.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T09:09:03.799Z"
-    },
-    "workers/duc-scouter/v0.1.0/STATUS.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T09:09:03.799Z"
-    }
-  }
+  "_fingerprint": "e5f9fc7025525f08"
 }

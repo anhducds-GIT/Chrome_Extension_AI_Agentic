@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "Seed du dung cho mot vong viec that ma KHONG sua mot dong nao cua no — vong-tham-chieu.mjs ben Udin chay tron bang cac lenh cua seed. Be mat GHI da BOT mot method 17/09: Page.setInterceptFileChooserDialog go cung duong mo_bang cua input.upload (WRITE_CDP_METHODS 17 -> 16), vi input.tha lam cung viec ma khong di qua hop thoai nao. Be mat DOC them dung mot thuoc tinh: data-image-id (ADR-0009). Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 PARKED, mo lai khi Duc goi."
+- next_step: "N1 nua sau: CAI GI giet may chu Bridge giua phien. Gia thuyet Start-Process-bi-don-theo-cha da bi LAT 17/09 (G-98: ba may chu dang song deu co cha da chet) — nguyen nhan that CHUA BIET, dung chep dong da gach thanh ket luan. Chu ky duy nhat biet duoc: stderr rong, tuc bi giet chu khong tu loi; ung vien re nhat chua do la chinh bo khoi dong (-KhoiDongLai goi Stop-Process -Force). Nua mang lai tien da xong: fetch failed nay tach ECONNREFUSED (khong ai nghe) khoi ca dut-giua-chung (bat lai khong chua duoc). Ke do N4: scout.type, scout.text, scout.grab chua cham tldraw lan nao — can Duc mo mot tab. R2 va R3 KHONG con parked: ca hai da dong 17/09 bang luot chay that."
 - human_action: "khong"
