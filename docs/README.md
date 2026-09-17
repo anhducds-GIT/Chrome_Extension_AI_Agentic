@@ -25,7 +25,7 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | `drafts/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md` | [docs/studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | nghiên cứu tầm với của Bridge |
 | `drafts/EXP-02…EXP-15` (14 file) | **ĐÃ XOÁ 2026-09-08** — xem dòng ngay dưới bảng thứ hai | 14 hồ sơ khảo sát giai đoạn 1 |
 | `drafts/FLOW-EXT-COORDINATION-PLAN.md` | [docs/studies/FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | kế hoạch 5 checkpoint, đang chạy |
-| **`docs/archive/` — ĐÃ XOÁ 2026-09-08 (15 file, 2.967 dòng)** | — | Tầng "hồ sơ đã nghỉ": mọi file trong đó đều `status: superseded` và công việc của chúng đã xong từ lâu. **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file: `git show a3b67a96a92e:docs/archive/<tên-file>`, liệt kê cả tầng: `git show --stat a3b67a96a92e -- docs/archive/`. Đức chốt xoá 08/09 |
+| **`docs/archive/`** | *(không phải đường `drafts/`)* | Xoá 08/09, **sống lại 17/09 với việc khác** — mục [`docs/archive/`](#docsarchive--xoá-0809-sống-lại-1709-với-một-việc-khác) bên dưới. *(Hàng này khai **"ĐÃ XOÁ"** tới 17/09, là chỗ THỨ HAI trong cùng file nói thế.)* |
 | `drafts/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md` | [docs/studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | roadmap S6 xếp thẳng vào studies |
 | **18 hồ sơ MỒ CÔI — ĐÃ XOÁ 2026-09-08 (2.538 dòng)** | — | Không gì trong repo trỏ tới chúng ngoài chính mục lục này: brief của việc đã ship, kế hoạch đã thi hành xong, bản đồ đã bị `llms.txt`/`DASHBOARD.md` thay. **Chỉ rời cây làm việc, KHÔNG rời git** — `git show --stat 522a22400fd3 -- docs/` liệt kê cả mẻ, `git show 522a22400fd3:docs/<đường-dẫn>` đọc lại một hồ sơ |
 | `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
@@ -58,15 +58,10 @@ không phải khi tò mò.
 | [ORCHESTRATOR.md](protocols/ORCHESTRATOR.md) | bạn là phiên điều phối | Đọc gì lúc mở phiên, luật song song, HARD ROLE FIREWALL, luật nạp báo cáo năm mục, lối ra bàn giao cho executor |
 | [HANDOFF.md](protocols/HANDOFF.md) | sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài | Một mục `HANDOFF.md` chứa gì và KHÔNG chứa gì, **trần 2.600 byte/mục** (khai ở `.repo-structure.json`, cổng chỉ chặn mục VỪA THÊM), xoay file theo tháng bằng `node scripts/handoff.mjs --rotate`, ba bất biến của lược đồ lưu trữ, và vì sao bộ đếm sự cố phải đi hết chuỗi con trỏ |
 | [ASSISTANT-V0.1.md](protocols/ASSISTANT-V0.1.md) | — | (khai để mục lục đủ; nội dung xem trong file) |
-| [RULE-COMPILER.md](protocols/RULE-COMPILER.md) | sắp thêm/sửa/xoá một nơi chứa luật, hoặc bị `npm run luat` báo đỏ | Sáu phép của bộ biên dịch luật, ba cửa ra khi hai nơi nói khác nhau, và bản đăng ký `luat.*` ở `.repo-structure.json` |
+| [RULE-COMPILER.md](protocols/RULE-COMPILER.md) | sắp thêm/sửa/xoá một nơi chứa luật, hoặc `npm run luat` báo đỏ | Sáu phép của bộ biên dịch luật, ba cửa ra khi hai nơi nói khác nhau, bản đăng ký `luat.*` |
 
-> **RULE-COMPILER.md thiếu ở bảng này từ 09/09 tới 17/09 — tám ngày.** Đúng cái bệnh khối mở đầu
-> file này đã gọi tên (*"protocols/ đã tồn tại từ trước nhưng KHÔNG có trong mục lục"*), tái phát
-> ở chính file dựng ra để chữa nó. Đếm lại được, đừng tin bảng gõ tay:
->
-> ```bash
-> ls docs/protocols/*.md | wc -l      # phải bằng số hàng của bảng trên
-> ```
+> Hàng cuối **thiếu ở bảng này 8 ngày** (09→17/09) — đúng bệnh khối mở đầu file đã gọi tên, tái
+> phát ở chính file dựng ra để chữa nó. `ls docs/protocols/*.md | wc -l` phải bằng số hàng trên.
 
 ---
 
@@ -87,47 +82,26 @@ không phải khi tò mò.
 
 ## `docs/briefs/` — đề bài từng phiên
 
-> ⚠️ **BẢNG GÕ TAY ĐÃ BỊ GỠ 17/09, vì nó mục đúng như chính nó dự báo.** Phiên S6 dựng file này
-> và đã tự cảnh báo: *"đúng một commit sau, `BRIEF-S7.md` ra đời và bảng đã thiếu"*. Đo lượt rà
-> `A5` (17/09): bảng khai **6** brief, thư mục có **16**. Mười cái vô hình suốt tám ngày.
->
-> Sửa bằng cách **thêm tay lần nữa** là lặp lại đúng vòng đó. Nên bảng đi, lệnh đếm ở lại —
-> cùng khuôn `ROADMAP.md` dùng (*"đếm lại được, đừng tin con số gõ tay"*):
+> ⚠️ **BẢNG GÕ TAY GỠ 17/09, vì nó mục đúng như chính nó dự báo** (*"đúng một commit sau,
+> `BRIEF-S7.md` ra đời và bảng đã thiếu"*). Đo `A5`: bảng khai **6**, thư mục có **16**. Thêm tay
+> lần nữa là lặp lại vòng đó — nên bảng đi, lệnh ở lại:
 >
 > ```bash
-> ls docs/briefs/*.md                                   # có những đề bài nào
-> grep -l "^status: active" docs/briefs/*.md            # cái nào còn sống
+> ls docs/briefs/*.md ; grep -l "^status: active" docs/briefs/*.md
 > ```
 >
-> Muốn có mục lục thật thì **cho máy sinh** cùng lượt với `DASHBOARD.md` — đó vẫn là cách sửa
-> đúng, và nó vẫn chưa ai làm. Một danh sách máy đếm thì không mục được.
+> Cách sửa thật vẫn là **cho máy sinh** mục lục này cùng lượt với `DASHBOARD.md`; chưa ai làm.
 
 ## `docs/archive/` — XOÁ 08/09, **SỐNG LẠI 17/09 với một việc KHÁC**
 
-**Đọc kỹ chỗ này, vì hai lần `docs/archive/` tồn tại không cùng một nghĩa.**
+**Lần một (chết 08/09).** 15 hồ sơ `status: superseded` (2.967 dòng). Lý lẽ *"chúng là bản ghi có
+thật"* vẫn đúng, nhưng **git đã là chỗ giữ bản ghi có thật**. Rời cây làm việc, còn trong lịch sử:
+`git show --stat a3b67a96a92e -- docs/archive/` · `git show a3b67a96a92e:docs/archive/<tên-file>`.
 
-**Lần một (chết 08/09).** Tầng này từng giữ 15 hồ sơ đã nghỉ (2.967 dòng), tất cả
-`status: superseded`. Lý lẽ giữ chúng là *"chúng là bản ghi có thật"* — vẫn đúng, nhưng **git đã
-là chỗ giữ bản ghi có thật**, nên một thư mục thứ hai chỉ cộng vào con số mà mọi phiên phải đọc.
-Xoá khỏi cây làm việc, giữ nguyên trong lịch sử:
-
-```bash
-git show --stat a3b67a96a92e -- docs/archive/          # xem cả tầng
-git show a3b67a96a92e:docs/archive/<tên-file>          # đọc lại một hồ sơ
-```
-
-**Lần hai (sống lại 17/09, lộ trình `A4`).** Nay nó giữ **nhật ký đã xoay theo tháng** —
-`HANDOFF-<năm>-<tháng>.md` — chứ không giữ hồ sơ `superseded`. Đó là đường **DỜI CHỖ, KHÔNG
-XOÁ** mà `docs/protocols/HANDOFF.md` khai, chạy bằng `node scripts/handoff.mjs --rotate`. Lý lẽ
-08/09 **không bị lật**: nó nói *"đừng dựng chỗ thứ hai để giữ bản ghi git đã giữ"*, còn lượt xoay
-là để `HANDOFF.md` đang sống nằm trong trần — hai việc khác nhau.
-
-```bash
-ls docs/archive/                    # đếm lại, đừng tin dòng nào gõ tay ở đây
-```
-
-*(Từ 08/09 tới 17/09 mục này khai thẳng **"ĐÃ XOÁ"** cho một thư mục đã có file git track. Bắt
-được ở lượt rà `A5` — và đó đúng là việc lượt rà sinh ra để làm.)*
+**Lần hai (17/09, lộ trình `A4`).** Nay giữ **nhật ký xoay theo tháng** (`HANDOFF-<năm>-<tháng>.md`,
+sinh bằng `node scripts/handoff.mjs --rotate`). Lý lẽ 08/09 **không bị lật** — nó cấm dựng chỗ thứ
+hai để giữ bản ghi git đã giữ; lượt xoay là để `HANDOFF.md` đang sống nằm trong trần.
+Đếm: `ls docs/archive/`. *(Hai chỗ trong file này khai **"ĐÃ XOÁ"** suốt 9 ngày — `A5` bắt được.)*
 
 ## `docs/adr/` — sổ quyết định, gộp theo CHỦ ĐỀ từ 2026-09-09
 
@@ -135,16 +109,13 @@ Trước 09/09 là **27 file xếp theo thứ tự thời gian**, và không ch�
 lực. Nay **một chủ đề, một file, một câu trả lời** — lý lẽ đầy đủ ở
 [ADR-0000](adr/0000-ghi-nhan-quyet-dinh-kien-truc.md).
 
-**BẢNG TRA GỠ 17/09 — nó mục giống hệt hai bảng trên.** Đo lượt rà `A5`: bảng khai **9** file
-(cao nhất `0021`), thư mục có **21** — **12 file vô hình**, trong đó có cả những quyết định đang
-cưỡng chế hằng ngày (`0035` bó mở phiên · `0037` nạp đọc đốm · `0038` ngân sách tài liệu).
-
-Bảng ấy không cần tồn tại, vì **chính file này đã chỉ đường thay nó** ở đoạn ngay dưới — cột
-"mang quyết định" chẳng qua là trường `decides:` chép tay ra một chỗ thứ hai:
+**BẢNG TRA GỠ 17/09 — mục giống hệt hai bảng trên.** Đo `A5`: bảng khai **9** file (cao nhất
+`0021`), thư mục có **21** — **12 file vô hình**, gồm cả quyết định đang cưỡng chế hằng ngày
+(`0035` bó mở phiên · `0037` nạp đọc đốm · `0038` ngân sách tài liệu). Cột *"mang quyết định"*
+chẳng qua là trường `decides:` chép tay ra chỗ thứ hai, nên bản gốc luôn rẻ hơn:
 
 ```bash
-grep -H "^decides:" docs/adr/*.md          # số hiệu nào nằm ở file nào — bản gốc, luôn đúng
-node scripts/rule-compile.mjs              # sổ cái + bản hiệu lực, kèm mồ côi và chỗ quá hạn
+grep -H "^decides:" docs/adr/*.md ; node scripts/rule-compile.mjs
 ```
 
 **Trích dẫn theo SỐ HIỆU, đừng trích theo tên file.** Số hiệu (`ADR-0025`) vĩnh viễn; tên file đổi

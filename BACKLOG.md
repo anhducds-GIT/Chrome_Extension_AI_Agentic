@@ -1151,7 +1151,8 @@ duy nhất một phiên mở ngày nay** — khai **0 lần** dòng đó. Nên n
 không ai mở**, không phải luật chết đang dạy người. Gói đóng băng thì chỉ-đọc, nên lượt này
 **không sửa**; ghi ra đây để lượt sau khỏi tưởng là bỏ sót.
 
-· **đóng khi:** 8 nơi còn lại mỗi nơi được **đọc hết** rồi đổi `ra_soat` — hoặc, với 4 file gói
-đóng băng, Đức chốt một câu: **mở băng để sửa dòng chết**, hay **khai thẳng là không ai đọc chúng
-nữa** và gỡ khỏi bản đăng ký `luat.ra_soat`. Đường thứ hai rẻ hơn và tôi nghiêng về nó, vì bó mở
-phiên đã thay chúng.
+- **đóng khi:** lệnh: `node scripts/rule-compile.mjs` in `④ CHUA_RA_SOAT … [0]`, và mỗi nơi được
+  đổi ngày là nơi **đã đọc hết**, không phải nơi đã quét.
+- **đóng khi:** đức: với 4 file của hai gói đóng băng — **mở băng để sửa dòng chết**, hay **khai
+  thẳng là không ai đọc chúng nữa** và gỡ khỏi bản đăng ký `luat.ra_soat`. Tôi nghiêng về đường
+  thứ hai: rẻ hơn, và bó mở phiên (`PHIEN.md`) đã thay chúng rồi.

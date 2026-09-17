@@ -485,3 +485,18 @@ hình dạng sai thì KHÔNG khai, chứ không khai bừa: một `worker` rác 
 Ghim `G9` bên Scouter canh đúng chỗ đó: transport không được chứa tên gói nào.
 
 **Không đụng gì khác trong gói này.** Đã trả khoá ngay sau lượt sửa.
+
+## 2026-09-17 · `claude-scouter-udine` — lượt rà `A5`: một con số gõ tay đã sai
+
+Không đụng mã, không đụng dữ liệu. `AGENTS.md` khai `du-lieu/tests/` có **9 phép ghim**; đếm
+17/09 ra **10**. Số gõ tay trong bản đồ file đúng là thứ luật vàng 4 của repo cấm, nên hàng đó
+nay mang **lệnh đếm** thay cho con số.
+
+Đọc hết `AGENTS.md` và không thấy chỗ trôi nào khác: sáu luật riêng còn đúng (không `debugger` ·
+từ vựng đóng bốn lệnh · ghi tệp không qua extension · chỉ nối vào cuối · hiểu biết về trang gom
+ở hai tệp `du-lieu/nguon-*.mjs` · cái phanh), ba tệp chép nguyên văn vẫn có khối ⑷ của
+`be-mat-hep-smoke.mjs` canh, và mọi liên kết trong file đều trỏ vào tệp có thật (đo bằng máy).
+
+**`PROTOCOL.md` (519 dòng) thì CHƯA rà** — mới quét, chưa đọc hết, nên **không đặt ngày** cho nó.
+Ghi ở `N-66` của sổ nợ gốc. Đặt ngày cho một file mới quét là đúng thứ bản khai của trường
+`ra_soat` gọi là *"tự tắt máy cảnh"*.
