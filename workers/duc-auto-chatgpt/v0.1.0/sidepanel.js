@@ -124,6 +124,7 @@
     resumeCheckpointFindings: [],
     manualReconciliationRunning: false,
     pendingFolderPick: null,
+    thuMucDaNho: null,
     checkpointCollision: null,
     recreateRunning: false,
     pendingRecreateJobId: null,
@@ -1529,6 +1530,10 @@
     // are still the AI's write targets, so probe THEM directly.
     try {
       const profiles = await window.DacOutputProfiles.list();
+      // B-101 ② · Nhớ tên thư mục DUY NHẤT còn trong kho để nút nói đúng thứ nó
+      // sắp làm. Chỉ khi có đúng MỘT — `reauthorizeSole()` cũng cố ý im khi
+      // nhiều hơn một, nên hai con số này phải cùng một luật.
+      state.thuMucDaNho = profiles?.length === 1 ? (profiles[0].last_known_handle_name || profiles[0].profile_id) : null;
       if (!profiles?.length) return;
       // Every revoked profile is reported — one authorized profile must not
       // silence another profile's revocation (Codex cross-audit finding #1:
@@ -3484,7 +3489,7 @@
         els.folderHintText.title = values.folderHint || "";
       }
       if (els.copyFolderHintBtn) els.copyFolderHintBtn.disabled = !values.folderHint || values.image.kind !== "directory";
-      els.destinationFolderBtn.textContent = window.DacSidepanelUiSemantics.folderButtonIntent(permission, values.image).label;
+      els.destinationFolderBtn.textContent = window.DacSidepanelUiSemantics.folderButtonIntent(permission, values.image, state.thuMucDaNho).label;
       state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
       els.separateResultDestinationInput.checked = state.separateResultDestination;
       els.separateResultDestinationControls.hidden = !state.separateResultDestination;
@@ -4778,7 +4783,8 @@
     // chọn không bao giờ mở. Nhãn nút và nhánh này nay cùng đọc một hàm.
     const yDinh = window.DacSidepanelUiSemantics.folderButtonIntent(
       state.outputProfileState?.state,
-      state.outputSettings?.image
+      state.outputSettings?.image,
+      state.thuMucDaNho
     );
     if (yDinh.reauthorizeFirst) {
       const xinLai = await window.DacOutputProfiles.reauthorizeSole();

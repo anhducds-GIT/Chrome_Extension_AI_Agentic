@@ -130,10 +130,19 @@
   // `reauthorizeFirst` chỉ bật khi phiên CHƯA cầm handle sống: vừa nạp lại
   // (nhãn "Choose Folder", handle còn trong IndexedDB) hoặc quyền đã mất (nhãn
   // "Re-authorize"). Đã gắn rồi thì bấm nghĩa là ĐỔI, và đi thẳng ra hộp chọn.
-  function folderButtonIntent(permissionState, imageLocation) {
+  //
+  // `tenThuMucDaNho` vá một lời nói dối mà Codex soát chéo vòng 5 bắt được: khi
+  // phiên chưa gắn mà kho hồ sơ VẪN còn một thư mục, nút ghi "Choose Folder"
+  // nhưng bấm vào lại gắn thẳng thư mục cũ — không hề cho chọn. Nay nó ghi đúng
+  // thứ sắp xảy ra. Cái giá còn lại, nói thẳng: muốn thư mục KHÁC thì mất hai
+  // cú bấm (cú đầu dùng lại, cú sau "Change Folder" mới ra hộp chọn). Đổi lại
+  // ca thường gặp nhất — vừa nạp lại, vẫn thư mục cũ — chỉ tốn một cú.
+  function folderButtonIntent(permissionState, imageLocation, tenThuMucDaNho) {
     const daGanHandle = imageLocation?.kind === "directory" && Boolean(imageLocation.handle);
     if (permissionState === "permission_required") return { label: "Re-authorize", reauthorizeFirst: true };
     if (daGanHandle) return { label: "Change Folder", reauthorizeFirst: false };
+    const daNho = String(tenThuMucDaNho || "").trim();
+    if (daNho) return { label: `Dùng lại: ${daNho}`, reauthorizeFirst: true };
     return { label: "Choose Folder", reauthorizeFirst: true };
   }
 
