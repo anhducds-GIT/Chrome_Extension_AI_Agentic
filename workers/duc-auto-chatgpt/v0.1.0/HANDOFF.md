@@ -967,3 +967,37 @@ thích của chính tôi và câu báo cho Đức đều chứa chuỗi đó. Đ
 
 **CHƯA NGHIỆM THU LIVE** — tôi không nạp lại được extension. Đức nạp lại rồi bấm hai lần; lần hai
 phải mở hộp chọn.
+
+## 2026-09-17 (lượt 4) · `claude-gpt-chay-het-job` — Codex bác ba lần, và cả ba lần đều đúng
+
+**Bối cảnh.** Nối tiếp lượt 3 (`B-101`). Cổng đòi audit độc lập; tôi đưa diff cho Codex soát.
+
+**Vòng 1 — KHÔNG ĐẠT.** *"Bộ ghim chỉ soi CẤU TRÚC."* Đúng: thêm một `return;` trước
+`showDirectoryPicker` thì sáu phép của tôi vẫn xanh hết. Thêm mục ⑺: cắt
+`choosePrimaryDestination()` đã ship ra chạy thật trong `node:vm`, bốn kịch bản, ĐẾM số lần mở
+hai cửa.
+
+**Vòng 2 — KHÔNG ĐẠT.** *"Nhánh xin-lại-quyền chưa đo VẾT."* Đúng: đếm cửa không chứng minh thư
+mục có được gắn vào phiên hay không. Đột biến M11 — gọi hộp chọn rồi `return` vứt handle — lọt
+qua phép đếm. Thêm phép đo VẾT cho cả bốn ca.
+
+**Vòng 3 — KHÔNG ĐẠT.** Cùng lỗi ở ca *"xin lại hỏng, rơi xuống hộp chọn"*. Sửa nốt.
+
+**Vòng 5 — KHÔNG ĐẠT, và đây là lỗi THẬT chứ không phải lỗi ghim.** Nhãn `Choose Folder` NÓI DỐI:
+phiên chưa gắn mà kho còn đúng một thư mục thì bấm vào là gắn thẳng thư mục cũ, không cho chọn —
+đúng bản chất `B-101` ở một ca khác. Vá: nút ghi **`Dùng lại: <tên>`**, đọc từ `state.thuMucDaNho`
+mà `probeBridgePersistence()` ghi lại.
+
+**Một ý tôi KHÔNG theo.** Vòng 4 Codex đòi ca Chrome Downloads phải `reauthorizeFirst: false`.
+Giữ `true`: bấm nút lúc đang ở chế độ Downloads chính là lời khai *"tôi muốn chuyển sang thư mục
+riêng"*. Lý do ghi ngay trong file ghim, kèm câu *"ghim vì đã ship có chủ đích, không phải vì
+Codex nói thế"*.
+
+**Giá còn lại, nói thẳng.** Muốn thư mục KHÁC ngay sau khi nạp lại thì mất HAI cú bấm.
+
+**Lỗi quy trình của chính tôi.** Hàm dọn đột biến của tôi `git checkout` cả hai file nguồn, nên
+nó xoá luôn phần `thuMucDaNho` tôi chưa commit — phải gõ lại. Đúng cái luật *commit trước khi thử
+đột biến* mà tôi đã ghi từ trước và vẫn phạm.
+
+**Đo.** 34 phép, **17/17** đột biến bị bắt (M17 lọt vòng đầu vì regex `[^)]*` quá lỏng — siết lại
+thành ghim đủ ba đối số). Suite vùng **145/145**.

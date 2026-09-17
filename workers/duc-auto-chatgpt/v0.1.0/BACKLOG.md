@@ -2627,7 +2627,23 @@ lại trước, giữ nguyên cái lợi của `~~B-53~~`.
 nên cái giá mà chú thích `B-53` tự khai — "Chrome CÓ THỂ coi là hết user gesture" — biến mất ở
 đúng ca hay bấm nhất.
 
-Ghim: `tests/nut-doi-thu-muc-smoke.mjs` 13/13, đột biến 8/8 (kể cả ca *"đếm vẫn bằng 1 nhưng lời
+**Vòng soát chéo Codex (4 vòng) bác 3 ý, đã sửa theo cả 3:**
+⑴ bộ ghim đầu chỉ soi CẤU TRÚC — thêm mục ⑺: cắt `choosePrimaryDestination()` đã ship ra chạy
+thật trong `node:vm`, bốn kịch bản, đếm hai cửa **và đo VẾT** (thư mục có thật sự gắn vào phiên
+không). ⑵ nhánh xin-lại-quyền cũng chưa đo VẾT. ⑶ **nhãn "Choose Folder" NÓI DỐI**: phiên chưa
+gắn mà kho còn đúng một thư mục thì bấm vào là gắn thẳng thư mục cũ, không cho chọn — đúng bản
+chất `B-101` ở một ca khác. Nay nhãn ghi **`Dùng lại: <tên>`**, đọc từ `state.thuMucDaNho` mà
+`probeBridgePersistence()` ghi lại.
+
+**Một ý tôi KHÔNG theo, lý do ghi ngay trong file ghim:** ca Chrome Downloads Codex đòi
+`reauthorizeFirst: false`; giữ `true`, vì bấm nút lúc đang ở chế độ Downloads chính là lời khai
+*"tôi muốn chuyển sang thư mục riêng"*.
+
+**Giá còn lại, nói thẳng:** muốn thư mục **KHÁC** ngay sau khi nạp lại thì mất **hai** cú bấm —
+cú đầu dùng lại thư mục cũ, cú sau nút đã thành "Change Folder" và mới ra hộp chọn. Đổi lại ca
+thường gặp nhất (vẫn thư mục cũ) chỉ tốn một cú.
+
+Ghim: `tests/nut-doi-thu-muc-smoke.mjs` **34/34**, đột biến **17/17** (kể cả ca *"đếm vẫn bằng 1 nhưng lời
 gọi bị chuyển ra ngoài nhánh"*). `tests/validation-output-ux-static.mjs` đổi theo, vì nó đang ghim
 đúng cái ternary vừa bị gỡ.
 
