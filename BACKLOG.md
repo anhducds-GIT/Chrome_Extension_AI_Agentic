@@ -1263,6 +1263,54 @@ lời khai *"danh sách đầy đủ"* ở `duc-auto-gemini/AGENTS.md` từ lư�
 - ~~**đóng khi:** mọi ADR của gói đều khai `nhom:`~~ — **điều kiện của vế sai, bỏ.** Thiếu `nhom:`
   chỉ đẩy ADR xuống rổ `~chua-phan-nhom`, không làm nó biến mất.
 
+## N-69 · Trần 180 giây cho bộ kiểm KHÔNG VỚI TỚI ĐƯỢC bằng chạy song song — sàn là 177,3s
+
+**Đo 17/09 khuya, `A4`.** Hai việc, và chỉ việc đầu đã xong.
+
+**⑴ ĐÃ SỬA — hoá đơn đang tính một đường không ai đi.** `can-nang.mjs` bấm giờ `npm test`.
+Không luật nào bảo ai chạy lệnh đó lúc đóng phiên: `MULTIFLOW.md` mục 3b và câu Đức dán ở
+`PROMPTS.md` mục 4 đều nói `npm run test:song-song`. Và `npm test` **hụt 7 suite**:
+
+```
+npm test          29 suite · 233s   <- thu hoa don dang tinh, va khong ai chay
+test:song-song    36 suite · 220s   <- thu luat bao chay
+```
+
+Nay bấm giờ đúng lệnh kia. **Thước vẫn 180, không nới một giây.**
+
+**⑵ CHƯA XONG, và nó không phải việc chỉnh cấu hình.** Hàng ấy **vẫn đỏ**, và lý do đo được:
+
+| | giây |
+|---|---:|
+| `bang-song` | **71,3** |
+| `harness-smoke` | **43,5** |
+| `dau-suite-smoke` | **33,6** |
+| `bang-ba-cua` | 17,6 |
+| 9 bài còn lại cộng lại | 11,3 |
+| **TỔNG nhóm PHẢI chạy một mình** | **177,3** |
+
+**177,3 / 180.** Tức kể cả khi 23 suite song song kia chạy **miễn phí**, cả bộ vẫn chỉ còn
+**2,7 giây** dư. Thêm luồng không giúp gì — sàn này là tuần tự theo định nghĩa.
+
+Ba bài đầu là **84%** của sàn. Chúng chạy một mình vì **đọc git của CÂY LÀM VIỆC CHÍNH**, mà hai
+tiến trình git cùng cây thì tranh `index.lock` và đẻ ra một lỗi *nội dung* trông y hệt lỗi thật
+(`.repo-structure.json` → `test._doc`). Nên chỉ có hai lối, cả hai đều là việc thật:
+
+- làm ba bài đó **không cần cây chính** (dựng kho tạm riêng — `bang-song` đã làm thế một phần
+  rồi, nên nó không phải chuyện bất khả);
+- hoặc làm chúng **rẻ hơn**, đặc biệt `bang-song`: nó dựng một kho git thử rồi chạy trọn bộ sinh.
+
+**Một con số trong lộ trình phải gạch:** khối `A4` ghi *"chay-test.mjs chạy 35/35 xanh trong
+116s"*. Con số đó đo **trước** khi bản vá bộ chạy nằm đủ — lúc ấy bộ chạy còn mù 25 suite và
+nhóm chạy-riêng mới có 10 tên. Số thật, 36 suite, cùng máy: **220s**. Tôi viết 116s vào lộ trình
+và nó suýt thành mốc cho lượt sau.
+
+- **đóng khi:** lệnh: `npm run can-nang` in hàng *Thời gian chạy trọn bộ kiểm* **dưới 180 giây**,
+  và `node scripts/chay-test.mjs` vẫn in đủ **36 suite** — không được rút bài để lấy giờ.
+- **đóng khi:** đức: nếu ba bài kia không rẻ đi được, đây là lúc **hỏi Đức** chứ không tự nới:
+  trần là luật an toàn về tốc độ vòng sửa–chạy, và `AGENTS.md` mục 7 giới hạn ⑸ bắt hỏi trước
+  khi đổi một trần.
+
 ## N-68 · Một lượt migrate bộ khung đã XOÁ một cửa đã chốt, và phép ghim của nó chết CÂM
 
 **Đo 17/09, trong lượt rà `A5`.** `docs/protocols/MULTIFLOW.md` mục 3a dạy:

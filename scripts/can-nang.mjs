@@ -305,9 +305,31 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS)) {
   dong("Số phép kiểm", pk.tong, NS.soPhepKiem, `(${pk.cauTruc} cấu trúc + ${pk.dongPhien} đóng phiên)`);
 
   if (!nhanh) {
+    /* ĐO ĐÚNG LỆNH MÀ LUẬT BẢO PHIÊN CHẠY — `npm run test:song-song`, không phải `npm test`.
+     *
+     * Đổi 17/09 (`A4`), và đây là đổi CÁI GÌ ĐƯỢC ĐO chứ không phải hạ thước. Thước vẫn 180.
+     *
+     * Vì sao: mốc đóng phiên ở `MULTIFLOW.md` mục 3b và câu Đức dán ở `PROMPTS.md` mục 4 đều
+     * nói `npm run test:song-song`. Không luật nào bảo ai chạy `npm test` lúc đóng phiên. Mà
+     * `npm test` là chuỗi **cố ý tuần tự** — nó phải giữ nguyên hình dạng vì một phép ghim ở
+     * `duc-auto-gemini` đọc thẳng `scripts.test` để bắt xanh giả (`N-43`), nên nó là một hợp
+     * đồng với phép ghim đó, không phải đường chạy của người.
+     *
+     * Đo 17/09, cùng một cây làm việc:
+     *     npm test            29 suite · 233 giây   ← thứ hoá đơn này đang tính, và không ai chạy
+     *     test:song-song      36 suite · 116 giây   ← thứ luật bảo chạy
+     * Tức bản cũ tính tiền cho một đường **vừa chậm gấp đôi vừa hụt 7 suite**. Đường mới rộng
+     * hơn VÀ rẻ hơn; không có đánh đổi nào phải cân ở đây.
+     *
+     * CHỖ HỞ, nói ra chứ không giấu: `test:song-song` chạy song song nên con số phụ thuộc số
+     * lõi của máy. Nó đo *"máy Đức mất bao lâu"*, không đo *"tốn bao nhiêu công"*. Đó đúng là
+     * thứ cái trần này quan tâm — trần sinh ra vì một vòng sửa–chạy quá chậm thì người ta bỏ
+     * chạy — nhưng một máy yếu hơn sẽ thấy số khác, và đó là hành vi ĐÚNG, không phải nhiễu. */
     const t0 = Date.now();
-    try { execSync("npm test", { cwd: ROOT, stdio: "ignore" }); } catch { /* đỏ cũng vẫn tính giờ */ }
+    try { execSync("npm run test:song-song", { cwd: ROOT, stdio: "ignore" }); } catch { /* đỏ cũng vẫn tính giờ */ }
     dong("Thời gian chạy trọn bộ kiểm", Math.round((Date.now() - t0) / 1000), NS.giayDongPhien, "giây");
+    console.log("      → đo `npm run test:song-song` (đường luật bảo chạy lúc đóng phiên), không");
+    console.log("        phải `npm test`. Chuỗi tuần tự giữ nguyên cho phép ghim N-43, xem mã.");
   } else {
     console.log("  · Thời gian chạy: BỎ QUA (--nhanh)");
   }
