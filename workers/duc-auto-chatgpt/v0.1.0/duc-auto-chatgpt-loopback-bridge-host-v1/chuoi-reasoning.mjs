@@ -529,7 +529,25 @@ async function chinh() {
   }
 
   const soNhatKy = path.join(thuMuc, "nhat-ky.jsonl");
-  const ghi = (o) => fs.appendFileSync(soNhatKy, JSON.stringify({ luc: new Date().toISOString(), ...o }) + "\n");
+  /* B-98 — NHẬT KÝ KHÔNG ĐƯỢC IM QUÁ LÂU. Đức nêu 17/09: *"khi tôi tiếp nối một chuỗi đang
+     reasoning thì script này không làm việc hoặc làm việc rất kém."* Đo thật cùng lúc: lượt chạy
+     bắt đầu 09:34:36, tiến trình VẪN SỐNG lúc 09:58 — và nhật ký **im từ 09:35:06**, 23 phút
+     không một dòng. Vì `ghi` của `DOC_HONG` nằm trong `if (nhipHong.inRa)`, mà `nhipDocHong`
+     giãn dần tới 120 giây — ĐÚNG, đó là phản xạ chống CAPTCHA 12/09 và KHÔNG được nới.
+     Hậu quả: nhìn từ nhật ký, **một bản đang chạy đúng và một bản treo chết đọc ra y hệt
+     nhau** — đúng cái bệnh `~~B-89~~` đã chữa cho MÀN HÌNH, nay hiện lại ở SỔ.
+
+     Chữa bằng ĐỒNG HỒ, không bằng số lượt: một dòng ít nhất mỗi `NHIP_TIM_MS`. KHÔNG thêm
+     một lượt đọc nào — nó chỉ ghi lại thứ vòng lặp ĐÃ biết, nên ranh giới chống spam ngay
+     bên dưới không hề bị chạm tới. */
+  const NHIP_TIM_MS = 300000;
+  let ghiLucNao = Date.now();
+  const ghi = (o) => {
+    ghiLucNao = Date.now();
+    fs.appendFileSync(soNhatKy, JSON.stringify({ luc: new Date().toISOString(), ...o }) + "\n");
+  };
+  /* "Sổ đã im quá lâu chưa?" đứng RIÊNG với `ghi`: nơi gọi phải quyết định TRƯỚC khi ghi. */
+  const soImQuaLau = () => Date.now() - ghiLucNao >= NHIP_TIM_MS;
 
   /* ═══ RANH GIỚI CỦA HỆ THỐNG — ĐỪNG GỠ, ĐỪNG HẠ ══════════════════════════════════════
    *
@@ -744,8 +762,16 @@ async function chinh() {
         /* IN CHẨN ĐOÁN NẾU CÓ. Từ 11/09 host kèm `diagnosis` + `remedy` vào lượt hết giờ của
            CHÍNH nó. Bản trước in cứng "panel đang bận" cho mọi lỗi đọc — một câu đoán, và nó
            che mất câu thật ngay bên dưới. Không có chẩn đoán thì nói "chưa rõ vì sao", đừng
-           đoán hộ: `REQUEST_TIMEOUT` do tiện ích tự sinh (hết hạn chờ side panel) hiện VẪN
-           chưa mang chẩn đoán — xem `B-50`. */
+           đoán hộ.
+
+           ⚠ SỬA TẠI CHỖ 17/09 — câu trên đã SAI một nửa từ hôm nay. Câu cũ viết:
+           *"`REQUEST_TIMEOUT` do tiện ích tự sinh hiện VẪN chưa mang chẩn đoán"*. Đúng tới 17/09,
+           và đó chính là lý do Đức nhìn ba lượt liên tiếp in "chưa rõ vì sao". Nay
+           `bridge-transport-loopback.js` kèm `diagnosis`/`remedy` vào chính nắp 30 giây của nó:
+           `PANEL_DA_DONG` · `EXECUTOR_KET` · `PANEL_IM`. Nắp ấy BẮN TRƯỚC nắp 35 giây của host,
+           nên phép chẩn đoán B-50 bên host gần như không bao giờ chạy — một phép chẩn đoán
+           không bao giờ chạy thì bằng không có. Khối đọc dưới đây KHÔNG đổi một dòng: nó vốn
+           đã đọc đúng `details.diagnosis`, chỉ là trước nay không ai đổ gì vào đó. */
         const cd = d.error?.details || {};
         const nhipHong = nhipDocHong(docHong);
         if (nhipHong.inRa) {
@@ -765,6 +791,12 @@ async function chinh() {
              chết. Nhịp tim in ra màn hình không cứu được: đóng cửa sổ là mất. */
           ghi({ su_kien: "DOC_HONG", vong, so_luot: docHong, hong_tong: hongTong, ma: d.error?.code || null,
             diagnosis: cd.diagnosis || null, debug: cd.debug ? String(cd.debug).slice(0, 300) : null });
+        } else if (soImQuaLau()) {
+          /* B-98 — nhịp tim. KHÔNG in ra màn hình: màn hình đã có nhịp riêng, và `~~B-89~~` chọn
+             nhịp ấy có chủ đích. Chỉ để lại DẤU VẾT trên đĩa — đóng cửa sổ là mất màn hình,
+             còn sổ thì ở lại. */
+          ghi({ su_kien: "NHIP_TIM", vong, so_luot: docHong, hong_tong: hongTong, ma: d.error?.code || null,
+            diagnosis: cd.diagnosis || null });
         }
         if (nhipHong.hoiPing) {
           const p = goi(["ping", "--request-id", khoaAnToan(nhan, `-v${vong}-ping${docHong}`)]);

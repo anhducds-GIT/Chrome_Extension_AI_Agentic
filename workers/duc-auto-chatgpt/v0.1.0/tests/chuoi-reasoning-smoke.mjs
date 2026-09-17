@@ -1667,3 +1667,62 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓚ DOI_HOI_THOAI nói ra cách chữa, và tên nút khớp side panel");
 }
+
+/* ---- Ⓛ B-98: nhật ký không được im quá lâu, mà KHÔNG được đọc thêm lượt nào ----------
+ *
+ * Đức 17/09: *"khi tôi tiếp nối một chuỗi đang reasoning thì script này không làm việc hoặc
+ * làm việc rất kém."* Đo cùng lúc: lượt chạy bắt đầu 09:34:36, tiến trình VẪN SỐNG lúc 09:58,
+ * nhật ký **im từ 09:35:06** — 23 phút không một dòng. `ghi` của `DOC_HONG` nằm trong
+ * `if (nhipHong.inRa)`, mà `nhipDocHong` giãn tới 120 giây. Nhìn từ sổ, một bản đang chạy
+ * đúng và một bản treo chết đọc ra y hệt nhau — đúng bệnh `~~B-89~~` đã chữa cho MÀN HÌNH.
+ *
+ * HAI vế, và vế thứ hai mới là vế chịu tải: nhịp tim KHÔNG được kéo theo một lượt đọc nào.
+ * Thêm một lượt gõ cửa mỗi 5 phút là nới đúng cái ranh giới đã mua bằng CAPTCHA 12/09.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  /* ⒜ Nhịp tim phải do ĐỒNG HỒ quyết định, không do số lượt: số lượt chính là thứ đang bị
+     `nhipDocHong` giãn ra, nên đếm lượt là đo lại đúng cái đang hỏng. */
+  assert.ok(/const soImQuaLau = \(\) => Date\.now\(\) - ghiLucNao >= NHIP_TIM_MS;/.test(ma),
+    "phép hỏi 'sổ im quá lâu chưa' phải so MỐC THỜI GIAN, không so số lượt");
+  /* ĐẾM, ĐỪNG ĐO KHOẢNG CÁCH. Bản đầu viết `/ghiLucNao = Date.now\(\);[\s\S]{0,120}fs.appendFileSync/`
+     và nó LỌT đột biến `S5`: dòng khai báo `let ghiLucNao = Date.now();` cách `fs.appendFileSync`
+     đúng hai dòng, nên khi xóa lượt gán BÊN TRONG `ghi` thì regex vẫn khớp — và đồng hồ
+     không bao giờ nhích, tức nhịp tim bắn MỖI VÒNG. Đếm thì không có chiều để sai: phải có
+     ĐÚNG HAI lượt gán — một lúc khai, một trong `ghi`. */
+  assert.equal((ma.match(/ghiLucNao = Date\.now\(\)/g) || []).length, 2,
+    "phải có ĐÚNG hai lượt đặt mốc: lúc khai báo, và bên trong `ghi` — thiếu lượt thứ hai thì đồng hồ đứng yên và nhịp tim bắn mỗi vòng");
+
+  const iNhip = ma.indexOf('su_kien: "NHIP_TIM"');
+  assert.ok(iNhip > 0, "phải có dòng nhịp tim trong sổ");
+
+  /* ⒝ Và nó phải là nhánh `else` của phép in — cùng chỗ, cùng dữ liệu, không phải một vòng
+     lặp thứ hai chạy song song. */
+  const iElse = ma.lastIndexOf("} else if (soImQuaLau())", iNhip);
+  assert.ok(iElse > 0 && iElse < iNhip, "nhịp tim phải nằm ở nhánh `else` của phép in, không phải một đường riêng");
+  const iIf = ma.lastIndexOf("if (nhipHong.inRa)", iElse);
+  assert.ok(iIf > 0, "và `else` ấy phải gắn đúng vào phép in đã có — nếu không thì mỗi lượt in ghi hai dòng");
+
+  /* ⒞ VẾ CHỊU TẢI: khối nhịp tim KHÔNG được gọi `doc`, `goi`, hay `ping`. Ranh giới chống spam
+     12/09 (~900 lượt/giờ → CAPTCHA) không được nới bằng một bản vá về khả năng nhìn. */
+  const than = ma.slice(iElse, ma.indexOf("if (nhipHong.hoiPing)", iElse));
+  assert.ok(than.length > 40 && than.length < 800, `lát cắt nhịp tim phải gọn (đang ${than.length})`);
+  for (const cam of ["await doc(", "goi(", "ping"]) {
+    assert.ok(!than.includes(cam), `nhịp tim KHÔNG được gọi \`${cam}\` — nó chỉ ghi lại thứ vòng lặp ĐÃ biết`);
+  }
+
+  /* ⒟ Và nhịp tim phải mang đủ số đo để đọc ra được "còn sống mà đang hỏng", chứ không chỉ
+     một dấu tích. Một dòng trống rỗng mỗi 5 phút cũng không phân biệt được gì hơn im lặng. */
+  const dong = ma.slice(iNhip, ma.indexOf("});", iNhip));
+  /* `vong` viết tắt (shorthand) nên không có dấu hai chấm — đòi `vong:` là đòi một thứ
+     không tồn tại, và đó là phép ghim đỏ oan chứ không phải bắt được lỗi. */
+  assert.ok(/(^|[{,]\s*)vong\s*[,}]/.test(dong), "nhịp tim phải nói đang ở vòng nào");
+  for (const truong of ["so_luot", "hong_tong", "ma", "diagnosis"]) {
+    assert.ok(dong.includes(`${truong}:`), `nhịp tim thiếu \`${truong}\``);
+  }
+
+  console.log("  ok  Ⓛ nhịp tim theo đồng hồ, mang số đo, và KHÔNG gõ cửa thêm lượt nào");
+}

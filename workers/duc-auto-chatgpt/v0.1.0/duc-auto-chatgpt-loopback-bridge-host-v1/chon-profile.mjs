@@ -34,15 +34,38 @@ import { hoiThoaiCua } from "./chuoi-reasoning.mjs";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "bridge-cli.mjs");
 
-/** Dựng menu. THUẦN, nên ghim được mà không cần Bridge. */
-export function dungMenu(sessions, bayGio = Date.now()) {
+/* CHỖ NGỒI CỦA MỘT GHẾ, viết cho người đọc — Đức nêu 17/09: *"cần thêm cả sub Profile ID để
+   giúp identify trong trường hợp có nhiều trang GPT cùng đang mở."*
+
+   Một nhãn ghế (`anhducds`, `kaito`) KHÔNG nói được ghế ấy đang nhìn hội thoại nào — một ghế
+   profile bám theo TAB ĐANG Ở TRƯỚC MẶT, nên câu trả lời đổi theo từng phút. Chọn mù giữa hai
+   nhãn là cách đã làm chết năm lượt chạy sáng 17/09 (`~~B-97~~`).
+
+   Lấy **tên dự án** trong đường dẫn (`/g/g-p-<hex>-<tên>/`) làm chữ chính: đó là thứ người
+   đọc nhận ra, khác hẳn một UUID. Kèm 8 ký tự đầu của định danh hội thoại để phân biệt hai
+   hội thoại cùng một dự án. THUẦN, nên ghim được mà không cần Bridge. */
+export function choNgoi(url) {
+  const u = String(url ?? "").trim();
+  if (!u) return "không hỏi được";
+  const id = hoiThoaiCua(u);
+  if (!id) return "chưa ở hội thoại nào";
+  const duAn = /\/g\/g-p-[0-9a-f]+-([^/?#]+)/i.exec(u);
+  return duAn ? `${decodeURIComponent(duAn[1])} · ${id.slice(0, 8)}` : id.slice(0, 8);
+}
+
+/** Dựng menu. THUẦN, nên ghim được mà không cần Bridge.
+ *  `cho` là bản đồ nhãn → địa chỉ (hoặc rỗng): không hỏi được thì menu vẫn dựng được như cũ. */
+export function dungMenu(sessions, bayGio = Date.now(), cho = null) {
   return sessions.map((s, i) => {
     const giay = s.last_seen_at ? Math.round((bayGio - Date.parse(s.last_seen_at)) / 1000) : null;
     const tuoi = giay === null ? "không rõ"
       : giay < 90 ? "đang nối"
       : giay < 3600 ? `im ${Math.round(giay / 60)} phút`
       : `im ${Math.round(giay / 3600)} giờ`;
-    return { so: i + 1, nhan: s.label, tuoi, dong: `  ${i + 1}) ${s.label}   (${tuoi})` };
+    const noi = cho ? choNgoi(cho.get ? cho.get(s.label) : cho[s.label]) : null;
+    return { so: i + 1, nhan: s.label, tuoi, noi,
+      dong: `  ${i + 1}) ${s.label}   (${tuoi})${noi ? `
+       đang nhìn: ${noi}` : ""}` };
   });
 }
 
@@ -121,7 +144,28 @@ function tuKiem() {
   assert.equal(hieuXacNhanUrl("https://chatgpt.com/g/g-p-duan/c/abc", null).url, "https://chatgpt.com/g/g-p-duan/c/abc",
     "hội thoại trong Project vẫn là hội thoại");
 
-  console.log("chon-profile tự kiểm: 20/20 xanh");
+  /* CHỖ NGỒI — Đức 17/09: nhiều trang GPT cùng mở thì nhãn ghế không đủ để chọn.
+     Ghim CẢ HAI đầu: có dự án thì phải hiện TÊN DỰ ÁN (thứ người đọc nhận ra), và ba ca
+     không-biết phải nói ra ba câu KHÁC NHAU — gộp chúng là quay về đúng chỗ xuất phát. */
+  const HT_DA = "https://chatgpt.com/g/g-p-6aa92660ce888191b50b14bb0f993c32-aves-contest/c/6aaae0ae-b6d0-83ec-b27a-2ce53d99b41d";
+  assert.equal(choNgoi(HT_DA), "aves-contest · 6aaae0ae", "có dự án thì lấy TÊN dự án, kèm 8 ký tự để tách hai hội thoại cùng dự án");
+  assert.equal(choNgoi("https://chatgpt.com/c/6aaae0ae-b6d0-83ec-b27a-2ce53d99b41d"), "6aaae0ae", "ngoài dự án thì còn định danh");
+  assert.equal(choNgoi("https://chatgpt.com/"), "chưa ở hội thoại nào", "trang phóng phải nói ra là chưa vào hội thoại");
+  assert.equal(choNgoi(""), "không hỏi được", "hỏi không được KHÁC HẮN chưa-vào-hội-thoại: một cái là ghế câm, một cái là ghế rảnh");
+  assert.equal(choNgoi(null), "không hỏi được");
+
+  /* Menu không có bản đồ chỗ ngồi thì phải chạy y như cũ — hỏi không được là mất một dòng
+     phụ, không được phép làm mất cả bước chọn. */
+  const gheThu = [{ label: "anhducds", last_seen_at: new Date().toISOString() }, { label: "kaito", last_seen_at: new Date().toISOString() }];
+  const khongCho = dungMenu(gheThu);
+  assert.equal(khongCho.length, 2);
+  assert.ok(!khongCho[0].dong.includes("đang nhìn"), "không có bản đồ thì không in dòng phụ");
+  const coCho = dungMenu(gheThu, Date.now(), new Map([["anhducds", HT_DA], ["kaito", ""]]));
+  assert.ok(coCho[0].dong.includes("aves-contest"), "có bản đồ thì phải in ra chỗ ngồi");
+  assert.ok(coCho[1].dong.includes("không hỏi được"), "ghế hỏi không được vẫn phải có mặt trong menu");
+  assert.equal(coCho[1].nhan, "kaito", "và vẫn chọn được bằng số như cũ");
+
+  console.log("chon-profile tự kiểm: 31/31 xanh");
 }
 
 async function main() {
@@ -150,17 +194,34 @@ async function main() {
     process.exit(2);
   }
 
-  const menu = dungMenu(sessions);
+  /* HỎI TẮT CẢ GHẾ XEM ĐANG NHÌN ĐÂU — chỉ khi có TỪ HAI ghẾ trở lên. Một ghế thì không
+     có gì để phân biệt, và `batUrl()` ngay sau đây đã in địa chỉ ra rồi — hỏi thêm là một lượt
+     RPC thừa đặt ngay trước một chuỗi sắp chạy. Ghế nào không hỏi được thì ghi rỗng, KHÔNG
+     chết cả bước chọn: biết tên ghế vẫn hơn không có menu nào. */
+  const cho = new Map();
+  if (sessions.length > 1) {
+    for (const s of sessions) {
+      try {
+        const out = execFileSync("node", [CLI, "ping", "--pairing", pairing, "--target", s.label], { encoding: "utf8" });
+        const j = JSON.parse(out);
+        cho.set(s.label, j?.ok ? j.result?.chatgpt?.url || "" : "");
+      } catch (_) { cho.set(s.label, ""); }
+    }
+  }
+
+  const menu = dungMenu(sessions, Date.now(), cho.size ? cho : null);
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const hoi = (q) => new Promise((res) => rl.question(q, res));
 
   let chon = null;
   if (menu.length === 1) {
     chon = menu[0].nhan;
-    console.log(`Chỉ một profile đang nối: ${chon} — dùng luôn.`);
+    console.log(`Chỉ một ghế đang nối: ${chon} — dùng luôn.`);
   } else {
     console.log("");
-    console.log("  Profile Chrome đang nối Bridge:");
+    /* KHÔNG gọi đây là "profile" nữa: một *Phiên làm việc theo tab* cũng báo danh vào đúng
+       danh sách này, và nó MỚI là thứ nên chọn khi mở nhiều trang GPT cùng lúc. */
+    console.log("  Ghế đang nối Bridge (profile Chrome, hoặc phiên làm việc theo tab):");
     for (const m of menu) console.log(m.dong);
     console.log("");
     for (let lan = 0; lan < 3 && !chon; lan += 1) {

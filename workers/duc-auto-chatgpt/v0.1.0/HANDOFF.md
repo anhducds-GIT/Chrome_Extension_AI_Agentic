@@ -841,3 +841,33 @@ Ghim Ⓚ: lời khuyên phải **nằm trong** nhánh `DOI_HOI_THOAI` (in vô đ
 
 Suite **140/140**. Đột biến **7/7** (`P1` in vô điều kiện · `P2`/`P3` bỏ địa chỉ · `P4` vì sao
 chung chung · `P5`/`P6` sai tên mục/nút · `P7` side panel đổi chữ mà lời khuyên không đổi theo).
+
+## 2026-09-17 (lượt 2) · `claude-gpt-chay-het-job` — `B-50` nửa còn lại, `B-98` nhịp tim, và chọn ghế bằng SỐ
+
+Đức hỏi ba việc trong một lượt, và cả ba đo được.
+
+**⑴ `REQUEST_TIMEOUT` mà "chưa rõ vì sao" — `B-50` có phép chẩn đoán, nó chưa từng chạy.**
+Host kèm `diagnosis`/`remedy` vào lượt hết giờ CỦA HOST — nắp **35 giây**. Nhưng nắp của tiện
+ích là `deadline_ms` của phương thức = **30 giây** cho `chat.read`, nên tầng trong **luôn bắn
+trước 5 giây**, và nó bắn `details` **RỖNG** (`bridge-transport-loopback.js:168`). Đo tận tay
+09:29: `chat-read` trả `details: {}`. Chẩn đoán không bao giờ chạy thì bằng không có.
+**Đã vá:** nắp 30 giây nay mang `waited_ms` · `executor_attached` · `heard_during_wait` ·
+`diagnosis` ∈ {`PANEL_DA_DONG`, `EXECUTOR_KET`, `PANEL_IM`} · `remedy`. Dùng ĐÚNG tên trường bộ
+chạy đã đọc từ 11/09 — khối đọc không đổi một dòng. Mốc "nghe thấy panel lần cuối" nhích theo **MỌI**
+khung từ panel — thứ tách "panel bận" khỏi "panel im".
+
+**⑵ `B-98` — nhật ký im 23 phút trong khi tiến trình VẪN SỐNG.** Đo: chạy 09:34:36, còn sống
+09:58, sổ im từ 09:35:06. Vì `ghi` của `DOC_HONG` nằm trong `if (nhipHong.inRa)` mà nhịp giãn
+tới 120 giây. Nhìn từ sổ, **đang-chạy-đúng và treo-chết đọc ra y hệt nhau** — đúng bệnh `~~B-89~~`
+đã chữa cho MÀN HÌNH, nay hiện ở SỔ; đây chính là cái Đức gọi *"làm việc rất kém"*.
+Chữa bằng ĐỒNG HỒ: một dòng `NHIP_TIM` ít nhất mỗi 5 phút, mang đủ số đo.
+⛔ **KHÔNG thêm một lượt gõ cửa nào** — ranh giới CAPTCHA 12/09 nguyên vẹn; ghim ⒞ canh đúng đó.
+
+**⑶ "Extension có 3 ID rồi, lúc chạy script thì chưa có."** Đo: `chay-chuoi.bat` hỏi *"Dùng lại
+thông số này?"* và đường **Enter nhảy THẲNG** tới `:dinhNghia` — `:chonProfile` chỉ nằm trên
+đường `:goTay`. Nên ai bấm Enter **không bao giờ thấy menu ghế**. Thêm lối thứ ba `g`: giữ
+tên/vòng/phút, **chọn lại ghế + hội thoại bằng SỐ**, xoá cả `DICH` lẫn `DIA_CHI` TRƯỚC khi hỏi.
+Menu nay in thêm **ghế ấy đang nhìn đâu** (tên dự án, không phải UUID).
+
+Suite **142/142** · đột biến **25/25**; `Q1` (dựng khối rồi vứt đi) và `S5` (đo khoảng cách
+thay vì ĐẾM) lọt ở lượt đầu — đúng họ cũ.

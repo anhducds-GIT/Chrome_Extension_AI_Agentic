@@ -99,11 +99,35 @@ if not exist "%DUC_CHUOI_SO%\lan-truoc.txt" goto :goTay
 echo.
 echo   Thong so lan truoc:
 for /f "usebackq tokens=1,* delims==" %%A in ("%DUC_CHUOI_SO%\lan-truoc.txt") do echo      %%A = %%B
+rem Duc neu 17/09: *"Extension da co tinh nang dat toi da 3 ID roi, nhung luc chay script
+rem thi chua co. Toi cung se prefer co the chon duoc la tot nhat, ko phai go."*
+rem Do that sang 17/09: duong "Enter = dung lai" nhay THANG toi :dinhNghia, nen :chonProfile
+rem KHONG BAO GIO chay lai. Ca ghe lan dia chi hoi thoai deu la cua lan truoc, ma ghe profile
+rem thi bam theo TAB DANG O TRUOC MAT - nam luot chay chet lien tiep vi dung thu do (B-97).
+rem Nen them mot loi thu BA: giu ten/vong/phut cu, nhung CHON LAI ghe va hoi thoai. Chon bang
+rem SO, khong go chu - dung lai menu :chonProfile da co san, khong dung mot menu thu hai.
 set "DUNGLAI="
-set /p "DUNGLAI=Dung lai thong so nay? [Enter = co / k = go moi]: "
+set /p "DUNGLAI=Dung lai thong so nay? [Enter = co / g = chon lai ghe va hoi thoai / k = go moi]: "
 if /i "%DUNGLAI%"=="k" goto :goTay
 for /f "usebackq tokens=1,* delims==" %%A in ("%DUC_CHUOI_SO%\lan-truoc.txt") do set "%%A=%%B"
-echo   -^> dung lai: chuoi "%NHAN%" · %VONG% vong · profile "%DICH%"
+if /i "%DUNGLAI%"=="g" goto :chonLaiGhe
+echo   -^> dung lai: chuoi "%NHAN%" · %VONG% vong · ghe "%DICH%"
+goto :dinhNghia
+
+rem Xoa ghe va dia chi cu TRUOC khi hoi lai. Giu lai mot nua la cach de nhat de chay nham
+rem mot hoi thoai cu - cung ly do da ghi o :lapGo.
+:chonLaiGhe
+set "DICH="
+set "DIA_CHI="
+call :chonProfile
+if "%DICH%"=="" (
+  echo.
+  echo Chua chon duoc ghe nao. Dung, khong chay gi.
+  echo.
+  pause
+  exit /b 2
+)
+echo   -^> chuoi "%NHAN%" · %VONG% vong · ghe "%DICH%"
 goto :dinhNghia
 
 :goTay

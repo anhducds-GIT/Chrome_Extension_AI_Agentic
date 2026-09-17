@@ -120,6 +120,14 @@
     let executorPort = null;
     let executorEpoch = null;
     const executorPending = new Map();
+    /* B-50 NỬA CÒN LẠI — MỐC "NGHE THẤY PANEL LẦN CUỐI", ngay tại tầng sinh ra lượt hết giờ.
+       Host đã có phép phân loại này từ 11/09 (`bridge-host.mjs`, khối B-50/B-58) và nó CHƯA
+       BAO GIỜ CHẠY cho ca thường gặp nhất: nắp của host là 35 giây, nắp ở đây là `deadline_ms`
+       = 30 giây cho `chat.read`, nên tầng này luôn bắn trước 5 giây — và nó bắn `details` RỖNG.
+       Đo 17/09 trên chuỗi "Scouter Improve 01": Đức nhìn ba lượt `REQUEST_TIMEOUT` liên tiếp,
+       cả ba in "chưa rõ vì sao", trong khi bộ chạy đã sẵn sàng in `diagnosis`/`remedy` từ 11/09.
+       Một phép chẩn đoán không bao giờ chạy thì bằng không có. */
+    let ngheExecutorLuc = 0;
     const extensionSessionId = `worker-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
 
     function safeStatus(state, errorCode = null) {
@@ -162,10 +170,33 @@
       if (!executorPort || !executorEpoch) return Promise.reject(new core.BridgeProtocolError("EXECUTOR_UNAVAILABLE"));
       const routeId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       const deadline = Math.max(1000, Number(values.deadline_ms || 10000));
+      /* Ảnh chụp mốc NGAY TRƯỚC KHI GỬI. Phép so là: trong lúc ta chờ, panel có nói gì với
+         service worker không — đúng phép so host dùng, chỉ đổi nguồn mốc. */
+      const ngheLucGui = ngheExecutorLuc;
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           executorPending.delete(routeId);
-          reject(new core.BridgeProtocolError("REQUEST_TIMEOUT"));
+          /* Đọc mọi thứ Ở THỜI ĐIỂM PHÁN QUYẾT, không ở lúc gửi: cả cổng lẫn mốc đều đổi
+             trong quãng chờ, và cái cần là ảnh chụp lúc ta bỏ cuộc. */
+          const conCong = Boolean(executorPort && executorEpoch);
+          const ngheTrongLucCho = ngheExecutorLuc !== ngheLucGui;
+          const imMs = ngheExecutorLuc ? Math.max(0, Date.now() - ngheExecutorLuc) : null;
+          reject(new core.BridgeProtocolError("REQUEST_TIMEOUT", undefined, {
+            waited_ms: deadline,
+            method: typeof request?.method === "string" ? request.method : null,
+            executor_attached: conCong,
+            heard_during_wait: ngheTrongLucCho,
+            last_seen_ms_ago: imMs,
+            inflight_executor: executorPending.size,
+            /* BA ca, ba cách xử lý khác hẳn nhau. Gộp chúng vào một chữ `REQUEST_TIMEOUT` là
+               lý do người ta ngồi đợi một thứ không bao giờ tự khỏi. */
+            diagnosis: !conCong ? "PANEL_DA_DONG" : ngheTrongLucCho ? "EXECUTOR_KET" : "PANEL_IM",
+            remedy: !conCong
+              ? "Side panel của tiện ích đang đóng. Mở lại side panel trên đúng cửa sổ Chrome rồi chạy lại."
+              : ngheTrongLucCho
+                ? "Panel còn sống nhưng lượt đọc không về: tab ChatGPT gần như chắc chắn đang bị che hoặc bị Chrome bóp. Đưa tab ấy ra trước mặt, hoặc gắn nó thành một phiên làm việc theo tab."
+                : "Panel im hoàn toàn. Đóng rồi mở lại side panel; nếu vẫn im thì nạp lại tab ChatGPT một lần."
+          }));
         }, deadline);
         executorPending.set(routeId, { resolve, reject, timer });
         const message = { type: "DAC_BRIDGE_RPC", route_id: routeId, envelope: request };
@@ -764,6 +795,9 @@
       executorEpoch = null;
       port.onMessage.addListener((message) => {
         if (executorPort !== port) return;
+        /* MỌI khung từ panel đều tính là "còn sống", kể cả khung không phải trả lời cho lượt
+           đang chờ — đó chính là thứ phân biệt "panel bận" với "panel im". */
+        ngheExecutorLuc = Date.now();
         if (message?.type === "DAC_BRIDGE_EXECUTOR_READY" && message.protocol === core.PROTOCOL && message.version === 1 && typeof message.executor_epoch === "string") {
           executorEpoch = message.executor_epoch;
           publishStatus(profileSeat.currentState());
