@@ -82,11 +82,11 @@
       "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-14T19:14:45.349Z",
-      "task": "T21 chang (1): dua goi-bridge.mjs ve _shared, bo ten goi go cung",
-      "released_at": "2026-09-14T19:19:35.722Z"
+      "claimed_at": "2026-09-17T09:12:32.477Z",
+      "task": "N1: fetch failed noi duoc may chu co dang nghe khong",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -103,5 +103,35 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e4c239c384a473e7"
+  "_fingerprint": "ddc019a1c2137690",
+  "tam": {
+    "workers/_shared/goi-bridge/goi-bridge.mjs": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T08:52:10.763Z"
+    },
+    "workers/_shared/goi-bridge/tests/goi-bridge-smoke.mjs": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T08:52:10.763Z"
+    },
+    "workers/duc-scouter/v0.1.0/docs/GIA-THUYET.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T08:52:10.763Z"
+    },
+    "workers/duc-scouter/v0.1.0/CHUOI-VIEC.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T08:54:42.848Z"
+    },
+    "workers/duc-scouter/v0.1.0/BACKLOG.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T09:06:24.369Z"
+    },
+    "workers/duc-scouter/v0.1.0/HANDOFF.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T09:09:03.799Z"
+    },
+    "workers/duc-scouter/v0.1.0/STATUS.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T09:09:03.799Z"
+    }
+  }
 }

@@ -60,13 +60,17 @@ sẵn trong `err.cause.code` mà bản cũ vứt đi. `workers/_shared/goi-bridg
 **Đóng khi:** một lượt đo nói được **ai** gọi cú giết (ví dụ: ghi nhật ký dòng đời của máy chủ —
 bật lúc nào, PID nào, biến mất lúc nào), và máy chủ sống qua một lượt chạy dài mà không ai bật lại.
 
-**② `N3` — RÀ SỔ NỢ. Rẻ, và hai mục đã chết mà chưa ai gạch.**
-Đo 17/09, đọc lại đúng điều kiện đóng của từng mục:
-· `S-01` đủ **cả ba** vế (`scout.click`/`scout.type` có trong từ vựng · mỗi cái một phép ghim ·
-  đột biến kiểm có con canh đường ghi) → **đóng được ngay**.
-· `T8` đã **ĐÓNG 14/09** mà mục ④ bên dưới vẫn liệt kê là còn — gạch tại chỗ.
-**Đóng khi:** mỗi mục `MỞ` còn lại được đọc **điều kiện đóng của chính nó** rồi kết luận, không
-đếm. Mục nào chết thì gạch kèm ngày và lý do.
+**② `N3` — RÀ SỔ NỢ. ĐÃ XONG 17/09, và nó tìm thấy **bốn** mục chết chứ không phải hai.**
+Đọc **điều kiện đóng của chính từng mục**, không đếm: `S-01` và `S-02` đóng từ **07/09** mà dòng đầu
+mục chưa ai gạch · `S-22` Đức chốt đóng **14/09** nhưng lời đóng viết ở SỔ GIẢ THUYẾT nên ở sổ nợ
+nó vẫn ghi `MỞ` · `S-24` đường ⓜ (`scout.grab`) làm xong **14/09**, chạy hàng ngày trong `W3`, vẫn ghi `MỞ`.
+**Nay sổ nợ Scouter còn đúng MỘT mục mở: `S-31`** — và nó là việc của tôi, không phải của Đức.
+
+> **Bài học đắt nhất của cả lượt này** không phải bốn mục cũ: `N2` bên dưới — mục tôi viết **sáng nay**
+> để hỏi Đức — hỏi đúng một quyết định anh **đã chốt mười ngày trước** và đã chạy trong cả hai
+> extension. Tức một lộ trình viết ra để chặn dòng cũ **tự đẻ thêm một dòng cũ**, trong cùng một ngày.
+> **Viết một mục “chờ Đức” là một lời khai, và lời khai nào cũng phải đo trước khi viết.** Một lệnh
+> `grep alarms manifest.json` là đủ để không ai mất thời gian.
 
 **③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI.**
 `R3` mới đụng **ba** lệnh: `dom.query` · `page.snapshot` · `input.click`. `scout.type` ·
@@ -77,12 +81,10 @@ bật lúc nào, PID nào, biến mất lúc nào), và máy chủ sống qua m�
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 
-**`N2` — EXTENSION RỤNG KẾT NỐI (`S-02`, mở từ 07/09).** Service worker ngủ thì `setTimeout`
-chết theo, nên bộ hẹn giờ nối lại không chạy; triệu chứng là `EXTENSION_OFFLINE`. Ba worker kia
-dùng `chrome.alarms`, nhưng **quyền `alarms` chưa được duyệt**, và thêm quyền là việc phải hỏi.
-Đường nâng đã chừa sẵn (`options.schedule` của `createTransport`).
-**Đức chốt MỘT trong hai:** thêm quyền `alarms` · hoặc KHÔNG thêm, và mục đóng bằng một dòng ghi
-lý do. Cả hai chiều đều đóng được mục này.
+~~**`N2` — EXTENSION RỤNG KẾT NỐI (`S-02`), đợi Đức duyệt quyền `alarms`**~~ — **KHÔNG CÒN.**
+Đức duyệt **07/09**, `S-02` đóng cùng ngày, [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md)
+ghi quyết định. Đo 17/09: cả `duc-scouter` lẫn `udin-optic` khai `alarms` trong manifest và gọi
+`chrome.alarms.create` + `onAlarm` thật trong `background`. **Đừng hỏi lại.**
 
 **`N5` — NHÓM VIDEO trong bảng "Udin làm được gì".** Đức nêu trước 17/09: sẽ có tính năng tạo
 video. Bảng đã dựng sẵn hình dạng nhóm — thêm **một** khối `[data-nhom="video"]`, không đụng nhóm

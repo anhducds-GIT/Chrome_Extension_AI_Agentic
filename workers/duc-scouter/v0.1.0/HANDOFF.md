@@ -2425,3 +2425,29 @@ thì cũng chỉ là một dòng chữ như mọi dòng khác.
 chốt chiều nào cũng đóng được mục) · `N5` (nhóm video, chỉ làm khi Udin có tính năng thật).
 
 `S-31` ghi thẳng vào roadmap là **việc của tôi, không phải của Đức** — để không đẩy nhầm lần nữa.
+
+## 2026-09-17j · `claude-scouter-udine` — `N1` nửa đầu, và `N3` lật chính lộ trình viết sáng nay
+
+**`N1`.** Giả thuyết *“`Start-Process` bị dọn theo tiến trình cha”* — **SAI** (`G-98`): ba máy chủ
+đang sống có cha **đã chết**, kể cả một cái do Đức bật. **Nguyên nhân thật vẫn chưa biết.**
+*“Bị giết, không tự lỗi”* là phép đo đúng; *“bị cha dọn”* là câu chuyện tôi đắp lên rồi viết vào ô
+*việc kế tiếp* — có nhãn CHƯA ĐO, nhưng phiên sau đọc điểm khởi hành chứ không đọc nhãn.
+
+**Nửa mang lại tiền đã xong:** `fetch failed` nay tách `ECONNREFUSED` (*không ai nghe* — bật máy
+chủ, kèm thư mục START-BRIDGE) khỏi ca còn lại (*có người nghe, đứt giữa chừng* — bật lại
+**không** chữa được). Đáp án nằm sẵn trong `err.cause.code`, bản cũ vứt đi. Ghim khối ⓗ đòi hai
+câu **phân biệt được nhau**, không chỉ “có ném lỗi”; 4/4 đột biến tay chết.
+
+**`N3` — chỗ đắt hơn.** Đọc **điều kiện đóng của từng mục**: **bốn** mục đã chết, không phải hai.
+`S-01` `S-02` đóng **07/09** mà dòng đầu mục chưa ai gạch · `S-22` Đức chốt đóng **14/09** nhưng
+lời đóng viết ở SỔ GIẢ THUYẾT nên ở sổ nợ vẫn `MỞ` · `S-24` đường ⓜ (`scout.grab`) xong **14/09**,
+chạy hàng ngày trong `W3`, vẫn `MỞ`. **Sổ nợ nay còn đúng MỘT mục mở: `S-31`**, và là việc của tôi.
+
+**Thứ tự trách: `N2`.** Sáng nay tôi viết `N2` vào ô *Chờ Đức* — xin anh duyệt quyền `alarms`.
+Anh **duyệt từ 07/09**; cả hai manifest khai, cả hai `background` gọi thật. Một lộ trình viết ra
+để chặn dòng cũ **tự đẻ thêm một dòng cũ**, cùng ngày, trong khi chính file ấy đã có luật *“đừng
+tin dòng X-bị-chặn-bởi-Y mà chưa đo Y”*. **Mục “chờ Đức” cũng là lời khai, phải đo trước khi viết.**
+
+**Đo:** suíte gói **36/36** · `npm test` xanh · `backlog-check` 36 mục, 0 vô hình.
+**Việc kế:** `N1` nửa sau (ai gọi cú giết — ứng viên rẻ nhất: `-KhoiDongLai` gọi `Stop-Process -Force`)
+và `N4` (ba lệnh chưa chạm `tldraw`, cần Đức mở một tab).

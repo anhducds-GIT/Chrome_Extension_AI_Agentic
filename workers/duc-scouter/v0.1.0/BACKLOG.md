@@ -9,7 +9,7 @@
 
 ## P1 — chặn đường
 
-- **S-01** · Bấm và gõ như tay người: mở nhóm lệnh `Input` của giao thức debug
+- ~~**S-01**~~ · **ĐÓNG 07/09** — xem khối `## ĐÓNG · S-01` bên dưới. *(Dòng đầu mục này để nguyên không gạch **mười ngày** sau khi mục đóng, nên mọi lượt đọc lướt đều thấy nó nằm trong ô **P1 — chặn đường**.)* Bấm và gõ như tay người: mở nhóm lệnh `Input` của giao thức debug
   (`dispatchMouseEvent` · `dispatchKeyEvent` · `insertText`). Đây là năng lực xếp hạng **số một**
   của bảng kiểm kê, và phép đo ① ngày 06/09 đã chứng minh đường đó dùng được (`isTrusted: true`).
   Chưa làm trong lượt này vì việc ② của `BRIEF-SCOUTER-SEED-01` chỉ gồm ba khả năng nền.
@@ -19,7 +19,7 @@
 
 ## P2 — nợ đã biết
 
-- **S-02** · Nối lại Bridge đang chạy bằng `setTimeout` trong service worker, mà service worker
+- ~~**S-02**~~ · **ĐÓNG 07/09 — Đức đã duyệt quyền `alarms` ngay hôm ấy.** Xem khối `## ĐÓNG · S-02` bên dưới và [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md). Đo 17/09: **cả hai** manifest (`duc-scouter`, `udin-optic`) khai `alarms`, và **cả hai** `background` gọi `chrome.alarms.create` + `onAlarm` thật. *(17/09 tôi đẩy mục này cho Đức như một câu **cần anh chốt** — một quyết định anh đã chốt **mười ngày trước** và đã chạy trong cả hai extension. Đúng hình dạng lỗi `S-31` hôm qua, lặp lại sau đúng một ngày, và lần này nó lọt vào chính cái lộ trình viết ra để chặn dòng cũ.)* Nối lại Bridge đang chạy bằng `setTimeout` trong service worker, mà service worker
   ngủ thì hẹn giờ chết theo. Ba worker kia dùng `chrome.alarms`, nhưng quyền `alarms` **không**
   nằm trong danh sách ADR-0009 duyệt, và thêm quyền là việc phải hỏi Đức (`AGENTS.md` gốc mục 2).
   Đường nâng đã chừa sẵn: tiêm `options.schedule` vào `createTransport`.
@@ -783,6 +783,8 @@ phải tab đó, hoặc cửa sổ đang thu nhỏ. Lượt chạy đúng lúc 1
 (cho trang tưởng mình được focus — chưa biết có đủ cho tab `hidden` không). **Đừng chọn trước
 phép đo còn thiếu.**
 
+**~~S-22~~ ĐÓNG 14/09 — Đức chốt NGỪNG ĐIỀU TRA, đóng bằng **lời khai** chứ không bằng bản vá** (đường ⓝ của `T11`). `README.md` nay nói thẳng: `scout.click` hứa *“đã bắn chuột vào đúng điểm của đúng phần tử”* và **không** hứa *“trang đã nhận”*; bên gọi tự đặt dấu kiểm trên trang. Lý do đóng không phải *“đã hiểu”* mà là **chi phí**: cùng một câu hỏi được mở **năm lần** (`G-07` `G-38` `G-40` `G-42` `G-47` `G-49`), bốn lần trả lời SAI. Kết luận đầy đủ ở `docs/GIA-THUYET.md`, khối *Kết luận hiện tại*. *(Tiêu đề vẫn ghi `MỞ` suốt ba ngày vì lời đóng được viết ở SỔ GIẢ THUYẾT chứ không ở đây — **một mục đóng ở nơi khác thì ở đây nó vẫn mở**.)*
+
 **S-22 · sửa 13/09:** giả thuyết tab ẩn là **SAI** (Đức xác nhận; `docs/GIA-THUYET.md` G-07). Mọi
 phép thử của mục này nay ghi ở sổ đó, không ở đây.
 
@@ -826,3 +828,5 @@ CloudFront signed, Firebase, Cloudinary có hạn giờ) đều dừng ở đây
 
 · **đóng khi:** Đức chốt một trong ba đường, và đường đó làm xong kèm phép ghim + đột biến —
 hoặc Đức chốt là KHÔNG làm, và mục này đóng bằng một dòng ghi lý do.
+
+**~~S-24~~ ĐÓNG 14/09 — đường ⓜ được chọn và ĐÃ LÀM XONG.** `scout.grab` nhận selector, extension tự đọc `src` đầy đủ **bên trong** rồi tải, nên URL ký sẵn không bao giờ ra khỏi trình duyệt. `stripQuery` **không bị nới một chốt nào** — đúng điều mục này đòi. Đo 17/09: phép ghim riêng `tests/scouter-grab-smoke.mjs`; đột biến kiểm khai `scout.grab` là *đường vào thứ BA* và đếm 2→3; chạy thật mỗi lượt `W3` của Udin (bốn `.jpg` về đĩa, [bằng chứng 17/09](../../udin-optic/v0.1.0/evidence/2026-09-17-vong-tham-chieu-tron-ven.md)). *(Tiêu đề vẫn ghi `MỞ` suốt ba ngày dù chính lệnh này chạy hàng ngày.)*
