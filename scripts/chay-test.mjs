@@ -200,19 +200,61 @@ export function danhSachSuite(root = ROOT) {
       + ". Repo CÓ file đó mà máy không hiểu được nó là một trạng thái KHÁC với 'repo chưa có suite',"
       + " nên nó không được đi chung một cửa.");
   }
-  const chuoi = String(pkg?.scripts?.["test:tuan-tu"] ?? pkg?.scripts?.test ?? "");
-  return chuoi.split("&&").map((s) => s.trim()).filter(Boolean)
+  /* HỢP HAI KHOÁ, KHÔNG CHỌN MỘT. Bản cũ viết `test:tuan-tu ?? test`, và dấu `??` ấy là một lỗ
+   * đo được ngày 17/09 sau khi đã sống 8 ngày mà không phép kiểm nào thấy.
+   *
+   * Nó ĐÚNG với hình dạng BỘ KHUNG (`test` = chính bộ chạy này, chuỗi thật ở `test:tuan-tu`) và
+   * SAI với repo này, nơi `N-43` **cố ý** giữ `test` là chuỗi thật — vì một phép ghim trong gói
+   * ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test` để bắt xanh giả, mà gói đóng băng thì chỉ-đọc. Lượt
+   * migrate `4da1e9e5` (09/09) thêm `test:tuan-tu` vào **sau** khi `N-43` đóng, nên từ hôm ấy
+   * `??` lấy 10 bài của bộ khung và **bỏ 25 bài của repo**.
+   *
+   * Cái giá không phải chậm: **dấu xác nhận băm theo 10 bài, trong khi thứ nó cho cổng bỏ qua là
+   * `npm test` — 28 bài.** Chạy `npm run test:song-song` rồi chạy cổng thì cổng in *"DÙNG LẠI
+   * DẤU"* cho một bộ chưa bao giờ chạy. Chiều ngược lại cũng thủng: 7 bài chỉ có ở `test:tuan-tu`
+   * thì `npm test` không bao giờ chạy tới.
+   *
+   * `tests/backlog-check-smoke.mjs` đã tự chữa đúng cách này cho phép đọc của nó
+   * (`[test, test:tuan-tu].filter(Boolean).join(" && ")`); khối này chỉ làm cùng một việc, muộn
+   * hơn. Hợp hai khoá thì **không hình dạng repo nào mất bài**, và thứ tự khai thôi là cái bẫy.
+   * Ghim: khối *BỘ CHẠY PHẢI THẤY CẢ HAI KHOÁ SUITE* ở `tests/dau-suite-smoke.mjs`. */
+  const chuoi = [pkg?.scripts?.test, pkg?.scripts?.["test:tuan-tu"]]
+    .filter((s) => typeof s === "string" && s).join(" && ");
+  const ra = chuoi.split("&&").map((s) => s.trim()).filter(Boolean)
     // Bỏ chính lệnh này ra, nếu ai đó khai nó vào chuỗi — chạy đệ quy là treo máy.
     .filter((s) => !s.includes("chay-test.mjs"));
+  /* Khử trùng lặp: hai khoá chồng nhau ở đâu thì chạy một lần chứ không hai. `Set` của JS giữ
+   * thứ tự chèn, nên dòng này không xáo danh sách — và danh sách có thứ tự thì băm mới ổn định. */
+  return [...new Set(ra)];
 }
 
-/** Suite nào PHẢI chạy một mình. Khai ở `test.serial` của `.repo-structure.json`. */
+/** Suite nào PHẢI chạy một mình. HAI nguồn, hợp lại — nguồn ⑵ là nửa còn lại của lỗ `??` vá ở
+ * `danhSachSuite` phía trên.
+ *
+ *   ⑴ `test.serial` của `.repo-structure.json` — khai theo TÊN TỆP, nơi một lane ghi thêm khi
+ *      bắt được tranh chấp thật.
+ *   ⑵ `scripts["test:tuan-tu"]` của `package.json`. `tests/dau-suite-smoke.mjs` khai thẳng nghĩa
+ *      của khoá ấy trong repo này: *"tập phải chạy một mình"*. Bộ chạy trước nay chỉ đọc ⑴, nên
+ *      những bài **tự khai là phải chạy riêng vẫn bị ném vào chạy song song** — đúng loại lỗi đẻ
+ *      ra một lượt đỏ giả mà người đọc đi tìm nguyên nhân trong nội dung bài kiểm.
+ *
+ * Khai SÓT vẫn không nguy hiểm (bộ chạy tự chạy lại một mình mọi suite đỏ trước khi kết luận);
+ * cái nguy là khai RỒI mà không ai đọc. */
 export function danhSachTuanTu(root = ROOT) {
+  const ra = [];
   try {
     const ct = JSON.parse(fs.readFileSync(path.join(root, ".repo-structure.json"), "utf8"));
     const ds = ct?.test?.serial;
-    return Array.isArray(ds) ? ds.filter((s) => typeof s === "string" && s) : [];
-  } catch { return []; }
+    if (Array.isArray(ds)) ra.push(...ds.filter((s) => typeof s === "string" && s));
+  } catch { /* vắng hay hỏng: nguồn ⑵ vẫn phải được đọc, đừng trả rỗng cho cả hai */ }
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+    for (const lenh of String(pkg?.scripts?.["test:tuan-tu"] ?? "").split("&&")) {
+      const ten = lenh.trim().split(/\s+/).find((t) => t.endsWith(".mjs") || t.endsWith(".js"));
+      if (ten) ra.push(path.basename(ten));
+    }
+  } catch { /* như trên */ }
+  return [...new Set(ra)];
 }
 
 /* ---- chạy ------------------------------------------------------------------ */

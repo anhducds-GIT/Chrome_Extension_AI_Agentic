@@ -511,4 +511,49 @@ try {
   ok(`không bài kiểm nào chết lặng lẽ: ${coTrongTests.length} tệp, ${dsChet.length} đang cách ly và cả ${dsChet.length} đều thật sự đỏ`);
 }
 
+/* ---- BỘ CHẠY PHẢI THẤY **CẢ HAI** KHOÁ SUITE ------------------------------
+ *
+ * Lỗ đo được 17/09, đã sống **8 ngày** và không phép kiểm nào thấy. `danhSachSuite` từng viết
+ * `test:tuan-tu ?? test`. Dấu `??` ấy ĐÚNG với hình dạng bộ khung (ở đó `test` = bộ chạy, chuỗi
+ * thật nằm ở `test:tuan-tu`) và SAI với repo này, nơi `N-43` **cố ý** giữ `test` là chuỗi thật vì
+ * một phép ghim trong gói ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test`. Lượt migrate `4da1e9e5` (09/09)
+ * thêm `test:tuan-tu` vào **sau** khi `N-43` đóng — nên từ hôm ấy bộ chạy lấy 10 bài, bỏ 25 bài.
+ *
+ * Cái giá không phải chậm. Là **dấu xác nhận băm theo 10 bài trong khi thứ nó cho cổng bỏ qua là
+ * `npm test` — 28 bài**: chạy `npm run test:song-song` rồi chạy cổng thì cổng in *"DÙNG LẠI DẤU"*
+ * cho một bộ chưa bao giờ chạy. Đúng họ `A1`, và đúng họ `gate-test-check-is-scoped`.
+ *
+ * Khối này neo vào HÀNH VI chứ không vào con số: mọi lệnh trong CẢ HAI khoá phải có mặt trong
+ * danh sách bộ chạy. Một mép đếm suông (`>= 30`) thì lượt `??` quay lại vẫn xanh nếu ai đó nới
+ * `test:tuan-tu` cho dài ra. */
+{
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  const tach = (s) => String(s || "").split("&&").map((x) => x.trim()).filter(Boolean)
+    .filter((x) => !x.includes("chay-test.mjs"));
+  const A = tach(pkg.scripts?.test);
+  const B = tach(pkg.scripts?.["test:tuan-tu"]);
+  /* Mỏ neo rỗng là ca hỏng tệ nhất: nó XANH mà chẳng kiểm gì. Nói ra, đừng bỏ qua. */
+  assert.ok(A.length && B.length,
+    "PHEP_GHIM_RONG: repo này phải có CẢ HAI khoá `test` và `test:tuan-tu`; thiếu một bên thì khối này không kiểm được gì");
+
+  const thay = new Set(danhSachSuite(ROOT));
+  const sot = [...new Set([...A, ...B])].filter((c) => !thay.has(c));
+  assert.equal(sot.length, 0,
+    `BO_CHAY_MU — ${sot.length} suite bộ chạy không thấy: ${sot.slice(0, 4).join(" | ")}. `
+    + "danhSachSuite đang đọc MỘT khoá thay vì hợp hai khoá.");
+  ok(`bộ chạy thấy cả hai khoá: ${thay.size} suite (test ${A.length} + test:tuan-tu ${B.length}, trừ trùng)`);
+
+  /* Nửa còn lại của cùng một lỗ: `test:tuan-tu` tự khai là *"tập phải chạy một mình"* (xem khối
+   * KHÔNG BÀI KIỂM NÀO ĐƯỢC CHẾT LẶNG LẼ ở trên). Khai rồi mà bộ chạy ném vào chạy song song thì
+   * tệ hơn không khai — nó đẻ ra đỏ giả, và người đọc đi tìm lỗi trong nội dung bài kiểm. */
+  const rieng = new Set(danhSachTuanTu(ROOT));
+  const quen = B
+    .map((c) => c.split(/\s+/).find((x) => x.endsWith(".mjs")))
+    .filter(Boolean).map((t) => path.basename(t))
+    .filter((t) => !rieng.has(t));
+  assert.equal(quen.length, 0,
+    `KHAI_RIENG_MA_CHAY_CHUNG — ${quen.length} bài: ${quen.slice(0, 4).join(" | ")}`);
+  ok(`mọi bài ở test:tuan-tu đều được xếp chạy RIÊNG: ${B.length} bài`);
+}
+
 console.log(`\n${so} passed, 0 failed, ${so} total`);
