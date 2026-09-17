@@ -78,14 +78,17 @@ nó vẫn ghi `MỞ` · `S-24` đường ⓜ (`scout.grab`) làm xong **14/09**,
 · `scout.grab` **1020ms**, HTTP 200, **287.003 byte**, URL thật không ra khỏi trình duyệt — **ĐẠT**.
 · `scout.type` gõ được 20 ký tự và `scout.text` đọc lại đúng từng chữ — **nhưng chạy trên MÃ CŨ.**
 
-**Chỗ kẹt, và nó lớn hơn `N4`:** bản extension Scouter đang nạp trong Chrome **cũ hơn repo** (`G-99`).
-`scout.tha` và `scout.upload` trả `METHOD_NOT_FOUND` trên **cả hai** ghế. Tức `Scouter v1` ký 16/09
-trên một bản mã **chưa từng được nạp vào trình duyệt lần nào** — mọi lượt live khai `da_kiem:true`
-đều chạy qua extension `udin-optic`, không qua Scouter.
-**Đóng khi:** Đức nạp lại extension Scouter (`chrome://extensions` → Reload) rồi `scout.type` chạy lại
-trên `tldraw` và trả **`da_kiem`** — ba câu chứ không hai.
-**Trước MỎcI lượt live từ nay:** hỏi bản nạp xem nó biết những method nào, rồi so với từ vựng trong repo.
-Một lượt gọi, và nó là thứ duy nhất phân biệt *mã này chạy đúng* với *mã này chưa bao giờ chạy*.
+**Chỗ kẹt — và tôi đã đoán sai một lần ở đây, xem `G-99`.**
+`scout.type` trả về **thiếu `da_kiem`**, và **sau một lượt Đức nạp lại extension vẫn thiếu**. Mã trong
+repo thì luôn trả `da_kiem`. ~~*“Bản nạp cũ hơn repo”*~~ — **đã rút**: bằng chứng cũ (`scout.tha`,
+`scout.upload` trả `METHOD_NOT_FOUND`) **vô giá trị** — hai lệnh ấy là của `udin-optic`, chưa bao giờ
+thuộc từ vựng Scouter.
+**Đo đến đâu:** `system.capabilities` khai **25 method, khớp repo 25/25** — nhưng đó là **máy chủ** trả
+lời, không phải extension. Bản đang chạy có `scout.chon` (16/09 22:32) mà thiếu đường tự kiểm
+(16/09 10:36, **tổ tiên** của `scout.chon`) — **không checkout nào của repo này ở trạng thái đó**.
+**Cần ĐỨC đúng một số:** `chrome://extensions` → extension Scouter → dòng **Đường dẫn / Loaded from**.
+Không có số đó thì mọi câu tiếp theo về `N4` là đoán.
+**Đóng khi:** `scout.type` chạy trên `tldraw` và trả **`da_kiem`** — ba câu chứ không hai.
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 

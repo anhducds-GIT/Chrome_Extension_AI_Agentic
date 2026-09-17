@@ -2478,3 +2478,29 @@ luôn chuỗi cắt ấy làm danh tính** — bốn lượt `PROBE_FAILED`, l�
 trong khi `scout.query` trả `items` — mảng rỗng, **không ném gì**, một trang đầy đọc y hệt trang trống.
 
 **Việc kế:** Đức nạp lại extension Scouter → chạy lại `scout.type` trên tldraw, đòi `da_kiem`. `N1` nửa sau.
+
+## 2026-09-17l · `claude-scouter-udine` — RÚT `G-99`: bằng chứng của tôi không đo được điều nó tưởng
+
+Đức nạp lại extension Scouter (ghế `Dummy_Scout` nối lại lúc 09:42). Chạy lại `scout.type` trên
+`tldraw`: **vẫn thiếu `da_kiem`**. Nên kết luận *“bản nạp cũ hơn repo”* của mục `2026-09-17k` **SAI**.
+
+**Bằng chứng tôi dùng là vô giá trị.** `scout.tha` và `scout.upload` trả `METHOD_NOT_FOUND` — nhưng hai
+lệnh ấy **chưa bao giờ nằm trong từ vựng Scouter**, chúng là method của `udin-optic`. Phép dò ấy không
+phân biệt được *bản này cũ* với *method này chưa từng có ở đây* — một lỗi `assertion-must-distinguish-
+branches`, lần này ở **dụng cụ chẩn đoán**. Một lệnh `grep 'name: "scout.' scouter-bridge-core.mjs`
+trước khi kết luận là đủ — và tôi đã chạy chính lệnh ấy **sau khi** đã viết kết luận vào sổ.
+
+**Đã gạch tại chỗ** ở `G-99`, `TRIALS.md` và khối `N4`. Câu *“`Scouter v1` ký trên mã chưa từng chạy”*
+**rút hẳn** — nó chỉ đứng trên bằng chứng vừa bị bác.
+
+**Thứ còn đứng, và vẫn chưa có lời đáp:** `scout.type` và `scout.clear` đều trả đúng hình dạng **fail-open
+trước 16/09**, trong khi mã repo luôn trả `da_kiem`. Đo thêm: `system.capabilities` khai **25 method,
+khớp repo 25/25** — nhưng đó là **máy chủ** trả lời chứ không phải extension, nên nó cũng chưa đủ.
+Một mảnh **không khớp bất kỳ checkout nào**: bản đang chạy có `scout.chon` (16/09 22:32) mà thiếu đường
+tự kiểm (16/09 10:36 — **tổ tiên** của `scout.chon`). Worktree `nifty-benz-a66fbf` cũng không phải.
+
+**Cần Đức đúng một số:** `chrome://extensions` → Scouter → **Đường dẫn nạp từ**. Đó là phép đo duy nhất
+còn thiếu, và không đầu dây nào của tôi đọc được nó.
+
+**Đo `N4`, phần không đổi:** `scout.text` và `scout.grab` ĐẠT; `scout.type` gõ tới trang thật (đọc lại đúng
+từng chữ), chỉ **lời tự khai của nó** là thiếu.
