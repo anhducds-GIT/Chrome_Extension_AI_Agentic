@@ -274,3 +274,22 @@ một chỗ để lệch, và extension chỉ TRẢ LỜI chứ không hỏi ra 
 
 **Móc ném thì lượt gọi ĐỎ và không gì được chuyển xuống** — đúng chiều an toàn: một đường dẫn
 chưa kiểm được thì không đi tiếp. Gói `udin-optic` là nơi đầu tiên dùng nó.
+
+## 2026-09-17 · `claude-scouter-udine` — `fetch failed` nói được máy chủ có đang nghe không
+
+Node ném đúng hai chữ **“fetch failed”** cho mọi ca hỏng tầng mạng. Nhưng hai ca dưới đây đòi
+hai việc **trái ngược nhau**, nên trộn chúng vào một câu là bắt người đọc đoán:
+
+- `ECONNREFUSED` → **không ai nghe** ở cổng ấy. Bật máy chủ lên — câu báo kèm luôn thư mục có
+  `START-BRIDGE`, lấy từ bản đồ thư mục chứ không gõ cứng.
+- còn lại → **có người nghe** mà lượt gọi đứt giữa chừng. Bật lại **không chữa được**; đọc
+  `*.BRIDGE.stderr.log` trước.
+
+**Không thêm dụng cụ nào.** Đáp án nằm sẵn trong `err.cause.code`, bản cũ vứt đi. Một lượt dò
+cổng riêng sẽ là phép đo **thứ hai** cho một câu đã có đáp án — và nó đo ở một thời điểm khác
+lượt gọi thật, nên có thể nói khác.
+
+Ghim khối ⓗ đòi hai câu **phân biệt được nhau**, không chỉ “có ném lỗi” — thiếu vế ấy thì một
+bản gộp hai nhánh về một câu vẫn xanh. 4 đột biến tay (gộp nhánh · bỏ cổng · bỏ đường dẫn ·
+đảo điều kiện) chết cả 4.
+
