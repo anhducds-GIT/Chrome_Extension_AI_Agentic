@@ -70,7 +70,7 @@ phải canh (thường là repo chưa khai bài kiểm tra). Cũng phải sửa,
 
 ### "Tôi cần duyệt những gì?"
 
-Danh sách đầy đủ ở **[AGENTS.md mục 2 — Sáu việc PHẢI hỏi Đức trước](../AGENTS.md#2-sáu-việc-phải-hỏi-đức-trước)**.
+Danh sách đầy đủ ở **[AGENTS.md mục 4 — Phải hỏi Đức trước](../AGENTS.md#4-phải-hỏi-đức-trước)**.
 Đó là **một bản duy nhất**, cố ý không chép lại ở đây — ba bản chép tay đã từng nói ba kiểu
 khác nhau, và đó đúng là thứ nguy hiểm nhất trong cả tập tài liệu này.
 

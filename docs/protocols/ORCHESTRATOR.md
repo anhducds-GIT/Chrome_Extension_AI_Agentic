@@ -24,7 +24,7 @@ product_code: forbidden
 |---|---|
 | Cầm toàn cảnh: việc mở, ai giữ vùng nào, đang chờ Đức gì | Không phải phiên code chính |
 | Trả lời **câu Đức hỏi**, và **vì sao câu trả lời là như vậy** | Không tự mở topic Đức chưa hỏi — mục 0b |
-| Cầm sự thật trong repo cho khớp thực tế | Không tự chốt việc thuộc `AGENTS.md` mục 3 (*Phải hỏi Đức trước*) |
+| Cầm sự thật trong repo cho khớp thực tế | Không tự chốt việc thuộc `AGENTS.md` mục 4 (*Phải hỏi Đức trước*) |
 | Chia việc thành các luồng chạy song song không giẫm chân | Không tự giành vùng người khác đang giữ |
 | Viết brief rồi giao việc kỹ thuật đi (mục 4b) | **Không code, không debug product, không đề xuất patch** — mục 4 |
 | Giữ bảng trạng thái tươi để Đức tự xem | Không gõ tay số nào vào bảng |
@@ -96,13 +96,14 @@ trên đất của nó; đừng bê luật repo Extension sang.
 - Một câu bắc qua hai repo hiện phải trả lời bằng cách `cd` sang đọc tay. Đó là **gõ tay, không
   phải năng lực của gói** — phiên sau không thừa hưởng. Biến nó thành năng lực: `IDEAS.md` mục
   `Y-13` phần 2, **chưa làm**, chờ pilot v0.1 đạt.
-- Luật ở mục này **chưa có phép kiểm máy**. `AGENTS.md` mục 8 (*Đóng phiên*) chốt lại: luật nào máy không kiểm được thì
-  sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
-  một lượt khác.
+- Luật ở mục này **chưa có phép kiểm máy**, và đó vẫn đúng ngày 17/09: `tests/role-firewall-smoke.mjs`
+  **có thật, 13 phép, đang xanh**, nhưng **không phép nào chạm mục `0c`** — nó ghim mục 4 và mục 4b.
+  Luật nền: `MULTIFLOW.md` mục 5, *"một chốt không có test ghim thì nó chỉ là bình luận."*
+  Mở rộng phép kiểm đó → khoá `_code` → một lượt khác.
 
 ## 0d. RẼ NHÁNH TRONG MỘT CHAT — tối đa 2 chat, mỗi chat rẽ bao nhiêu tuỳ ý ([ADR-0017](../adr/0004-hai-vai-assistant.md) ⑴, [ADR-0005](../adr/0005-lam-viec-song-song.md) ⑵)
 
-Đang chạy: **tối đa 2 chat song song** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), hai chat đó
+Đang chạy: **tối đa 2 chat song song** (`AGENTS.md` mục 6, *Vai và chạy song song*; Đức chốt 07/09), hai chat đó
 phải **khác vùng**. Bên trong MỘT chat thì **số tác vụ ngầm không bị giới hạn** — Đức nói rõ:
 *"trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok."*
 **Chủ khoá là tên CHAT**, không phải tên từng tác vụ ngầm.
@@ -225,7 +226,7 @@ Phép thử trước khi compact: *"cái tôi vừa biết đã có trong file c
 riêng, cây làm việc riêng, cổng riêng** — nên một chat ở repo này không thể chặn chat ở repo
 kia. Gộp chúng vào một con số là tự trói mình mà không đổi lại được an toàn nào.
 
-Trong **một** repo: **tối đa hai CHAT** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), và chỉ mở
+Trong **một** repo: **tối đa hai CHAT** (`AGENTS.md` mục 6, *Vai và chạy song song*; Đức chốt 07/09), và chỉ mở
 chat mới khi chat cũ **đã push** — không phải khi nó "báo xong".
 
 **Đơn vị đếm là CHAT.** Số tác vụ ngầm bên trong một chat không bị giới hạn.
@@ -300,7 +301,7 @@ là thứ tự Đức đã chốt, nên bản đồ xếp theo nó, không xếp
 Ba điều KHÔNG được làm khi chia luồng:
 
 1. **Đừng hứa song song trên một khoá.** Hai việc cùng khoá thì phải xếp hàng, kể cả khi
-   chúng đụng hai file khác nhau — luật mục 1 của `AGENTS.md` là một khoá một phiên.
+   chúng đụng hai file khác nhau — luật mục 2 của `AGENTS.md` (*Ai được ghi ở đâu*) là một khoá một phiên.
 2. **Đừng đọc trường `phạm vi` của sổ ý tưởng như bằng chứng.** Nó là văn xuôi người viết,
    nên bảng in nó kèm nhãn `[DÒ]`. Dò theo tên trong repo này đã cho kết luận sai bốn lần
    trong một ngày.
@@ -447,7 +448,7 @@ buộc dùng lại hai cơ chế đã có — khoá vùng và Log. Đừng phát
 | **Defect** | Chuyện gì đã xảy ra thật? Kèm bằng chứng, không phải giả định |
 | **Phải làm gì** | Đức đã chốt gì. Ghi thành việc, không ghi thành gợi ý |
 | **Ranh giới** | KHÔNG được đụng gì. Đây là mục chặn nở phạm vi |
-| **Khoá cần** | Tên khoá theo `AGENTS.md` mục 1 (*Khoá*), để executor nhận đúng vùng |
+| **Khoá cần** | Tên khoá theo `AGENTS.md` mục 2 (*Ai được ghi ở đâu*), để executor nhận đúng vùng |
 | **Xong khi nào** | Điều kiện máy kiểm được: cổng xanh · test bắt được mutation · Log |
 | **Hỏi ai** | Thường là **Đức**, không phải phiên điều phối |
 
@@ -459,7 +460,7 @@ viết brief rồi tự làm luôn thì firewall chưa hề tồn tại — nó 
 
 ## 5. Khi nào DỪNG và hỏi Đức
 
-Bốn việc của `AGENTS.md` mục 3 (*Phải hỏi Đức trước*: thêm permission · pilot live mới · đổi luật
+Bốn việc của `AGENTS.md` mục 4 (*Phải hỏi Đức trước*: thêm permission · pilot live mới · đổi luật
 an toàn · force-push hay merge vào `main`) — không
 bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
 
@@ -470,7 +471,7 @@ bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
   chờ Đức mà không ai nhắc thì nó chỉ nằm đó.
 - **Việc Đức giao đụng nhiều khoá cùng lúc** → tách thành nhiều việc trước khi nhận khoá,
   đừng nhận cả gốc repo.
-- **Bảng quyền báo `DAU_VO`** → dừng, đọc `AGENTS.md` mục 7 (*Sổ tay*), dòng `DAU_VO`. Đừng `--restamp` cho xong.
+- **Bảng quyền báo `DAU_VO`** → dừng, đọc `AGENTS.md` mục 2 (*Ai được ghi ở đâu*), dòng `DAU_VO`. Đừng `--restamp` cho xong.
 
 ### 5b. Và KHÔNG BAO GIỜ dừng vì chuyện commit (Đức chốt 2026-09-06)
 
@@ -513,7 +514,7 @@ thuật vào — trích đúng năm mục rồi DỪNG — chứ không phải k
 **Lớp thực thi — làm im lặng, đúng luật `AGENTS.md`:** cổng kiểm xanh → Log vào `HANDOFF.md`
 → `safe-push.mjs`. Thêm hai việc riêng của vai này, và cả hai đã trả giá thật:
 
-- **Trả khoá là một lượt push RIÊNG, và phải có lượt đó.** Đúng thứ tự, sáu bước:
+- **Trả khoá là một lượt push RIÊNG, và phải có lượt đó.** Đúng thứ tự, bảy bước:
 
   ```
   nhận khoá → làm việc → commit → push  ←── khoá VẪN đứng tên bạn ở bước này
@@ -557,7 +558,7 @@ Ba trạng thái, và đọc chúng khác nhau:
 
 **Lệnh đó KHÔNG tự sửa gì** — nó in ra lệnh sửa để bạn tự quyết. Cố ý: một cổng tự dọn bằng
 chứng của chính thứ nó phải phát hiện là cổng vô dụng, và tệ hơn — nó tạo cảm giác an toàn.
-Cùng lý lẽ với `AGENTS.md` mục 7 (*Sổ tay*): *"đừng restamp cho xong việc."*
+Cùng lý lẽ với `AGENTS.md` mục 2 (*Ai được ghi ở đâu*): *"đừng restamp cho xong việc."*
 
 Khác `session-check.mjs` ở bốn chỗ, đừng lẫn: ai chạy (điều phối ↔ executor) · lúc nào (trước
 khi **báo cáo** ↔ trước khi **đóng phiên**) · hỏi gì ("điều tôi sắp nói có đúng không" ↔ "việc
@@ -565,11 +566,11 @@ tôi làm đủ điều kiện push chưa") · đỏ thì sao (không được p
 
 ## 7. `IDEAS.md` miễn khoá khi chỉ thêm dòng ở cuối
 
-Luật đầy đủ ở `AGENTS.md` mục 1b (*Vùng, miễn trừ*), khai bằng máy ở `append_only_exempt` — **đừng đọc bản ở đây,
+Luật đầy đủ ở `AGENTS.md` mục 2 (*Ai được ghi ở đâu*, gạch đầu dòng cuối), khai bằng máy ở `append_only_exempt` — **đừng đọc bản ở đây,
 đọc bản ở đó.** Vai điều phối là vai ghi ý tưởng nhiều nhất nên hay dùng miễn trừ này; nhớ vế
 sau của nó: **sửa hay xoá dòng cũ thì KHÔNG được miễn**, trừ khi bạn đang giữ khoá đúng file.
 
 **Luật này sống ở đâu:** khối `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
-đừng sửa script**. `AGENTS.md` mục 1 (*Khoá*) nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị
+đừng sửa script**. `AGENTS.md` mục 2 (*Ai được ghi ở đâu*) nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị
 gõ cứng ở cả `session-check.mjs` lẫn `safe-push.mjs`, và hai bản sao của một luật đã trả hai
 câu khác nhau cho cùng một file ngày 02/09.

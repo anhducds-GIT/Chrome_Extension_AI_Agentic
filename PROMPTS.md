@@ -20,7 +20,7 @@
 | Nhận / trả quyền vùng | có | có | có |
 | Chạy cổng đóng phiên, push | có | có | có |
 | Sinh lại bảng trạng thái | có | có | có |
-| Xem bảng trạng thái | mở `DASHBOARD-…​.html` trong repo | như Claude | như Claude |
+| Xem bảng trạng thái | mở `DASHBOARD-Chrome-Extension-AI-Agentic.html` trong repo | như Claude | như Claude |
 
 **Cách đo:** `AGENTS.md` gốc có **0 chỗ** giả định công cụ riêng của Claude — mọi chỉ dẫn vận hành
 đều là `node scripts/*.mjs`. Hai chỗ tìm kiếm bắt được trong sổ tay vận hành đều là dương tính giả
@@ -148,7 +148,7 @@ Sinh bảng trạng thái ra một file tạm cho tôi xem, đừng commit.
 
 **Dùng khi nào:** AI báo "chỗ này có chủ khác" và Đức muốn xử lý.
 
-> **Từ 08/09 mặc định là khoá TỪNG FILE, không phải khoá cả vùng** (`AGENTS.md` mục 1a). AI nhận
+> **Từ 08/09 mặc định là khoá TỪNG FILE, không phải khoá cả vùng** (`AGENTS.md` mục 2, *Ai được ghi ở đâu*). AI nhận
 > ngay trước lượt ghi và trả ngay sau — Đức thường không phải làm gì. Cả vùng chỉ nhận khi nó
 > thật sự sửa khắp vùng đó. Sửa 09/09: mục này trước đây chỉ dạy khoá vùng.
 
@@ -195,7 +195,7 @@ Ghi một dòng Log vào HANDOFF trước khi push.
 ```
 
 > Thứ tự này không phải chuyện hình thức: bộ test để lại một dấu buộc vào commit cuối, nên
-> **commit sau khi chạy test là làm hỏng dấu** và cổng phải chạy lại cả bộ (`AGENTS.md` mục 0a).
+> **commit sau khi chạy test là làm hỏng dấu** và cổng phải chạy lại cả bộ (`AGENTS.md` mục 3, *Kiểm, commit, đẩy*).
 
 **AI sẽ chạy:** `npm run test:song-song` → `node scripts/session-check.mjs --as <phiên>` →
 `node scripts/safe-push.mjs --as <phiên>`

@@ -121,5 +121,10 @@ Dấu `**` phải đóng **ngay sau mã**. Viết sai mẫu thì nó **không đ
 - **Vế viết sau đuôi liên kết:** `[ADR-0005](…) ⑴`. Mục `Vế đã chết` đúng khuôn `- **NNNN [vế] — …**` — văn xuôi thì bộ đo không thấy gì và **báo SẠCH**; bỏ ký hiệu vế là khai chết cả quyết định.
 - **Trỏ tới `AGENTS.md` thì kèm TÊN mục, không chỉ số.** Số hiệu ADR là danh tính vĩnh viễn; số
   mục của `AGENTS.md` chỉ là **vị trí** và nó đổi mỗi lượt sắp xếp lại — lượt cắt 402 → 252 dòng
-  ngày 09/09 làm hỏng **sáu** lượt trỏ trong ba file. Viết `AGENTS.md` mục 3 (*Phải hỏi Đức
+  ngày 09/09 làm hỏng **sáu** lượt trỏ trong ba file. Viết `AGENTS.md` mục 4 (*Phải hỏi Đức
   trước*): số sai thì tên vẫn chỉ đúng chỗ, và người đọc thấy ngay là nó lệch.
+  **Luật này một mình KHÔNG đủ, và đã chứng minh: 17/09 đếm lại được 21 chỗ trỏ sai trên mặt
+  luật sống — kể cả câu ví dụ của chính mục này.** Kèm tên chỉ giúp người đọc TỰ thấy lệch; nó
+  không giúp ai thấy 21 chỗ cùng lúc. Nay có máy canh: `tests/trich-muc-agents-smoke.mjs` đọc
+  tiêu đề thật của `AGENTS.md` rồi đối chiếu **số · tên · liên kết neo** ở mọi file luật sống
+  (miễn `docs/adr/` · `docs/archive/` · `docs/briefs/` — chúng là bản ghi quá khứ).

@@ -196,7 +196,7 @@ chính thứ đang canh mọi thứ khác — và nó luôn được biện minh
 ## Việc nào cần người, việc nào không
 
 Danh sách việc **phải hỏi Đức** nằm ở
-[AGENTS.md mục 2 — Sáu việc PHẢI hỏi Đức trước](../AGENTS.md#2-sáu-việc-phải-hỏi-đức-trước).
+[AGENTS.md mục 4 — Phải hỏi Đức trước](../AGENTS.md#4-phải-hỏi-đức-trước).
 **Một bản duy nhất, đừng chép lại ở đây.**
 
 Trong lịch bảo trì này, AI **tự làm hết** những việc sau mà không cần hỏi ai: quét và sửa liên

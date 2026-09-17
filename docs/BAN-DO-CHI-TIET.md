@@ -8,7 +8,7 @@ ttl_days: 365
 
 > **Đây là bản đồ file CHÍNH THỨC của repo bạn.** Cổng đóng phiên đối chiếu file mới với file
 > này, nên **thêm file hay thư mục mới thì thêm một mục ở ĐÂY** — không khai = không tồn tại.
-> `AGENTS.md` mục 6 chỉ giữ vài cửa hay dùng nhất.
+> `AGENTS.md` mục 8 (*Đọc TRƯỚC KHI làm*) chỉ giữ vài cửa hay dùng nhất.
 
 ### Hiểu bộ khung này gồm gì và dùng thế nào
 

@@ -145,10 +145,10 @@ trên cùng cổng đó. Nhưng dùng chung thì mọi lượt gọi phải mang
 **Cách đỡ phiền hơn: cho gói này một tệp ghép cặp RIÊNG, cổng riêng.** Sinh bằng một lệnh:
 
 ```bash
-node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --ra "<đường dẫn .json NGOÀI kho mã>"
+node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi hnx-fetch
 ```
 
-Không đưa `--cong` thì nó tự chọn cổng trống (32152 trở đi). Sinh xong: đưa tệp đó cho
+`--goi` tự đặt tệp vào **nhà chung của Bridge NGOÀI kho mã** đúng quy ước tên; muốn tự chọn chỗ thì dùng `--ra "<đường dẫn .json NGOÀI kho mã>"` thay cho nó. Không đưa `--cong` thì nó tự chọn cổng trống (32152 trở đi). Sinh xong: đưa tệp đó cho
 `Chay-may-chu-HNX.cmd`, rồi **chọn đúng tệp đó trong bảng bên** của HNX Fetch. Từ lúc đó mỗi
 máy chủ chỉ có một extension cắm vào, và `--target` thành không cần.
 

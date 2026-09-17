@@ -21,7 +21,7 @@ ttl_days: 365
 | Một dòng cho mỗi sự cố gặp thật | **Cách làm một việc** → brief trong `docs/briefs/` |
 | | **Thay đổi mã** → thông điệp commit |
 
-Đây không phải luật mới: `AGENTS.md` mục 8 (*Đóng phiên*) đã ghi *"làm gì, kết quả số, còn gì mở"* từ đầu. Cái
+Đây không phải luật mới: `AGENTS.md` mục 1 (*Một phiên*, vế **Đóng**) đã ghi *"làm gì, kết quả số, còn gì mở"* từ đầu. Cái
 mới là **có trần và có máy kiểm**.
 
 **Viết một mục dài không phải chăm chỉ — nó là đẩy chi phí sang mọi phiên sau.** Mọi phiên mở

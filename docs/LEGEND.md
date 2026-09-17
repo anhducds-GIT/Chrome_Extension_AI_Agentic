@@ -46,7 +46,7 @@ ttl_days: 365
 | **HANDOFF** | Bàn giao giữa các phiên. Chỉ thêm dòng, không sửa dòng cũ | |
 | **P1…P5** | Hồ sơ repo, khai ở trường `profile` trong `.repo-structure.json`: P1 nhiều gói · P2 ứng dụng đơn · P3 tài liệu · P4 hạ tầng · P5 điều phối | |
 
-## Năm "luật an toàn" của repo — hàng 6 của `AGENTS.md` mục 2
+## Năm "luật an toàn" của repo — hàng 3 của `AGENTS.md` mục 4 (*Phải hỏi Đức trước*)
 
 Đổi một trong năm thứ này là **đổi thứ đang canh mọi thứ khác**, nên phải hỏi Đức trước.
 Cắt khỏi `AGENTS.md` sang đây ở bản 1.3.20 vì mục 1 phải nhận thêm luật giữ khoá, và Tầng 1 có

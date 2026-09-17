@@ -6,7 +6,7 @@ status: active
 # MULTIFLOW — nhiều phiên AI cùng làm trên một repo
 
 > **Đọc file này khi:** bạn sắp làm việc trong repo này cùng lúc với AI khác, hoặc bạn sắp
-> **sửa** một trong bốn cơ chế bên dưới. Luật ngắn nằm ở `AGENTS.md` mục 1 và mục 2 — file này
+> **sửa** một trong bốn cơ chế bên dưới. Luật ngắn nằm ở `AGENTS.md` mục 2 (*Ai được ghi ở đâu*) và mục 3 (*Kiểm, commit, đẩy*) — file này
 > giải thích **vì sao** luật đó có hình dạng như vậy, và **phải làm gì khi muốn đổi nó**.
 >
 > Viết cho hai loại người đọc: Đức (không code) đọc mục 1–3; AI sắp sửa cơ chế đọc hết.
@@ -67,7 +67,7 @@ không **do hình dạng bản giao việc**, không phải do lane lười. C�
 thì làm ba lượt (06/09 một lane ôm ba khoá worker cho một việc sửa chữ và chặn một phiên khác).
 
 Năm điều **không** được làm, và mỗi điều là một tai nạn thật. **Năm câu này CỐ Ý nhắc lại
-`AGENTS.md` mục 1 (*Khoá*) — đừng gộp:** tầng 1 giữ *câu luật*, tầng 2 giữ *vụ tai nạn đằng sau
+`AGENTS.md` mục 2 (*Ai được ghi ở đâu*) — đừng gộp:** tầng 1 giữ *câu luật*, tầng 2 giữ *vụ tai nạn đằng sau
 nó*, và ai đọc file này là đang đi sửa cơ chế nên cần vế thứ hai (`RULE-COMPILER.md` mục 4).
 
 - **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
@@ -101,7 +101,6 @@ node scripts/claim.mjs --soat --as <phiên>                # BẮT BUỘC trư�
 node scripts/claim.mjs --xong --het --as <phiên>          # trả mọi khoá file
 node scripts/claim.mjs --list                             # ai đang giữ gì
 node scripts/claim.mjs --take|--release <khoá> --as <phiên> [--task "một câu"]
-node scripts/claim.mjs --khai-vung <khoá> --as <phiên>    # mở MỘT VÙNG MỚI
 node scripts/claim.mjs --restamp --as <phiên> --duc-duyet "<câu chốt của Đức>"
 git config core.hooksPath .githooks                       # một lượt, xong cho mọi lane
 ```
@@ -116,6 +115,14 @@ git config core.hooksPath .githooks                       # một lượt, xong 
 Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`. **Nhận đúng vùng
 mình đụng, không nhận cả gốc repo** — cổng sẽ nói tên khoá còn thiếu.
 
+> **Mở một VÙNG MỚI thì hiện chỉ có đường sửa `.repo-structure.json` rồi `--restamp`.** Khối lệnh
+> trên từng có một dòng `--khai-vung` — cửa đó có thật, đóng `N-41` ngày 08/09 kèm 2 phép ghim,
+> rồi **biến mất** trong lượt `4da1e9e5` *(migrate bộ khung 0.3.0 → 1.8.0, 09/09)*. Lượt ấy thay
+> `scripts/claim.mjs` bằng bản của bộ khung; phép ghim `tests/claim-smoke.mjs` **nay không nạp nổi**
+> (`does not provide an export named 'BASELINE'`) và nó nằm trong khu cách ly `npm run test:chet`,
+> nên **không lượt chạy nào kêu suốt 8 ngày**. Dòng dạy một lệnh không tồn tại đã gỡ 17/09; việc
+> khôi phục hay bỏ hẳn nằm ở `N-68`.
+
 **Artifact máy sinh KHÔNG đòi khoá nào** — khai ở khối `generated` của `.repo-structure.json`
 (hôm nay: `DASHBOARD.md`, `llms.txt`, `repo-map.json`, `DASHBOARD-Chrome-Extension-AI-Agentic.html`,
 `FEATURE-PARITY-AUTO.md`). Chạy lại bộ sinh là ra y hệt nên không có gì của ai trong đó để mất.
@@ -123,17 +130,22 @@ mình đụng, không nhận cả gốc repo** — cổng sẽ nói tên khoá c
 ([ADR-0014](../adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)). Ở bảng đối chiếu, dòng **[DÒ]**
 là máy **đoán theo tên** — kiểm lại trước khi hành động theo nó.
 
-**File miễn khoá** khai ở `append_only_exempt` — **sửa ở đó, đừng sửa script.** Hai loại: miễn vô
-điều kiện (`.agents/claims.json` — không miễn thì chính thao tác trả quyền cũng bị coi là sửa file
-gốc), và miễn **khi chỉ thêm dòng ở cuối** (`HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc — mọi
-lane đều phải ghi vào ba quyển này, bắt chúng xếp hàng sau `_root` là tự chặn luật của mình).
+**File miễn khoá có HAI loại, và chúng khai ở HAI CHỖ KHÁC NHAU — đừng gộp.** Loại *miễn khi chỉ
+thêm dòng ở cuối* khai ở `append_only_exempt` trong `.repo-structure.json` (`HANDOFF.md` gốc ·
+`IDEAS.md` · `BACKLOG.md` gốc — mọi lane đều phải ghi vào ba quyển này, bắt chúng xếp hàng sau
+`_root` là tự chặn luật của mình): **sửa ở đó, đừng sửa script.** Loại *miễn vô điều kiện* —
+hôm nay chỉ có `.agents/claims.json`, vì không miễn thì chính thao tác trả quyền cũng bị coi là
+sửa file gốc — **cố ý KHÔNG nằm trong danh sách đó**, nó miễn trong mã. Chính `.repo-structure.json`
+nói lý do: *"trộn hai loại vào một danh sách là mất mất điều kiện."* Bản trước của đoạn này đọc
+như thể cả hai cùng khai ở `append_only_exempt`, tức mời phiên sau thêm `claims.json` vào đó và
+biến một miễn-có-điều-kiện thành miễn-vô-điều-kiện cho ba quyển kia.
 
 **Một vùng không nhận được khi bên trong còn khoá file của lane khác** — kể cả khoá đó đã treo lâu.
 Đó là chứa-nhau hai chiều đang chạy đúng, không phải lỗi. Đợi, hoặc hỏi lane đó. **Đừng nhả hộ.**
 
 ## 3b. Đóng phiên — thứ tự, và hai lớp bộ sinh
 
-> Chuyển từ `AGENTS.md` mục 0a xuống đây 09/09, kèm lời giải cho hai chỗ mâu thuẫn mà một lượt
+> Chuyển từ `AGENTS.md` xuống đây 09/09 (lúc đó nó là *mục 0a*; đánh số ấy không còn), kèm lời giải cho hai chỗ mâu thuẫn mà một lượt
 > audit độc lập tìm ra ([ADR-0033](../adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑸⒝⒞).
 
 ```
@@ -241,7 +253,7 @@ Không phải khẩu hiệu. Đếm được trong một ngày làm việc: **b�
 không có tác dụng gì, và cả bốn lần test đều đang xanh. Cách duy nhất phát hiện là **đột biến
 kiểm** — cố ý làm hỏng chốt rồi xem có test nào đỏ không.
 
-Ba cái bẫy đã tự cắn, ghi ra để đừng ai mất công đạp lại:
+Bốn cái bẫy đã tự cắn, ghi ra để đừng ai mất công đạp lại:
 
 1. **Ghim hàm không thay được ghim đường đi.** Hàm trả về đúng, mà nơi gọi nó lờ đi thì cũng như
    không. Đột biến "gỡ chốt trong `main()`" không làm đỏ một test nào — vì test chỉ gọi hàm.
@@ -312,7 +324,7 @@ Ghi lại để đừng ai "cải tiến" vào đúng mấy chỗ này:
 
 | Cần gì | Mở file |
 |---|---|
-| Luật ngắn, bản chính thức | `AGENTS.md` mục 1 và mục 2 |
+| Luật ngắn, bản chính thức | `AGENTS.md` mục 2 (*Ai được ghi ở đâu*) · mục 3 (*Kiểm, commit, đẩy*) |
 | Vì sao các phiên va nhau, các phương án đã cân | `docs/archive/PARALLEL-WORK-DESIGN-V0.md` |
 | Vai điều phối: đọc gì, giao việc thế nào | `docs/protocols/ORCHESTRATOR.md` |
 | Câu để Đức dán cho bất kỳ AI nào | `PROMPTS.md` |
