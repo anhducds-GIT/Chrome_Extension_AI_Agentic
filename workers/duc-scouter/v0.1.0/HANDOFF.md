@@ -2328,3 +2328,38 @@ quả lượt trước — **gộp được thành một**. Đó chính xác là
 **Nên `S-31` giữ nguyên mức nợ, đổi người chịu:** không phải *"chờ Đức chốt có mở `scout.reload`
 không"* mà *"gom mọi lượt sửa mã extension của một phiên, xin nạp lại ĐÚNG MỘT LẦN ở cuối"*. Đã
 ghi thẳng vào mục `S-31`.
+
+## 2026-09-17f · `claude-scouter-udine` — `R3` ĐÓNG: seed chạy trên trang thứ hai, không sửa một dòng
+
+**Đây là câu hỏi cả lộ trình dựng lên để trả lời:** *Scouter là bộ đồ nghề chung, hay một cái
+adapter cho Udin?* Tới sáng nay nó vẫn là **lời khai** — mọi thứ đã chứng minh đều chứng minh
+trên đúng một trang.
+
+**Trang chọn: `tldraw.com`** — bảng công cụ + canvas vector, không chat, không sinh gì. Khác loại
+thật so với Udin, và không cần đăng nhập nên đo được trên Chrome hồ sơ trống.
+
+**Đóng bằng HAI `W`, không phải một:**
+
+| | `W` | bằng chứng |
+|---|---|---|
+| ⓐ | đổi màu vẽ | `Color — Black (selected)` **1 → 0**, `Color — Red (selected)` **0 → 1** |
+| ⓑ | vẽ một hình | bấm `Rectangle — R` → bấm `.tl-canvas` → `.tl-shape` **0 → 1** |
+
+`W-ⓐ` đáng nói: tldraw **tự khai trạng thái trong nhãn trợ năng**, nên chặng ấy tự kiểm được —
+đúng hình dạng `W5` của Udin, mà không ai thiết kế cho nó giống.
+
+**Vốn từ đụng tới: `dom.query` · `page.snapshot` · `input.click`. Không một dòng seed nào bị sửa**
+— hai file đo chỉ `import`.
+
+**MỘT GIẢ THUYẾT CỦA TÔI BỊ CHÍNH PHÉP ĐO BÁC.** Tôi đoán vẽ hình phải *nhấn-di-thả*, thao tác
+seed không có, và đã soạn sẵn câu báo *"đây là khoảng trống"*. Đo lại: một cú bấm là đủ. Suýt ghi
+một **giới hạn không tồn tại** vào sổ — mà một giới hạn ghi nhầm thì không ai đi kiểm lại nó nữa.
+
+**Và một lượt đo suýt thành kết luận rác:** bản đầu của phép đo ⓑ trả `-1` cho mọi phép đếm (trang
+chưa vẽ xong), rồi in ra *"một cú bấm không đủ"* vì `-1 === -1`. Nay mọi phép đếm hỏng đều **NÉM**,
+và lượt chờ sẵn sàng phải chờ bằng **thứ đã chứng minh là có**, không chờ bằng chính selector đang
+nghi ngờ — nếu không thì *"trang chưa vẽ xong"* và *"selector sai"* đọc y hệt nhau.
+
+**PHẠM VI:** chạy lõi seed trên Chrome hồ sơ trống (`chrome-do.mjs`), **không** qua dây extension;
+đường ấy chứng minh riêng trên Udin hằng ngày nhưng chưa trên tldraw. `scout.type` · `scout.text` ·
+`scout.grab` chưa chạm trang này lần nào.

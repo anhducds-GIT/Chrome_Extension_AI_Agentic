@@ -116,11 +116,25 @@ nó dò một trang lạ → sinh adapter → chạy. Lúc ấy bảng `W` mới
 đọc. Chạy lại với bộ đầy đủ là phép thử thật cho câu *"seed này dùng lại được"*.
 **Không cần hỏi ai.**
 
-**③ `R3` — TRANG THỨ HAI, khác loại.** Đây là đích của cả lộ trình từ đầu (chặng ⑤), và là
-phép đo duy nhất trả lời được câu *"Scouter là bộ đồ nghề chung hay là một cái adapter cho
-Udin"*. Ứng viên: Vizcom (artboard), một node editor, một timeline.
-**Đóng khi:** có `W` ĐẠT trên trang mới **mà không sửa một dòng nào của seed**. Sửa phải một
-dòng thì đó là câu trả lời, và là câu trả lời đáng giá hơn.
+**③ `R3` — TRANG THỨ HAI, khác loại. ✅ ĐÓNG 17/09 trên `tldraw.com`.**
+Điều kiện đóng là *một* `W`; đóng bằng **hai**: ⓐ đổi màu vẽ (`Color — Black (selected)` 1 → 0,
+`Color — Red (selected)` 0 → 1 — trang tự khai trạng thái nên chặng tự kiểm được) · ⓑ vẽ một hình
+(bấm `Rectangle — R` → bấm `.tl-canvas` → `.tl-shape` **0 → 1**). Vốn từ dùng: `dom.query` ·
+`page.snapshot` · `input.click`. **Không một dòng seed nào bị sửa.**
+
+**Nên câu *"Scouter là bộ đồ nghề chung"* hết là lời khai.** Udin và tldraw khác loại thật: một
+bên chat sinh ảnh + canvas ảnh, bên kia bảng công cụ + canvas vector, không chat, không sinh gì.
+
+**Và một giả thuyết của tôi bị chính phép đo bác:** tôi đoán vẽ hình cần *nhấn-di-thả* — thao tác
+seed không có — và đã định ghi đó là khoảng trống. Đo lại: **một cú bấm là đủ**. Suýt ghi một
+giới hạn không tồn tại vào sổ, và một giới hạn ghi nhầm thì không ai đi kiểm lại.
+
+**PHẠM VI — thứ lượt này KHÔNG chứng minh:** nó chạy lõi seed trên **Chrome hồ sơ trống** do
+`chrome-do.mjs` đẻ ra, không đi qua dây extension. Đường extension đã được chứng minh riêng và
+hằng ngày trên Udin, nhưng **chưa** trên tldraw. Vốn từ đụng tới cũng mới là ba lệnh — `scout.type`
+`scout.text` `scout.grab` chưa chạm trang này lần nào.
+
+~~**Đóng khi:** có `W` ĐẠT trên trang mới mà không sửa một dòng nào của seed.~~
 
 **④ Dọn sổ, không cái nào chặn cái nào.** `S-31` (Udin không tự nạp lại được — chọn một trong
 ba đường đã ghi; mặc định ⒝ *gộp nhiều lượt sửa thành một lượt nạp lại*) · `T8` đổi tên
