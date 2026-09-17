@@ -989,3 +989,17 @@ thoại (đo `0/14` và `0/11`).
 **Còn mở, và cần Đức chốt chứ không cần thêm thời gian:** `S-31` — Udin không tự nạp lại được
 (`scout.reload` cắt ở `T21`), nên mỗi lần sửa mã extension đều phải nhờ Đức bấm một lần. Mở lại
 là **thêm một method Bridge** = đổi luật an toàn.
+
+## 2026-09-17h · `claude-scouter-udine` — `lifecycle: building → active`
+
+Đổi vì **thực tế đã đổi**, không phải vì muốn cắm một cọc sơn: cả hai ca việc thật của Đức nay
+chạy trọn bằng MỘT lệnh — ⒜ ảnh Udin tự sinh, ⒝ ảnh từ ngoài thả vào — bảy chặng, không một hộp
+thoại, và `RD` đã đóng bằng một lượt chạy sống hôm nay.
+
+`building` nghĩa là *đang dựng*; gói này thì đang **chạy việc**. Giữ `building` là để một dòng
+sai trong bảng tổng, và bảng ấy là thứ Đức đọc.
+
+**KHÔNG đổi, và nói rõ vì sao:** `T7` (vòng tự cải tiến) vẫn ở mức **PARTIAL** trong
+`CAPABILITIES.md`. Điều kiện lên `MASTERED` mà chính file ấy viết ra đã đủ cả ba vế, nhưng nó là
+**chữ ký của Đức** chứ không phải một lượt chạy xanh — y như `Scouter v1` phải đợi ADR-0008.
+Tôi không tự nâng mức hộ anh.

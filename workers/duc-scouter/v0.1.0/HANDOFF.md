@@ -2310,3 +2310,21 @@ như một sự thật đã đo.
 **Luật rút ra, và nó rộng hơn Udin:** một hàng trong sổ giả thuyết chỉ được chở thứ phép đo ấy
 CHẠM tới. *"Đọc ra chữ X"* là phép đo. *"Nghĩa là máy chủ đang đầy"* là một lời suy — và một lời
 suy đứng trong cột kết luận thì không ai đi kiểm lại nữa.
+
+## 2026-09-17e · `claude-scouter-udine` — `S-31` không chờ Đức; nó chờ tôi, và hôm nay tôi phá nó
+
+**Tôi vừa đưa `S-31` cho Đức như một câu hỏi cần anh chốt. Sai.** Mục ấy trong `BACKLOG.md` đã
+viết sẵn từ 16/09: ba đường ⒜⒝⒞, **⒝ là mặc định**, kèm một câu thẳng — *"đừng mở method mới cho
+một chuyện kỷ luật giải quyết được."*
+
+Tôi trích một món nợ mà **không đọc điều kiện đóng của nó**, rồi chuyển nó thành việc của Đức.
+Đúng cái bẫy `deferral-reason-is-a-claim`: một dòng *"đang chờ X"* sống lâu hơn mọi dòng khác vì
+không ai đọc lại nó — kể cả người viết.
+
+**Và số đo của hôm nay đứng về phía sổ nợ, không về phía tôi:** một phiên, **hai** lượt nhờ Đức
+nạp lại extension (một cho `①②③`, một cho `data-image-id`). Không có gì ở lượt sau phụ thuộc kết
+quả lượt trước — **gộp được thành một**. Đó chính xác là đường ⒝, và tôi đã không đi.
+
+**Nên `S-31` giữ nguyên mức nợ, đổi người chịu:** không phải *"chờ Đức chốt có mở `scout.reload`
+không"* mà *"gom mọi lượt sửa mã extension của một phiên, xin nạp lại ĐÚNG MỘT LẦN ở cuối"*. Đã
+ghi thẳng vào mục `S-31`.

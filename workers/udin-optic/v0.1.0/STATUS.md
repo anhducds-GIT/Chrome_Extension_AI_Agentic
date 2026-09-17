@@ -2,13 +2,13 @@
 schema: extension-status/v2
 id: udin-optic
 name: Udin Optic
-lifecycle: building
+lifecycle: active
 owner: claude-scouter-udine
 priority_rank: 5
 next_step: "CA HAI CA CUA DUC CHAY TRON BANG MOT LENH (do that 17/09): --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai. Bay chang W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4, khong mot hop thoai nao. Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src. Man chan User Limit Reached la BUG: Duc chot cu an, quaManCho bam lai toi 12 luot. Con mo: S-31 — CAN DUC CHOT. R2/R3 PARKED."
 human_action: "khong"
 version_source: workers/udin-optic/v0.1.0/manifest.json
-lifecycle_note: "lan chay that dau tien 15/09 — xem HANDOFF muc 2026-09-15f"
+lifecycle_note: "lan chay that dau tien 15/09. building -> active ngay 17/09: ca hai ca viec that cua Duc chay tron bang MOT lenh (anh Udin tu sinh, va anh tu ngoai tha vao), bay chang, khong mot hop thoai nao. Doi lifecycle vi thuc te da doi, khong phai vi mot coc son."
 current_focus: "CA HAI DIEM DUNG DA QUA: Duc nap lai extension 17/09; Scouter v1 ky o ADR-0008. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? S-31 (Udin khong tu nap lai duoc) van mo — moi lan sua ma extension deu phai nho Duc bam mot lan, va mo lai la THEM MOT METHOD nen phai Duc chot."
 lam_duoc: "Chay viec sinh anh tren Udin tu dong lenh: vuot man cho, gui prompt, doi anh moi, roi lay anh ve dia. Bon chang W1..W4 deu co phep ghim."
 khong_lam_duoc: "Khong tu chay. Khong do trang la: khong co scout.page, scout.tree, scout.a11y, scout.shot, scout.network — chung KHONG TON TAI o goi nay, khong phai bi chan. Khong goi mang tuy y: scout.fetch bi cat. Khong tu nap lai chinh no: scout.reload bi cat, do la viec cua seed Scouter. Manifest chi khai dung mot trang."

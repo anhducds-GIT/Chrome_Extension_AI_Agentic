@@ -74,6 +74,15 @@
   · **đóng khi:** chọn được một đường và ghi lý do vào đây. **⒝ là mặc định cho tới lúc đó** —
   đừng mở method mới cho một chuyện kỷ luật giải quyết được.
 
+  **ĐO 17/09 — đường ⒝ bị chính tôi phá, và đó là dữ liệu chứ không phải lời thú tội.** Trong một
+  phiên tôi xin Đức nạp lại **hai** lượt: một cho `①②③`, một cho `data-image-id`. Hai lượt ấy
+  **gộp được thành một** — không có gì ở lượt sau phụ thuộc kết quả lượt trước. Tệ hơn: tôi đưa
+  `S-31` cho Đức như một **câu hỏi cần anh chốt**, trong khi mục này đã viết sẵn *"⒝ là mặc định"*
+  và *"đừng mở method mới cho một chuyện kỷ luật giải quyết được"*. Tôi trích một món nợ mà không
+  đọc điều kiện đóng của nó — đúng cái bẫy `deferral-reason-is-a-claim`.
+  **Nên mục này KHÔNG chờ Đức.** Nó chờ tôi: gom mọi lượt sửa mã extension của một phiên lại, rồi
+  xin nạp lại **đúng một lần**, ở cuối.
+
 - ~~**S-04** · `scout.reload` trả lời rồi mới nạp lại sau **một độ trễ cố định 250ms**~~ —
   **ĐÓNG 16/09 bằng vế thứ hai của chính điều kiện đóng.**
 
