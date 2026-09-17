@@ -333,3 +333,18 @@ tới nó, còn khối ⑤ chỉ so ba hằng số có xuất. Lời khai ấy *
 Khối ⑥ mới đọc thẳng văn bản hai file, neo vào đúng khối `Object.freeze({…})` (neo cả file thì nó
 khớp phải chính đoạn chú thích vừa viết), khai hai mã lệch là `LECH_CO_CHU_Y`, và **tự đếm mỏ
 neo** — gõ sai tên mã thì ĐỎ chứ không im lặng bỏ qua. Hai ca hỏng dựng thật, **giết được 2/2**.
+
+## 2026-09-17b · `claude-scouter-udine` — cái mốc của phép ghim DI CHUYỂN ĐƯỢC
+
+`tests/tuong-duong-voi-ban-goc.mjs` biện minh cho cái mốc của nó bằng: *"gói ĐÃ ĐÓNG BĂNG… nó
+không đổi nữa, nên lệch nhau bao giờ cũng là lỗi của bản mới."* **Sai hai lần, đo 17/09:**
+⑴ Đức mở băng **toàn bộ** từ 08/09 (`ADR-0024` ⑴), `frozen` là `[]`. ⑵ Bản gốc **đã đổi thật** —
+`e10dc65f` (11/09) thêm **40 dòng** vào chính `bridge-host.mjs`, một lượt hết giờ nay tự khai
+mình thuộc loại nào (`B-50`/`B-58`).
+
+**Hệ quả để lượt sau khỏi sửa nhầm chiều:** file này ĐỎ thì **đừng mặc định lỗi ở lõi mới**. Chạy
+`git log -1 --oneline -- <đường dẫn bản gốc>` trước. Bản gốc vừa nhúc nhích thì việc cần làm là
+một **quyết định cố ý** — đưa thay đổi ấy sang lõi, hay khai là lệch có chủ ý — chứ không phải
+sửa lõi cho khớp một cái mốc vừa trôi. Đã ghi thẳng vào docblock của phép ghim.
+
+Không đổi một hành vi nào; sáu khối vẫn xanh.
