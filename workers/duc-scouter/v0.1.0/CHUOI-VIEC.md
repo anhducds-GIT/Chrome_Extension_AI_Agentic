@@ -138,10 +138,14 @@ bên chat sinh ảnh + canvas ảnh, bên kia bảng công cụ + canvas vector,
 seed không có — và đã định ghi đó là khoảng trống. Đo lại: **một cú bấm là đủ**. Suýt ghi một
 giới hạn không tồn tại vào sổ, và một giới hạn ghi nhầm thì không ai đi kiểm lại.
 
-**PHẠM VI — thứ lượt này KHÔNG chứng minh:** nó chạy lõi seed trên **Chrome hồ sơ trống** do
-`chrome-do.mjs` đẻ ra, không đi qua dây extension. Đường extension đã được chứng minh riêng và
-hằng ngày trên Udin, nhưng **chưa** trên tldraw. Vốn từ đụng tới cũng mới là ba lệnh — `scout.type`
-`scout.text` `scout.grab` chưa chạm trang này lần nào.
+~~**PHẠM VI:** chạy lõi seed trên Chrome hồ sơ trống, không đi qua dây extension.~~
+**VẾ ẤY ĐÃ KHÉP cùng ngày.** Đức mở một tab tldraw, và cả hai `W` chạy lại **qua đúng dây
+extension** trên ghế `Dummy_Scout`: `Color — Red (selected)` 0 → 1 · `Color — Black (selected)`
+1 → 0 · `.tl-shape` 0 → 1. Cùng kết quả với lượt trên Chrome sạch, nên phần "seed dùng lại được"
+nay đúng ở **cả hai đường**.
+
+**Phạm vi CÒN LẠI, và nó là thật:** vốn từ đụng tới mới là ba lệnh — `dom.query` · `page.snapshot`
+· `input.click`. `scout.type` · `scout.text` · `scout.grab` chưa chạm trang này lần nào.
 
 ~~**Đóng khi:** có `W` ĐẠT trên trang mới mà không sửa một dòng nào của seed.~~
 

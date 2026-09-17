@@ -2385,3 +2385,20 @@ còn CHẶN, E2E ĐẠT) đủ từ 16/09, và `R2` là lượt chạy lại ch�
 định *gõ prompt → bấm nút → ra kết quả*, nên trên `tldraw` nó **không có ô prompt nào để bám**.
 `R3` chứng minh **seed** dùng lại được ở trang khác loại; `R2` chứng minh **vòng tự cải tiến**
 khép. Hai câu khác nhau, đừng gộp.
+
+## 2026-09-17h · `claude-scouter-udine` — `R3` khép nốt vế extension trên tldraw
+
+Mục 17/09f khai một phạm vi thật: `R3` chạy trên **Chrome hồ sơ trống**, chưa qua dây extension.
+Đức mở một tab tldraw, nên vế ấy khép **cùng ngày** thay vì nằm lại làm một dòng "chưa đo".
+
+Chạy trên ghế `Dummy_Scout`, qua `scout.click` / `scout.query` thật: `Color — Red (selected)`
+**0 → 1** · `Color — Black (selected)` **1 → 0** · `.tl-shape` **0 → 1**. **Cùng kết quả** với
+lượt trên Chrome sạch.
+
+Đáng ghi vì nó đóng một khoảng mù chứ không chỉ thêm một dấu tích: hai đường ấy khác nhau thật —
+một bên gọi thẳng lõi seed từ Node, một bên đi qua `chrome.debugger` của extension, qua cái phanh,
+qua máy chủ Bridge. Chúng **có thể** cho kết quả khác nhau, và chỉ chạy mới biết.
+
+**Phạm vi còn lại, viết ra để đừng ai đọc rộng hơn thứ đã đo:** vốn từ đụng tới mới là ba lệnh —
+`dom.query` · `page.snapshot` · `input.click`. `scout.type` · `scout.text` · `scout.grab` chưa
+chạm trang này lần nào.
