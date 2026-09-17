@@ -568,14 +568,39 @@
         ? "chưa gắn lại sau khi mở Chrome — gõ đúng tên này rồi bấm Gắn tab đang mở"
         : seat.tab_alive === false ? "tab đã đóng" : WORKSPACE_STATE_LABELS[seat.state] || seat.state;
       detail.textContent = seat.tab_id === null ? ` — ${stateLabel} ` : ` — tab ${seat.tab_id} · ${stateLabel} `;
+      /* NÚT CHÉP — Đức nêu 17/09: một cú bấm ra đủ hồ sơ + phiên + cách gọi, để dán thẳng cho
+         AI thay vì ghép tay ba mẩu. Chữ được ghép ở `bridge-workspace-core.seatHandle`, THUẦN,
+         nên phép ghim lái được nó mà không cần dựng cả panel. */
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "secondary small";
+      copyBtn.textContent = "Chép";
+      copyBtn.title = "Chép hồ sơ + phiên + --target để dán cho AI";
+      copyBtn.addEventListener("click", () => copyBridgeSeatHandle(seat, copyBtn));
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "secondary small";
       removeBtn.textContent = "Gỡ";
       removeBtn.addEventListener("click", () => removeBridgeWorkspace(seat.workspace_id, seat.name).catch((error) => log(messageOf(error), "error")));
-      item.append(name, detail, removeBtn);
+      item.append(name, detail, copyBtn, removeBtn);
       els.bridgeWorkspaceList.append(item);
     }
+  }
+
+  /* Tên hồ sơ đọc từ Ô ĐANG HIỆN, không từ một bản nhớ riêng: ô ấy là thứ Đức vừa gõ và vừa
+     nhìn thấy, nên chép ra đúng cái anh đang đọc. Một bản nhớ thứ hai là một chỗ để hai bên
+     nói khác nhau. */
+  async function copyBridgeSeatHandle(seat, button) {
+    const chu = window.DacBridgeWorkspaceCore.seatHandle(seat, els.bridgeProfileLabelInput?.value || "");
+    const nhanCu = button.textContent;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+      await navigator.clipboard.writeText(chu);
+      button.textContent = "Đã chép";
+    } catch (_error) {
+      button.textContent = "Không chép được";
+    }
+    window.setTimeout(() => { button.textContent = nhanCu; }, 1800);
   }
 
   async function refreshBridgeWorkspaces() {

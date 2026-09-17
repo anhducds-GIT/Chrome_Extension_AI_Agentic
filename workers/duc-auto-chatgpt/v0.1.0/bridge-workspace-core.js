@@ -154,8 +154,28 @@
     };
   }
 
+  /* MỘT DÒNG ĐỦ ĐỂ GỌI ĐÚNG GHẾ NÀY — Đức nêu 17/09: *"khi tôi ấn copy thì nó sẽ copy được
+     tên của block, tên của profile và tên của phiên làm việc… one click copy nhanh gọn nhẹ."*
+
+     VÌ SAO PHẢI KÈM `--target <workspace_id>`, KHÔNG CHỈ CÁI TÊN: đo thật 17/09, cùng buổi Đức
+     hỏi. Hai hồ sơ Chrome (`anhducds` và `kaito`) cùng có một phiên tên `01`, và host trả:
+         TARGET_AMBIGUOUS · candidates: [ {label:"01"}, {label:"01"} ]
+     Tên phiên là thứ NGƯỜI đặt nên nó trùng được; `workspace_id` thì không. Chép cái tên thôi
+     là chép một thứ vừa mới chứng minh là không gọi được.
+
+     Tên hồ sơ đứng ĐẦU vì đó là thứ người đọc nhận ra; định danh máy đứng CUỐI vì đó là thứ
+     máy cần. Một dòng, dán thẳng cho AI, không phải ghép tay ba mẩu. */
+  function seatHandle(seat, profileLabel) {
+    const ten = sanitizeWorkspaceName(seat?.name) || "(phiên chưa đặt tên)";
+    const ho = sanitizeWorkspaceName(profileLabel) || "(hồ sơ chưa đặt tên)";
+    const tab = Number.isInteger(seat?.tab_id) && seat.tab_id > 0 ? `tab ${seat.tab_id}` : "chưa gắn tab";
+    const id = String(seat?.workspace_id || "").trim();
+    return `${ho} / ${ten} (${tab})${id ? ` · --target ${id}` : ""}`;
+  }
+
   (typeof window !== "undefined" ? window : globalThis).DacBridgeWorkspaceCore = Object.freeze({
     STORAGE_KEY,
+    seatHandle,
     MAX_WORKSPACES,
     WORKSPACE_ID_PATTERN,
     sanitizeWorkspaceName,

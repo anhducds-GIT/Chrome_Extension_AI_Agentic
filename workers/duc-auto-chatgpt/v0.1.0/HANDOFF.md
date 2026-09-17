@@ -904,3 +904,36 @@ cả hai đỏ `ReferenceError` — đo được ngay lượt đầu.
 Ghim: `tests/luot-hoi-bi-gap-b99-smoke.mjs` chạy HÀM THẬT rồi đưa sang `soleUserTurnIndex`
 THẬT, và chứng minh cả hai chiều: chữ đã bóc thì tìm ra, chữ chưa bóc thì trượt.
 Sáu chỗ còn gây nhầm lẫn ghi ở `~~B-100~~`. Suite **143/143** · đột biến **6/6**.
+
+## 2026-09-17 (lượt 4) · `claude-gpt-chay-het-job` — `B-50` NGHIỆM THU LIVE, nút chép định danh ghế, và `B-99` vẫn CHƯA chứng minh được
+
+**`~~B-50~~` đã sống — số đo đầu tiên sau khi Đức nạp lại tiện ích.** Dòng in ra:
+`vòng 1 · đọc hỏng 1 lượt (REQUEST_TIMEOUT) — PANEL_IM` kèm `Panel im hoàn toàn. Đóng rồi mở
+lại side panel…`. Trước bản vá chỗ này in `— chưa rõ vì sao` và không gì khác.
+
+**NÚT CHÉP ĐỊNH DANH GHẾ** (Đức nêu: *"one click copy nhanh gọn nhẹ"*). Mỗi hàng phiên làm
+việc nay có nút **Chép** → một dòng:
+`kaito / 01 (tab 2096832290) · --target 5cc3f867-…`
+Chữ ghép ở `bridge-workspace-core.seatHandle` — THUẦN, ghim được mà không dựng panel.
+
+⚠ **`--target <workspace_id>` KHÔNG phải trang trí, nó mua bằng một lỗi thật ngay trong buổi:**
+tôi gọi `--target 01` và host trả `TARGET_AMBIGUOUS · candidates: [{label:"01"},{label:"01"}]`
+— hồ sơ `anhducds` VÀ `kaito` cùng có một phiên tên `01`. Tên phiên do NGƯỜI đặt nên trùng
+được; `workspace_id` thì không. Ghim ⑵ canh đúng chỗ đó.
+
+**GẶP THÊM — nạp lại tiện ích thì content script trong tab cũ CHẾT THEO.** Ghế `01` trả
+`RECEIVER_LOST: receiver unavailable in the workspace tab`. Chữa bằng `chat-reload` (F5 tab
+2096832290, 4,8 giây là xong). **Lời dặn "nạp lại extension" của tôi lượt trước là THIẾU:**
+phải kèm F5 ĐÚNG tab ChatGPT, nếu không mọi lượt đọc đều `RECEIVER_LOST`.
+
+**`~~B-99~~` VẪN CHƯA CHỨNG MINH ĐƯỢC — đừng đóng sổ.** Tôi gieo một prompt **1.059 ký tự**,
+gửi xong `submitted: true`, `evidence.read_status: OK` ngay lượt đầu. Nhưng `dom-probe` đếm
+**0 nút `collapsible-user-message-toggle`** trên trang: **lượt hỏi ấy KHÔNG bị gấp**, nên con
+lỗi không hề nổ. Một lượt gửi thành công khi cái bẫy vắng mặt **không nói gì** về bản vá.
+
+Suy ra một điều CHƯA ĐO: ngưỡng gấp **không theo số ký tự**. Lượt gãy sáng nay chỉ **869 ký
+tự** mà bị gấp (≈40 dòng ngắn); lượt 1.059 ký tự này thì không (≈18 dòng). Nghi là theo **số
+dòng / chiều cao dựng**, chưa kiểm. Muốn nghiệm thu `~~B-99~~` thì phải có một lượt hỏi **thật
+sự bị gấp** — kiểm bằng `dom-probe`, đếm nút, đừng tin độ dài.
+
+Suite **144/144** · đột biến **8/8**.
