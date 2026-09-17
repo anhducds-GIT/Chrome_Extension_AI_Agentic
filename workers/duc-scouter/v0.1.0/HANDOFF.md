@@ -2630,3 +2630,31 @@ viễn. `Đ2` nay mở bằng một **cò độ tươi** gắn vào nội dung c
 
 **Một lỗi của tôi, đã trả.** `next_step` tôi viết dài thêm 325 ký tự, và đó là phần đẩy
 `PHIEN.md` vượt trần cứng 6.600 (`S-34`, một phiên khác cùng nhãn lane đo ra). Đã cắt lại ngắn.
+
+## 2026-09-17q · `claude-scouter-udine` — `A4` còn một mục, `A5` 13→5, và một luật chết ở ba gói
+
+**Thứ lớn nhất lượt này không nằm trên lộ trình.** Bộ chạy suite **chỉ thấy 10 trên 35 bài**, đã
+thế **8 ngày**: `danhSachSuite` viết `test:tuan-tu ?? test`, đúng với hình dạng bộ khung và sai
+với repo này. Cái giá không phải chậm — **dấu xác nhận băm theo 10 bài trong khi thứ nó cho cổng
+bỏ qua là `npm test`, 28 bài**. Vá bằng hợp hai khoá, ghim ở khối ⑥ mới của
+`tests/dau-suite-smoke.mjs`, **2 ca hỏng dựng thật giết 2/2**. Sau vá: **35/35 xanh, 116s**.
+
+**`A5`: 13 → 5 nơi, và mỗi nơi đã đóng đều trả về một chỗ trôi THẬT** — không nơi nào là thủ tục.
+Đắt nhất là `PROMPTS.md` mục 1: **câu Đức DÁN để mở phiên** vẫn dặn đọc `HANDOFF.md`, thứ
+`ADR-0034`/`ADR-0035` thay từ 09/09; bản cũ tốn **>12.000 token** trước dòng code đầu tiên. Cùng
+lỗi ở `ORCHESTRATOR.md` (2 chỗ). `docs/README.md` khai `docs/archive/` *"đã xoá"* ở **hai** chỗ
+trong khi git đang track file trong đó, và ba bảng gõ tay mục (brief 6/16 · ADR 9/21 · thiếu
+`RULE-COMPILER.md`) — thay bằng **lệnh đếm**, không thêm tay lần nữa.
+
+**Một lời khai sai của CHÍNH TÔI, gạch tại chỗ trong ngày.** Sáng tôi viết *"gói ĐÃ ĐÓNG BĂNG"*
+vào hai file mã. **Không gói nào đóng băng** — `frozen` là `[]`, Đức mở băng toàn bộ **08/09**
+(`ADR-0024` ⑴). Nặng hơn: `tuong-duong-voi-ban-goc.mjs` biện minh cho **cái mốc** của nó bằng
+*"nó không đổi nữa"* — sai hai lần, vì bản gốc **đã đổi thật** (`e10dc65f`, 11/09, +40 dòng). Nay
+docblock dặn: file đó ĐỎ thì **đọc `git log` của bản gốc trước**, đừng mặc định lỗi ở lõi mới.
+
+**Và tôi lại đẩy cho Đức một quyết định anh đã chốt — lần thứ BA trong ba ngày.** Tôi hỏi *"mở
+băng hay bỏ?"* cho một việc anh chốt chín ngày trước. Anh trả lời *"vẫn cứ phải mở băng để sửa
+cho chuẩn chỉnh"*, và theo chốt đó dòng luật chết đã gỡ ở `duc-auto-gemini` +
+`duc-auto-gg-flow-video`. Gói thứ ba chờ lane khác trả khoá.
+
+**Đã đẩy 34 commit.** Việc kế và số đo sẵn: khối đầu `CHUOI-VIEC.md`.

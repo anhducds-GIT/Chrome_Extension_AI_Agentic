@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "A1 A2 A3 dong 17/09; con A4 va A5, ca hai dang co phien khac dong toi — hoi truoc khi gianh. Roi D2 (audit doc lap) va D4 (rut phan dung chung khoi udin-optic/tu-dong ma khong de them fork). Ba muc do, kem co do tuoi bat buoc cua D2: CHUOI-VIEC.md."
+- next_step: "A1 A2 A3 DONG. A4 con MOT muc: bo kiem 233/180 giay — do san 4 suite chiem 67%, va chay-test.mjs da chay 35/35 trong 116s; viec that la quyet dinh CAI GI duoc do, DUNG noi 180 len. A5 con 5 noi (~1.880 dong phai doc HET truoc khi dat ngay), ba noi da sua cho troi nhung chua ra. Hai muc moi: N-66, N-67. Chi tiet va thu tu: CHUOI-VIEC.md khoi dau. Roi D2 (can Duc mo kenh) va D4."
 - human_action: "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai."

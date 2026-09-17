@@ -9,7 +9,7 @@ last_verified_how: "Live 16/09: mot luot E2E that tren trang Udin (prompt moi, -
 evidence_ref: workers/duc-scouter/v0.1.0/docs/TRIALS.md
 owner: claude
 priority_rank: 4
-next_step: "A1 A2 A3 dong 17/09; con A4 va A5, ca hai dang co phien khac dong toi — hoi truoc khi gianh. Roi D2 (audit doc lap) va D4 (rut phan dung chung khoi udin-optic/tu-dong ma khong de them fork). Ba muc do, kem co do tuoi bat buoc cua D2: CHUOI-VIEC.md."
+next_step: "A1 A2 A3 DONG. A4 con MOT muc: bo kiem 233/180 giay — do san 4 suite chiem 67%, va chay-test.mjs da chay 35/35 trong 116s; viec that la quyet dinh CAI GI duoc do, DUNG noi 180 len. A5 con 5 noi (~1.880 dong phai doc HET truoc khi dat ngay), ba noi da sua cho troi nhung chua ra. Hai muc moi: N-66, N-67. Chi tiet va thu tu: CHUOI-VIEC.md khoi dau. Roi D2 (can Duc mo kenh) va D4."
 human_action: "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."

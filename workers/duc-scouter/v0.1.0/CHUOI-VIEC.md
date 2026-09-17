@@ -46,10 +46,35 @@ mục đóng 07/09 mà mười ngày sau vẫn đẩy cho Đức quyết; một 
 
 ### Việc còn lại — theo thứ tự nên làm
 
-> **Cập nhật cuối 17/09 tối: `A1` `A2` `A3` ĐÓNG. Còn `A4` và `A5`.**
-> `A1` đóng bằng `2bdb1cce` (ca hỏng thật cho sáu hàng) · `A2`+`A3` bằng `d7c2f601` (mồ côi
-> 169 → 0, B16 xanh, không hạ hạng không nới ngưỡng). Khối mô tả bên dưới **giữ nguyên văn**
-> để đọc được vì sao chúng được xếp thứ tự như thế.
+> **Cập nhật cuối 17/09 khuya — ĐỌC KHỐI NÀY TRƯỚC, phần dưới là lý lẽ gốc giữ nguyên văn.**
+>
+> **ĐÓNG: `A1` `A2` `A3`.** `2bdb1cce` (ca hỏng thật cho sáu hàng cổng) · `d7c2f601` (mồ côi
+> 169 → 0, `B16` xanh, không hạ hạng không nới ngưỡng).
+>
+> **`A4` — còn ĐÚNG MỘT mục.** Kho chữ và `HANDOFF.md` đã về trong thước (và **hạ** thước, không
+> nới). Còn: **bộ kiểm 233 / 180 giây**. Đo sẵn để lượt sau khỏi đo lại — 4 suite chiếm 67%:
+> `duc-auto-chatgpt/run-all` 49s · `harness-smoke` 46s · `dau-suite-smoke` 39s · `cong-do-that`
+> 31s. Đường rẻ nhất **đã có sẵn và đã chứng minh**: `node scripts/chay-test.mjs` chạy **35/35
+> xanh trong 116s**. Việc thật là quyết định *cái gì được đo* — `npm test` cố ý tuần tự vì một
+> phép ghim ở `duc-auto-chatgpt` đọc thẳng `scripts.test` (`N-43`). **Đừng nới 180 lên.**
+>
+> **`A5` — 13 → 5 nơi.** Năm nơi đã đóng, **mỗi nơi trả về một chỗ trôi THẬT** (xem `N-66`).
+> Năm nơi còn lại, kèm số dòng phải đọc **hết** trước khi đặt ngày:
+> `MULTIFLOW.md` 319 · `ORCHESTRATOR.md` 569 · `PROMPTS.md` 341 · `hnx-fetch/PROTOCOL.md` 519 ·
+> `duc-auto-chatgpt/AGENTS.md` 132. **Tổng ~1.880 dòng — đây là việc đọc, không phải việc sửa.**
+> Ba nơi đầu đã được sửa đúng chỗ trôi đã biết (dòng *"đọc `HANDOFF.md` lúc mở phiên"*) nhưng
+> **chưa đặt ngày**, vì sửa một chỗ không phải là đã rà cả file.
+>
+> **Hai mục mới mở trong lượt rà, cả hai đều có số đứng sau:**
+> `N-66` (5 nơi còn lại) · `N-67` (sổ cái máy sinh bỏ sót **25** ADR của Gemini, **4** của
+> ChatGPT — vì ADR của GÓI không khai `nhom:`; `A3` chỉ làm 20 ADR GỐC).
+>
+> **Chặn duy nhất còn lại, và nó không phải việc của tôi:** `duc-auto-chatgpt/AGENTS.md` mang
+> nguyên dòng luật chết đã gỡ ở hai gói kia; lane `claude-gpt-chay-het-job` đang giữ khoá vùng
+> ấy và đang sửa trong đó.
+>
+> **Thứ tự sau khi `A4`+`A5` xong, không đổi:** `Đ2` (audit độc lập, **cần Đức mở kênh**, mở
+> bằng cò độ tươi) → `Đ4` (rút phần dùng chung khỏi `udin-optic/tu-dong/` mà không đẻ fork).
 
 **① `A1` — SÁU PHÉP KIỂM CHƯA TỪNG ĐỎ. ✅ ĐÓNG 17/09 (`2bdb1cce`). Làm trước, vì nó quyết định mọi màu xanh còn lại.**
 `can-nang.mjs` đếm được: qua **300 lượt chạy cổng**, sáu hàng này **chưa đỏ lần nào** —
