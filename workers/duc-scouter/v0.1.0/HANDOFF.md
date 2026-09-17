@@ -2658,3 +2658,30 @@ cho chuẩn chỉnh"*, và theo chốt đó dòng luật chết đã gỡ ở `d
 `duc-auto-gg-flow-video`. Gói thứ ba chờ lane khác trả khoá.
 
 **Đã đẩy 34 commit.** Việc kế và số đo sẵn: khối đầu `CHUOI-VIEC.md`.
+
+## 2026-09-17r — A5 ĐÓNG (13→1) · A4 đo lại · hai con số của chính tôi bị gạch
+
+**A5 trả về MỘT bệnh, không phải bốn lỗi rời.** `AGENTS.md` đã đánh số lại khi nén luật, và
+**21 chỗ trên mặt luật SỐNG vẫn trích số cũ**. Ba chỗ dẫn người đọc sang một mục nói chuyện
+khác hẳn (`ORCHESTRATOR` *"mục 3 (Phải hỏi Đức trước)"* khi mục 3 nay là *Kiểm, commit, đẩy*).
+Trích sai số **không nổ**: người đọc mở đúng file, thấy một mục có thật, rồi làm theo một luật
+không liên quan. Đã vá 21 chỗ + `tests/trich-muc-agents-smoke.mjs` (số · tên · liên kết neo,
+30 file, thử phá **4/4 đỏ**, vào `scripts.test` → 36 suite). Phép ghim bắt thêm 2 chỗ A5 không
+nhìn tới, một là **câu ví dụ của chính luật** *"trỏ tới AGENTS.md thì kèm TÊN mục"*.
+
+Ba chỗ trôi khác: `MULTIFLOW` dạy `claim.mjs --khai-vung` — **lệnh không tồn tại** (`N-68`:
+nó có thật, đóng N-41 ngày 08/09 kèm 2 ghim, rồi biến mất trong lượt migrate bộ khung; phép
+ghim của nó nay không nạp nổi và nằm trong khu cách ly nên 8 ngày không ai kêu) · đọc như thể
+`claims.json` khai ở `append_only_exempt` trong khi chính `.repo-structure.json` cấm · *"Ba
+cái bẫy"* rồi liệt kê bốn.
+
+**A4: đổi CÁI GÌ ĐƯỢC ĐO, không nới thước.** `can-nang` bấm giờ `npm test` — lệnh không luật
+nào bảo chạy lúc đóng phiên, và hụt 7 suite. Nay bấm `test:song-song` (36 suite). Hàng vẫn
+ĐỎ, và nay đo được vì sao: **nhóm chạy-riêng cộng lại 177,3s trên trần 180 của cả bộ** — 23
+suite song song chạy miễn phí thì vẫn chỉ dư 2,7s. Ba bài là 84% sàn. `N-69`.
+
+**HAI CON SỐ CỦA CHÍNH TÔI, GẠCH TẠI CHỖ.** ⑴ Lộ trình ghi *"35/35 xanh trong 116s"* — đo lúc
+bản vá bộ chạy chưa nằm đủ, khi nó còn mù 25 suite; số thật 36 suite là **220s**. ⑵ `N-67` vế
+một (*"sổ cái bỏ sót 25+4 quyết định"*) **SAI**: cộng đủ ba đường thì thiếu **0** — 27 cái ấy
+khai trong `luat.mo_coi_co_y` kèm lý do viết tay. Tôi đếm hai con số, thấy lệch, rồi **đặt tên
+cho khoảng lệch** thay vì hỏi nó là gì. Cả hai đều suýt thành mốc cho lượt sau.

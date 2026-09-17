@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "A1 A2 A3 DONG. A4 con MOT muc: bo kiem 233/180 giay — do san 4 suite chiem 67%, va chay-test.mjs da chay 35/35 trong 116s; viec that la quyet dinh CAI GI duoc do, DUNG noi 180 len. A5 con 5 noi (~1.880 dong phai doc HET truoc khi dat ngay), ba noi da sua cho troi nhung chua ra. Hai muc moi: N-66, N-67. Chi tiet va thu tu: CHUOI-VIEC.md khoi dau. Roi D2 (can Duc mo kenh) va D4."
+- next_step: "A1 A2 A3 A5 DONG. A5 di 13 noi -> 1 (noi cuoi cho lane khac tra khoa). No tra ve MOT benh chu khong phai bon loi roi: AGENTS.md danh so lai, 21 cho tren mat luat song van trich so cu — da va, va da co may canh (trich-muc-agents-smoke, thu pha 4/4). A4: da bam gio DUNG lenh (test:song-song 36 suite) thay npm test (29 suite); hang do VAN DO va nay biet vi sao — nhom chay rieng cong lai 177,3s tren tran 180 cua ca bo, xem N-69. Hai con so cua chinh toi da gach: 116s (that: 220s) va N-67 ve mot (thieu 0). Viec ke: N-69 > N-68 > N-67 ve hai. Roi D2 (can Duc mo kenh) va D4."
 - human_action: "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai."

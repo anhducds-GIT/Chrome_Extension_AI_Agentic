@@ -46,35 +46,41 @@ mục đóng 07/09 mà mười ngày sau vẫn đẩy cho Đức quyết; một 
 
 ### Việc còn lại — theo thứ tự nên làm
 
-> **Cập nhật cuối 17/09 khuya — ĐỌC KHỐI NÀY TRƯỚC, phần dưới là lý lẽ gốc giữ nguyên văn.**
+> **CẬP NHẬT 17/09 nửa đêm — KHỐI NÀY THAY HẲN khối trước nó. Phần dưới là lý lẽ gốc, giữ nguyên văn.**
 >
-> **ĐÓNG: `A1` `A2` `A3`.** `2bdb1cce` (ca hỏng thật cho sáu hàng cổng) · `d7c2f601` (mồ côi
-> 169 → 0, `B16` xanh, không hạ hạng không nới ngưỡng).
+> **ĐÓNG: `A1` `A2` `A3` `A5`.** `A5` đi từ **13 nơi → 1**; nơi cuối (`duc-auto-chatgpt/AGENTS.md`)
+> đã ĐỌC HẾT nhưng **cố ý chưa đặt ngày** vì lane khác giữ khoá và ba chỗ trôi chưa sửa được —
+> đặt ngày lúc này là tắt máy cảnh 7 ngày cho một file đang sai. Ba chỗ ấy ghi thành bảng trong `N-66`.
 >
-> **`A4` — còn ĐÚNG MỘT mục.** Kho chữ và `HANDOFF.md` đã về trong thước (và **hạ** thước, không
-> nới). Còn: **bộ kiểm 233 / 180 giây**. Đo sẵn để lượt sau khỏi đo lại — 4 suite chiếm 67%:
-> `duc-auto-chatgpt/run-all` 49s · `harness-smoke` 46s · `dau-suite-smoke` 39s · `cong-do-that`
-> 31s. Đường rẻ nhất **đã có sẵn và đã chứng minh**: `node scripts/chay-test.mjs` chạy **35/35
-> xanh trong 116s**. Việc thật là quyết định *cái gì được đo* — `npm test` cố ý tuần tự vì một
-> phép ghim ở `duc-auto-chatgpt` đọc thẳng `scripts.test` (`N-43`). **Đừng nới 180 lên.**
+> **Thứ `A5` thật sự trả về không phải bốn lỗi rời mà MỘT bệnh:** `AGENTS.md` đã đánh số lại khi
+> nén luật, và **21 chỗ trên mặt luật sống vẫn trích số cũ** — ba chỗ dẫn người đọc sang một mục
+> nói chuyện khác hẳn. Đã vá 21 chỗ và **đóng đường về bằng máy**:
+> `tests/trich-muc-agents-smoke.mjs` (thử phá **4/4 đỏ**, đã vào `scripts.test`, 35 → 36 suite).
+> Phép ghim ấy bắt thêm 2 chỗ không ai nhìn tới, một trong đó là **câu ví dụ của chính luật**
+> *"trỏ tới AGENTS.md thì kèm TÊN mục"*.
 >
-> **`A5` — 13 → 5 nơi.** Năm nơi đã đóng, **mỗi nơi trả về một chỗ trôi THẬT** (xem `N-66`).
-> Năm nơi còn lại, kèm số dòng phải đọc **hết** trước khi đặt ngày:
-> `MULTIFLOW.md` 319 · `ORCHESTRATOR.md` 569 · `PROMPTS.md` 341 · `hnx-fetch/PROTOCOL.md` 519 ·
-> `duc-auto-chatgpt/AGENTS.md` 132. **Tổng ~1.880 dòng — đây là việc đọc, không phải việc sửa.**
-> Ba nơi đầu đã được sửa đúng chỗ trôi đã biết (dòng *"đọc `HANDOFF.md` lúc mở phiên"*) nhưng
-> **chưa đặt ngày**, vì sửa một chỗ không phải là đã rà cả file.
+> **`A4` — ĐÃ SỬA nửa đo, NỬA CÒN LẠI LÀ VIỆC THẬT.** `can-nang` bấm giờ `npm test`, một lệnh
+> **không luật nào bảo ai chạy** lúc đóng phiên và **hụt 7 suite**; nay bấm giờ
+> `npm run test:song-song` (36 suite). **Thước vẫn 180.** Nhưng hàng đó **vẫn đỏ**, và nay biết
+> vì sao: **nhóm phải chạy một mình cộng lại 177,3 giây trên trần 180 của cả bộ** — kể cả khi 23
+> suite song song chạy miễn phí thì chỉ còn 2,7 giây dư. Ba bài là 84% sàn: `bang-song` 71,3 ·
+> `harness-smoke` 43,5 · `dau-suite-smoke` 33,6. Chi tiết và hai lối ra: `N-69`.
 >
-> **Hai mục mới mở trong lượt rà, cả hai đều có số đứng sau:**
-> `N-66` (5 nơi còn lại) · `N-67` (sổ cái máy sinh bỏ sót **25** ADR của Gemini, **4** của
-> ChatGPT — vì ADR của GÓI không khai `nhom:`; `A3` chỉ làm 20 ADR GỐC).
+> **~~`chay-test.mjs` chạy 35/35 xanh trong 116s~~ — SỐ CỦA TÔI, VÀ NÓ SAI.** Đo lúc bản vá bộ
+> chạy chưa nằm đủ, khi nó còn mù 25 suite và nhóm chạy-riêng mới có 10 tên. Số thật, 36 suite,
+> cùng máy: **220s**. Gạch chứ không xoá — nó suýt thành mốc cho lượt sau.
 >
-> **Chặn duy nhất còn lại, và nó không phải việc của tôi:** `duc-auto-chatgpt/AGENTS.md` mang
-> nguyên dòng luật chết đã gỡ ở hai gói kia; lane `claude-gpt-chay-het-job` đang giữ khoá vùng
-> ấy và đang sửa trong đó.
+> **`N-67` VẾ MỘT SAI, cũng của tôi.** *"Sổ cái bỏ sót 25+4 quyết định"* — đo lại bằng cách CỘNG
+> đủ ba đường thay vì trừ hai con số: **thiếu 0**. 27 cái ấy nằm trong `luat.mo_coi_co_y`, khai
+> thành bốn nhóm kèm lý do viết tay. Vế HAI vẫn thật, và lớn hơn: `decisions.md` của gemini còn
+> 15 mục gõ tay; **không được gỡ cả 15** — mục 02/09 (*Port multi-profile Bridge*) không có ADR
+> nào, nó là quyết định còn sống chỉ tồn tại ở đó.
 >
-> **Thứ tự sau khi `A4`+`A5` xong, không đổi:** `Đ2` (audit độc lập, **cần Đức mở kênh**, mở
-> bằng cò độ tươi) → `Đ4` (rút phần dùng chung khỏi `udin-optic/tu-dong/` mà không đẻ fork).
+> **Việc còn mở, theo thứ tự:** `N-69` (trần 180) → `N-68` (một cửa đã chốt bị lượt migrate xoá
+> mất, phép ghim của nó chết câm) → `N-67` vế hai → `N-66` nơi cuối (chờ lane kia trả khoá).
+>
+> **Sau đó không đổi:** `Đ2` (audit độc lập, **cần Đức mở kênh**, mở bằng cò độ tươi) → `Đ4`
+> (rút phần dùng chung khỏi `udin-optic/tu-dong/` mà không đẻ fork).
 
 **① `A1` — SÁU PHÉP KIỂM CHƯA TỪNG ĐỎ. ✅ ĐÓNG 17/09 (`2bdb1cce`). Làm trước, vì nó quyết định mọi màu xanh còn lại.**
 `can-nang.mjs` đếm được: qua **300 lượt chạy cổng**, sáu hàng này **chưa đỏ lần nào** —
