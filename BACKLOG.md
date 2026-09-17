@@ -1074,7 +1074,7 @@ không vào file. Hai chỗ hở, đo 17/09 ngay sau lượt `npm run don -- --a
 không phải đám cháy.
 
 **đóng khi:** hai công cụ dùng **một** quy ước tên + con trỏ (hoặc `don.mjs` gọi thẳng
-`handoff.mjs --cat`), và có một phép ghim dựng ca hỏng: dời một mục CÓ dòng `AssistantEvent` rồi
+`handoff.mjs`; **KHÔNG** qua `--cat` — cửa đó đã mất 09/09, xem `N-68`), và có một phép ghim dựng ca hỏng: dời một mục CÓ dòng `AssistantEvent` rồi
 đòi bộ đếm vẫn đếm đủ. Mẫu sẵn: `tests/build-overview-smoke.mjs` khối (d2).
 
 ### KHUNG-M5 · Khoá trùng trong `.repo-structure.json` lọt im lặng
@@ -1339,22 +1339,47 @@ Nó nằm trong khu cách ly `npm run test:chet` (`N-65`), tức **không lượ
 tới nó**. Một phép ghim chết trong khu cách ly trông y hệt một phép ghim đang canh: cả hai đều
 không làm cổng đỏ.
 
-**Ba việc, theo thứ tự:**
+**Ba việc — HAI ĐÃ XONG 18/09 (`955d5653`), việc ③ còn mở và nó là việc lớn nhất.**
 
-1. Quyết cửa `--khai-vung` **khôi phục hay bỏ hẳn**. Bỏ thì đường mở vùng mới là sửa
-   `.repo-structure.json` rồi `--restamp` — **phải viết ra**, vì đó chính là đường mà `N-41` gọi
-   là *"một đường hợp lệ trông giống hệt một vụ cướp khoá"*.
-2. `tests/claim-smoke.mjs` viết lại theo API mới, hoặc bỏ kèm lý do — nó là phép ghim của **bảng
-   quyền**, thứ giữ cho hai phiên không cùng ghi một chỗ.
-3. **Câu hỏi lớn hơn cả hai việc trên:** lượt migrate ấy thay 36 file máy. Cửa này là cái tôi
-   tình cờ đụng phải. **Chưa ai đếm xem còn bao nhiêu cửa nữa của repo này bị thay mất cùng
-   lượt đó** — và khu cách ly 8 bài nghĩa là 8 phép ghim không kêu được.
+**① `--khai-vung` KHÔI PHỤC.** Đo trước khi quyết chứ không khôi phục theo phản xạ: vùng đi
+**8 → 11 trong 16 ngày**, tức mở vùng mới không phải việc hiếm, và lối thay thế (sửa tay
+`claims.json` rồi `--restamp`) chính là thứ `N-41` gọi là *"một đường hợp lệ trông giống hệt một
+vụ cướp khoá"*. Port nguyên bản từ git kèm `kiemKhoaKhaiDuoc` — nó **hỏi chính bộ quy vùng**
+(`stewardOf`) chứ không chép lại luật.
 
-- **đóng khi:** lệnh: `grep -c "khai-vung" docs/protocols/MULTIFLOW.md scripts/claim.mjs` — hoặc
-  cả hai > 0 (khôi phục), hoặc cả hai = 0 kèm một dòng ghi lý do bỏ trong mục này.
-- **đóng khi:** lệnh: `node tests/claim-smoke.mjs` thoát 0, hoặc file đã bị gỡ kèm lý do.
-- **đóng khi:** đức: có một lượt đếm cửa `4da1e9e5` đã thay mất — so danh sách lệnh/cờ của
-  `scripts/*.mjs` trước và sau commit đó.
+**② `--cat/--giu` KHÔNG khôi phục — nhưng nay NỔ.** Đã có `--rotate` (theo THÁNG, ADR-0011) và
+`npm run don` (theo NGÂN SÁCH DÒNG, đối chiếu byte trước khi ghi), nên dựng lại đường thứ ba là
+cài một tính năng hai lần — `AGENTS.md` mục 7 giới hạn ⑴ cấm. Thứ phải sửa là **cách nó chết**:
+`handoff.mjs` nuốt im lặng mọi cờ lạ rồi **thoát 0**, nên bốn nơi trong repo vẫn dạy một câu lệnh
+"chạy được" mà không cắt gì. Nay cờ lạ bị từ chối, và câu lỗi **kể tên hai đường còn sống**.
+Ba nơi dạy câu chết đã sửa: `MULTIFLOW.md` mục 3b · `.repo-structure.json` · mục `KHUNG-M4`.
+Hai ADR (`0008`, `0033`) **cố ý không chạm** — chúng là bản ghi của lúc quyết định, và lệnh nay
+tự giải thích khi bị gọi.
+
+**Phép ghim: `tests/cua-rieng-repo-smoke.mjs`** — CHẠY THẬT từng cửa, không grep mã nguồn (grep
+bắt được *"chuỗi còn trong file"*, không bắt được *"khối lệnh còn nối vào `main()`"*). Thử phá
+**4/4 đỏ**, mỗi con một câu khẳng định riêng. Nó **cố ý không nằm** trong `claim-smoke.mjs`:
+file ấy upstream sở hữu và sẽ bị thay lần nữa.
+
+> **Luật rút ra, và nó đáng hơn cả hai cửa cộng lại: phép ghim cho một cửa RIÊNG của repo phải
+> nằm ở file mà bộ khung KHÔNG có bản của nó.** Cả hai cửa đều CÓ phép ghim, và cả hai phép ghim
+> đều không kêu — một cái vỡ ở bước import rồi vào khu cách ly, một cái bị chính lượt migrate ghi
+> đè cùng lúc với cửa nó canh. Phép ghim chết chung một lượt với thứ nó canh là ca tệ nhất:
+> không còn ai sống sót để kêu.
+
+**③ CÒN MỞ — chưa ai đếm lượt migrate ấy còn lấy mất gì.** Đo 18/09, so bề mặt cờ của 11 file
+bị thay: ngoài hai cửa trên, phần còn lại là cờ `git` và biến CSS (không phải cửa của ta). Nhưng
+**phép so đó chỉ thấy thứ khai bằng `--cờ`** — nó mù với hàm bị bỏ, hằng số bị đổi, nhánh bị rút
+gọn. Một lượt rà 12/09 (`8942420e`) đã tìm và dựng lại **7 phép ghim chết + 1 lớp bảo vệ thật của
+`safe-push`** từ cùng lượt migrate ấy, và nó đo được *"18/31 bài kiểm ở gốc repo KHÔNG chạy nổi"*.
+Ba lượt rà, ba lần còn thấy thiệt hại mới.
+
+- **đóng khi:** ~~lệnh: `grep -c "khai-vung"`~~ — **đã đóng:** `node tests/cua-rieng-repo-smoke.mjs`
+  thoát 0 (6 phép), và nó nằm trong `scripts.test`.
+- **đóng khi:** lệnh: `node tests/claim-smoke.mjs` thoát 0, **hoặc** file bị gỡ kèm một dòng lý do
+  ở `N-65` — nó vẫn là phép ghim của BẢNG QUYỀN và nó vẫn không nạp nổi.
+- **đóng khi:** đức: một lượt đếm có phương pháp **khác phép so cờ** cho `4da1e9e5` — so danh sách
+  hàm export và hằng số trước/sau, không chỉ so `--cờ`.
 
 ### KHUNG-M8 · Cửa audit của `safe-push` thưởng cho im lặng, phạt người khai thật
 
