@@ -21,6 +21,7 @@
  * bên Scouter không phải sửa một ký tự nào.
  */
 import { readFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { duongGhepCapChuan } from "../bridge-host/tao-tep-ghep-cap.mjs";
 
@@ -40,7 +41,9 @@ export function taoGoiBridge(khai) {
   /* Đường tệp ghép cặp đọc từ `.repo-structure.json` qua `duongGhepCapChuan`, KHÔNG gõ cứng.
    * Bản cũ gõ cứng đúng chuỗi đó — tức là bản đồ thư mục có hai bản, và chính `.repo-structure
    * .json` đã dặn *"khong duoc go cung o hai noi"*. */
-  const docGhepCap = (duong = (ghepEnv && process.env[ghepEnv]) || duongGhepCapChuan(tenGoi)) => {
+  const duongGhepCap = () => (ghepEnv && process.env[ghepEnv]) || duongGhepCapChuan(tenGoi);
+
+  const docGhepCap = (duong = duongGhepCap()) => {
     try {
       return JSON.parse(readFileSync(duong, "utf8"));
     } catch (loi) {
@@ -66,11 +69,38 @@ export function taoGoiBridge(khai) {
     };
     if (ghe) than.target = ghe;
 
-    const res = await fetch(`http://127.0.0.1:${cap.port}/v1/rpc`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cap.token}` },
-      body: JSON.stringify(than),
-    });
+    /* `fetch` hỏng ở tầng mạng thì Node ném đúng hai chữ **"fetch failed"** — và hai chữ ấy
+     * không nói được thứ duy nhất người đọc cần biết: *máy chủ có đang nghe không*. Đó là khác
+     * biệt giữa "bật máy chủ lên" và "máy chủ đang chạy nhưng vừa chết giữa lượt gọi", hai việc
+     * phải làm khác hẳn nhau. Ngày 17/09 máy chủ chết ba lần trong một phiên và mỗi lần lại tốn
+     * một lượt đoán, vì câu báo giống hệt nhau.
+     *
+     * Không cần dụng cụ mới: câu trả lời NẰM SẴN trong `err.cause.code`, chỉ là bản cũ vứt nó
+     * đi. Đo 17/09 trên chính máy này: cổng trống → `ECONNREFUSED`, kèm `connect ECONNREFUSED
+     * 127.0.0.1:<cổng>`. Một lượt dò cổng riêng sẽ là phép đo THỨ HAI cho một câu hỏi đã có đáp
+     * án — và nó còn đo ở một thời điểm khác lượt gọi thật, nên có thể nói khác. */
+    let res;
+    try {
+      res = await fetch(`http://127.0.0.1:${cap.port}/v1/rpc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cap.token}` },
+        body: JSON.stringify(than),
+      });
+    } catch (loi) {
+      const ma = loi?.cause?.code || "KHONG_RO";
+      if (ma === "ECONNREFUSED") {
+        throw new Error(
+          `KHÔNG CÓ AI NGHE ở 127.0.0.1:${cap.port} — máy chủ Bridge của '${tenGoi}' chưa chạy ` +
+            `(hoặc đã chết). Bật lại bằng START-BRIDGE trong ${dirname(duongGhepCap())}, ` +
+            `rồi chạy lại lệnh này. (${ma})`,
+        );
+      }
+      throw new Error(
+        `CÓ NGƯỜI NGHE ở 127.0.0.1:${cap.port} nhưng lượt gọi '${method}' đứt giữa chừng (${ma}). ` +
+          "Máy chủ chết giữa lượt, hoặc treo — khác hẳn ca chưa bật: bật lại một máy chủ đang " +
+          "chạy sẽ KHÔNG chữa được. Xem *.BRIDGE.stderr.log cạnh tệp ghép cặp trước đã.",
+      );
+    }
 
     const chu = await res.text();
     let goiTin;

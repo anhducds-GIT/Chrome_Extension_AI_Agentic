@@ -122,4 +122,41 @@ const CAP = { port: 31999, token: "T".repeat(43) };
   assert.match(loi, /Bridge đã chạy chưa/, "lỗi phải nói việc phải làm, không chỉ nói hỏng");
 }
 
-console.log("  · goi-bridge: 7 khối xanh");
+// ⓗ HAI CÁCH HỎNG KHÁC NHAU PHẢI ĐỌC RA KHÁC NHAU
+/* `fetch` hỏng tầng mạng thì Node ném đúng hai chữ "fetch failed" cho MỌI ca. Hai ca dưới đây
+ * đòi hai việc trái ngược nhau — một cái bảo *bật máy chủ lên*, cái kia bảo *đừng bật, nó đang
+ * chạy đấy* — nên trộn chúng vào một câu báo là bắt người đọc đoán, và 17/09 mỗi lượt đoán tốn
+ * một lượt bật lại.
+ *
+ * Khối này KHÔNG chỉ đòi "có ném lỗi": nó đòi hai câu báo **phân biệt được nhau**. Thiếu vế ấy
+ * thì một bản gộp hai nhánh về một câu vẫn xanh — đúng bài `assertion-must-distinguish-branches`. */
+{
+  const thuMang = async (code) => {
+    const that = globalThis.fetch;
+    globalThis.fetch = async () => { const e = new TypeError("fetch failed"); e.cause = { code }; throw e; };
+    const x = taoGoiBridge({ goi: "goi-thu", ghepEnv: "GHEP_KHONG_DAT" });
+    try { await x.goi("dom.query", {}, { capDat: CAP }); assert.fail("phải ném"); }
+    catch (e) { return e.message; }
+    finally { globalThis.fetch = that; }
+  };
+
+  const chuaBat = await thuMang("ECONNREFUSED");
+  const dutGiua = await thuMang("ECONNRESET");
+
+  assert.match(chuaBat, /KHÔNG CÓ AI NGHE/, "cổng trống phải nói thẳng là không ai nghe");
+  assert.match(dutGiua, /CÓ NGƯỜI NGHE/, "đứt giữa chừng phải nói rõ máy chủ CÓ nghe — bật lại không chữa được");
+  assert.notEqual(chuaBat, dutGiua, "hai ca đòi hai việc trái ngược nhau, không được ra cùng một câu");
+
+  for (const [ten, m] of [["chưa bật", chuaBat], ["đứt giữa", dutGiua]]) {
+    assert.ok(m.includes(String(CAP.port)), `${ten}: phải in CỔNG, nếu không người đọc không biết dò ở đâu`);
+    assert.ok(!m.includes(CAP.token), `${ten}: token lọt vào lời báo lỗi`);
+    assert.ok(!/^fetch failed$/.test(m), `${ten}: vẫn là câu trần của Node`);
+  }
+  /* Và câu "chưa bật" phải chỉ được CHỖ bật lại — một lời báo không nói việc phải làm thì người
+   * đọc vẫn phải đi hỏi, y như lúc chưa có nó. Cùng đòi hỏi với khối ⓖ ở trên. */
+  const { duongGhepCapChuan } = await import("../../bridge-host/tao-tep-ghep-cap.mjs");
+  assert.ok(chuaBat.includes(path.dirname(duongGhepCapChuan("goi-thu"))),
+    "câu 'chưa bật' phải trỏ tới thư mục có START-BRIDGE, và trỏ bằng bản đồ thư mục chứ không gõ cứng");
+}
+
+console.log("  · goi-bridge: 8 khối xanh");

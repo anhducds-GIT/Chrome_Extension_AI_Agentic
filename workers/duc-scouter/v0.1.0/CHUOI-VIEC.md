@@ -44,15 +44,21 @@ hỏng hằng ngày** — hai thứ làm Đức mất buổi, và một lượt 
 
 ### Việc còn lại — theo thứ tự nên làm
 
-**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. AI tự đo được, làm trước.**
-Đo 17/09: máy chủ Udin chết **ba lần** trong một phiên, `stderr` **rỗng** — tức bị **giết**, không
-tự lỗi. Triệu chứng phía người gọi là `fetch failed`, đọc không ra nguyên nhân, và mỗi lần lại
-tốn một lượt bật lại.
-**Giả thuyết CHƯA ĐO** (đừng chép nó thành kết luận): `Start-Process` chạy từ PowerShell của
-phiên AI bị dọn theo tiến trình cha khi phiên ấy đóng. Nếu đúng thì nó **chỉ hỏng khi AI bật**,
-không hỏng khi Đức tự bật — và đó là một khác biệt phải đo chứ không suy.
-**Đóng khi:** biết nguyên nhân bằng phép đo, và máy chủ sống qua một lượt chạy dài mà không ai
-bật lại. Câu báo `fetch failed` nói thêm được *"máy chủ có đang nghe không"*.
+**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. NỬA ĐÃ ĐÓNG 17/09, nửa còn lại chưa biết nguyên nhân.**
+~~*“`Start-Process` chạy từ PowerShell của phiên AI bị dọn theo tiến trình cha”*~~ — **SAI, đã đo**
+(`G-98`). Ba máy chủ đang sống lúc đo đều có tiến trình cha **đã chết**, kể cả một máy chủ do
+chính Đức bật. Windows không dọn con theo cha. **Đừng dựng gì trên dòng đã gạch ấy nữa.**
+
+**ĐÃ XONG:** câu báo `fetch failed` nay tách đúng hai ca đòi hai việc trái ngược nhau — *KHÔNG CÓ AI
+NGHE ở cổng N* (bật máy chủ lên, kèm đường dẫn chỗ bật) so với *CÓ NGƯỜI NGHE nhưng lượt gọi đứt
+giữa chừng* (bật lại **không** chữa được, đọc `stderr` trước). Không thêm dụng cụ nào: đáp án nằm
+sẵn trong `err.cause.code` mà bản cũ vứt đi. `workers/_shared/goi-bridge/` — ghim khối ⓗ, 4 đột biến chết.
+
+**CÒN LẠI — và đừng đoán thêm một lần nữa:** *cái gì giết máy chủ?* Chỉ biết chữ ký: `stderr` **rỗng**
+⇒ bị giết chứ không tự lỗi. Ứng viên rẻ nhất chưa đo: **chính bộ khởi động** — `-KhoiDongLai` gọi
+`Stop-Process -Force`, đúng một cái giết không để lại byte nào.
+**Đóng khi:** một lượt đo nói được **ai** gọi cú giết (ví dụ: ghi nhật ký dòng đời của máy chủ —
+bật lúc nào, PID nào, biến mất lúc nào), và máy chủ sống qua một lượt chạy dài mà không ai bật lại.
 
 **② `N3` — RÀ SỔ NỢ. Rẻ, và hai mục đã chết mà chưa ai gạch.**
 Đo 17/09, đọc lại đúng điều kiện đóng của từng mục:
