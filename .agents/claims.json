@@ -103,11 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "c65b6bffd00e2d1f",
-  "tam": {
-    "workers/udin-optic/v0.1.0/HANDOFF.md": {
-      "owner": "claude-scouter-udine",
-      "luc": "2026-09-17T10:27:48.165Z"
-    }
-  }
+  "_fingerprint": "938a2ea708839e7e"
 }
