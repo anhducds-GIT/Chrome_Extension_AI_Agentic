@@ -494,14 +494,16 @@ của repo này** — nó là mặc định bộ khung, và repo chưa từng kh
 trần của chính repo, dạng **bánh cóc**. **Phần bớt thật là `docs/studies/` — 5.516 dòng, 55% kho
 chữ — và nó CHỜ ĐỨC**, vì `docs/README.md` đang khai chúng là *"nghiên cứu còn sống"*.
 
-**`A5` — máy sạch, người đọc được 9/22.** ① 0 · ② 0 · ③ 0 (khai `trung_co_y` cho cặp
-`hnx-fetch` Đức đã chốt 08/09 là CỐ Ý lặp) · ④ **22 → 13**. Chỉ đóng dấu cho chỗ đã đọc THẬT; 13
-chỗ giữ mốc 09/09 — đóng dấu mà không đọc chính là bệnh `A5` đi chữa. Ba chỗ dạy sai đã sửa:
-`decisions.md` Flow Video còn dạy *"viết ở `Proposed`"* — vế Đức chốt ngược lại **09/09**, sống
-thêm 8 ngày vì nó nói bằng lời mình nên phép ① không thấy; `README.md` bảo đóng phiên bằng
-`test:song-song` (cổng gọi `npm test`), và bỏ sót `udin-optic`.
+**`A5` — máy sạch, người đọc được 9/22.** ① 0 · ② 0 · ③ 0 (khai `trung_co_y` cho cặp `hnx-fetch`
+Đức chốt 08/09 là CỐ Ý lặp) · ④ **22 → 13**. Chỉ đóng dấu cho chỗ đã đọc THẬT — đóng dấu mà không
+đọc chính là bệnh `A5` đi chữa. Ba chỗ dạy sai đã sửa: `decisions.md` Flow Video còn dạy *"viết ở
+`Proposed`"*, vế Đức chốt ngược lại **09/09** (sống thêm 8 ngày vì nó nói bằng lời mình nên phép ①
+không thấy); `README.md` bảo đóng phiên bằng `test:song-song`, và bỏ sót `udin-optic`.
 
 Hai bẫy mới, số đo và cửa ra ở sổ nợ: **`KHUNG-M4`** (hai công cụ cắt nhật ký, hai quy ước) ·
 **`KHUNG-M5`** (khoá trùng trong `.repo-structure.json` lọt im lặng). Cả hai gặp thật hôm nay.
+
+**Bánh cóc cắn ngay chủ của nó:** đặt trần xong, chính phiên này thêm 6 dòng `README.md` và
+thước ĐỎ ngay. Trả bằng cách **bớt**, không nâng số.
 
 <!-- HANDOFF-THANG: 2026-09 -->
