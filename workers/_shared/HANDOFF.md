@@ -5,6 +5,29 @@
 
 ## Log
 
+## 2026-09-18 · `claude-universal-scouter` — hai lõi mới ở đây, và vì sao chúng ở ĐÂY
+
+`goi-bridge/giai-target.mjs` (bộ giải target theo danh tính) và `adapters/` (hợp đồng + descriptor
+từng trang). Nghiên cứu: `duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md`. Sổ: `G-104`…`G-107`.
+
+**Vì sao ở `_shared` chứ không trong gói extension nào.** Cả hai là **Node-side**. `G-92` đã đo:
+extension **không import được** từ `_shared` (Chrome kẹp `..` ở gốc gói). Nên đặt ở đây là bằng
+chứng cấu trúc rằng chúng **không thể** lọt vào bó extension — đúng thứ hợp đồng adapter đi hứa.
+
+**Ba cái bẫy đã vấp, dùng chung cho mọi lane:**
+
+1. **Nhãn ghế có thể RỖNG.** Cài Scouter lên một profile mới thì ghế lên dây không tên; gọi bằng
+   nhãn ra chuỗi rỗng → `TARGET_AMBIGUOUS`. **Địa chỉ ghế LUÔN là `instance_id`.**
+2. **Trường nào tên tự nhiên nhất thì phải là trường dùng được.** Bản đầu trả `ghe` = nhãn,
+   `dia_chi` = địa chỉ; người gọi cầm `r.ghe` ném vào lượt sau và nhận `TARGET_NOT_CONNECTED`.
+   Đổi lại: `ghe` = địa chỉ, `ghe_nhan` = nhãn.
+3. **Một bộ dò không có ca vi phạm đi kèm là một bộ dò không ai biết có kêu không.** Mẫu cấm CDP
+   viết `Page.[A-Z]` (chữ hoa) trong khi method CDP viết thường — 4/6 mẫu rỗng, bộ soát vẫn trả
+   `dat: true`. Bắt được chỉ vì phép ghim dựng sẵn một adapter vi phạm cố ý.
+
+**`_shared/<bất kỳ>/tests/*.mjs` được `duc-scouter/v0.1.0/tests/run-all.mjs` quét theo HÌNH DẠNG**,
+nên bộ ghim mới tự vào suite mà không phải khai ở đâu cả (39/39).
+
 ## 2026-09-08 · `claude-scouter-s06` — vùng này ra đời, và bộ khung chưa lường trước nó
 
 **Việc.** Đức chốt Scouter phải có host Bridge RIÊNG, để sau này nhân bản seed sang nhiều
