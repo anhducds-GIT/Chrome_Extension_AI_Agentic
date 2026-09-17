@@ -46,7 +46,12 @@ mục đóng 07/09 mà mười ngày sau vẫn đẩy cho Đức quyết; một 
 
 ### Việc còn lại — theo thứ tự nên làm
 
-**① `A1` — SÁU PHÉP KIỂM CHƯA TỪNG ĐỎ. Làm trước, vì nó quyết định mọi màu xanh còn lại.**
+> **Cập nhật cuối 17/09 tối: `A1` `A2` `A3` ĐÓNG. Còn `A4` và `A5`.**
+> `A1` đóng bằng `2bdb1cce` (ca hỏng thật cho sáu hàng) · `A2`+`A3` bằng `d7c2f601` (mồ côi
+> 169 → 0, B16 xanh, không hạ hạng không nới ngưỡng). Khối mô tả bên dưới **giữ nguyên văn**
+> để đọc được vì sao chúng được xếp thứ tự như thế.
+
+**① `A1` — SÁU PHÉP KIỂM CHƯA TỪNG ĐỎ. ✅ ĐÓNG 17/09 (`2bdb1cce`). Làm trước, vì nó quyết định mọi màu xanh còn lại.**
 `can-nang.mjs` đếm được: qua **300 lượt chạy cổng**, sáu hàng này **chưa đỏ lần nào** —
 *Bất biến quyền sở hữu ba tầng · Không có secret lọt vào repo · Luật biên dịch sạch · Mọi lệnh git
 đọc được · Nhãn lane trong commit · Vùng CHỈ-THÊM không bị viết lại*.
@@ -58,7 +63,7 @@ chứng minh một hook có chạy). **Đừng bẻ trong cây làm việc thậ
 **Đóng khi:** mỗi hàng có một ca hỏng **chạy được** làm nó đỏ — hoặc được khai thẳng là *không
 dựng nổi ca hỏng*, và khi ấy nó chưa bao giờ là phép kiểm, phải viết lại hoặc bỏ.
 
-**② `A2` — SỔ LUẬT ĐANG ĐẾM MỘT CÂY KHÁC. Rẻ nhất, và nó làm con số kia đọc được.**
+**② `A2` — SỔ LUẬT ĐANG ĐẾM MỘT CÂY KHÁC. ✅ ĐÓNG 17/09 (`d7c2f601`). Rẻ nhất, và nó làm con số kia đọc được.**
 Đo 17/09: `rule-compile.mjs` báo **169 quyết định mồ côi**, nhưng **164 trong số đó nằm ở
 `.claude/worktrees/nifty-benz-a66fbf/`** — một worktree mà **git không track một file nào**
 (`git ls-files` đếm 0). Repo thật chỉ có ~**5**.
@@ -68,7 +73,7 @@ sách ở `A4` là thật, đừng gạch chúng theo.
 **Đóng khi:** bộ quét bỏ qua `.claude/worktrees/`, con số mồ côi đo lại, và **5 mục thật** kia
 được xử từng cái.
 
-**③ `A3` — B16 ĐỎ: 20 ADR không có nhà.**
+**③ `A3` — B16 ĐỎ: 20 ADR không có nhà. ✅ ĐÓNG 17/09 (`d7c2f601`).**
 `repo có 20 ADR mà chưa khai luat.chu_de — mọi luật đều không có nhà`. B16 thuộc nhóm **chỉ cảnh
 báo**, nên nó đỏ mà cổng vẫn xanh — đúng kiểu nợ sống lâu. Đường sửa có sẵn và `--de-xuat` **chạy
 được** (đã thử): khai `luat.chu_de` vào `.repo-structure.json`, rồi thêm `chu_de:` vào frontmatter
@@ -99,12 +104,39 @@ bật Bridge kế tiếp**. Chờ một lần chết thật rồi đọc nó.
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 
-**`Đ1` — ĐẨY.** Nhiều commit đang nằm local: `safe-push` từ chối vì chúng nằm sau một commit của
-lane `claude-gpt-chay-het-job`, và đẩy là việc của họ lên theo. Đức chốt `--carry` thì đẩy được.
+**~~`Đ1` — ĐẨY~~ · CHẾT 17/09 tối, không cần Đức nữa.** Đo lại sau một lượt `git fetch` thật:
+`origin/main` == `HEAD`, **0 commit chưa đẩy**. Việc này đã tự giải quyết giữa chừng. *(Dòng cũ để
+lại: "nhiều commit đang nằm local, `safe-push` từ chối vì chúng nằm sau một commit của lane
+`claude-gpt-chay-het-job`; Đức chốt `--carry` thì đẩy được." — đúng lúc viết, sai từ 18:20.)*
 
 **`Đ2` — AUDIT TỔNG THỂ + ĐỘC LẬP.** Đức đặt hàng 17/09, làm **sau khi `A1`–`A5` xong**. Thứ tự ấy
 cố ý: `A1` là *kiểm lại người kiểm*, và giao cho một AI khác một bộ đo chưa biết có đỏ được không
 thì nó audit trên cát. **Cần Đức mở kênh** (Codex / GPT) — AI không tự gửi gì ra ngoài.
+
+> **CÒ ĐỘ TƯƠI — bắt buộc, chạy TRƯỚC khi audit.** Sinh ra từ một ca thật 17/09: GPT đọc repo qua
+> connector GitHub và báo SHA `fbb1bd6f` *"không resolve trên main"*, trong khi đo tại chỗ sau một
+> lượt `git fetch` thì nó **có** trên `origin/main` từ 17:44. Connector phục vụ một chỉ mục cũ.
+>
+> Đó **không phải chuyện vặt**: hai trong bốn gap của bản nghiên cứu 17/09 sinh ra vì đúng cơ chế
+> ấy — nó không thấy việc 15–17/09 (`udin-optic` ra đời, `R3`, `scout.clear` tự kiểm, chính lộ
+> trình `A1`–`A5`) nên báo lại những chỗ đã đóng. Một lượt `Đ2` trên cây cũ thì **tốn tiền cả hai
+> đầu và trả về nợ ma**.
+>
+> Câu phải bắt bên kia trả lời trước, mười giây: *đọc `workers/duc-scouter/v0.1.0/CHUOI-VIEC.md`
+> trên `main`; không thấy khối `A1`–`A5` thì DỪNG, connector đang phục vụ bản cũ.*
+>
+> Cò này **không gắn với một SHA** — SHA rồi sẽ cũ. Nó gắn với một khối nội dung có mặt từ 17/09.
+
+**`Đ4` — KIẾN TRÚC `Universal Workflow Engine` ↔ `Site Adapter` ↔ `Scouter`.** Hội tụ với GPT
+17/09 tối, và hướng đã **đổi so với bản nghiên cứu đầu**: không xây thêm một tầng Task/Workflow
+mới — **nó đã tồn tại và đang chạy thật** ở `udin-optic/tu-dong/` (2.007 dòng, 13 file, đúng hình
+`Task → Targets → Context → Action → Evidence`). Việc đúng là **rút phần dùng chung ra** khỏi
+workflow thật ấy mà **không đẻ thêm một bản fork**.
+
+Số đứng sau câu này, đo 17/09: bốn lõi của `duc-scouter` và `udin-optic` **giống nhau 0 dòng khác
+trên 3.874 dòng** — nơi có ghim so từng byte thì hai bản chép đứng yên; nơi KHÔNG có ghim (bảng mã
+lỗi Bridge) thì chúng **đã trôi**, và chỗ trôi ấy chính là `S-32`. Nên điều khoản ① của bản kiến
+trúc phải nói về **ranh giới chép/fork**, không phải về tầng task. **Làm sau `Đ2`.**
 
 **`N5` — NHÓM VIDEO** trong bảng *Udin làm được gì*. Hình dạng nhóm đã dựng sẵn, thêm đúng một
 khối `[data-nhom="video"]`. **Chưa làm gì cho tới khi Udin thật sự có tính năng video.**
