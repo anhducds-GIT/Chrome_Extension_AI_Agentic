@@ -2,7 +2,7 @@
 
 > **Viết cho Đức đọc.** Đức chốt mô hình ngày 13/09. Mọi ô "ĐÃ CHỨNG MINH" đều trỏ tới bằng chứng
 > chạy thật. Không có bằng chứng thì ô đó chưa được xanh.
-> Danh sách 25 mục phạm vi `SEED v0.1` vẫn nằm ở `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md`
+> Danh sách 25 mục phạm vi `SEED v0.1` vẫn nằm ở `docs/archive/SCOUTER-CAPABILITY-INVENTORY-V1.md`
 > (gốc repo). File này **không thay** danh sách đó: nó đo theo **tay chân của trình duyệt**.
 
 ## 1. Mô hình — hai thứ khác nhau, đừng gộp

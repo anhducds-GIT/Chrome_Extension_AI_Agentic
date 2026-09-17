@@ -576,4 +576,29 @@ có chứa thứ sắp bị bỏ.
 
 Đột biến: **3/3** trên ba vế mới của lượt miễn, **3/3** trên ba đuôi file.
 
+## 2026-09-17 · `claude-scouter-udine` — Đức chốt dời 8 bản thiết kế đã ship sang `docs/archive/`
+
+Đức hỏi *"`docs/studies/` là nội dung gì?"*, đọc xong mười file rồi chốt: **dời 8, giữ 2**.
+
+**Vì sao 8 file ấy đi được:** cả tám là phần *nghĩ TRƯỚC khi xây*, và cả tám mô tả những thứ **nay
+đã tồn tại và đang chạy** — multi-profile Bridge (ship cả ba worker), nhiều phiên một profile
+(thành code `54160a2`), kế hoạch gói Flow (gói đã có), kiểm kê trước khi xây Scouter (`v1` đã ký),
+RFC `.repo-structure.json` (nay là xương sống), khảo sát chạy song song (thành hệ khoá/lane),
+lộ trình S1–S10 (§8 của chính nó ghi *"S1→S7 đã đóng"*), và một bản tự khai **"REASONING ONLY"**.
+Phần *ràng buộc* của chúng đã rút thành ADR từ lâu; giữ ở `studies/` là bắt mọi lượt đo trả tiền
+cho **2.553 dòng kế hoạch đã thành sản phẩm**.
+
+**Hai file GIỮ LẠI, và đây là vế đắt:** `PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0` là **thứ duy nhất
+còn lại** của 14 hồ sơ `EXP-*` Đức chốt xoá 08/09 — đụng vào nó là mất thật. Cùng nguồn của nó
+(`CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0`) giữ theo, vì bản synthesis vẫn khai nó là đầu vào.
+
+**Dời, KHÔNG xoá** — `git mv`, nguyên văn, vẫn trong git. Đo: `docs/` **9.865 → 7.328 dòng**;
+`can-nang` **9.958 → 7.414**. Hai bánh cóc **HẠ theo** (`tran_dong_khong_ke_adr` 9830 → 7328,
+`budget.tongTaiLieu` 9958 → 7414) — hạ là việc duy nhất chúng được phép làm.
+
+**Liên kết: sửa tài liệu SỐNG, KHÔNG sửa bản ghi.** 9 file sống đổi đường dẫn.
+`HANDOFF-ARCHIVE-*`, `evidence/*`, `decisions.md` và các ADR vẫn trỏ `docs/studies/…` cũ — **cố
+ý**, cùng lý lẽ đã áp 02/09 cho các dòng `Nguồn: drafts/…`: sửa trích nguồn trong một bản ghi là
+làm sai bản ghi.
+
 <!-- HANDOFF-THANG: 2026-09 -->

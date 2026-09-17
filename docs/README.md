@@ -21,14 +21,14 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 
 | Đường dẫn cũ | Nay ở | Vì sao xếp vào đó |
 |---|---|---|
-| `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` | [docs/studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md](studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | hướng A Đức duyệt 28/08; gemini + chatgpt CHƯA port |
+| `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` | [docs/archive/BRIDGE-MULTIPROFILE-DESIGN-V1.md](archive/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | hướng A Đức duyệt 28/08; gemini + chatgpt CHƯA port |
 | `drafts/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md` | [docs/studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | nghiên cứu tầm với của Bridge |
 | `drafts/EXP-02…EXP-15` (14 file) | **ĐÃ XOÁ 2026-09-08** — xem dòng ngay dưới bảng thứ hai | 14 hồ sơ khảo sát giai đoạn 1 |
-| `drafts/FLOW-EXT-COORDINATION-PLAN.md` | [docs/studies/FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | kế hoạch 5 checkpoint, đang chạy |
+| `drafts/FLOW-EXT-COORDINATION-PLAN.md` | [docs/archive/FLOW-EXT-COORDINATION-PLAN.md](archive/FLOW-EXT-COORDINATION-PLAN.md) | kế hoạch 5 checkpoint, đang chạy |
 | **`docs/archive/`** | *(không phải đường `drafts/`)* | Xoá 08/09, **sống lại 17/09 với việc khác** — mục [`docs/archive/`](#docsarchive--xoá-0809-sống-lại-1709-với-một-việc-khác) bên dưới. *(Hàng này khai **"ĐÃ XOÁ"** tới 17/09, là chỗ THỨ HAI trong cùng file nói thế.)* |
 | `drafts/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md` | [docs/studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | roadmap S6 xếp thẳng vào studies |
 | **18 hồ sơ MỒ CÔI — ĐÃ XOÁ 2026-09-08 (2.538 dòng)** | — | Không gì trong repo trỏ tới chúng ngoài chính mục lục này: brief của việc đã ship, kế hoạch đã thi hành xong, bản đồ đã bị `llms.txt`/`DASHBOARD.md` thay. **Chỉ rời cây làm việc, KHÔNG rời git** — `git show --stat 522a22400fd3 -- docs/` liệt kê cả mẻ, `git show 522a22400fd3:docs/<đường-dẫn>` đọc lại một hồ sơ |
-| `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
+| `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
 
 ## Ngoài `docs/` — sổ và công cụ ở gốc repo
 
@@ -44,7 +44,7 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | Hiểu repo trong một lần đọc · xem có extension nào | `llms.txt` · `repo-map.json` · `DASHBOARD.md` — **đều máy sinh, đừng sửa tay** |
 | Vận hành nhiều extension, hoặc thêm một cái | `PLATFORM.md`; khai cái mới bằng cách chép `STATUS.template.md` đặt cạnh `manifest.json` |
 | Đức cần một câu để dán · muốn tự mở bảng | `PROMPTS.md` · `bang-trang-thai/` · `node scripts/build-overview.mjs <file-ra.html>` |
-| Hiểu vì sao nhiều phiên hay va nhau | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` |
+| Hiểu vì sao nhiều phiên hay va nhau | `docs/archive/PARALLEL-WORK-DESIGN-V0.md` |
 | Trạng thái sống, không phải trạng thái đã gõ | `node scripts/what-next.mjs` |
 
 ## `docs/protocols/` — cách làm việc
@@ -65,20 +65,38 @@ không phải khi tò mò.
 
 ---
 
-## `docs/studies/` — nghiên cứu còn sống
+## `docs/studies/` — nghiên cứu CÒN SỐNG (hai file)
 
 | Tài liệu | Trạng thái | Nói về gì |
 |---|---|---|
-| [BRIDGE-MULTIPROFILE-DESIGN-V1.md](studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | `active` | BRIDGE-MULTIPROFILE-DESIGN-V1 — Nhiều profile Chrome dùng chung một Bridge |
-| [MULTI-SESSION-PER-PROFILE-DESIGN-V1.md](studies/MULTI-SESSION-PER-PROFILE-DESIGN-V1.md) | `active` | Nhiều phiên làm việc có tên trong MỘT profile Chrome — thiết kế V1, CHỜ ĐỨC DUYỆT 4 câu |
-| [CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | `active` | Chrome Extension + Native Bridge Capability Reach Study V0 |
-| **EXP-02…EXP-15 — ĐÃ XOÁ 2026-09-08 (14 file, 8.310 dòng)** | — | Kết luận của cả loạt đã gộp vào [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md). **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file: `git show 96a241ef743e:docs/studies/<tên-file>`, liệt kê cả loạt: `git show --stat 96a241ef743e -- docs/studies/`. Đức chốt xoá 08/09; lý do và ba lựa chọn đã cân ở `_run-qua-dem-20260907/DON-REPO--CHO-DUC-CHOT.md` |
-| [FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | `active` | FLOW-EXT — Kế hoạch điều phối Extension Google Flow (video) |
-| [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | `active` | Phase 1 Synthesis — Browser Runtime Capability Map V0 |
-| [PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | `active` | AI-ORCHESTRATOR — Reasoning V3: Project Resume Protocol + Full AI Control |
-| [REPO-STRUCTURE-SPEC-V1.md](studies/REPO-STRUCTURE-SPEC-V1.md) | `?` | REPO-STRUCTURE-SPEC-V1 |
-| [ROADMAP-CLEAN-AND-TEMPLATE-V1.md](studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md) | `?` | ROADMAP-CLEAN-AND-TEMPLATE-V1 |
-| [SCOUTER-CAPABILITY-INVENTORY-V1.md](studies/SCOUTER-CAPABILITY-INVENTORY-V1.md) | `active` | Kiểm kê năng lực hai trục trước khi xây Scouter — ba worker đang có gì · Chrome cho phép gì mà repo chưa dùng (ADR-0009 mục ⑺) |
+| [CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | `active` | Một extension + Bridge **với tới đâu** về mặt kỹ thuật |
+| [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | `active` | Bản tổng hợp — **thứ duy nhất còn lại** của 14 hồ sơ `EXP-*` đã xoá 08/09 |
+
+> **EXP-02…EXP-15 — ĐÃ XOÁ 2026-09-08 (14 file, 8.310 dòng), Đức chốt.** Kết luận gộp vào bản
+> synthesis ở trên. **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file:
+> `git show 96a241ef743e:docs/studies/<tên-file>`; cả loạt: `git show --stat 96a241ef743e -- docs/studies/`.
+
+### Tám bản thiết kế ĐÃ DỜI sang `docs/archive/` — Đức chốt 2026-09-17
+
+Không xoá một chữ nào: **dời chỗ**, vẫn trong git, vẫn mở đọc được, chỉ thôi bị tính vào cân nặng
+kho chữ. Lý do gọn: **cả tám mô tả những thứ NAY ĐÃ TỒN TẠI và đang chạy** — chúng là phần *nghĩ
+trước khi xây*, còn phần *ràng buộc* đã rút thành ADR từ lâu. Giữ chúng ở `studies/` là bắt mọi
+lượt đo kho chữ trả tiền cho 2.553 dòng kế hoạch đã thành sản phẩm.
+
+| Đã dời | Nay đang là cái gì |
+|---|---|
+| [BRIDGE-MULTIPROFILE-DESIGN-V1.md](archive/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | Đức duyệt hướng A 28/08; **đã ship cả ba worker** |
+| [MULTI-SESSION-PER-PROFILE-DESIGN-V1.md](archive/MULTI-SESSION-PER-PROFILE-DESIGN-V1.md) | Đức duyệt 03/09; **thành code** (`54160a2`) |
+| [FLOW-EXT-COORDINATION-PLAN.md](archive/FLOW-EXT-COORDINATION-PLAN.md) | Gói `duc-auto-gg-flow-video` **đã tồn tại** |
+| [SCOUTER-CAPABILITY-INVENTORY-V1.md](archive/SCOUTER-CAPABILITY-INVENTORY-V1.md) | Kiểm kê TRƯỚC khi xây Scouter; **Scouter v1 đã ký** |
+| [REPO-STRUCTURE-SPEC-V1.md](archive/REPO-STRUCTURE-SPEC-V1.md) | RFC gửi repo khác review; `.repo-structure.json` **nay là xương sống** |
+| [PARALLEL-WORK-DESIGN-V0.md](archive/PARALLEL-WORK-DESIGN-V0.md) | Khảo sát vì sao các phiên va nhau; **thành hệ khoá/lane đang chạy** |
+| [ROADMAP-CLEAN-AND-TEMPLATE-V1.md](archive/ROADMAP-CLEAN-AND-TEMPLATE-V1.md) | Lộ trình S1–S10; §8 của chính nó ghi *"S1→S7 đã đóng và đã push"* |
+| [PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | Tự khai **"REASONING ONLY"**; không ADR nào trích |
+
+> **Bản ghi thì KHÔNG sửa theo.** `HANDOFF-ARCHIVE-*`, `evidence/*`, `decisions.md` và các ADR vẫn
+> trỏ đường dẫn `docs/studies/…` cũ — **cố ý**. Sửa trích nguồn trong một bản ghi là làm sai bản
+> ghi; cùng lý lẽ đã áp ngày 02/09 cho các dòng `Nguồn: drafts/…`.
 
 ## `docs/briefs/` — đề bài từng phiên
 

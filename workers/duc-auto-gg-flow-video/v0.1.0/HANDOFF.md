@@ -402,6 +402,12 @@ soát hằng tuần (giới hạn ⑨) sinh ra để lấp, và đây là lần 
 
 Đổi đúng một khối văn; **không** chạm mã, không chạm ADR nào của gói.
 
+## 2026-09-17 · `claude-scouter-udine` — đổi đường dẫn `FLOW-EXT-COORDINATION-PLAN` trong `STATUS.md`
+
+Đức chốt dời 8 bản thiết kế đã ship sang `docs/archive/`. Một trong tám là kế hoạch điều phối
+sinh ra gói này (viết 27/08) — gói đã tồn tại và đang chạy, nên kế hoạch ấy thuộc kho lưu trữ.
+`STATUS.md` trỏ tới nó, nay trỏ đúng chỗ mới. Dời chứ không xoá: nguyên văn, vẫn trong git.
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 **Đẩy kèm `--carry`** (ADR-0005, Đức duyệt thường trực). Ba commit của lane khác bị cuốn theo,

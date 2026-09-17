@@ -313,7 +313,7 @@ Ghi lại để đừng ai "cải tiến" vào đúng mấy chỗ này:
 | Cần gì | Mở file |
 |---|---|
 | Luật ngắn, bản chính thức | `AGENTS.md` mục 1 và mục 2 |
-| Vì sao các phiên va nhau, các phương án đã cân | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` |
+| Vì sao các phiên va nhau, các phương án đã cân | `docs/archive/PARALLEL-WORK-DESIGN-V0.md` |
 | Vai điều phối: đọc gì, giao việc thế nào | `docs/protocols/ORCHESTRATOR.md` |
 | Câu để Đức dán cho bất kỳ AI nào | `PROMPTS.md` |
 | Quyết định nào Đức đã chốt, và vì sao | `docs/adr/` |

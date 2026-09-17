@@ -8,7 +8,7 @@ ttl_days: 90
 
 Đọc trước, theo thứ tự: [ADR-0009](../adr/0007-scouter.md) (Scouter
 là gì) → [ADR-0010](../adr/0007-scouter.md) (phạm vi đã chốt: 25 mục, dừng ở
-đó) → [bảng kiểm kê](../studies/SCOUTER-CAPABILITY-INVENTORY-V1.md) (danh sách 25 mục và chúng
+đó) → [bảng kiểm kê](../archive/SCOUTER-CAPABILITY-INVENTORY-V1.md) (danh sách 25 mục và chúng
 nằm ở đâu).
 
 **Phạm vi đã chốt. Executor không mở rộng.** Thấy một mục `SEED v1` hay ho thì ghi vào

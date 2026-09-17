@@ -28,6 +28,13 @@ công cụ hỏi git. Ngày nào có một file `.md` bị git bỏ qua nằm d�
 Đã gạch tại chỗ, giữ nguyên dòng cũ bên dưới. Cùng câu ấy cũng đã gạch ở `scripts/rule-compile.mjs`,
 và mở `KHUNG-M6` ở sổ nợ gốc cho lượt sửa thật (hai bộ quét lấy danh sách từ git).
 
+## 2026-09-17 · `claude-scouter-udine` — đổi đường dẫn hai liên kết theo lượt dời `studies/`
+
+Đức chốt dời 8 bản thiết kế đã ship từ `docs/studies/` sang `docs/archive/` (2.553 dòng, dời chứ
+không xoá). `ROADMAP.md` và `docs/CAPABILITIES.md` của gói này trỏ tới
+`SCOUTER-CAPABILITY-INVENTORY-V1.md` — bản kiểm kê **trước khi xây Scouter**, nay Scouter `v1` đã
+ký nên nó thuộc kho lưu trữ. Đổi đúng đường dẫn, không đổi một chữ nội dung.
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 <!-- HANDOFF-CUT-POINTER: ADR-0008 -->

@@ -19,7 +19,7 @@ ttl_days: 30
 Audit 2026-09-01 [ĐO]: 5 file nghiên cứu 31/08 ĐÃ ở `docs/studies/`. Còn thiếu 4 món dưới.
 
 ## Việc cần làm — đúng 4 món
-1. `docs/studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md`: thêm frontmatter đầu file, đúng ba trường,
+1. `docs/archive/ROADMAP-CLEAN-AND-TEMPLATE-V1.md`: thêm frontmatter đầu file, đúng ba trường,
    không sửa gì khác: `kind: study` · `status: active` · `ttl_days: 180`.
 2. `docs/studies/SEND-TO-OTHER-REPOS.md`: frontmatter đang 4 trường — XÓA dòng `created`. Giữ đúng 3.
 3. `git mv docs/studies/archive docs/archive` (2 file). Roadmap S1 quy định archive ở `docs/archive/`.

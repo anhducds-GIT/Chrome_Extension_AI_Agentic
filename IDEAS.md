@@ -117,7 +117,7 @@ hiển thị sai.
 
 - **số đo đặt ra bài toán:** 127 commit/ngày · 77% chạm `_root` · 63 lần ghi bảng quyền · 21
   nhãn phiên từ 01/09. Khảo sát đầy đủ và bốn phương án kèm giá:
-  `docs/studies/PARALLEL-WORK-DESIGN-V0.md`
+  `docs/archive/PARALLEL-WORK-DESIGN-V0.md`
 
 ## Y-04 · Bảng trạng thái sinh ngay trong repo
 

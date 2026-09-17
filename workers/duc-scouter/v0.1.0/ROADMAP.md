@@ -2,14 +2,14 @@
 
 > **Viết cho Đức đọc.** Một trang, không thuật ngữ nếu tránh được.
 > Phạm vi cố định: **25 mục `SEED v0.1`**, chốt ở [ADR-0010](../../../docs/adr/0007-scouter.md).
-> Danh sách 25 mục nằm ở `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md`; file này **không
+> Danh sách 25 mục nằm ở `docs/archive/SCOUTER-CAPABILITY-INVENTORY-V1.md`; file này **không
 > chép lại nó**, chỉ nói mục nào xong, mục nào chưa, và làm theo thứ tự nào.
 
 ## Đếm lại được, đừng tin con số gõ tay
 
 ```bash
 awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/) print}' \
-  docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md | wc -l
+  docs/archive/SCOUTER-CAPABILITY-INVENTORY-V1.md | wc -l
 ```
 
 ## Thang phiên bản — Đức chốt 07/09 ([ADR-0020](../../../docs/adr/0007-scouter.md))

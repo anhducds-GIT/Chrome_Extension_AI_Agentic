@@ -72,4 +72,4 @@ còn là hạ tầng. Cách vận hành trong [`AI-OPERATOR-GUIDE.md`](AI-OPERAT
 | Tổng quan + cài đặt | [`README.md`](README.md) |
 | Việc còn mở F-xx | [`BACKLOG.md`](BACKLOG.md) |
 | Vận hành qua Bridge (kèm phép kiểm vân tay runtime BẮT BUỘC) | [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md) |
-| Kế hoạch điều phối 5 checkpoint | [`../../../docs/studies/FLOW-EXT-COORDINATION-PLAN.md`](../../../docs/studies/FLOW-EXT-COORDINATION-PLAN.md) |
+| Kế hoạch điều phối 5 checkpoint | [`../../../docs/archive/FLOW-EXT-COORDINATION-PLAN.md`](../../../docs/archive/FLOW-EXT-COORDINATION-PLAN.md) |

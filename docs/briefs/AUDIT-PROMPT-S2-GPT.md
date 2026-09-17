@@ -30,8 +30,8 @@ nó dựng lại toàn bộ artifact TỪ CÂY GIT HEAD rồi so với bản Đ�
 Hệ quả: bất kỳ chỗ nào không tất định, hoặc bất kỳ chỗ nào đọc trạng thái chưa commit từ
 working tree, đều biến thành một cổng đỏ giáng xuống đầu phiên AI mở repo kế tiếp.
 
-Đây là phiên S2 của `docs/studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md`. Hợp đồng của
-`repo-map.json` được quy định ở mục C1 của `docs/studies/REPO-STRUCTURE-SPEC-V1.md` — hãy
+Đây là phiên S2 của `docs/archive/ROADMAP-CLEAN-AND-TEMPLATE-V1.md`. Hợp đồng của
+`repo-map.json` được quy định ở mục C1 của `docs/archive/REPO-STRUCTURE-SPEC-V1.md` — hãy
 đọc mục đó và đối chiếu, đừng tin mô tả trong commit message.
 
 BA LỜI TUYÊN BỐ CẦN CÔNG KÍCH
