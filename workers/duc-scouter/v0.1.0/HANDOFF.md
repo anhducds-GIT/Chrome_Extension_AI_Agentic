@@ -14,6 +14,20 @@
 
 ## Log
 
+## 2026-09-17 · `claude-scouter-udine` — gạch tại chỗ một câu đối chứng SAI trong `CHUOI-VIEC.md`
+
+Audit độc lập (Codex, vòng 1) bác một câu tôi viết ở khối `A2` của lộ trình: *"`can-nang.mjs` đọc
+từ git nên nó KHÔNG bị thổi"*. **Sai** — `liet()` của nó cũng `fs.readdirSync`, cũng quét đĩa.
+
+Chỗ đáng nhớ không phải con số, mà là **hình dạng của cái sai**: kết luận thì ĐÚNG (số 9.958
+không bị thổi), nhưng **lý do thì sai**, và lý do mới là thứ phiên sau tin theo rồi xây tiếp lên.
+Đo lại cho ra sự thật khác hẳn: 42 file `.md` dưới `docs/` (trừ `adr/` `archive/` `migrations/`),
+**42/42 đều được git track, 0 file lạc** — nên con số sạch vì **cây hôm nay sạch**, không phải vì
+công cụ hỏi git. Ngày nào có một file `.md` bị git bỏ qua nằm dưới `docs/` là nó thổi ngay.
+
+Đã gạch tại chỗ, giữ nguyên dòng cũ bên dưới. Cùng câu ấy cũng đã gạch ở `scripts/rule-compile.mjs`,
+và mở `KHUNG-M6` ở sổ nợ gốc cho lượt sửa thật (hai bộ quét lấy danh sách từ git).
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 <!-- HANDOFF-CUT-POINTER: ADR-0008 -->
