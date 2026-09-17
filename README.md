@@ -1,11 +1,10 @@
 # Chrome Extension AI Agentic
 
-Kho chứa các **extension Chrome cục bộ, dùng riêng** của Đức, cộng bộ luật và cổng kiểm để
-nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm chân nhau.
+Kho chứa các **extension Chrome cục bộ, dùng riêng** của Đức, cộng bộ luật và cổng kiểm để nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm chân nhau.
 
-> Trước 06/09 file này là README của extension Observer V0. Observer đã thành Scouter và dọn
-> về nhà riêng theo [ADR-0013](docs/adr/0007-scouter.md); bản ghi cũ
-> giữ nguyên văn ở `workers/duc-scouter/v0.1.0/README-OBSERVER-V0.md`.
+> Trước 06/09 đây là README của Observer V0 — nay là Scouter, dọn sang nhà riêng theo
+> [ADR-0013](docs/adr/0007-scouter.md); bản cũ nguyên văn ở
+> `workers/duc-scouter/v0.1.0/README-OBSERVER-V0.md`.
 
 ## Vào đâu trước
 
@@ -31,8 +30,7 @@ nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm
 | `workers/udin-optic/v0.1.0` | Sinh ảnh trên `vinfast.udinbv.com`: vượt màn chờ → gửi prompt → đợi ảnh mới → lấy về đĩa. Tách khỏi Scouter 15/09 |
 | `workers/hnx-fetch` | Lấy dữ liệu HNX mỗi ngày. **Không có quyền `debugger`** nên nó không bấm được gì ([ADR-0021](docs/adr/0021-goi-extension.md) ⑵) |
 
-Mỗi gói tự có `AGENTS.md` · `README.md` · `STATUS.md` · `HANDOFF.md` · `BACKLOG.md` và **khoá
-riêng** trong `.agents/claims.json`.
+Mỗi gói tự có `AGENTS.md` · `README.md` · `STATUS.md` · `HANDOFF.md` · `BACKLOG.md` và **khoá riêng** trong `.agents/claims.json`.
 
 ## Chạy phép ghim
 
@@ -42,11 +40,7 @@ node scripts/session-check.mjs --as <tên-phiên>   # cổng đóng phiên
 ```
 
 `npm test` là chuỗi TUẦN TỰ, chậm hơn nhiều lần — nhưng **cổng đóng phiên chạy CHÍNH NÓ**
-(`runRootSuite` gọi `npm test --silent`), nên đó là chuỗi phải xanh. `test:song-song` là đường
-chạy nhanh để làm việc, không phải đường đóng phiên.
-
-> Sửa 17/09 (`A5`): chỗ này trước viết *"đóng phiên thì dùng dòng trên"* — sai, cổng không gọi
-> `test:song-song` bao giờ. Một câu hướng dẫn sai ở đây làm người ta tin mình đã chạy đúng thứ
-> cổng sắp chạy.
+(`runRootSuite` gọi `npm test --silent`), nên đó là chuỗi phải xanh; `test:song-song` là đường
+chạy nhanh để làm việc. *(Sửa 17/09: chỗ này trước bảo đóng phiên bằng `test:song-song`.)*
 
 Không có phụ thuộc ngoài. Mọi phép ghim là script Node thuần.
