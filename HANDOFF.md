@@ -874,3 +874,26 @@ tự ghép thì phải đẩy cái biết ấy xuống theo một đường khá
 
 Móc ném thì lượt gọi ĐỎ và **không gì được chuyển xuống**: một đường dẫn chưa kiểm được thì
 không đi tiếp. Thêm `scouter:tai-len` và `scouter:hinh-hoc` vào `package.json`.
+
+## 2026-09-17 · `claude-scouter-udine` — `tests/cong-do-that.mjs`: sáu hàng cổng, sáu ca hỏng thật
+
+`A1` hỏi: sáu hàng **chưa đỏ lần nào** qua 300 lượt chạy — *dựng nổi ca hỏng cho chúng không?*
+Đi tìm thì gặp thứ tệ hơn một hàng chưa đỏ: **bộ máy trả lời đã được thiết kế sẵn, mà file nó
+đọc thì chưa bao giờ tồn tại.** `can-nang.mjs` đọc `tests/cong-do-that.mjs` để đánh dấu ✓ — file
+ấy không có trong cây làm việc, không trong `git log --all`, không bị `.gitignore`. Nhưng bốn
+chỗ trích nó **như một sự thật đã có**: `session-check.mjs` (*"cả hai vế có ca hỏng dựng sẵn ở …
+khối 1"*), `build-dashboard.mjs` (*"gọi cổng 50 lượt, tức 462 giây"* — một phép ĐO của file chưa
+tồn tại), và `harness-smoke.mjs` năm lượt. Một **màu xanh giả có trích dẫn**: đọc như bằng chứng
+nên không ai đi kiểm.
+
+Nay file đã viết và **6/6 hàng đỏ được thật**. Mỗi khối hai lượt đo — XANH trước khi bẻ, ĐỎ sau
+khi bẻ — trong kho tạm dùng xong xoá, không bao giờ bẻ trong cây làm việc thật. Vế đo-trước
+không thừa: nó bắt ngay một fixture đã đỏ sẵn (kho không có `origin` thì `rev-parse --verify
+origin/main` đi qua `git()` chứ không qua `gitLoiLaBinhThuong`, nên *"Mọi lệnh git đọc được"* đỏ
+vì thiếu remote, không phải vì thứ tôi vừa bẻ).
+
+Ba lời trích sai đã sửa tại chỗ: con số 462 giây → **12 lượt gọi cổng ≈ 24,7 giây**; câu "khối 1"
+của `session-check` nói thẳng là hai vế ấy **vẫn chưa có** ca hỏng; và `can-nang` thôi in *"đã
+chứng minh là ĐỎ ĐƯỢC"* — nó chỉ dò TÊN trong văn bản, không chạy gì, nên nay in lệnh xác nhận.
+
+`npm run test:do-that` — **KHÔNG** vào `npm test`: 12 lượt cổng, và bộ kiểm chính đã 199/180 giây.

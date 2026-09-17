@@ -1531,9 +1531,12 @@ export function createHeadDeps(root = ROOT) {
    * Mỗi `readFile` là MỘT tiến trình `git show HEAD:<file>`, mỗi `fileExists`/`isFile` là một
    * `git cat-file -t` nữa. Đo 10/09: một tiến trình git ~37,5 ms; `collectModel` đọc hết file
    * rồi `B6` ĐỌC LẠI hết để dò link, rồi `B12` đọc nữa. Kết quả: `check-bootstrap` 11,0 giây
-   * trên 12,2 giây của cả lượt cổng — và `tests/cong-do-that.mjs` gọi cổng 50 lượt, tức 462
-   * giây, đúng bằng thời gian tường của CẢ suite (suite chạy song song, nên tường ≈ suite chậm
-   * nhất).
+   * trên 12,2 giây của cả lượt cổng — và một bộ ca hỏng gọi cổng N lượt trả giá N lần con số ấy.
+   *
+   * SỬA 17/09: câu này trước đây viết *"`tests/cong-do-that.mjs` gọi cổng 50 lượt, tức 462 giây"*
+   * — một phép đo của một file **chưa hề tồn tại** lúc đó (`git log --all` trống). File nay đã
+   * viết, và số THẬT là **12 lượt gọi cổng ≈ 24,7 giây**: nó chạy trên kho tạm tí hon, không
+   * trên repo thật. Giữ lại vế đắt của lượt nhớ-lại thì vẫn đúng; giữ con số 462 thì không.
    *
    * VÌ SAO NHỚ LẠI LÀ ĐÚNG, KHÔNG PHẢI NỚI: mọi thứ ở đây đọc từ `HEAD`, và `HEAD` không đổi
    * trong một lượt chạy. Bộ nhớ nằm TRONG closure của từng `createHeadDeps()`, không phải toàn

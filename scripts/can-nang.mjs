@@ -296,7 +296,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS)) {
     if (daTraLoi.length) {
       console.log(`      ${conHoi.length ? "—" : ""} ${daTraLoi.length} mục đã có ca hỏng dựng sẵn ở ${CA_HONG}:`);
       for (const t of daTraLoi) console.log(`        ✓ ${t}`);
-      console.log("        (chưa đỏ trong lượt chạy thật, nhưng đã chứng minh là ĐỎ ĐƯỢC)");
+      /* CÂU NÀY LÀ MỘT LỜI TRÍCH, KHÔNG PHẢI MỘT PHÉP ĐO. Ở đây chỉ dò TÊN trong văn bản file
+         ca hỏng — nó không chạy gì cả, nên một cái tên nằm trong chú thích cũng ăn dấu ✓. Bản
+         trước viết thẳng *"đã chứng minh là ĐỎ ĐƯỢC"*, tức khai một kết quả mình chưa hề đo.
+         Đó đúng cái bệnh `A1` đi chữa, nên không được phép tái diễn ngay trong công cụ đo. */
+      console.log("        (chưa đỏ trong lượt chạy thật · XÁC NHẬN bằng `npm run test:do-that` ≈25 giây)");
     }
     if (conHoi.length) {
       console.log(`${NL}      Đây là danh sách để HỎI, không phải để xoá. Với từng cái: dựng nổi ca`);

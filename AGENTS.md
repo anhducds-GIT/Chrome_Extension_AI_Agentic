@@ -126,4 +126,5 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | **Xem bảng trạng thái chạy tại chỗ** | [bang-song/Xem-bang.cmd](bang-song/Xem-bang.cmd) — `npm run bang-song` |
 | **Sắp commit — hai cửa MÁY** | `.githooks/` — `commit-msg` từ chối lượt commit cuốn theo file lane khác đang khoá; `post-commit` **tự trả khoá file**. Bật bằng `core.hooksPath=.githooks` — lượt `upgrade` đặt hộ, kiểm bằng `git config --local --get core.hooksPath`. **Cấu hình MỖI BẢN SAO, không đi theo file.** |
 | **Bộ biên dịch luật / đo phần nạp bằng token** | `scripts/rule-compiler.mjs` — `npm run luat` |
+| **Một hàng cổng "chưa từng đỏ" — nó ĐỎ ĐƯỢC không?** | `tests/cong-do-that.mjs` — `npm run test:do-that`. Mỗi hàng một ca hỏng thật, đo HAI vế (xanh trước khi bẻ, đỏ sau khi bẻ), bẻ trong kho tạm chứ không bao giờ trong cây làm việc |
 <!-- BAN-DO:END -->

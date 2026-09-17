@@ -211,7 +211,11 @@ if (originMainResolves) {
  * KHÔNG PHẢI NỚI, và chiều fail-closed giữ nguyên từng vế:
  *   · một nguồn KHÔNG nhãn (hoặc nhãn HỎNG) là đủ để KHÔNG quy thuộc được → vẫn ĐỎ;
  *   · file còn trong CÂY LÀM VIỆC thì chưa commit nào đứng tên nó → vẫn phải có khoá, vẫn ĐỎ.
- * Cả hai vế có ca hỏng dựng sẵn ở `tests/cong-do-that.mjs` khối 1. */
+ * SỬA 17/09: câu ở đây trước viết *"Cả hai vế có ca hỏng dựng sẵn ở `tests/cong-do-that.mjs`
+ * khối 1"*. File ấy **chưa hề tồn tại** lúc đó, nên hai vế này KHÔNG có ca hỏng nào — lời trích
+ * tự nó là bằng chứng giả. File nay đã viết, nhưng nó phủ sáu hàng CHƯA TỪNG ĐỎ, không phủ hai
+ * vế này; hàng "Ai đứng tên việc này" thì đã đỏ trong lượt chạy thật nhiều lần. Ai dựng được ca
+ * hỏng cho hai vế trên thì thêm vào đó và sửa lại câu này. */
 /* `size > 0` KHÔNG dư: `[].every(Boolean)` trả `true`, nên một mục Map rỗng sẽ nói "quy thuộc
    được" khi KHÔNG nhãn nào đứng tên. Hôm nay không tới được (chỗ điền Map luôn `.add` ngay sau
    khi `set`), nhưng hướng hỏng là fail-OPEN, và audit độc lập nêu đúng chỗ này 10/09. Không có
