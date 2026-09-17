@@ -133,4 +133,5 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | **Đào lịch sử xa hơn phần còn lại trong `HANDOFF.md`** | `docs/archive/` — phần cũ **dời** sang đó bằng `npm run don`, **giữ nguyên từng chữ**. Dời chứ không xoá: cổng đối chiếu byte, dòng nào không có bản khớp trong kho lưu trữ là ĐỎ |
 | **Một hàng cổng "chưa từng đỏ" — nó ĐỎ ĐƯỢC không?** | `tests/cong-do-that.mjs` — `npm run test:do-that`. Mỗi hàng một ca hỏng thật, đo HAI vế (xanh trước khi bẻ, đỏ sau khi bẻ), bẻ trong kho tạm chứ không bao giờ trong cây làm việc |
 | **Trỏ tới một mục của file này từ chỗ khác** | Kèm **TÊN** mục, đừng chỉ số — số là vị trí và nó đổi mỗi lượt sắp xếp lại. `tests/trich-muc-agents-smoke.mjs` canh số · tên · liên kết neo trên mọi file luật sống (17/09: 21 chỗ đã trỏ sai) |
+| **Sửa một file mà BỘ KHUNG cũng có bản của nó** (`claim.mjs` · `handoff.mjs` · `session-check.mjs`…) | Cửa riêng của repo đặt trong đó **bị lượt migrate sau xoá**, và phép ghim đặt cùng chỗ chết theo — hai cửa đã mất kiểu đó (`N-68`). Ghim cửa riêng ở `tests/cua-rieng-repo-smoke.mjs`; `tests/import-gay-smoke.mjs` canh hàng rào khu cách ly |
 <!-- BAN-DO:END -->

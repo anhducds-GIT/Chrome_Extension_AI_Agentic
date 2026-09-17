@@ -737,3 +737,33 @@ bị đổi. Lượt rà 12/09 (`8942420e`) đã dựng lại 7 phép ghim chế
 **Hai lỗi của tôi:** ⑴ chạy `--sua AGENTS.md`, bị TỪ CHỐI, **vẫn ghi** — đúng thứ mục 2 cấm; gỡ
 ngay, `git diff` sạch. ⑵ mục này lúc đầu **2.712 byte / trần 2.600**, làm cổng đỏ cho mọi lane
 trong cây; lane `claude-universal-scouter` bắt được và báo.
+
+## 2026-09-18b — N-68 ĐÓNG: đo lượt migrate bằng đường thứ hai, và nó đổi hình dạng của N-65
+
+Lane `claude-scouter-udine`. Chi tiết ở `N-68`.
+
+Phép so `--cờ` ở lượt trước chỉ thấy thứ khai bằng cờ. Đường thứ hai hỏi câu khác — **có ai đang
+`import` một cái tên không còn tồn tại không?** — và ra con số phép so kia không thấy:
+
+```
+9 cặp import gãy, trên ĐÚNG 8 file — và 8 file đó CHÍNH LÀ khu cách ly npm run test:chet
+0 file trong scripts/ gãy
+```
+
+⑴ **Không công cụ đang sống nào hỏng.** Phần lớn trong "119 ký hiệu biến mất" của phép đo đầu là
+một lượt **viết lại**. Con số 119 một mình sẽ dẫn tới một lượt hoảng.
+
+⑵ **`N-65` không phải việc port mã.** Khu cách ly 8 bài là **8 lớp bảo vệ mà thứ chúng canh đã bị
+xoá** — `build-overview-smoke.mjs` một mình import **44** cái tên không còn. Viết lại chúng trước
+hết là **quyết lớp bảo vệ nào còn đáng giữ**, và đó là việc cần người.
+
+**Phép ghim `tests/import-gay-smoke.mjs`** ghim CÁI HÀNG RÀO, không đòi 8 bài sống lại: khu cách
+ly không lớn thêm trong im lặng ①, không giữ lại bài đã lành ②, danh sách không mục ③. Thử phá
+**4/4, mỗi con bởi ĐÚNG câu khẳng định của nó** — hai lượt đầu bị giết bởi *nhầm* câu, tức chưa
+chứng minh gì; phải tách ca hỏng ra mới đo được.
+
+**Một dương tính giả biết chọn giờ:** phép ghim ấy tự cắn nó ngay lượt chạy đầu **sau khi commit**
+— docblock của nó mang dòng ví dụ `import { X } from "./y.mjs"`, và bộ quét đi qua `git ls-files`
+nên trước lúc commit nó vô hình. Đã gỡ chú thích trước khi dò.
+
+38 suite. Hai phép ghim mới đã khai vào Bản đồ file.
