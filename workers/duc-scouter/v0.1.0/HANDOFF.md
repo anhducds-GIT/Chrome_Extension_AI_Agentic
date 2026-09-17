@@ -14,6 +14,33 @@
 
 ## Log
 
+## 2026-09-18 · `claude-universal-scouter` — website mới có cần extension mới không
+
+Nghiên cứu Đức giao, kết quả + đặc tả bốn lỗ hổng ở **`docs/UNIVERSAL-SCOUTER.md`**; sổ:
+`G-100`…`G-103`. Ở đây chỉ ghi thứ tài liệu kia không nói.
+
+**Kết luận SAI tôi đã phát hành cho Đức.** `scout.targets` trả `0` khớp `vizcom` bốn lượt, tôi
+viết *"Vizcom nằm ở profile không có Scouter"*. Sai: nó ở `Default`, **đúng** profile có ghế
+`Scouter_blank`, đọc được đầy đủ. Gốc: Chrome **focus cửa sổ app đang mở ở profile khác**;
+`--profile-directory` **bị bỏ qua khi Chrome đã chạy**. Dữ liệu nói *"không thấy"*, tôi viết
+thành *"không tồn tại"* — cùng họ `G-99`, lần thứ hai trong hai ngày.
+
+**Ba bẫy vấp trong lúc làm:**
+
+1. Phép ghim *"descriptor không chứa `chrome.`"* báo đỏ vì regex khớp vào **chính câu chú
+   thích** của tôi. **Bóc chú thích trước rồi mới grep.**
+2. `grep -c '"workers/duc-scouter"' .agents/claims.json` trả **2** → tôi suýt khai *"trùng key,
+   `JSON.parse` nuốt mất"* và đi sửa sổ khoá dùng chung. `JSON.parse` thật: **không trùng** —
+   bản thứ hai nằm trong khoá top-level `tam`. Suýt chữa cái không hỏng, ở file nguy hiểm nhất.
+3. `claim.mjs --sua <vùng>` ghi vào `tam` (khoá mức FILE, vài phút). Cổng `--soat` hỏi quyền
+   **VÙNG**, lấy bằng `--take`. Hai cờ hai việc; `--help` chỉ in `--take`.
+
+**Không đụng:** `manifest.json` · cổng ghi · `CDP_HAN_MS` · `udin-optic` · `hnx-fetch` · ba gói
+`duc-auto-*`. Không một dòng mã — bản này là **SPEC**.
+
+**Chặn, cần Đức:** thêm `scout.song` (phép dò sống, hạn 1.500ms) là **đổi luật an toàn** (luật
+gói mục 4) → Gap 2 đứng chờ. Ba gap kia chạy được ngay; thứ tự ở `docs/UNIVERSAL-SCOUTER.md` §7.
+
 ## 2026-09-17 · `claude-scouter-udine` — gạch tại chỗ một câu đối chứng SAI trong `CHUOI-VIEC.md`
 
 Audit độc lập (Codex, vòng 1) bác một câu tôi viết ở khối `A2` của lộ trình: *"`can-nang.mjs` đọc

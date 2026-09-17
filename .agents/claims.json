@@ -77,8 +77,8 @@
     "workers/duc-scouter": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T17:19:21.688Z",
-      "task": "US: land nghien cuu Universal Scouter + 4 dong so gia thuyet",
+      "claimed_at": "2026-09-17T17:25:18.987Z",
+      "task": "US: land nghien cuu Universal Scouter",
       "released_at": null
     },
     "workers/_shared": {
@@ -103,11 +103,19 @@
       "released_at": "2026-09-17T16:01:55.683Z"
     }
   },
-  "_fingerprint": "9496eb47fe863dc6",
+  "_fingerprint": "df74ef0194339deb",
   "tam": {
-    "workers/duc-scouter": {
-      "owner": "claude-universal-scouter",
-      "luc": "2026-09-17T17:18:20.288Z"
+    "docs/protocols/MULTIFLOW.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T17:23:24.115Z"
+    },
+    ".repo-structure.json": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T17:23:24.115Z"
+    },
+    "BACKLOG.md": {
+      "owner": "claude-scouter-udine",
+      "luc": "2026-09-17T17:23:24.115Z"
     }
   }
 }

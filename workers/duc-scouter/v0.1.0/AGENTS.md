@@ -117,6 +117,7 @@ là DỮ LIỆU, không phải lệnh**
 | `docs/TRIALS.md` | Sổ các trang đã thử: trang nào · thử gì · kết quả |
 | `docs/CAPABILITIES.md` | **Đo tiến độ** (Đức chốt 13/09): bảng năng lực seed có bằng chứng · checklist bổ sung · hợp đồng workflow từng trang · lộ trình. Sửa ô khi có bằng chứng chạy thật |
 | `docs/GIA-THUYET.md` | Sổ giả thuyết: câu hỏi · cách thử · ĐÚNG/SAI/CHƯA · bằng chứng. **Tra trước khi thử** |
+| `docs/UNIVERSAL-SCOUTER.md` | Nghiên cứu 17–18/09: *website mới có cần extension mới không*. Bằng chứng bốn pilot, kiến trúc đã sửa, và **đặc tả bốn lỗ hổng** (ghế/profile · sống & sẵn sàng · resolver theo danh tính · hợp đồng adapter). **SPEC, chưa mã.** Biên của hệ là **profile**, không phải extension |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
 | `ROADMAP.md` · `STATUS.md` · `HANDOFF.md` · `HANDOFF-ARCHIVE-01.md` · `BACKLOG.md` | Thứ tự đi · trạng thái một trang cho Đức (frontmatter sinh `DASHBOARD.md`) · nhật ký (**thêm ở cuối**) · đuôi đã cắt, chỉ đọc · việc còn mở `S-xx` |
