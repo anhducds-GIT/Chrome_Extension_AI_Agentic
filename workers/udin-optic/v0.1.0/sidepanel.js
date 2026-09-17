@@ -151,6 +151,22 @@ async function luuTenGhe() {
 }
 
 $("#ten-ghe-so-chep").addEventListener("click", () => { chepVaoBangNho($("#ten-ghe-so-chep"), $("#ten-ghe-so").dataset.soGhe || ""); });
+/* Tên riêng suy từ Profile ID. Cùng công thức với `tu-dong/chon-ghe.mjs` — giữ hai bên khớp
+ * nhau là việc của `tests/ten-ghe-smoke.mjs`, vì một cái tên gợi ý khác nhau ở hai chỗ thì Đức
+ * gõ theo bảng bên rồi lệnh lại bảo là chưa đặt tên. */
+function tenGoiYTuSo(id) {
+  const s = String(id ?? "").replace(/[^A-Za-z0-9]/g, "");
+  if (s.length < 4) return null;
+  return `udin-${s.slice(0, 6).toLowerCase()}`;
+}
+$("#ten-ghe-goi-y").addEventListener("click", () => {
+  const ten = tenGoiYTuSo($("#ten-ghe-so").dataset.soGhe || "");
+  const bao = $("#ten-ghe-bao");
+  if (!ten) { bao.textContent = "Chưa có Profile ID — nối Bridge một lượt rồi thử lại."; return; }
+  $("#ten-ghe").value = ten;
+  $("#ten-ghe").focus();
+  bao.textContent = "Đã điền. Bấm “Lưu tên” để khai với máy chủ.";
+});
 $("#ten-ghe-luu").addEventListener("click", () => { luuTenGhe().catch(() => { $("#ten-ghe-bao").textContent = "Không lưu được tên."; }); });
 $("#ten-ghe").addEventListener("keydown", (su_kien) => {
   if (su_kien.key !== "Enter") return;

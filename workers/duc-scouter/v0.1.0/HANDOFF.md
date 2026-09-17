@@ -2363,3 +2363,25 @@ nghi ngờ — nếu không thì *"trang chưa vẽ xong"* và *"selector sai"* 
 **PHẠM VI:** chạy lõi seed trên Chrome hồ sơ trống (`chrome-do.mjs`), **không** qua dây extension;
 đường ấy chứng minh riêng trên Udin hằng ngày nhưng chưa trên tldraw. `scout.type` · `scout.text` ·
 `scout.grab` chưa chạm trang này lần nào.
+
+## 2026-09-17g · `claude-scouter-udine` — `R2` ĐÓNG, `T7` lên `MASTERED`
+
+**Vòng tự cải tiến chạy lại với bộ đầy đủ, và nó khép.** Ghế `Dummy_Scout`, thư mục báo cáo
+`r2-udin-17-09`. Chặng ② dò ra 403.389 byte. Chặng ③ dựng adapter **không một selector nào gõ
+sẵn**: ô nhập `textarea.agent-textarea` và vùng kết quả `img.canvas-image` rút **từ báo cáo**,
+còn nút `button.agent-send-button` lấy **từ chính trang** — cái đổi từ *chưa bấm được* sang *bấm
+được* sau lượt gõ. Gõ → bấm → **1 kết quả mới trong 24 giây**.
+
+**Lượt này tự chứng minh chỗ đắt nhất của thiết kế, và nó là con số đáng giữ lại:**
+`ketQuaTruoc: 28 → ketQuaSau: 28`, `ketQuaMoi: 1`. **Con số không đổi mà vẫn có thành viên mới.**
+Đó đúng là ca đã hạ bản cũ — đếm đi từ 36 xuống 32 trong khi 4 ảnh mới hiện ra (URL ký hết hạn,
+ảnh cũ rụng khỏi DOM), adapter chờ 590 giây rồi bị giết. So **TẬP** thay so **SỐ** là thứ cứu
+lượt hôm nay; không có nó thì `28 → 28` đọc ra "chưa có gì xảy ra".
+
+**`T7` lên `MASTERED`** — điều kiện do chính `CAPABILITIES.md` đặt ra (mọi workflow ĐẠT, không
+còn CHẶN, E2E ĐẠT) đủ từ 16/09, và `R2` là lượt chạy lại chứng minh vòng vẫn khép.
+
+**PHẠM VI, khai ngay tại chỗ nâng mức:** bộ sinh adapter mới chạy trên Udin. Hình dạng của nó giả
+định *gõ prompt → bấm nút → ra kết quả*, nên trên `tldraw` nó **không có ô prompt nào để bám**.
+`R3` chứng minh **seed** dùng lại được ở trang khác loại; `R2` chứng minh **vòng tự cải tiến**
+khép. Hai câu khác nhau, đừng gộp.

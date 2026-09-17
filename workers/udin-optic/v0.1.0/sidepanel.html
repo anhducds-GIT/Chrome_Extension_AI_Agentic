@@ -190,6 +190,11 @@
               <span class="mo">Bấm Try Again tới 12 lượt. Màn chắn ấy là lỗi giao diện của Udin, không phải hết chỗ.</span>
               <code>qua-man-cho.mjs</code>
             </li>
+            <li data-lenh="chon-ghe.mjs">
+              <span class="viec-ten">Liệt kê các ghế đang nối, và chỉ ra ghế TRÙNG TÊN</span>
+              <span class="mo">Mở nhiều cửa sổ Chrome cùng cắm Udin thì mỗi cửa sổ là một ghế. Lệnh này in ra tên, Profile ID và dòng UDIN_GHE để gọi đúng ghế. Bảng bên chỉ thấy ghế của chính nó nên không tự kiểm trùng được.</span>
+              <code>chon-ghe.mjs</code>
+            </li>
             <li data-lenh="chon-che-do.mjs">
               <span class="viec-ten">Chọn chế độ Agent hoặc Manual Gen</span>
               <span class="mo">Xin đúng chế độ đang bật thì nó không bấm lần nào.</span>
@@ -285,7 +290,15 @@
             <span class="mo">Tên</span>
             <input id="ten-ghe" type="text" maxlength="64" placeholder="ví dụ: udine-chinh" autocomplete="off" spellcheck="false">
           </label>
+          <!-- NÚT GỢI Ý TÊN — thêm 17/09 sau khi Đức mở hai cửa sổ cùng cắm Udin và nói trước
+               cái sắp xảy ra: *"bạn sẽ có thể gặp một tình trạng là trùng tên gọi và trùng tên
+               profile."* Ô tên để RỖNG là mặc định cũ, và hai cửa sổ cùng rỗng thì không gọi
+               được cửa sổ nào bằng tên — phải đi chép dãy 36 ký tự.
+               Tên gợi ý suy từ CHÍNH Profile ID, nên hai ghế khác id thì không bao giờ trùng.
+               Nó chỉ ĐIỀN VÀO Ô, không tự lưu: lưu tên là cắt dây nối, và một cú cắt dây không
+               ai bấm là một cú cắt dây không ai hiểu. -->
           <div class="ten-ghe-hang">
+            <button id="ten-ghe-goi-y" type="button">Tên riêng theo Profile ID</button>
             <button id="ten-ghe-luu" type="button">Lưu tên</button>
             <span id="ten-ghe-bao" class="mo" aria-live="polite"></span>
           </div>

@@ -1060,3 +1060,31 @@ ngược trong regex) bị Python đọc thành escape bát phân và **một BY
 trong file** — trong đúng dòng chú thích cảnh báo về chuyện ấy. `tests/khong-byte-dieu-khien-smoke.mjs`
 bắt được. Nay dùng **hai regex riêng** thay tham chiếu ngược: dài hơn một dòng, đổi lại không còn
 chỗ nào cho một dấu gạch đi qua ba lớp vỏ.
+
+## 2026-09-17k · `claude-scouter-udine` — tách ghế khi mở nhiều cửa sổ
+
+**Đức 17/09:** *"Tôi đã mở hai tab và tách chúng ra, cả hai đều dùng extension Udin, do đó bạn
+sẽ có thể gặp trùng tên gọi và trùng tên profile."*
+
+Anh nói trước cái sắp hỏng, và nó có thật: máy chủ phân giải nhãn → ghế, nên **hai ghế cùng nhãn
+trả `TARGET_AMBIGUOUS`** — quay lại đúng chỗ hỏng lúc chưa ai có tên.
+
+**Phép kiểm trùng phải đứng ở PHÍA GỌI, không ở bảng bên** — không phải vì tiện: `G-96` đo 16/09,
+extension **chỉ TRẢ LỜI**, không phát đi được yêu cầu nào, nên bảng bên cảnh báo được bằng chữ mà
+**không kiểm được**.
+
+`tu-dong/chon-ghe.mjs` in nhãn · Profile ID · dòng `UDIN_GHE=`. Hai chốt, cả hai là chỗ một bản
+làm ẩu vẫn trông đúng: **đánh dấu CẢ HAI** ghế trùng tên (đánh dấu mỗi cái thứ hai thì người đọc
+tưởng cái đầu là "cái đúng") · ghế **chưa đặt tên KHÔNG tính là trùng** (chưa ai gọi bằng tên nên
+chưa hỏng; báo trùng ở đó là dạy Đức bỏ qua cảnh báo thật).
+
+Bảng bên thêm nút **“Tên riêng theo Profile ID”** — suy từ chính id nên hai ghế không bao giờ
+trùng, và nó chỉ **ĐIỀN vào ô, không tự lưu**: lưu tên là **cắt dây nối**.
+
+**Chỗ đắt nhất:** công thức tên viết ở **hai nơi** không import được của nhau. Khối ⓓ của
+`tests/ten-ghe-smoke.mjs` **chạy thẳng hàm trong `sidepanel.js`** rồi so với bản Node — chép
+công thức vào phép ghim là dựng bản thứ BA của cùng một luật.
+
+**Hai đột biến sống sót, cả hai tố MÃ chứ không tố ghim** — hai chỗ tôi đặt *hai lớp canh cùng
+một thứ*, gỡ lớp trên thì lớp dưới che mất. Sửa còn một lớp; lý do đầy đủ ở chú thích trong
+`chon-ghe.mjs`. `8/8`.

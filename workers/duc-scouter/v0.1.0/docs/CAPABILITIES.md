@@ -207,7 +207,13 @@ nằm trong bảng `W` vì nó không phải một workflow của một trang: n
 sinh adapter → chạy adapter*. Chạy thật trên Udin: báo cáo 288 KB ⟶ `pilots/t7-tu-sinh/` rút
 selector từ báo cáo bằng ba luật không biết gì về Udin ⟶ **4 ảnh mới trong 39 giây**. Ba selector
 nó tự rút ra trùng bản làm tay `udin-optic/`. `G-84` `G-85` `G-86` `G-87`.
-Mức: **PARTIAL**. Chỉ được gọi **MASTERED** khi mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT.
+~~Mức: **PARTIAL**.~~ → **MASTERED, 17/09 (`R2`).** Điều kiện do chính dòng này đặt ra — *mọi workflow bắt buộc ĐẠT, không còn CHẶN, và E2E ĐẠT* — đủ cả ba từ 16/09. Nhưng `R2` không chỉ lật một cái nhãn: **vòng được chạy LẠI với bộ đầy đủ**, và nó khép.
+
+**Chạy thật 17/09** (ghế `Dummy_Scout`, thư mục báo cáo `r2-udin-17-09`): chặng ② dò ra báo cáo 403.389 byte; chặng ③ dựng adapter **không một selector nào gõ sẵn** — ô nhập `textarea.agent-textarea` rút TỪ BÁO CÁO, vùng kết quả `img.canvas-image` rút TỪ BÁO CÁO, còn cái nút `button.agent-send-button` thì lấy TỪ CHÍNH TRANG (cái đổi từ *chưa bấm được* sang *bấm được* sau lượt gõ). Gõ → bấm → **1 kết quả mới trong 24 giây**.
+
+**Và lượt này tự chứng minh chỗ đắt nhất của thiết kế:** `ketQuaTruoc: 28 → ketQuaSau: 28`, `ketQuaMoi: 1`. Con số **không đổi** mà vẫn có thành viên mới — đúng ca đã hạ bản cũ (đếm đi từ 36 xuống 32 trong khi 4 ảnh mới hiện ra, rồi adapter chờ 590 giây và bị giết). Phép so **TẬP** thay phép so **SỐ** là thứ cứu lượt này.
+
+**PHẠM VI — thứ mức `MASTERED` này KHÔNG nói:** bộ sinh adapter mới chạy trên Udin. Hình dạng của nó giả định một trang *gõ prompt → bấm nút → ra kết quả*; `R3` cho thấy **seed** chạy được trên `tldraw` (loại khác hẳn), nhưng **chuỗi sinh adapter** thì chưa được thử ở đó — và trên tldraw nó sẽ không có ô prompt nào để bám.
 
 **Và đây là chỗ câu hỏi ⓪ của Đức đã tự trả gần hết.** Đề xuất bắt buộc là `W1 W2 W3 W4 W7` +
 E2E — **cả sáu nay đều ĐẠT**. ~~Ba `W` còn lại đúng là ba cái đề xuất để NGOÀI: `W5` `W6` dính

@@ -111,10 +111,19 @@ UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-tham-chieu.mjs "<prompt CHUA 
 ⑶ Sau lượt gỡ thì mốc **luôn bằng 0**, nên hiệu số `sau > truoc` là một biến thừa — đổi sang
 một con số tuyệt đối, và hai con đột biến của nó hoá ra **tương đương**.
 
-**② `R2` — khép vòng tự cải tiến LẦN HAI, nay có đủ 8/8.** `T7` khép 14/09 ở mức `PARTIAL`:
-nó dò một trang lạ → sinh adapter → chạy. Lúc ấy bảng `W` mới 5/8 nên vòng chỉ đi được phần
-đọc. Chạy lại với bộ đầy đủ là phép thử thật cho câu *"seed này dùng lại được"*.
-**Không cần hỏi ai.**
+**② `R2` — khép vòng tự cải tiến LẦN HAI. ✅ ĐÓNG 17/09, `T7` lên `MASTERED`.**
+Chạy thật trên ghế `Dummy_Scout`, thư mục `r2-udin-17-09`: chặng ② ra báo cáo 403.389 byte;
+chặng ③ dựng adapter **không một selector nào gõ sẵn** (ô nhập và vùng kết quả rút TỪ BÁO CÁO,
+cái nút lấy TỪ CHÍNH TRANG bằng phần đổi trước/sau lượt gõ) → gõ → bấm → **1 kết quả mới trong
+24 giây**.
+
+**Lượt này tự chứng minh chỗ đắt nhất của thiết kế:** `ketQuaTruoc: 28 → ketQuaSau: 28`,
+`ketQuaMoi: 1`. Con số KHÔNG ĐỔI mà vẫn có thành viên mới — đúng ca đã hạ bản cũ. So **TẬP**
+thay so **SỐ** là thứ cứu lượt này.
+
+**PHẠM VI:** bộ sinh adapter mới chạy trên Udin; hình dạng của nó giả định *gõ prompt → bấm nút
+→ ra kết quả*, nên trên `tldraw` nó sẽ không có ô prompt nào để bám. `R3` chứng minh **seed**
+dùng lại được ở trang khác loại; `R2` chứng minh **vòng tự cải tiến** khép. Hai câu khác nhau.
 
 **③ `R3` — TRANG THỨ HAI, khác loại. ✅ ĐÓNG 17/09 trên `tldraw.com`.**
 Điều kiện đóng là *một* `W`; đóng bằng **hai**: ⓐ đổi màu vẽ (`Color — Black (selected)` 1 → 0,
