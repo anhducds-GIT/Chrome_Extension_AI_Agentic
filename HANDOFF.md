@@ -687,3 +687,28 @@ lại 177,3s trên trần 180 của cả bộ**, nên song song không cứu đ�
 chạy còn mù 25 suite) và `N-67` vế một (*"sổ cái bỏ sót 29"* — cộng đủ ba đường thì thiếu **0**).
 Cả hai cùng một tật: đếm hai con số, thấy lệch, rồi **đặt tên cho khoảng lệch** thay vì hỏi nó
 là gì.
+
+## 2026-09-18 · `claude-universal-scouter` — website mới có cần extension mới không
+
+Nghiên cứu Đức giao. Kết quả + đặc tả ở `workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md`,
+sổ `G-100`…`G-103`. Ở gốc chỉ ghi thứ dùng được cho **mọi** gói.
+
+**Biên của hệ không phải extension — mà là PROFILE.** `chrome.debugger.getTargets()` chỉ thấy
+profile mà extension được cài. Đức có **11 profile**; hai ghế Scouter thấy hai tập target **rời
+nhau hoàn toàn** (40 vs 19). Hệ quả cho mọi gói: một câu *"không tìm thấy trang"* **phải kèm đã
+hỏi ghế nào, mỗi ghế thấy bao nhiêu target** — nếu không, nó không phân biệt được *trang không
+mở* với *trang mở ở profile khác*, và tôi đã phát hành đúng một kết luận sai kiểu đó cho Đức.
+
+**Cùng Chromium không có nghĩa cùng runtime.** Đo được bốn runtime cùng lúc trên máy Đức: Chrome
+tab · Chrome app window/PWA (**đọc được như tab thường**) · Electron (`claude`, `ChatGPT`, `Zalo`)
+· WebView2 (`msedgewebview2`). Hai cái sau **ngoài tầm mọi extension**, đừng mở lại.
+
+**Ba bẫy công cụ, dùng chung cho mọi lane:**
+
+1. `claim.mjs --sua <vùng>` ghi vào khoá `tam` (mức FILE, vài phút). Cổng `--soat` hỏi quyền
+   **VÙNG**, lấy bằng `--take`. Hai cờ hai việc, và `--help` chỉ in `--take`.
+2. `grep -c '"<khoá>"' .agents/claims.json` **đếm cả khoá nằm trong `tam`** — nó trả 2 và trông
+   y hệt "trùng key, `JSON.parse` nuốt mất". Đo bằng `JSON.parse` thật trước khi đụng sổ khoá.
+3. `rule-compile.mjs --sinh` sinh ra thay đổi ở `docs/protocols/MULTIFLOW.md` và
+   `.repo-structure.json` mà cổng **không** đòi. Đó là việc đang dở của lane khác (`6616cfb7`),
+   không phải của lượt chạy hiện tại — **đừng commit nó dưới nhãn lane mình**.
