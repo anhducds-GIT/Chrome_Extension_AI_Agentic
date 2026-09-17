@@ -183,7 +183,7 @@ sai hai tiếng sau. Xem `G-108`.
 |---|---|---|
 | ① danh tính chính = email | **XONG** | `_shared/adapters/vizcom.mjs` — `danh_tinh` = `{a11y_chua:"anhducds@gmail.com"}`, workspace/gói xuống `danh_tinh_phu`. Ghim: `hop-dong-smoke` ⓙ · `giai-target-smoke` ⓞ/ⓞ′ |
 | ③ khoá danh tính trước/sau | **XONG** | `_shared/goi-bridge/giai-target.mjs` → `khoaDanhTinh()`. Ghim ⓟ–ⓣ, cả bốn đã thử **đột biến** và đều ĐỎ |
-| ② `scout.song` | **CODE XONG, CHƯA CHẠY ĐƯỢC** | `scouter-bridge-core.mjs` (bảng method) + `scouter-seed-core.mjs` (xử lý + `SONG_HAN_MS`). Ghim ⑳. **Chặn bởi lượt nạp lại extension** — đo thật lúc 18/09: `METHOD_NOT_FOUND` sau **22ms** |
+| ② `scout.song` | **CHẠY THẬT, ĐO XONG** | Đức nạp lại 2/4 ghế 18/09. Vizcom `anhducds` **20·84·85·10·4 ms** · `tuanvv4` **2·3·3·2·3 ms**, `song:true` 10/10 — cách hạn 1.500ms ≥17×. Hai ghế chưa nạp vẫn `METHOD_NOT_FOUND`. Sửa thêm `ly_do` tách **từ chối nhanh** khỏi **treo** (`G-111`). Đường TREO chưa đo được trên máy thật |
 | ④ pilot ghi | **CHƯA** | Chặn bởi công tắc đường ghi |
 
 **Ba chỗ pilot sửa lại lộ trình này** — ghi ra vì lộ trình là một lời khai, không phải một sự thật:

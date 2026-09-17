@@ -479,13 +479,30 @@ export function createSeedHandlers(deps = {}) {
     async "scout.song"(params) {
       const target = await resolveTarget(params.target_id);
       const batDau = Date.now();
+      /* HAI ĐƯỜNG DẪN TỚI `song: false`, VÀ CHÚNG KHÔNG PHẢI MỘT.
+       *
+       * Đo thật 18/09 sau lượt nạp lại: `chrome://extensions/` trả `song:false` ở **ms 0–1**.
+       * Đó là một lượt TỪ CHỐI — Chrome không cho gắn debugger vào trang nội bộ — chứ không
+       * phải một renderer chết. Bản đầu gộp cả hai vào cùng một `false`, và ai đọc `ms:0` sẽ
+       * đi tìm một cái tab chết không hề tồn tại.
+       *
+       *   ném nhanh, `ly_do` có chữ   → KHÔNG ĐƯỢC PHÉP hỏi (hoặc phép dò hỏng)
+       *   `ly_do` rỗng, ms ≈ 1.500    → hỏi rồi, TRANG KHÔNG ĐÁP
+       *
+       * Cả hai vẫn dẫn tới cùng một việc phải làm (DỪNG), nên nó không phải lỗ hổng an toàn.
+       * Nhưng một con số không nói mình đo được cái gì thì không đối chiếu được với cái gì —
+       * và `ly_do` là chỗ nó tự nói. */
+      let ly_do = null;
       const song = await Promise.race([
-        runProbe("scout.view", target, {}).then(() => true, () => false),
+        runProbe("scout.view", target, {}).then(() => true, (loi) => {
+          ly_do = String(loi?.message ?? loi).slice(0, 120);
+          return false;
+        }),
         /* `timers.setTimeout`, không phải cái toàn cục: `timers` được tiêm đúng để phép ghim
          * khỏi phải chờ thật 1,5 giây mỗi lượt chạy suite (xem khối `deps` ở đầu tệp). */
         new Promise((giai) => timers.setTimeout(() => giai(false), SONG_HAN_MS))
       ]);
-      return { probe: "page.view", data: { song, ms: Date.now() - batDau, han_ms: SONG_HAN_MS }, cdp: [] };
+      return { probe: "page.view", data: { song, ms: Date.now() - batDau, han_ms: SONG_HAN_MS, ly_do }, cdp: [] };
     },
 
     /* `scout.view` — phép ĐỌC của nhóm "nhìn & đi lại" ([ADR-0007]). Không tham số nào ngoài

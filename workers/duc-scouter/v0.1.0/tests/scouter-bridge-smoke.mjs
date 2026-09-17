@@ -670,6 +670,21 @@ function request(method, params) {
     const het = await dangCho;
     assert.equal(het.ok, true, "trang câm KHÔNG được thành một lượt NÉM — người gọi phải bọc try để hỏi 'còn sống không' thì đúng bằng việc không có method này");
     assert.equal(het.result.data.song, false);
+    assert.equal(het.result.data.ly_do, null,
+      "HẾT HẠN thì `ly_do` phải RỖNG — đó là dấu phân biệt 'đã hỏi, không đáp' với 'không được phép hỏi'");
+  }
+
+  /* ⑶ TỪ CHỐI NHANH ≠ TRANG CHẾT. Đo thật 18/09: `chrome://extensions/` trả `song:false` ở
+   *    ms 0–1 vì Chrome không cho gắn debugger vào trang nội bộ. Gộp nó với một renderer chết
+   *    là gửi người đi tìm một cái tab chết không tồn tại. */
+  {
+    const { engine, dispatch } = makeSeed({ fail: true });
+    const r = await dispatch(request("scout.song", { target_id: TARGET_ID }));
+    assert.equal(r.ok, true, "một lượt từ chối vẫn là một CÂU TRẢ LỜI, không phải một lượt ném");
+    assert.equal(r.result.data.song, false);
+    assert.ok(r.result.data.ly_do, "từ chối nhanh PHẢI kèm lý do — không có nó thì nó đọc y hệt một trang chết");
+    assert.ok(r.result.data.ms < 1500, "và nó phải về trước hạn, không phải chờ hết 1.500ms");
+    assert.equal(engine.calls.length, 1);
   }
 }
 

@@ -121,7 +121,7 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
    * nó nói *ai quyết, khi nào, vì sao* — và nó phải đọc được bởi người sẽ gặp nó sáu tháng nữa
    * mà không có mặt lúc quyết. */
   const CO_Y_KHAC = Object.create(null);
-  CO_Y_KHAC["scripts/scouter-seed-core.mjs"] = { bam_day: "4c966af358e8d18c", bam_goc: "4d65e73c647ce05f", ly_do:
+  CO_Y_KHAC["scripts/scouter-seed-core.mjs"] = { bam_day: "4c966af358e8d18c", bam_goc: "3d1009ba7fc1989f", ly_do:
     "18/09, Đức chốt đường ⒝ của `duc-scouter/v0.1.0/docs/VIZCOM-PHASE-2.md` §3: `scout.song` " +
     "(phép dò SỐNG, read-only, hạn 1.500ms) chỉ triển khai trong Scouter, KHÔNG chép sang đây. " +
     "Lý do: nó là năng lực của BỘ ĐỒ NGHỀ duyệt web nói chung — trả lời 'renderer còn đáp không' " +

@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-17T18:56:43.275Z",
       "task": "sinh lai trang tong",
-      "released_at": null,
+      "released_at": "2026-09-17T18:57:57.774Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -77,16 +77,16 @@
     "workers/duc-scouter": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T18:40:36.481Z",
-      "task": "Vizcom Phase 2: scout.song + pilot ghi",
+      "claimed_at": "2026-09-17T19:13:18.730Z",
+      "task": "scout.song: tach tu-choi khoi treo",
       "released_at": null
     },
     "workers/_shared": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-17T18:40:36.386Z",
       "task": "Vizcom Phase 2: danh tinh email + re-check truoc write",
-      "released_at": null
+      "released_at": "2026-09-17T18:57:57.288Z"
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -98,10 +98,10 @@
     "workers/udin-optic": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T18:48:19.413Z",
-      "task": "khai CO_Y_KHAC cho scout.song",
+      "claimed_at": "2026-09-17T19:13:18.795Z",
+      "task": "cap nhat neo bam",
       "released_at": null
     }
   },
-  "_fingerprint": "e08d7d7c7d7030e5"
+  "_fingerprint": "b1383d33d65af7c1"
 }

@@ -2782,3 +2782,21 @@ lại lộ trình: **§8 của file đó**. Đây chỉ ghi thứ sẽ cắn phi
 
 **Chặn cứng, chỉ Đức gỡ:** ⑴ nạp lại extension ghế `5ba67fd2…` — `scout.song` đo được
 `METHOD_NOT_FOUND` sau 22ms, bản trong Chrome là bản cũ; ⑵ bật công tắc ghi cho chặng ④.
+
+## 2026-09-18e · `claude-universal-scouter` — `scout.song` chạy thật, và một chỗ nó nói dối
+
+Đức nạp lại **2 trong 4** ghế. Trên hai ghế đó `scout.song` chạy: Vizcom `anhducds`
+**20·84·85·10·4 ms**, `tuanvv4` **2·3·3·2·3 ms**, `song:true` 10/10 lượt — cách hạn 1.500ms
+ít nhất **17×**. Hai ghế chưa nạp trả `METHOD_NOT_FOUND` ở 3–22ms: **bản chạy trong Chrome là
+bản lúc nạp**, sửa tệp trên đĩa không đổi nó. `target_id` bịa → NÉM `PROBE_FAILED`, không trả
+`song:false` — "tìm target nào" là câu hỏi khác "target còn sống không".
+
+**Chỗ bản đầu nói dối:** `chrome://extensions/` trả `song:false` ở **ms 0–1**. Đó là một lượt
+**TỪ CHỐI** (Chrome không cho gắn debugger vào trang nội bộ), không phải renderer chết — và
+`ms:0` đọc lên như một cái tab chết không hề tồn tại. Đã thêm `ly_do`: có chữ = không được
+phép hỏi · rỗng + ms≈1.500 = hỏi rồi không đáp. Cả hai vẫn dẫn tới DỪNG nên không phải lỗ
+hổng an toàn, nhưng một con số không nói mình đo được gì thì không đối chiếu được với gì.
+
+**CHƯA ĐO ĐƯỢC đường TREO trên máy thật.** 6 target chết của `G-107` nằm ở ghế `Scouter_blank`,
+và ghế đó chưa nạp lại. Đường treo hiện chỉ có phép ghim với đồ giả — đừng đọc `G-111` thành
+"đã chứng minh cả ba lớp".
