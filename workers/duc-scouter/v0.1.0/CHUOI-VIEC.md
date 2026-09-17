@@ -84,7 +84,18 @@ tính năng riêng của ứng dụng, không phải một đường nhập tệ
 kèm vì **Udin đang ĐẦY CHỖ** — lý do nằm ngoài repo, không phải trong mã. Dấu hiệu nhận ra:
 `.concurrency-overlay` có mặt và đọc ra *“User Limit Reached · Please try again in a few minutes
 when other users finish their sessions.”*. Đo: **~25 phút** và **6 lượt bấm `Try Again`** cách
-nhau một phút đều không tắt được nó, nên **đừng bấm thêm — chỉ có đợi**. Làm tiếp:
+nhau một phút đều không tắt được nó, nên ~~**đừng bấm thêm — chỉ có đợi**~~.
+
+> **CÂU GẠCH TRÊN SAI, Đức bác 17/09:** *"đây chỉ là bug thôi, từ sau bạn cứ ấn."* Màn chắn là
+> **lỗi giao diện của Udin**, không phải hết chỗ thật. Nay `quaManCho` bấm lại tới 12 lần.
+>
+> Và cái sai nằm sâu hơn một con số: phép đo 16/09 ghi ĐÚNG triệu chứng (~25 phút, 6 lượt bấm,
+> không tắt) rồi **tôi tự đặt tên cho nguyên nhân** — *"máy chủ đầy chỗ"* — và viết cái tên ấy
+> thành luật. Hôm sau chính luật ấy chặn một lượt chạy thật và tôi báo cho Đức là *bị chặn bởi
+> sức chứa máy chủ*, một câu chỉ mình anh bác được. **Triệu chứng thì đo được; nguyên nhân thì
+> phải hỏi người biết.**
+
+Làm tiếp:
 
 ```
 # ~~vong-style.mjs~~ — TEP NAY DA XOA 17/09 (Duc chot). Duong thay the, lam duoc moi thu no lam:

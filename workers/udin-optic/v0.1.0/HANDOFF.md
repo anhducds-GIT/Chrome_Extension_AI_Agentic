@@ -932,3 +932,32 @@ trả lời. Cái thứ hai chỉ lộ ra vì có một lượt treo đủ lâu 
 sức chứa máy chủ Udin, **không** bởi thứ gì trong repo này. Đường danh tính đã chứng minh xong
 trên dây thật ở lượt ① (thả vào, chọn được, gửi được); thứ còn thiếu duy nhất là một lượt Udin
 chịu sinh ảnh. Luật cũ vẫn đúng: **đừng bấm `Try Again` thêm — chỉ có đợi.**
+
+## 2026-09-17f · `claude-scouter-udine` — Đức bác lời khai "máy chủ đầy chỗ": đó là BUG, cứ ấn
+
+**Đức, 17/09:** *"máy chủ Udin đang đầy chỗ → đây chỉ là bug thôi, từ sau bạn cứ ấn."*
+
+Mục 17/09e ở trên khai màn chắn `.concurrency-overlay` là **hết chỗ thật** và kết luận `RD` bị
+chặn bởi sức chứa máy chủ. **Vế ấy SAI.** Màn chắn có thật, nhưng nó là **lỗi giao diện của
+Udin** — bấm `Try Again` là qua.
+
+**Cái sai nằm sâu hơn một con số, và đó mới là phần đáng giữ lại.** Phép đo 16/09 ghi ĐÚNG triệu
+chứng: ~25 phút, 6 lượt bấm, màn chắn không tắt. Rồi tôi **tự đặt tên cho nguyên nhân** — *"máy
+chủ đầy chỗ"* — và viết cái tên ấy thành luật trong `CHUOI-VIEC.md`: *"đừng bấm thêm, chỉ có
+đợi."* Hôm sau chính luật ấy chặn một lượt chạy thật, `quaManCho` bỏ cuộc sau ĐÚNG MỘT cú bấm, và
+tôi báo cho Đức là *bị chặn bởi sức chứa máy chủ* — một câu chỉ mình anh bác được.
+**Triệu chứng thì đo được; nguyên nhân thì phải hỏi người biết.**
+
+**Sửa ở cả ba tầng, không chỉ ở mã:**
+
+| tầng | trước | nay |
+|---|---|---|
+| mã | bấm **1** lần rồi ném | bấm lại tới **12** lượt, mỗi lượt kiểm màn chắn đã tắt; trả về số lượt đã bấm |
+| câu báo | *"máy chủ Udin vẫn đầy chỗ"* | kể **đã bấm mấy lần, chờ bao lâu**, và **không đặt tên cho nguyên nhân** |
+| luật | `CHUOI-VIEC.md` · `CAPABILITIES.md` · `GIA-THUYET.md` khai "hết chỗ" | cả ba **gạch tại chỗ** kèm câu Đức bác |
+
+**Ghim phải phân biệt được, và bản đầu thì không:** bộ ghim cũ vẫn xanh trọn sau khi tôi sửa mã —
+vì mọi khối của nó chỉ dựng ca *tắt ngay ở cú đầu* hoặc *không bao giờ tắt*. Thêm `tatOLan`
+(màn chắn chịu tắt ở cú thứ N) và một khối đòi `bam: 3`; cộng một khối khẳng định câu đỏ
+**KHÔNG** chứa chữ *"đầy chỗ"* — thiếu vế ấy thì một bản chỉ sửa số lần bấm mà giữ nguyên lời
+khai bậy vẫn xanh. `10` khối · `5/5` đột biến.

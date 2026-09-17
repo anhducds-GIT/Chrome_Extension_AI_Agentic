@@ -2289,3 +2289,24 @@ trỏ `R2`/`R3`; Đức khoanh phạm vi 17/09 nên cả hai **parked**, và dò
 Đáng ghi lại vì nó ngược chiều thói quen của gói này: danh sách method GHI **chưa bao giờ ngắn
 lại** trước hôm nay. Lý do nó ngắn được là có một đường khác làm cùng việc mà không mang theo
 cái hiểm của nó — không phải vì ta siết cho đẹp.
+
+## 2026-09-17d · `claude-scouter-udine` — gạch lời khai "Udin hết chỗ" ở ba tài liệu của gói này
+
+**Đức bác 17/09:** màn chắn `.concurrency-overlay` của Udin là **bug giao diện**, không phải hết
+chỗ thật — *"đây chỉ là bug thôi, từ sau bạn cứ ấn."* Mã sửa ở gói `udin-optic`; đây là phần sổ
+sách của gói này, vì ba tài liệu ở đây đang dạy người sau một điều sai.
+
+| file | câu bị gạch |
+|---|---|
+| `CHUOI-VIEC.md` | *"đừng bấm thêm — chỉ có đợi"* |
+| `docs/CAPABILITIES.md` hàng `W1` | *"thất bại: màn chắn còn sau 15 giây"* → nay bấm lại tới 12 lượt, và câu đỏ không đặt tên nguyên nhân |
+| `docs/GIA-THUYET.md` `G-57` | *"màn chắn là thật, Udin đang hết chỗ"* — vế đầu đúng, **vế sau sai** |
+
+**`G-57` đáng đọc kỹ vì nó là một hàng ĐÚNG chở một chữ SAI.** Phép dò `scout.text` làm đúng việc
+của nó: đọc ra 100 ký tự chữ trên màn chắn. Thứ hỏng là câu tôi viết thêm vào cột *"kết luận"* —
+một **nguyên nhân** không nằm trong phép đo nào. Hàng ấy đã được trích đi trích lại suốt ba ngày
+như một sự thật đã đo.
+
+**Luật rút ra, và nó rộng hơn Udin:** một hàng trong sổ giả thuyết chỉ được chở thứ phép đo ấy
+CHẠM tới. *"Đọc ra chữ X"* là phép đo. *"Nghĩa là máy chủ đang đầy"* là một lời suy — và một lời
+suy đứng trong cột kết luận thì không ai đi kiểm lại nữa.
