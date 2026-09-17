@@ -151,15 +151,15 @@
     {
       "id": "udin-optic",
       "path": "workers/udin-optic/v0.1.0",
-      "lifecycle": "building",
+      "lifecycle": "active",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
       "next_step": "CA HAI CA CUA DUC CHAY TRON BANG MOT LENH (do that 17/09): --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai. Bay chang W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4, khong mot hop thoai nao. Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src. Man chan User Limit Reached la BUG: Duc chot cu an, quaManCho bam lai toi 12 luot. Con mo: S-31 — CAN DUC CHOT. R2/R3 PARKED.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
-      "last_verified": null,
-      "last_verified_commit": null,
+      "last_verified": "2026-09-17",
+      "last_verified_commit": "cf406fb6f91f4725be2aad0f3dc04f0c7e905857",
       "open_item": "CA HAI DIEM DUNG DA QUA: Duc nap lai extension 17/09; Scouter v1 ky o ADR-0008. Duong ranh: 4 tep CO Y KHAC + tu-dong/ chay chieu Udin->Scouter; 7 tep CHEP BI GHIM chay chieu nguoc lai. Phep thu mot cau truoc moi viec: co can method Bridge MOI khong? S-31 (Udin khong tu nap lai duoc) van mo — moi lan sua ma extension deu phai nho Duc bam mot lan, va mo lai la THEM MOT METHOD nen phai Duc chot."
     }
   ],
