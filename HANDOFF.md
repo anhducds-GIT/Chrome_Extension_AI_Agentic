@@ -662,3 +662,28 @@ hiện đều đã vá** — nhưng lúc commit tôi **chưa gõ nhãn `Audit:`*
 đường im lặng. Từ lượt sau nhãn đi kèm. Ghi ra đây để bản ghi không đẹp hơn sự thật.
 
 <!-- HANDOFF-THANG: 2026-09 -->
+
+## 2026-09-17s — A5 đóng 13→1 · A4 đo lại · một phép ghim mới cho cả mặt luật
+
+Lane `claude-scouter-udine`.
+
+**Một bệnh, không phải bốn lỗi rời:** `AGENTS.md` đánh số lại khi nén luật, **21 chỗ trên mặt
+luật SỐNG vẫn trích số cũ**; ba chỗ dẫn người đọc sang mục nói chuyện khác hẳn. Trích sai số
+không nổ — người đọc mở đúng file, thấy một mục có thật, rồi làm theo một luật không liên quan.
+Vá 21 chỗ + `tests/trich-muc-agents-smoke.mjs` (số · tên · liên kết neo, 30 file, thử phá 4/4
+đỏ, vào `scripts.test` → 36 suite). Phép ghim bắt thêm 2 chỗ, một là **câu ví dụ của chính luật**
+*"trỏ tới AGENTS.md thì kèm TÊN mục"* trong `RULE-COMPILER.md`.
+
+**`N-68` mới — nặng nhất:** `claim.mjs --khai-vung` có thật, đóng `N-41` 08/09 kèm 2 phép ghim,
+rồi **biến mất** trong lượt migrate bộ khung `4da1e9e5`. Phép ghim của nó không nạp nổi và nằm
+trong khu cách ly `test:chet`, nên 8 ngày không lượt chạy nào kêu. Lượt ấy thay 36 file máy —
+**chưa ai đếm còn bao nhiêu cửa nữa mất theo.**
+
+**`N-69` mới:** `can-nang` bấm giờ `npm test` (29 suite), lệnh không luật nào bảo chạy lúc đóng
+phiên; nay bấm `test:song-song` (36 suite). Thước vẫn 180, hàng vẫn ĐỎ — **nhóm chạy-riêng cộng
+lại 177,3s trên trần 180 của cả bộ**, nên song song không cứu được.
+
+**Hai con số của chính tôi, gạch tại chỗ:** *"35/35 trong 116s"* (thật: 220s, số cũ đo lúc bộ
+chạy còn mù 25 suite) và `N-67` vế một (*"sổ cái bỏ sót 29"* — cộng đủ ba đường thì thiếu **0**).
+Cả hai cùng một tật: đếm hai con số, thấy lệch, rồi **đặt tên cho khoảng lệch** thay vì hỏi nó
+là gì.

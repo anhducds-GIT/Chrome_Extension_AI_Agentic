@@ -500,3 +500,20 @@ từ vựng đóng bốn lệnh · ghi tệp không qua extension · chỉ nối
 **`PROTOCOL.md` (519 dòng) thì CHƯA rà** — mới quét, chưa đọc hết, nên **không đặt ngày** cho nó.
 Ghi ở `N-66` của sổ nợ gốc. Đặt ngày cho một file mới quét là đúng thứ bản khai của trường
 `ra_soat` gọi là *"tự tắt máy cảnh"*.
+
+## 2026-09-17 — A5: PROTOCOL.md đã rà HẾT 519 dòng, đặt ngày
+
+Lane `claude-scouter-udine`. **Đọc hết, không quét.** Kiểm từng thứ file này nêu tên: 13 file
+và thư mục · cờ `--loai CHI_SO_CO_PHIEU`/`HDTLCSCP` · phím tắt `Ctrl+Shift+H` trong manifest ·
+mọi con số tự khai (4 lệnh · 3 thứ vắng mặt · 4 bẫy · 4 phép kiểm tự động · 4 việc đối chiếu ·
+4 điều cấm · 3 việc hỏi Đức · 3 luật bảo trì) — **tất cả khớp**.
+
+**Một chỗ sửa:** mục 2 ① dạy sinh tệp ghép cặp bằng `--ra "<đường dẫn>"`. Cờ đó còn chạy, nhưng
+`tao-tep-ghep-cap.mjs` nay khuyên `--goi <tên-gói>` — nó tự đặt tệp vào **nhà chung của Bridge
+ngoài kho mã** đúng quy ước tên, thay vì để người gõ tự chọn chỗ. `AGENTS.md` gốc (mục 8) đã
+dạy `--goi`; protocol này thì chưa. Đã đổi sang `--goi`, giữ `--ra` làm lối khi có lý do riêng.
+
+**Không sửa, ghi lại để lane giữ `workers/_shared` biết:** docblock `══ DÙNG ══` ở đầu
+`tao-tep-ghep-cap.mjs` (dòng ~32) chỉ khai `--ra`, trong khi `main()` của chính nó in ra hai
+cách và gọi `--goi` là *"khuyên dùng"*. Tức file tự mâu thuẫn với mình. Vùng đó không phải của
+tôi ở lượt này.
