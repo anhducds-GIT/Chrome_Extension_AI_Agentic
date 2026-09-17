@@ -38,6 +38,21 @@ trôi* không phải fork — fork là hai bản trôi **mà không ai biết**.
 
 **CHƯA làm:** chưa một lượt chạy thật nào từ extension này — chặng ④, cần Đức nạp extension.
 
+## 2026-09-17 · `claude-scouter-udine` — gói này lần đầu được khai là một NƠI CHỨA LUẬT
+
+`workers/udin-optic/v0.1.0/AGENTS.md` nay có tên trong `luat.ra_soat` của `.repo-structure.json`.
+Trước đó gói **không có nơi chứa luật nào**, nên bộ biên dịch báo đúng một câu: *"KHÔNG số hiệu
+nào được trích (1/1)"* — tức [ADR-0001](docs/adr/0001-duc-ky-udin-v1.md), **chữ ký `Udin v1` của
+Đức**, là một quyết định mồ côi. Nay `AGENTS.md` trích nó ở mục *Gói này là gì*, kèm vế đắt hơn
+của chữ ký: gói **khai đúng chỗ nó không làm được**, và mọi lượt mở năng lực sau phải giữ nguyên
+danh sách ấy.
+
+Sửa thêm một lượt trích treo: `[ADR-0009]` ở bảng bản đồ (`chon-tham-chieu.mjs`) **không có liên
+kết**, nên nó rơi vào sổ của chính gói này — nơi không có ADR-0009 nào. Nó là ADR của Scouter
+(`data-image-id`); đã nối đúng đường dẫn.
+
+Bốn phép của bộ biên dịch sau lượt này: ① 0 · ② **0** · ③ 0.
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 ## 2026-09-15b · `claude-scouter-udine` — máy chủ đã chạy thật, và nó tự xưng nhầm tên ngay lượt đầu

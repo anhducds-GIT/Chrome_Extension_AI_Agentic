@@ -387,6 +387,21 @@ nợ hạ tầng vào `BACKLOG.md` gốc repo.
 **Chưa làm:** gói vẫn `building`, chưa khai `last_verified`. Việc kế là lượt live một job
 (Image + chip x3) kiểm F-26 — **cần Đức bấm**.
 
+## 2026-09-17 · `claude-scouter-udine` — gỡ một vế ĐÃ CHẾT khỏi `decisions.md`
+
+Lượt rà soát luật (`A5` của lộ trình gốc repo) bắt được: `decisions.md` còn dạy *"viết ở
+`Proposed`, đổi sang `Accepted` ở một lượt riêng"*. Đức chốt **ngược lại** ngày 09/09
+([ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵) và `docs/_TEMPLATE-adr.md`
+đã ghi nó là vế chết từ hôm ấy — file này thì không, nên nó **dạy tiếp một thứ đã bị bãi suốt
+tám ngày**.
+
+**Vì sao máy không bắt được, và đây là phần đáng nhớ:** phép ① của bộ biên dịch chỉ đỏ khi có một
+lượt trích **mang số hiệu** (`ADR-0026 ⑵`). Câu cũ ở đây nói đúng nội dung vế đã chết nhưng **bằng
+lời của mình**, không trích số nào — nên nó vô hình với máy. Đó chính là khoảng trống mà lượt rà
+soát hằng tuần (giới hạn ⑨) sinh ra để lấp, và đây là lần nó trả tiền.
+
+Đổi đúng một khối văn; **không** chạm mã, không chạm ADR nào của gói.
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 **Đẩy kèm `--carry`** (ADR-0005, Đức duyệt thường trực). Ba commit của lane khác bị cuốn theo,

@@ -478,11 +478,10 @@ chứng minh là ĐỎ ĐƯỢC"* — nó chỉ dò TÊN trong văn bản, khôn
 `npm run test:do-that` — **KHÔNG** vào `npm test`: 12 lượt cổng, và bộ kiểm chính đã 199/180 giây.
 ## 2026-09-17 · `claude-scouter-udine` — sổ luật thôi đếm một cây khác; `A2`–`A5`
 
-**`A2` — bộ đo quét ĐĨA trong khi repo được định nghĩa bởi GIT.** `rule-compile.mjs` báo **169
-quyết định mồ côi**; **164** trong số đó nằm ở `.claude/worktrees/`, một cây mà `git ls-files`
-đếm **0 file**. Bỏ qua `.claude/` → sổ cái **354 → 180** quyết định, mồ côi **169 → 0** (năm mục
-thật đã xử: bốn ADR Scouter được trích đúng chỗ luật của chúng sống, `udin-optic` lần đầu được
-khai là một nơi chứa luật). Đối chứng: `can-nang.mjs` đọc từ git nên **không** bị thổi.
+**`A2` — bộ đo quét ĐĨA trong khi repo được định nghĩa bởi GIT.** Báo **169 quyết định mồ côi**;
+**164** nằm ở `.claude/worktrees/`, cây mà `git ls-files` đếm **0 file**. Bỏ qua `.claude/` → sổ
+cái **354 → 180**, mồ côi **169 → 0** (năm mục thật đã xử). Đối chứng: `can-nang.mjs` đọc từ git
+nên **không** bị thổi.
 
 **`A3` — B16 xanh, và nay CHẶN.** Khai bảy `luat.chu_de`; 20 ADR gốc nhận `chu_de:` + `nhom:`
 **cùng giá trị** (một phân loại, không phải hai), mỗi chủ đề đúng một `dau_moi`. `npm run luat --
