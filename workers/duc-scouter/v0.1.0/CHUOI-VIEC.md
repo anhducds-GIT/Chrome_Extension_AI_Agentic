@@ -72,23 +72,19 @@ nó vẫn ghi `MỞ` · `S-24` đường ⓜ (`scout.grab`) làm xong **14/09**,
 > **Viết một mục “chờ Đức” là một lời khai, và lời khai nào cũng phải đo trước khi viết.** Một lệnh
 > `grep alarms manifest.json` là đủ để không ai mất thời gian.
 
-**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI. Chạy 17/09: **hai phần ba đóng**, phần còn lại kẹt ở `S-31`.**
-Đức mở tab `tldraw.com`, ghế `Dummy_Scout`. Số đã vào `TRIALS.md`:
-· `scout.text` **122ms**, đọc ra `"100%"`, 4 ký tự — **ĐẠT**.
-· `scout.grab` **1020ms**, HTTP 200, **287.003 byte**, URL thật không ra khỏi trình duyệt — **ĐẠT**.
-· `scout.type` gõ được 20 ký tự và `scout.text` đọc lại đúng từng chữ — **nhưng chạy trên MÃ CŨ.**
+**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI. ĐÓNG 17/09.**
+Đức mở tab `tldraw.com`. Ba lệnh chạy sống, số đã vào `TRIALS.md`:
+· `scout.text` **122ms** → `"100%"`, 4 ký tự.
+· `scout.grab` **1020ms** → HTTP 200, **287.003 byte**, URL thật không ra khỏi trình duyệt.
+· `scout.type` → gõ tới trang, và **tự kiểm đúng hợp đồng**: `da_kiem: true`, `kiem_bang: "dom.text"`.
+tldraw không có ô nhập nào, nên ô ấy dựng bằng chính bộ lệnh: `tools.text` → `canvas` → `contenteditable` 0→1.
+**Câu *“seed dùng lại được”* nay đúng cho **sáu** lệnh trên trang thứ hai, không phải ba.**
 
-**Chỗ kẹt — và tôi đã đoán sai một lần ở đây, xem `G-99`.**
-`scout.type` trả về **thiếu `da_kiem`**, và **sau một lượt Đức nạp lại extension vẫn thiếu**. Mã trong
-repo thì luôn trả `da_kiem`. ~~*“Bản nạp cũ hơn repo”*~~ — **đã rút**: bằng chứng cũ (`scout.tha`,
-`scout.upload` trả `METHOD_NOT_FOUND`) **vô giá trị** — hai lệnh ấy là của `udin-optic`, chưa bao giờ
-thuộc từ vựng Scouter.
-**Đo đến đâu:** `system.capabilities` khai **25 method, khớp repo 25/25** — nhưng đó là **máy chủ** trả
-lời, không phải extension. Bản đang chạy có `scout.chon` (16/09 22:32) mà thiếu đường tự kiểm
-(16/09 10:36, **tổ tiên** của `scout.chon`) — **không checkout nào của repo này ở trạng thái đó**.
-**Cần ĐỨC đúng một số:** `chrome://extensions` → extension Scouter → dòng **Đường dẫn / Loaded from**.
-Không có số đó thì mọi câu tiếp theo về `N4` là đoán.
-**Đóng khi:** `scout.type` chạy trên `tldraw` và trả **`da_kiem`** — ba câu chứ không hai.
+> **Và một dòng phải để lại ở đây:** giữa chừng tôi báo *“`scout.type` thiếu `da_kiem`”* rồi dựng tiếp
+> *“bản nạp cũ hơn repo”* và *“`Scouter v1` ký trên mã chưa từng chạy”*. **Cả ba đều SAI** (`G-99`).
+> `da_kiem` luôn có, nó nằm **cạnh** `data` chứ không **trong** `data`, còn tôi thì in `r.data`.
+> **Giá phải trả: Đức nạp lại extension cho một lỗi không nằm trong extension.**
+> Khi một trường *“biến mất”* — **nghi cách đọc trước khi nghi cái máy**, và in cả vật trước khi thu hẹp.
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 

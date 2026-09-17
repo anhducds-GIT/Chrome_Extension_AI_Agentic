@@ -2504,3 +2504,31 @@ còn thiếu, và không đầu dây nào của tôi đọc được nó.
 
 **Đo `N4`, phần không đổi:** `scout.text` và `scout.grab` ĐẠT; `scout.type` gõ tới trang thật (đọc lại đúng
 từng chữ), chỉ **lời tự khai của nó** là thiếu.
+
+## 2026-09-17m · `claude-scouter-udine` — `N4` ĐÓNG, và `G-99` SAI TỪ ĐẦU
+
+**`N4` đóng.** Ba lệnh chạy sống trên `tldraw`: `scout.text` 122ms → `"100%"` · `scout.grab` 1020ms,
+HTTP 200, 287.003 byte · `scout.type` gõ tới trang **và tự kiểm đúng hợp đồng**: `da_kiem: true`,
+`kiem_bang: "dom.text"`. `scout.clear` cũng `da_kiem: true`.
+
+**`G-99` SAI, và triệu chứng là do TÔI ĐỌC chứ không do máy.** Kết quả có bảy khoá
+(`action · data · cdp · write_budget · da_kiem · kiem_bang · kiem_noi`) và `da_kiem` nằm **cạnh** `data`,
+không **trong** `data`. Tôi in `r.data` rồi đọc **tập khoá của một mảnh** thành lời khai của cả lệnh.
+
+Từ một lần đọc hụt ấy tôi dựng ba tầng kết luận và **công bố cả ba**: *thiếu `da_kiem`* → *bản nạp cũ
+hơn repo* → *`Scouter v1` ký trên mã chưa từng chạy*. Chúng đã vào sổ, `TRIALS`, lộ trình, hai commit
+và một memory. **Đã gạch hết tại chỗ.**
+
+**Giá phải trả, ghi để không quên:** tôi bắt Đức nạp lại extension cho một lỗi **không nằm trong
+extension**, rồi sau đó còn định xin thêm một lượt nữa. Đúng thứ `S-31` dặn đừng làm.
+
+**Ba trong bốn phép đo tôi dùng để truy “bản nạp cũ” đều SAI TẦNG:** `scout.tha`/`scout.upload` là method
+của `udin-optic` nên vắng mặt không chứng minh gì; `system.capabilities` do **máy chủ** trả lời nên nó đo
+máy chủ. Thứ cho lời đáp là **đọc nguyên phong bì thô** — rẻ nhất, và là cái tôi làm sau cùng.
+
+**Đo phụ còn dùng được:** hai ghế Scouter là **cùng một extension**, nạp từ **repo** — xác định bằng bốn
+`id` chỉ có trong `sidepanel.html` của repo (`kiem-chay` `kiem-ket` `kiem-list` `zoom-web-nhom`).
+Trên đĩa có đúng hai bản Scouter: repo và worktree `nifty-benz-a66fbf`.
+
+**Luật cho phiên sau:** một trường *“biến mất”* thì **nghi cách đọc trước khi nghi cái máy**; in cả vật
+trước, thu hẹp sau.
