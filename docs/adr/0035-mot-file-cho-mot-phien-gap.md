@@ -4,7 +4,8 @@ adr: 0035
 decides: [0035]
 date: 2026-09-09
 deciders: Đức (đặt trần 2.000–3.000 token và gọi tên mục tiêu của việc compile) · claude-nen-luat (thi hành)
-nhom: pham-vi-va-ky-luat
+chu_de: nhat-ky-va-mo-phien
+nhom: nhat-ky-va-mo-phien
 ---
 
 # ADR-0035 — Một file cho một phiên gói, và trần CỨNG chặn ở lượt sinh

@@ -5,6 +5,8 @@ decides: [0007, 0009, 0010, 0013, 0016, 0020]
 date: 2026-09-06
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: goi-extension
+nhom: goi-extension
 ---
 
 # ADR-0007 — Scouter: bộ đồ nghề dựng extension

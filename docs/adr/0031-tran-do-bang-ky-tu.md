@@ -4,7 +4,8 @@ adr: 0031
 decides: [0031]
 date: 2026-09-09
 deciders: Đức (đặt câu hỏi + uỷ quyền) · claude-luat-rasoat (đo và chốt)
-nhom: pham-vi-va-ky-luat
+chu_de: pham-vi-va-tran
+nhom: pham-vi-va-tran
 ---
 
 # ADR-0031 — Trần đo bằng KÝ TỰ, và đo cái MỘT PHIÊN TRẢ

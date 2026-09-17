@@ -5,6 +5,8 @@ decides: [0001, 0002, 0003, 0006]
 date: 2026-09-02
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: chu-va-commit
+nhom: chu-va-commit
 ---
 
 # ADR-0001 — Ranh giới bộ khung: cái gì ở đâu, và ai được sửa

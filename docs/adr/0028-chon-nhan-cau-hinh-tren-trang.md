@@ -5,6 +5,8 @@ decides: [0028]
 date: 2026-09-02
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: an-toan-khi-chay
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0028 — Chọn nhãn cấu hình trên trang là việc của AI, và bốn luật cho nó

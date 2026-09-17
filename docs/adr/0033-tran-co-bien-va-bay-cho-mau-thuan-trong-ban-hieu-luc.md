@@ -4,7 +4,9 @@ adr: 0033
 decides: [0033]
 date: 2026-09-09
 deciders: Đức (đặt trần có biên + uỷ quyền tái tổ chức kiến trúc luật) · claude-nen-luat (thi hành) · Codex (audit độc lập, bác bỏ kết luận sai)
-nhom: pham-vi-va-ky-luat
+chu_de: pham-vi-va-tran
+nhom: pham-vi-va-tran
+dau_moi: true
 ---
 
 # ADR-0033 — Trần CÓ BIÊN, và bảy chỗ mâu thuẫn trong bản hiệu lực

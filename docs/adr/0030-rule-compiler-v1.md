@@ -4,6 +4,8 @@ adr: 0030
 decides: [0030]
 date: 2026-09-09
 deciders: Đức (uỷ quyền) · claude-luat-rasoat (thi hành)
+chu_de: bo-luat
+nhom: bo-luat
 ---
 
 # ADR-0030 — Rule Compiler V1: bản hiệu lực được TÁI TẠO, không viết tay

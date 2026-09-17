@@ -4,7 +4,8 @@ adr: 0036
 decides: [0036]
 date: 2026-09-09
 deciders: Đức (chốt "phương án b") · claude-nen-luat (đo và đề xuất)
-nhom: pham-vi-va-ky-luat
+chu_de: nhat-ky-va-mo-phien
+nhom: nhat-ky-va-mo-phien
 ---
 
 # ADR-0036 — ĐÍCH của bó mở phiên gói suy từ NỀN CỐ ĐỊNH, không từ tỉ lệ phần trăm

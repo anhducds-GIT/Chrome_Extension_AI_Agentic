@@ -4,7 +4,8 @@ adr: 0032
 decides: [0032]
 date: 2026-09-09
 deciders: Đức (uỷ quyền nén và tái tổ chức kiến trúc luật) · claude-nen-luat (đo và chốt)
-nhom: pham-vi-va-ky-luat
+chu_de: goi-extension
+nhom: goi-extension
 ---
 
 # ADR-0032 — Ba gói `duc-auto-*` giữ luật vàng RIÊNG, cố ý gần giống nhau

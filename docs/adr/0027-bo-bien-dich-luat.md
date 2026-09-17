@@ -5,6 +5,9 @@ decides: [0027]
 date: 2026-09-09
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: bo-luat
+nhom: bo-luat
+dau_moi: true
 ---
 
 # ADR-0027 — Bộ biên dịch luật: luật vào bằng cửa nào, ra bằng cửa nào

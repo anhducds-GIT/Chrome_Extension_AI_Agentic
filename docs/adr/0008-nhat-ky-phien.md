@@ -5,6 +5,8 @@ decides: [0008, 0011, 0012]
 date: 2026-09-06
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: nhat-ky-va-mo-phien
+nhom: nhat-ky-va-mo-phien
 ---
 
 # ADR-0008 — Nhật ký phiên: giữ bao nhiêu, cắt thế nào

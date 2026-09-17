@@ -5,6 +5,8 @@ decides: [0029]
 date: 2026-09-09
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: chu-va-commit
+nhom: chu-va-commit
 ---
 
 # ADR-0029 — Hai vai ở repo Extension: **Hệ thống / Sản phẩm**, và cả hai đều code được

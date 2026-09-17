@@ -5,6 +5,9 @@ decides: [0015]
 last_reviewed: 2026-09-09
 date: 2026-09-07
 deciders: Đức
+chu_de: an-toan-khi-chay
+nhom: an-toan-khi-chay
+dau_moi: true
 ---
 
 # ADR-0015 — Nâng trần `run.trial` lên 900 giây; `run.start` vẫn cấm

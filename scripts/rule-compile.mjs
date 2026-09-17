@@ -315,7 +315,19 @@ function quet(thuMuc, nhan) {
       return;
     }
     for (const m of muc) {
-      if (m.name === "node_modules" || m.name === ".git" || m.name === "evidence") continue;
+      /* `.claude/` — WORKTREE CỦA AGENT, tức MỘT BẢN SAO CỦA CHÍNH REPO NÀY nằm trong repo.
+       *
+       * Đo 17/09: bộ này báo **169 quyết định mồ côi**, và **164** trong số đó ở
+       * `.claude/worktrees/nifty-benz-a66fbf/` — một cây mà `git ls-files` đếm **0 file**. Repo
+       * thật chỉ có ~5. Cùng một họ lỗi với `worktree-hostile-checks`: **bộ đo quét ĐĨA trong
+       * khi repo được định nghĩa bởi GIT**. Hậu quả không phải một con số xấu, mà một con số
+       * KHÔNG BAO GIỜ VỀ 0 — và một phép kiểm như thế thì người ta thôi đọc.
+       *
+       * Đối chứng để khỏi vơ đũa: `can-nang.mjs` đọc từ git nên nó KHÔNG bị thổi.
+       *
+       * ponytail: chặn theo TÊN vì đó đúng chỗ đã đo được. Ngày nào có một bản sao repo nằm ở
+       * tên khác, đổi sang hỏi git (`git check-ignore` / `ls-files`) — đắt hơn nhưng tổng quát. */
+      if (m.name === "node_modules" || m.name === ".git" || m.name === ".claude" || m.name === "evidence") continue;
       const p = path.join(d, m.name);
       if (m.isDirectory()) di(p);
       else if (nhan(path.relative(ROOT, p).split(path.sep).join("/"))) ra.push(p);

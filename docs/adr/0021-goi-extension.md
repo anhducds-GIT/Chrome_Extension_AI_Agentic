@@ -5,6 +5,9 @@ decides: [0021, 0022, 0024]
 date: 2026-09-08
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: goi-extension
+nhom: goi-extension
+dau_moi: true
 ---
 
 # ADR-0021 — Các gói extension: bao nhiêu gói được sống, và tách gói thế nào

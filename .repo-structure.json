@@ -260,6 +260,17 @@
     "_vi_sao": "Duc chot 09/09: 'can mot bo rule compiler, dam bao cac rules duoc consistent va on dinh, khong phinh'. Truoc file nay khong co cho nao liet ke NOI CHUA LUAT, nen cau hoi 'da ra soat het chua' khong tra loi duoc bang may. Do 09/09: 18 noi, 3.650 dong ban hieu luc + 5.769 dong so cai.",
     "_ra_soat_doc": "Ngay ra soat GAN NHAT cua tung noi, dinh dang YYYY-MM-DD. null = chua bao gio ra. Gioi han (9) cua AGENTS.md doi ra HANG TUAN; tran_ngay_ra_soat cuong che ve do. Chi dat ngay khi ban DA DOC HET file va da doi chieu voi so cai — dat ngay cho xong la tu tat may canh.",
     "tran_ngay_ra_soat": 7,
+    "_chu_de_doc": "NHA cua moi luat. B16 doi MOI ADR goc khai `chu_de:` va moi chu de co DUNG MOT `dau_moi: true` — de cau 'mo dung mot file' la mot su that do duoc, khong phai mot loi hua. Khai 17/09 boi lane claude-scouter-udine, muc A3.",
+    "_chu_de_vi_sao_bay_nhom": "ADR-0030 (2) dat ra truong `nhom` va neu vi du nam gia tri TRONG MOT KHOI MA — do la vi du, khong phai tu vung dong: sau nam ADR (0031-0036) da tu dung `pham-vi-va-ky-luat`, mot gia tri khong co trong danh sach ay. Nen day khai HAI DIEU: bay chu de that su phu 20 ADR goc, va luat `nhom` MANG CUNG GIA TRI voi `chu_de` — mot phan loai, khong phai hai. Nam nhom thi mot nhom phinh len chin ADR, va luc do dau moi khong con nghia gi.",
+    "chu_de": {
+      "bo-luat": "Luat duoc ghi, bien dich va ra soat the nao",
+      "chu-va-commit": "Ai so huu cai gi · khoa · lam viec song song · day",
+      "nhat-ky-va-mo-phien": "Nhat ky phien · STATUS · bo mo phien",
+      "pham-vi-va-tran": "Pham vi va tran do duoc",
+      "goi-extension": "Cac goi extension: bao nhieu goi song, tach the nao",
+      "an-toan-khi-chay": "Chay that tren trang that: nap, phanh, gioi han",
+      "bridge": "Soi day Bridge"
+    },
     "ra_soat": {
       "AGENTS.md": "2026-09-09",
       "CLAUDE.md": "2026-09-09",
@@ -276,6 +287,7 @@
       "workers/hnx-fetch/AGENTS.md": "2026-09-09",
       "workers/hnx-fetch/PROTOCOL.md": "2026-09-09",
       "workers/duc-scouter/v0.1.0/AGENTS.md": "2026-09-09",
+      "workers/udin-optic/v0.1.0/AGENTS.md": "2026-09-17",
       "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": "2026-09-09",
       "workers/duc-auto-gemini/v0.2.0/AGENTS.md": "2026-09-09",
       "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": "2026-09-09",

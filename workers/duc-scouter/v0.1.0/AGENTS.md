@@ -13,6 +13,10 @@ nó là **bộ khung tương tác tự hoàn thiện** — nó dò một trang, 
 AI viết code mới xuống đĩa và bảo nó nạp lại chính nó. Vì thế tên nó không mang tiền tố
 `duc-auto-`; đó là chủ ý, không phải quên ([ADR-0013](../../../docs/adr/0007-scouter.md)).
 
+**Đức đã KÝ `Scouter v1`** ([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md)): bộ đồ nghề này dùng
+được cho việc thật, và nó **khai đúng chỗ nó không làm được**. Chữ ký ấy là mốc — mọi lượt mở
+năng lực sau nó phải giữ nguyên lời hứa đó.
+
 Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵):
 
 | Tầng | Có mấy bản | Chứa gì |
@@ -36,7 +40,12 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
    *ghi*, **không** gỡ chặn về *chạy ở đâu* — trang thật vẫn phải hỏi Đức (trang thử tự tạo thì
    được), và ba giới hạn ở lõi vẫn nguyên.
 4. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
-   do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức.
+   do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức. Đức đã **uỷ quyền mở rộng
+   năng lực** trong biên ấy, và nhóm *"nhìn & đi lại"* được định nghĩa ở
+   [ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md) — uỷ quyền là **trong
+   biên**, không phải thay cho biên. Chính sách che `de-xuat-chat-v1` cùng **cửa hẹp đọc chữ**
+   (`scout.text`) ký ở [ADR-0006](docs/adr/0006-chinh-sach-che-va-cua-hep-doc-chu.md): mở một cửa
+   hẹp có tên là cách KHÔNG phải mở cả bức tường.
 5. **Quyền đã duyệt là TRẦN, không phải sàn** ([ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md)
    · [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Khai trong
    `manifest.json` **đúng thứ đang dùng**, đừng khai trước; **`downloads` thì KHÔNG** — file đi qua
@@ -53,7 +62,8 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
    method Bridge nào bật được nó**. Trần 200 lượt mỗi lần mở khoá, gõ cứng trong mã. Hai chỗ
    **đừng đảo lại** dù trông thừa: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm) và **trừ
    trước, bấm sau** (lượt bấm hỏng vẫn tốn ngân sách). `P1..P12` canh khối này; lý do đầy đủ ở
-   [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md).
+   [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md); con số 200 (nâng từ 50) ở
+   [ADR-0005](docs/adr/0005-tran-ghi-nang-tu-50-len-200.md).
 9. **Tra `docs/GIA-THUYET.md` TRƯỚC mỗi phép thử; ghi dòng `CHƯA` trước khi thử, sửa kết quả
    sau.** Dòng `SAI` thì đừng thử lại. Đức chốt 13/09 vì phiên đi vòng lại việc đã làm.
 

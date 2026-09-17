@@ -5,6 +5,8 @@ decides: [0014]
 last_reviewed: 2026-09-09
 date: 2026-09-07
 deciders: Đức
+chu_de: pham-vi-va-tran
+nhom: pham-vi-va-tran
 ---
 
 # ADR-0014 — Tách khối máy sinh của `FEATURE-PARITY.md` ra file riêng, miễn khoá

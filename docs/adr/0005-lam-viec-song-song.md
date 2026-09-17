@@ -5,6 +5,9 @@ decides: [0005, 0018, 0019, 0023, 0025]
 date: 2026-09-05
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: chu-va-commit
+nhom: chu-va-commit
+dau_moi: true
 ---
 
 # ADR-0005 — Làm việc song song: khoá, quyền, và đẩy

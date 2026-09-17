@@ -5,6 +5,8 @@ decides: [0004, 0017]
 date: 2026-09-05
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: nhat-ky-va-mo-phien
+nhom: nhat-ky-va-mo-phien
 ---
 
 # ADR-0004 — Mấy phiên Assistant, và chia việc giữa chúng thế nào

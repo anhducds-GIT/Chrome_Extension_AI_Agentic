@@ -4,7 +4,9 @@ adr: 0034
 decides: [0034]
 date: 2026-09-09
 deciders: Đức (đặt trần 9–10k token cho một phiên đụng gói) · claude-nen-luat (đo và chốt)
-nhom: pham-vi-va-ky-luat
+chu_de: nhat-ky-va-mo-phien
+nhom: nhat-ky-va-mo-phien
+dau_moi: true
 ---
 
 # ADR-0034 — Mở phiên đọc `STATUS.md`, KHÔNG đọc `HANDOFF.md`

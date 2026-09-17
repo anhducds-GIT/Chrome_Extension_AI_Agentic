@@ -4,7 +4,9 @@ adr: 0037
 decides: [0037]
 date: 2026-09-15
 deciders: Đức (chốt nắp TỔNG 6.000 = 2 × 3.000, và "đừng dùng BUDGET làm giới hạn") · GPT Web (nêu tách hai mặt phẳng) · Claude Opus 5 (đo và soạn)
+chu_de: bridge
 nhom: bridge
+dau_moi: true
 ---
 
 # ADR-0037 — Nắp đọc DOM qua Bridge đặt bằng THAM SỐ ĐO ĐƯỢC, không bằng budget GPT tự khai

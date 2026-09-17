@@ -5,6 +5,8 @@ decides: [0000, 0026]
 date: 2026-09-02
 last_reviewed: 2026-09-09
 deciders: Đức
+chu_de: bo-luat
+nhom: bo-luat
 ---
 
 # ADR-0000 — Cách ghi một quyết định
