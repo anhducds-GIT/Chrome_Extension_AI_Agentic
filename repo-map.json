@@ -154,7 +154,7 @@
       "lifecycle": "building",
       "status_md": "workers/udin-optic/v0.1.0/STATUS.md",
       "owner": "claude-scouter-udine",
-      "next_step": "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED.",
+      "next_step": "CA HAI CA CUA DUC DEU CHAY TRON BANG MOT LENH, do that 17/09: (a) anh Udin tu sinh --anh canvas:<mau src>; (b) anh tu ngoai --anh <duong vung ghi>, tha bang scout.tha. Bay chang W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4. Khong mot hop thoai nao (do 0/14 va 0/11). Danh tinh anh canvas la data-image-id (ADR-0009). Man chan User Limit Reached la BUG cua Udin — Duc chot 17/09 \"cu an\"; quaManCho bam lai toi 12 luot, do that tat o cu dau. Con mo: S-31 (Udin khong tu nap lai duoc) — CAN DUC CHOT vi mo lai la them mot method Bridge. R2 va R3 PARKED.",
       "human_action": "khong",
       "priority_rank": 5,
       "superseded_by": null,
@@ -209,7 +209,7 @@
     {
       "id": "workers/udin-optic/v0.1.0",
       "unit": "workers/udin-optic/v0.1.0",
-      "title": "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED.",
+      "title": "CA HAI CA CUA DUC DEU CHAY TRON BANG MOT LENH, do that 17/09: (a) anh Udin tu sinh --anh canvas:<mau src>; (b) anh tu ngoai --anh <duong vung ghi>, tha bang scout.tha. Bay chang W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4. Khong mot hop thoai nao (do 0/14 va 0/11). Danh tinh anh canvas la data-image-id (ADR-0009). Man chan User Limit Reached la BUG cua Udin — Duc chot 17/09 \"cu an\"; quaManCho bam lai toi 12 luot, do that tat o cu dau. Con mo: S-31 (Udin khong tu nap lai duoc) — CAN DUC CHOT vi mo lai la them mot method Bridge. R2 va R3 PARKED.",
       "rank": 5,
       "claim": null
     }
