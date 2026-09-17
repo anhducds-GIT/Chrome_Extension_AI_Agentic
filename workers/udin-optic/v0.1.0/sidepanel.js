@@ -28,7 +28,7 @@ const engine = new ScouterEngine();
 const $ = (chon) => document.querySelector(chon);
 
 /* Đổi tab. `hidden` chứ không `style.display`, để phím Tab không lạc vào khối đang ẩn. */
-const TABS = ["tiendo", "hoatdong", "hethong"];
+const TABS = ["tiendo", "hoatdong", "huongdan", "hethong"];
 for (const ten of TABS) {
   $(`#tab-${ten}`).addEventListener("click", () => {
     for (const khac of TABS) {

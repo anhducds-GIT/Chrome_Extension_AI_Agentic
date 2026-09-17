@@ -58,6 +58,7 @@
       <div class="tabs" role="tablist" aria-label="Khu vực">
         <button class="tab" role="tab" id="tab-tiendo" aria-controls="panel-tiendo" aria-selected="true">Tiến độ</button>
         <button class="tab" role="tab" id="tab-hoatdong" aria-controls="panel-hoatdong" aria-selected="false">Hoạt động</button>
+        <button class="tab" role="tab" id="tab-huongdan" aria-controls="panel-huongdan" aria-selected="false">Hướng dẫn</button>
         <button class="tab" role="tab" id="tab-hethong" aria-controls="panel-hethong" aria-selected="false">Hệ thống</button>
       </div>
 
@@ -111,6 +112,98 @@
             <span id="hoat-dong-dem" class="mo"></span>
           </div>
           <ul id="hoat-dong-list" class="viec-list"></ul>
+        </div>
+      </section>
+
+      <!-- ================= HƯỚNG DẪN ================= -->
+      <!-- LÀ MỘT THẺ RIÊNG, không phải một <details> ở đáy thẻ khác. Chính file này đã ghi cái
+           giá của chuyện đó ở khối "Hồ sơ ghế": Đức đi tìm một thứ, không thấy, và kết luận
+           tính năng CHƯA CÓ — "một tính năng người dùng không nhận ra thì bằng không có".
+
+           MỖI DÒNG VIỆC MANG `data-lenh`, và đó không phải trang trí: `tests/huong-dan-smoke.mjs`
+           đối chiếu tập ấy với các tệp CHẠY ĐƯỢC thật trong `tu-dong/`. Thêm một lệnh mà quên
+           viết vào đây thì bộ đo ĐỎ. Một trang hướng dẫn gõ tay không có phép ghim thì nó chỉ
+           đúng vào đúng ngày người ta gõ nó. -->
+      <section id="panel-huongdan" role="tabpanel" aria-labelledby="tab-huongdan" hidden>
+        <div class="the">
+          <h2>Udin làm được gì</h2>
+          <p class="mo">Mỗi dòng là một việc chạy trọn bằng MỘT lệnh. Bảo AI chạy lệnh ấy, hoặc tự chạy trong Terminal ở thư mục repo.</p>
+          <ul id="viec-list" class="viec-huong-dan">
+            <li data-lenh="vong-tham-chieu.mjs">
+              <span class="viec-ten">Sinh ảnh CÓ ẢNH THAM CHIẾU (@1 / @2)</span>
+              <span class="mo">Việc chính. Lấy ảnh làm mẫu rồi xin Udin vẽ theo. Ảnh mẫu lấy từ canvas, hoặc từ MỘT TỆP TRÊN MÁY thả vào. Bảy chặng, ảnh ra .jpg, và đọc luôn câu Udin trả lời.</span>
+              <code>vong-tham-chieu.mjs</code>
+            </li>
+            <li data-lenh="e2e.mjs">
+              <span class="viec-ten">Sinh ảnh từ một câu, ảnh về đĩa</span>
+              <span class="mo">Không cần ảnh mẫu. Vượt màn chắn → gõ prompt → chờ xong → tải ảnh về → đổi .jpg → đọc câu trả lời.</span>
+              <code>e2e.mjs</code>
+            </li>
+            <li data-lenh="gui-prompt.mjs">
+              <span class="viec-ten">Gửi một prompt rồi chờ Udin chạy xong</span>
+              <span class="mo">Dùng khi muốn tách riêng lượt gửi. Có --noi-lai để bám vào một lượt ĐANG chạy mà không gửi thêm gì.</span>
+              <code>gui-prompt.mjs</code>
+            </li>
+            <li data-lenh="lay-anh.mjs">
+              <span class="viec-ten">Tải ảnh kết quả về đĩa</span>
+              <span class="mo">Lấy đúng ảnh của lượt vừa chạy, không lấy cả lịch sử phiên.</span>
+              <code>lay-anh.mjs</code>
+            </li>
+            <li data-lenh="doi-sang-jpg.mjs">
+              <span class="viec-ten">Đổi ảnh .webp sang .jpg</span>
+              <span class="mo">Bản .webp gốc GIỮ NGUYÊN trên đĩa, không xoá.</span>
+              <code>doi-sang-jpg.mjs</code>
+            </li>
+            <li data-lenh="doc-tra-loi.mjs">
+              <span class="viec-ten">Đọc câu Udin vừa trả lời</span>
+              <span class="mo">Từ chối nếu Udin còn đang nghĩ, và từ chối nếu chữ y hệt lượt trước.</span>
+              <code>doc-tra-loi.mjs</code>
+            </li>
+            <li data-lenh="chon-tham-chieu.mjs">
+              <span class="viec-ten">Liệt kê ảnh trên canvas, hoặc chọn ảnh theo thứ tự @1 @2</span>
+              <span class="mo">Chạy không tham số để xem canvas đang có những gì.</span>
+              <code>chon-tham-chieu.mjs</code>
+            </li>
+            <li data-lenh="qua-man-cho.mjs">
+              <span class="viec-ten">Vượt màn chắn User Limit Reached</span>
+              <span class="mo">Bấm Try Again tới 12 lượt. Màn chắn ấy là lỗi giao diện của Udin, không phải hết chỗ.</span>
+              <code>qua-man-cho.mjs</code>
+            </li>
+            <li data-lenh="chon-che-do.mjs">
+              <span class="viec-ten">Chọn chế độ Agent hoặc Manual Gen</span>
+              <span class="mo">Xin đúng chế độ đang bật thì nó không bấm lần nào.</span>
+              <code>chon-che-do.mjs</code>
+            </li>
+            <li data-lenh="them-khung.mjs">
+              <span class="viec-ten">Thêm một khung trống vào canvas</span>
+              <span class="mo">Qua menu Add to canvas. Thêm một khung RỖNG, không phải thêm ảnh — ảnh Udin tự sinh đã tự vào canvas rồi.</span>
+              <code>them-khung.mjs</code>
+            </li>
+          </ul>
+        </div>
+
+        <div class="the">
+          <h2>Bắt đầu thế nào</h2>
+          <ol class="huong-dan">
+            <li>Bật <strong>máy chủ Bridge</strong> trên máy, rồi chọn tệp ghép cặp ở thẻ <strong>Hệ thống</strong>.</li>
+            <li>Mở <strong>một tab Udin</strong>. Mọi lệnh đều nhắm vào tab ấy.</li>
+            <li>Muốn AI <strong>bấm hoặc gõ</strong> thì bật công tắc ở đầu bảng này. Mỗi lần bật được <strong>200 lượt</strong>; hết thì bật lại.</li>
+            <li>Thấy AI làm gì lạ thì nhấn <strong>Ctrl + Shift + U</strong> — tắt ngay, kể cả khi bảng này đã đóng.</li>
+          </ol>
+          <p class="mo"><strong>Sửa mã máy chủ Bridge thì phải bật lại MÁY CHỦ</strong>, nạp lại extension không đủ — đó là hai thứ khác nhau. Sửa mã extension thì ngược lại: nạp lại extension ở <code>chrome://extensions</code>.</p>
+        </div>
+
+        <div class="the">
+          <h2>Udin KHÔNG làm được gì</h2>
+          <!-- Khối này đứng ngang hàng với khối "làm được gì", không nhét vào cuối: một giới hạn
+               viết ra mà không ai đọc thì nó vẫn được người ta trông đợi, rồi hỏng ở lúc đắt nhất. -->
+          <ul class="viec-huong-dan">
+            <li><span class="viec-ten">Không tự chạy</span><span class="mo">Mọi lượt đều do người hoặc AI gõ lệnh. Không có hàng đợi job, không có lịch.</span></li>
+            <li><span class="viec-ten">Chỉ một trang</span><span class="mo">Extension này khai đúng trang Udin. Trang khác thì dùng gói Scouter.</span></li>
+            <li><span class="viec-ten">Không dò trang lạ</span><span class="mo">Không có chụp màn hình, không có cây DOM, không có cây trợ năng — những lệnh ấy KHÔNG TỒN TẠI ở gói này, không phải bị chặn.</span></li>
+            <li><span class="viec-ten">Không tự nạp lại chính nó</span><span class="mo">Sửa mã extension xong vẫn cần một lượt bấm tay ở <code>chrome://extensions</code>.</span></li>
+            <li><span class="viec-ten">Ảnh của anh phải nằm trong vùng ghi</span><span class="mo">Ảnh ở chỗ khác thì CHÉP vào vùng ghi trước; bản gốc không bị đụng.</span></li>
+          </ul>
         </div>
       </section>
 
@@ -201,15 +294,9 @@
           <pre id="report" tabindex="0">Chưa quan sát lần nào.</pre>
         </details>
 
-        <details class="the">
-          <summary>Hướng dẫn nhanh</summary>
-          <ol class="huong-dan">
-            <li>Bật máy chủ Bridge trên máy, rồi chọn tệp ghép cặp ở khối trên cùng.</li>
-            <li>Mở trang web muốn thuần hoá. Để AI gửi lệnh xuống qua Bridge.</li>
-            <li>Muốn AI <strong>bấm hoặc gõ</strong> thì bật công tắc ở đầu bảng. Mỗi lần bật được 200 lượt.</li>
-            <li>Thấy AI làm gì lạ thì nhấn <strong>Ctrl + Shift + U</strong> — tắt ngay, kể cả khi bảng này đã đóng.</li>
-          </ol>
-        </details>
+        <!-- "Hướng dẫn nhanh" ĐÃ CHUYỂN sang thẻ HƯỚNG DẪN (17/09). Không để lại bản thứ hai
+             ở đây: hai bản của một hướng dẫn thì sớm muộn lệch, và bản vá làm ở một bên không
+             bao giờ tới bên kia — cùng cái giá `G9` đã ghi cho luật, nay áp cho chữ. -->
       </section>
     </main>
     <script type="module" src="sidepanel.js"></script>

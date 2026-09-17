@@ -1003,3 +1003,33 @@ sai trong bảng tổng, và bảng ấy là thứ Đức đọc.
 `CAPABILITIES.md`. Điều kiện lên `MASTERED` mà chính file ấy viết ra đã đủ cả ba vế, nhưng nó là
 **chữ ký của Đức** chứ không phải một lượt chạy xanh — y như `Scouter v1` phải đợi ADR-0008.
 Tôi không tự nâng mức hộ anh.
+
+## 2026-09-17i · `claude-scouter-udine` — thẻ HƯỚNG DẪN trong bảng bên, và chữ ký `Udin v1`
+
+**Đức 17/09:** *"Viết thêm cả tính năng, feature list, hướng dẫn sử dụng trong Extension Udin."*
+
+**Là một THẺ RIÊNG, không phải một `<details>` ở đáy thẻ khác.** Chính `sidepanel.html` đã ghi
+cái giá của chuyện đó ở khối *Hồ sơ ghế*: Đức đi tìm một thứ, không thấy, và kết luận tính năng
+CHƯA CÓ — *"một tính năng người dùng không nhận ra thì bằng không có."* Bản "Hướng dẫn nhanh" cũ
+trong `<details>` đã **chuyển đi, không để lại bản thứ hai**.
+
+Ba khối: **làm được gì** (10 việc, mỗi việc kèm lệnh gõ lại được) · **bắt đầu thế nào** ·
+**KHÔNG làm được gì** — khối cuối đứng ngang hàng với khối đầu, không nhét xuống cuối.
+
+**Phần đáng giá hơn nội dung: phép ghim giữ cho nó không mục.** Một trang hướng dẫn gõ tay chỉ
+đúng vào đúng cái ngày người ta gõ nó — repo này đã trả giá hai lần (bảng từng gõ tay *"14
+method"* khi thật là 15; lời khai *"máy chủ đầy chỗ"* sống ba ngày). Nên mỗi dòng việc mang
+`data-lenh`, và `tests/huong-dan-smoke.mjs` đối chiếu tập ấy với **các tệp CHẠY ĐƯỢC thật** trong
+`tu-dong/` — đo bằng chính khối `if (… === resolve(process.argv[1]))`, không bằng một danh sách
+tên gõ tay (danh sách tên lại đúng là thứ nó sinh ra để diệt). Hai chiều: quên viết → đỏ; trỏ vào
+lệnh không tồn tại → cũng đỏ. `6` khối · `6/6` đột biến.
+
+**Hai chỗ phép ghim bắt được ngay khi vừa viết:** ⑴ dòng `them-khung` tôi viết cụt (24 ký tự) —
+**không hạ ngưỡng**, viết lại cho đủ nghĩa. ⑵ Chú thích CSS của tôi nói *"TÊN trên, giải thích
+dưới"* trong khi luật để `li` ở `flex-direction: row` — ba phần nằm ngang, dính thành một câu.
+Nhìn thấy tận mắt rồi mới sửa, và ghim luôn cái luật bố cục ấy.
+
+**`Udin v1` ký: [ADR-0001](docs/adr/0001-duc-ky-udin-v1.md).** Nó nói ba điều và chỉ ba — làm
+được gì (mỗi dòng có một lượt chạy thật đứng sau) · **KHÔNG hứa gì** · cái phanh **giữ nguyên**,
+không nới một chốt nào cho lượt ký. Và nó **không** nâng `T7`: vòng tự cải tiến vẫn `PARTIAL`,
+đó là việc của Scouter và phụ thuộc `R2`.

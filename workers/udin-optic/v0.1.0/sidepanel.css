@@ -179,12 +179,24 @@ p { margin: 0; }
 .thanh { height: 7px; border-radius: 999px; background: var(--xam-nen); overflow: hidden; }
 .thanh-day { height: 100%; width: 0; background: var(--luc); border-radius: 999px; transition: width .2s; }
 
-.moc-list, .viec-list, .nangluc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.moc-list li, .viec-list li, .nangluc-list li {
+.moc-list, .viec-list, .viec-huong-dan, .nangluc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.moc-list li, .viec-list li, .viec-huong-dan li, .nangluc-list li {
   display: flex; align-items: flex-start; gap: 8px;
   padding: 7px 0; border-top: 1px solid var(--vien);
 }
-.moc-list li:first-child, .viec-list li:first-child, .nangluc-list li:first-child { border-top: 0; }
+.moc-list li:first-child, .viec-list li:first-child, .viec-huong-dan li:first-child, .nangluc-list li:first-child { border-top: 0; }
+
+/* Mỗi dòng việc: TÊN đậm trên, lời giải thích dưới, LỆNH ở cuối để mắt bắt ngay.
+ * Lệnh phải `word-break` vì bảng bên hẹp và tên tệp dài hơn cột. */
+/* CỘT, không phải hàng. Luật chung ở trên đặt `li` thành `flex-direction: row` (mặc định),
+ * và khi ấy tên việc, lời giải thích, dòng lệnh nằm CẠNH nhau trên một hàng chật 380px —
+ * đọc ra một câu dính liền. Đã nhìn thấy tận mắt trước khi sửa, không sửa theo trí nhớ. */
+.viec-huong-dan li { flex-direction: column; gap: 3px; }
+.viec-ten { font-weight: 600; }
+.viec-huong-dan code {
+  align-self: flex-start; font-size: 11px; padding: 1px 5px; border-radius: 4px;
+  background: var(--nen-ma, rgba(127, 127, 127, 0.14)); word-break: break-all;
+}
 
 .dau { flex: none; width: 16px; height: 16px; border-radius: 50%; margin-top: 1px; display: grid; place-items: center; font-size: 10px; font-weight: 700; }
 .dau.xong { background: var(--luc); color: #fff; }
