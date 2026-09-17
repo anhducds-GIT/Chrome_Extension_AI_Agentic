@@ -546,4 +546,34 @@ nay sạch**, không vì công cụ hỏi git. Gạch tại chỗ ở `rule-comp
 Hai mục nhận nhưng chưa làm, có số và có chuỗi hỏng: `KHUNG-M6` (bộ đo vẫn quét ĐĨA — chặn một
 cái tên không phải chặn cả lớp) · `KHUNG-M7` (`hang()` khớp `includes`, hôm nay đúng do MAY).
 
+## 2026-09-17 · `claude-scouter-udine` — audit vòng 2 cũng ĐỎ, và ba lỗ là của chính bản vá vòng 1
+
+**Ba trong năm phát hiện nằm trong thứ tôi vừa sửa xong buổi sáng.** Đúng bài repo đã ghi: *soi
+lại sau MỖI vòng sửa*, đừng cho rằng một bản vá hẹp thì an toàn.
+
+**⒜ Khai miễn hỏng chỉ bị soi KHI nhóm ấy đang trùng.** `duocMien()` gọi trong vòng lặp, nên một
+lượt khai hỏng mà hôm nay chỉ khớp MỘT file thì không ai gọi tới — nó **im hoàn toàn**, và là
+một cái bẫy nằm chờ tới ngày có người chép bản thứ hai. Nay soi **cả bảng khai TRƯỚC**, không
+phụ thuộc hôm nay tìm thấy gì.
+
+**⒝ `ly_do` chưa bị bắt buộc** — khai `{ o: [...] }` trống lý do vẫn miễn được, tức lượt miễn
+thành một công tắc không tên.
+
+**⒞ Vân tay + tập file VẪN chưa bằng "câu Đức đã duyệt".** Đây là đường vòng đắt nhất, và Codex
+chạy thật để chứng minh: thay **cả hai** bản trùng bằng một câu **ngược nghĩa cùng bộ từ** (đảo
+trật tự mệnh đề) thì `vanTay()` cho y hệt — nó cố ý bỏ thứ tự — tập file y hệt, và lượt miễn vẫn
+che. Nay khai thêm `cau`, so bằng `cauChuan()`: bỏ markdown/dấu/hoa-thường nhưng **GIỮ trật tự**.
+
+**⒟ `can-nang`:** một khoá ngân sách **MỚI** không có đối chứng ở `HEAD` thì lượt so im lặng bỏ
+qua — đi vòng qua bánh cóc bằng đúng một bước. Nay kể ra. Và *"KHÔNG ĐO ĐƯỢC"* trước đây vẫn
+thoát 0; nay nó vào `canh`, vì không đo được không phải là đạt.
+
+**⒠ Đường vòng qua cả bảy khối:** thêm `if (file.endsWith(".env")) continue` vào vòng quét secret
+thì **bảy khối vẫn xanh** — fixture không có `.env` nào nên con số bao phủ vẫn N/N. Nay khối ②
+đo **con số bao phủ** (đọc N trên N) **và** fixture mang sẵn tám đuôi hay bị bỏ qua. Thử bỏ
+`.env` · `.yaml` · `.py`: **3/3 chết**. Bài học: một phép đo bao phủ chỉ có răng khi tập được đo
+có chứa thứ sắp bị bỏ.
+
+Đột biến: **3/3** trên ba vế mới của lượt miễn, **3/3** trên ba đuôi file.
+
 <!-- HANDOFF-THANG: 2026-09 -->
