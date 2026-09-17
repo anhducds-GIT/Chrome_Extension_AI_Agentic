@@ -14,6 +14,33 @@
 
 ## Log
 
+## 2026-09-18b · `claude-universal-scouter` — pilot Vizcom: chọn đúng 1 trong 3 tài khoản, ĐẠT
+
+E2E chạy được: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom `anhducds` → adapter
+→ đọc → verify. Bảng bên ĐÓNG suốt. Bằng chứng: `pilots/vizcom-anhducds/ket-qua-2026-09-18.txt`.
+Sổ: `G-104`…`G-107`. Đặc tả: `docs/UNIVERSAL-SCOUTER.md`.
+
+**Thứ pilot dạy mà spec không đoán ra — ba cái, cái nào cũng là một lớp bảo vệ RỖNG:**
+
+1. **Ghế không nhãn = ghế không gọi tới được** (`G-105`). Đức cài Scouter lên hai profile mới,
+   cả hai lên dây nhãn rỗng → gọi bằng nhãn ra chuỗi rỗng → `TARGET_AMBIGUOUS`. Địa chỉ phải
+   LUÔN là `instance_id`. Kèm theo: kết quả trả `ghe` = **địa chỉ**, `ghe_nhan` = nhãn — bản đầu
+   làm ngược và tôi tự vấp ngay lượt E2E đầu, vì người gọi cầm `r.ghe` ném vào lượt sau.
+2. **Bộ dò CDP thô trong hợp đồng adapter là bộ dò RỖNG** (`G-106`): mẫu cấm viết `Page.[A-Z]`,
+   đòi chữ HOA, mà method CDP viết thường (`Page.navigate`). Bốn trên sáu mẫu không bao giờ kêu.
+   Bắt được **chỉ vì** phép ghim đi kèm một adapter vi phạm cố ý.
+3. **`>= 1` chứ không phải `=== 1`**: chuỗi email xuất hiện **2 lần** trong cây trợ năng. Bản
+   đầu báo *"cổng đóng"* cho đúng tài khoản — một phép kiểm chặt quá tay vẫn là phép kiểm SAI,
+   nó chỉ sai về phía an toàn nên dễ trôi.
+
+**Chưa làm, và có lý do đo được:** `scout.song` **KHÔNG** implement. Đo 19 target: sống ≤282ms,
+chết ~20.020ms — hai cực cách nhau 70 lần. Nhưng cả hai ứng viên Vizcom đều SỐNG, nên pilot chưa
+chứng minh nó cần. Trigger đã ghi ở `G-107`, đợi gặp thật.
+
+**Chưa quét:** bề mặt sinh ảnh của Vizcom nằm ở `/workbench/…`; đi tới đó cần `scout.navigate`
+hoặc `scout.click` — lệnh GHI, mà công tắc chỉ tay Đức mở được. `viec` của adapter **cố ý để
+trống** phần đó: khai một bước chưa đo là dựng một selector đoán.
+
 ## 2026-09-18 · `claude-universal-scouter` — website mới có cần extension mới không
 
 Nghiên cứu Đức giao, kết quả + đặc tả bốn lỗ hổng ở **`docs/UNIVERSAL-SCOUTER.md`**; sổ:

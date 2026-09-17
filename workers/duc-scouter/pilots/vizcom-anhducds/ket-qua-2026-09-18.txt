@@ -1,0 +1,34 @@
+## ⓪ SOÁT HỢP ĐỒNG ADAPTER
+    {"dat":true,"loi":[]}
+
+## ① KIỂM KÊ GHẾ
+    Scouter_blank      c8568b34-34a9-4323-a980-3f337263d7a7
+    Dummy_Scout        f3f7264e-0b31-4417-8c65-06e6b1b47535
+    (KHÔNG NHÃN)       5ba67fd2-701f-489a-bfd1-8bedb0df3153
+    (KHÔNG NHÃN)       b5f89960-4fd4-46d0-86eb-09c6c18bf185
+
+## ② GIẢI TARGET theo adapter — KHÔNG nêu ghế, để resolver tự tìm
+    ok: true | mã: -
+    hỏi Scouter_blank    38 target · 15 page · 0 khớp origin
+    hỏi Dummy_Scout      15 target · 4 page · 0 khớp origin
+    hỏi (không nhãn)     12 target · 3 page · 1 khớp origin
+    hỏi (không nhãn)     7 target · 3 page · 1 khớp origin
+    ứng viên: 2 · khớp: 1 · lệch: 1 · đọc không ra: 0
+    → CHỌN  (không nhãn) (5ba67fd2…)  id=C39F1D994F30ECA8D5C0C54CD6EADB1C
+      url=https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+      bằng chứng danh tính: "ĐĐức Nguyễn's WorkspaceFree plan"
+    → LOẠI  (không nhãn) (b5f89960…) id=8CF657F436… vì đọc ra "VinfastEnterprise plan"
+
+## ③ CỔNG THỨ HAI — danh tính TÀI KHOẢN, chạy trước mọi bước GHI
+    tìm "anhducds@gmail.com" trong 131 tên node → 2 khớp
+    → danh tính tài khoản XÁC NHẬN. Công tắc đường ghi vẫn do TAY ĐỨC, không method nào bật được nó.
+
+## ④ CHẠY CÁC BƯỚC ĐỌC CỦA ADAPTER
+    [doc_danh_tinh] đọc tổ chức đang mở: "ĐĐức Nguyễn's WorkspaceFree plan"
+    [kiem_ke_tep] đếm bề mặt tương tác: 23 phần tử tương tác
+    [kiem_ke_tep] đọc cây trợ năng: 275 node
+
+## ⑤ NHẬT KÝ DÂY — bằng chứng không tài khoản nào bị thao tác
+    tổng 12 lượt gọi · lệnh GHI: 0
+    target C39F1D994F30… : 5 lượt, tất cả read-only
+    target 8CF657F436D7… : 1 lượt, tất cả read-only

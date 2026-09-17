@@ -1,7 +1,12 @@
 # UNIVERSAL SCOUTER — bản chốt sau khi đo, và bản đặc tả cho bốn lỗ hổng
 
 **Đo:** 17/09/2026 · **Chốt bản này:** 18/09/2026 · **Phiên:** `claude-universal-scouter`
-**Chrome:** 153.0.8010.48 · **Trạng thái:** SPEC — **chưa viết một dòng mã nào**
+**Chrome:** 153.0.8010.48
+
+**Trạng thái 18/09:** Gap 3 và Gap 4 **ĐÃ TRIỂN KHAI VÀ CHẠY THẬT** · Gap 1 làm phần tối thiểu
+(không đổi extension) · Gap 2 **cố ý CHƯA làm**, lý do đo được ở `G-107`.
+Pilot E2E: [`pilots/vizcom-anhducds/`](../pilots/vizcom-anhducds/) — chọn đúng 1 trong 3 tài khoản
+Vizcom, loại 2 cái kia, 0 lệnh ghi. Bốn dòng sổ mới: `G-104`…`G-107`.
 
 > Tài liệu này thay thế mọi kết luận cũ về *"Vizcom chưa đọc được"*. Xem §0.
 
@@ -270,6 +275,15 @@ chú thích** *"không gọi chrome.*"*. Cùng họ `detectors-match-your-own-pr
 nào bật được nó. Adapter khai được bước ghi, nhưng chạy thì cần Đức bật công tắc. **Giữ nguyên.**
 
 ---
+
+## 3b. ĐÃ TRIỂN KHAI ĐƯỢC GÌ, VÀ PILOT SỬA SPEC Ở ĐÂU
+
+| Gap | Trạng thái | Pilot bác/sửa spec chỗ nào |
+|---|---|---|
+| **3 — resolver** | **XONG** · `_shared/goi-bridge/giai-target.mjs` · 14 phép ghim | Spec viết chuỗi 7 chặng. Pilot thêm **hai** thứ spec không có: ⑴ địa chỉ ghế phải là `instance_id` chứ không phải nhãn (`G-105`); ⑵ **hai** đường đọc danh tính — `scout.text` theo selector **và** `scout.a11y` — vì dấu hiệu phân biệt tài khoản nằm trong `StaticText`, chỗ `scout.page` không với tới (`G-104`) |
+| **4 — hợp đồng adapter** | **XONG** · `_shared/adapters/` · 9 phép ghim | Spec liệt kê 4 điều cấm. Pilot thêm điều thứ **⑸ cấm neo vào hash styled-components** — đo được mọi `class` của Vizcom là hash đổi theo mỗi lượt build. Và chính bộ soát có một mẫu cấm **rỗng** (`G-106`) |
+| **1 — ghế/profile** | **phần tối thiểu** | Spec dự tính thêm 3 trường vào `system.capabilities`. Pilot cho thấy **không cần đổi extension gì cả**: `bridge.sessions` đã trả `instance_id` + nhãn sẵn. Sổ ghế vẫn để ngoài repo, chưa ai điền |
+| **2 — sống & sẵn sàng** | **CHƯA, cố ý** | Ngưỡng 1.500ms **sống sót phép đo** (`G-107`): sống ≤282ms, chết ~20.020ms, hai cực cách 70×. Nhưng cả hai ứng viên Vizcom đều sống, nên chưa trả lời được *"không có nó thì E2E hỏng ở đâu"* |
 
 ## 4. ACCEPTANCE TESTS
 

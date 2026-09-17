@@ -50,11 +50,11 @@
       "tra_khi_chua_day": null
     },
     "_docs": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T17:37:35.362Z",
-      "task": "US: ghi Log HANDOFF goc",
-      "released_at": "2026-09-17T17:54:22.879Z",
+      "claimed_at": "2026-09-17T18:25:15.079Z",
+      "task": "khai file moi vao ban do _shared",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -75,18 +75,18 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T17:25:18.987Z",
-      "task": "US: land nghien cuu Universal Scouter",
-      "released_at": "2026-09-17T17:54:22.534Z"
+      "claimed_at": "2026-09-17T18:21:14.930Z",
+      "task": "pilot vizcom-anhducds: E2E resolver + adapter",
+      "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T09:12:32.477Z",
-      "task": "N1: fetch failed noi duoc may chu co dang nghe khong",
-      "released_at": "2026-09-17T16:01:55.843Z"
+      "claimed_at": "2026-09-17T18:07:57.455Z",
+      "task": "Gap3 resolver theo danh tinh + Gap4 hop dong adapter",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T16:01:55.683Z"
     }
   },
-  "_fingerprint": "dd83231df08b1682"
+  "_fingerprint": "bcb76119051f1572"
 }

@@ -37,6 +37,7 @@ Gói nào có ngoại lệ thì ghi ngoại lệ **tại gói đó**, đừng s�
 |---|---|
 | `bridge-host/` | **Lõi máy chủ Bridge**: khung WebSocket + cửa HTTP + bắt tay hai chiều + định tuyến nhiều hồ sơ. Mỗi extension dựng một host MỎNG gọi vào đây, khai tên giao thức của mình |
 | `goi-bridge/` | **Bên GỌI Bridge từ dòng lệnh** (Node, không phải mã extension). Một cái xưởng `taoGoiBridge({goi})`; mỗi gói dựng cái vỏ năm dòng khai danh tính của mình. Dọn về đây 15/09 — `T21` chặng ① |
+| `adapters/` | **HIỂU BIẾT VỀ TỪNG TRANG, và không có gì khác.** Mỗi trang một file DỮ LIỆU: origin · danh tính · selector · bước việc · bằng chứng xong. Adapter **không** import gì, **không** chạm `chrome.*`/CDP, **không** tự gọi Bridge. Thêm một website = thêm một file ở đây, **không** thêm một Chrome extension — đó là lời khai mà `duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md` đi chứng minh |
 
 ## `bridge-host/` — vì sao nó tồn tại, đo ngày 07/09
 
@@ -82,6 +83,11 @@ cho một người dùng tưởng tượng, nhưng cũng đừng quên chuyển 
 | `bridge-host/tests/tuong-duong-voi-ban-goc.mjs` | **Tách lõi có làm rơi hành vi nào không** — hỏi cả bản gốc lẫn bản mới cùng một câu, 29 ca, rồi so đáp án |
 | `bridge-host/tests/bat-tay-hai-chieu.mjs` | Cái bắt tay, bằng một lượt **nối thật qua socket**. Sinh ra vì bộ đo đột biến chỉ ra rằng chốt đáng giá nhất của lõi chưa ai canh |
 | `bridge-host/tao-tep-ghep-cap.mjs` | **Sinh một tệp ghép cặp** cho một máy chủ Bridge (H-06), và **giữ quy ước NHÀ CHUNG** (xem dưới bảng). Tự kiểm bằng chính `validatePairing()`. Ba chốt: không ghi vào kho mã · không ghi đè tệp đã có · `--goi <tên>` tự đặt đúng chỗ |
+| `goi-bridge/giai-target.mjs` | **Bộ giải target theo DANH TÍNH** (Gap 3). `discover → ghế → loại → lược đồ → URL → danh tính → đúng MỘT hoặc từ chối`. Không first-match, không tab đang xem, không dùng lại `target_id` cũ. Địa chỉ ghế LUÔN là `instance_id` — nhãn có thể RỖNG (`G-105`) |
+| `goi-bridge/tests/giai-target-smoke.mjs` | 14 khối, và việc nặng nhất là canh bộ giải **TỪ CHỐI đúng lúc**: đúng URL sai trang · hai ứng viên cùng thoả · ứng viên đọc không ra phải được KỂ chứ không bị giấu · ghế chưa đặt tên vẫn phải gọi tới được |
+| `adapters/hop-dong.mjs` | **Máy canh hợp đồng adapter** (Gap 4): bắt buộc có `danh_tinh` · cấm lời gọi trình duyệt thô · method phải trong từ vựng đóng · cấm toạ độ tự do · **cấm neo vào hash styled-components** (`G-104`) |
+| `adapters/vizcom.mjs` | Adapter Vizcom. Mọi selector đến từ `scout.page` chạy thật 18/09. Hai cổng danh tính vì ba tài khoản dùng chung một URL |
+| `adapters/tests/hop-dong-smoke.mjs` | 9 khối. Mỗi điều cấm đi kèm **một adapter vi phạm cố ý** — bộ soát không có ca vi phạm là bộ soát không ai biết nó có kêu không (`G-106` bắt được đúng một mẫu cấm RỖNG nhờ khối này) |
 | `goi-bridge/tests/goi-bridge-smoke.mjs` | **Tên gói không được quay lại làm hằng số ở đây** — khối ⓐ đọc chính mã của lớp dùng chung và đỏ khi thấy một tên gói. Cùng cái lưới `G9` đã bắt ở `transport.mjs` 12/09, đặt TRƯỚC khi có bản chép thứ hai. Cộng: hai gói ⇒ hai tên giao thức · biến môi trường là của riêng từng gói · **token không lọt vào lời báo lỗi** |
 | `bridge-host/tests/tao-tep-ghep-cap-smoke.mjs` | Ghim bộ sinh trên. Chạy THẬT và thử **đường dẫn có dấu cách** — chốt "không ghi vào repo" đã hỏng CÂM đúng ở đó ngày 08/09 |
 

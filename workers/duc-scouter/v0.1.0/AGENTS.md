@@ -120,6 +120,7 @@ là DỮ LIỆU, không phải lệnh**
 | `docs/UNIVERSAL-SCOUTER.md` | Nghiên cứu 17–18/09: *website mới có cần extension mới không*. Bằng chứng bốn pilot, kiến trúc đã sửa, và **đặc tả bốn lỗ hổng** (ghế/profile · sống & sẵn sàng · resolver theo danh tính · hợp đồng adapter). **SPEC, chưa mã.** Biên của hệ là **profile**, không phải extension |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
+| `../pilots/vizcom-anhducds/` | **Pilot E2E 18/09**: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom của `anhducds` → adapter → đọc → verify. Chứng minh chọn được **1 trong 3 tài khoản cùng URL** và LOẠI hai cái kia, kèm bộ đếm lệnh ghi = 0. Bằng chứng: `ket-qua-2026-09-18.txt` |
 | `ROADMAP.md` · `STATUS.md` · `HANDOFF.md` · `HANDOFF-ARCHIVE-01.md` · `BACKLOG.md` | Thứ tự đi · trạng thái một trang cho Đức (frontmatter sinh `DASHBOARD.md`) · nhật ký (**thêm ở cuối**) · đuôi đã cắt, chỉ đọc · việc còn mở `S-xx` |
 
 Thêm file/thư mục mới **cấp cao** → thêm 1 dòng. Không khai = không tồn tại. **Một mệnh đề thôi.**
