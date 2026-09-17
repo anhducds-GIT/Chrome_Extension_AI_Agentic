@@ -107,4 +107,48 @@ const lenhKhai = [...html.matchAll(/<li data-lenh="([^"]+)">/g)].map((m) => m[1]
     "`.viec-huong-dan li` phải là CỘT — để hàng ngang thì tên việc và lời giải thích dính vào nhau");
 }
 
-console.log(`  · udin huong-dan: 6 khối xanh · ${lenhThat.length} lệnh khai đủ`);
+/* ---- ⓖ MỌI dòng việc phải nằm TRONG một nhóm -------------------------
+ * Đức chốt 17/09: *"trong tương lai tôi sẽ còn có các feature khác liên quan đến tạo video…
+ * nên tôi prefer bạn tạo thành các group và gói nó lại thay vì là để rải rải ra."*
+ *
+ * Khối này là thứ giữ lời ấy khi tôi không còn ở đây. Nó KHÔNG kiểm tên nhóm — thêm nhóm
+ * `video` sau này không được làm bộ đo đỏ. Nó kiểm đúng một điều: **không dòng nào rơi ra
+ * ngoài nhóm**. Đó là cái đã hỏng ở bản đầu (10 dòng phẳng), và là cái sẽ hỏng lại khi ai đó
+ * thêm vội một lệnh mới vào cuối danh sách. */
+{
+  /* HAI regex riêng cho hai loại thẻ, KHÔNG dùng tham chiếu ngược `so-mot-co-gach-cheo`: dấu gạch ấy phải đi
+   * qua ba lớp vỏ (bash → python → JS) và đã có lần biến thành một BYTE ĐIỀU KHIỂN nằm im
+   * trong file. Viết dài hơn một dòng thì đổi lại được sự chắc chắn. */
+  const nhom = [
+    ...html.matchAll(/<section[^>]*data-nhom="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g),
+    ...html.matchAll(/<details[^>]*data-nhom="([^"]+)"[^>]*>([\s\S]*?)<\/details>/g),
+  ];
+  assert.ok(nhom.length >= 2, `phải có ít nhất hai nhóm (chính và phụ), thấy ${nhom.length}`);
+
+  const trongNhom = new Set();
+  for (const [, ten, than] of nhom) {
+    const cua = [...than.matchAll(/<li data-lenh="([^"]+)">/g)].map((m) => m[1]);
+    assert.ok(cua.length > 0, `nhóm '${ten}' rỗng — nhóm rỗng thì xoá đi, đừng để làm nhiễu`);
+    for (const l of cua) {
+      assert.ok(!trongNhom.has(l), `${l} nằm ở HAI nhóm — mỗi việc một chỗ, nếu không Đức đọc hai lần rồi tưởng là hai việc`);
+      trongNhom.add(l);
+    }
+  }
+  const roiRa = lenhKhai.filter((l) => !trongNhom.has(l));
+  assert.deepEqual(roiRa, [], `có dòng việc nằm NGOÀI mọi nhóm: ${roiRa.join(", ")}`);
+}
+
+/* ---- ⓗ Nhóm PHỤ phải GẬP LẠI được ------------------------------------
+ * "Cất vào một nest group toggle" là nguyên văn yêu cầu. Một `<section>` mở toang thì nó lại
+ * rải ra đúng như cũ, chỉ khác cái tiêu đề. */
+{
+  assert.ok(/<details[^>]*data-nhom="phu"/.test(html),
+    "nhóm phụ phải là <details> — gập lại được, không phải một khối mở sẵn");
+  /* Dùng indexOf chứ không regex: chỗ này chỉ cần biết `<summary>` có đứng ngay sau thẻ mở
+   * của nhóm phụ hay không, và một regex vắt qua nhiều dòng ở đây đã vỡ một lần vì escape. */
+  const moPhu = html.indexOf('data-nhom="phu"');
+  assert.ok(moPhu > 0 && html.slice(moPhu, moPhu + 200).includes("<summary>"),
+    "nhóm phụ thiếu <summary> — không có chỗ để bấm mở");
+}
+
+console.log(`  · udin huong-dan: 8 khối xanh · ${lenhThat.length} lệnh trong ${[...html.matchAll(/data-nhom="/g)].length - 1} nhóm`);

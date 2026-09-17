@@ -128,7 +128,19 @@
         <div class="the">
           <h2>Udin làm được gì</h2>
           <p class="mo">Mỗi dòng là một việc chạy trọn bằng MỘT lệnh. Bảo AI chạy lệnh ấy, hoặc tự chạy trong Terminal ở thư mục repo.</p>
-          <ul id="viec-list" class="viec-huong-dan">
+
+          <!-- GOM THEO NHÓM, không rải phẳng. Đức chốt 17/09: *"trong tương lai tôi sẽ còn có các
+               feature khác liên quan đến tạo video… nên tôi prefer bạn tạo thành các group và gói
+               nó lại thay vì là để rải rải ra."*
+
+               Hình dạng để MỞ RỘNG: mỗi nhóm là một `[data-nhom]`, nhóm phụ là `<details>` gập
+               lại. Thêm nhóm video sau này = thêm MỘT khối `[data-nhom="video"]` ở đây, không
+               đụng gì tới nhóm cũ. `tests/huong-dan-smoke.mjs` đòi **mọi** dòng việc phải nằm
+               TRONG một nhóm — không cho một dòng nào lại rơi ra ngoài. -->
+
+          <section class="nhom" data-nhom="anh">
+            <h3>Sinh ảnh &amp; thao tác ảnh</h3>
+            <ul class="viec-huong-dan">
             <li data-lenh="vong-tham-chieu.mjs">
               <span class="viec-ten">Sinh ảnh CÓ ẢNH THAM CHIẾU (@1 / @2)</span>
               <span class="mo">Việc chính. Lấy ảnh làm mẫu rồi xin Udin vẽ theo. Ảnh mẫu lấy từ canvas, hoặc từ MỘT TỆP TRÊN MÁY thả vào. Bảy chặng, ảnh ra .jpg, và đọc luôn câu Udin trả lời.</span>
@@ -139,10 +151,10 @@
               <span class="mo">Không cần ảnh mẫu. Vượt màn chắn → gõ prompt → chờ xong → tải ảnh về → đổi .jpg → đọc câu trả lời.</span>
               <code>e2e.mjs</code>
             </li>
-            <li data-lenh="gui-prompt.mjs">
-              <span class="viec-ten">Gửi một prompt rồi chờ Udin chạy xong</span>
-              <span class="mo">Dùng khi muốn tách riêng lượt gửi. Có --noi-lai để bám vào một lượt ĐANG chạy mà không gửi thêm gì.</span>
-              <code>gui-prompt.mjs</code>
+            <li data-lenh="chon-tham-chieu.mjs">
+              <span class="viec-ten">Liệt kê ảnh trên canvas, hoặc chọn ảnh theo thứ tự @1 @2</span>
+              <span class="mo">Chạy không tham số để xem canvas đang có những gì.</span>
+              <code>chon-tham-chieu.mjs</code>
             </li>
             <li data-lenh="lay-anh.mjs">
               <span class="viec-ten">Tải ảnh kết quả về đĩa</span>
@@ -154,15 +166,24 @@
               <span class="mo">Bản .webp gốc GIỮ NGUYÊN trên đĩa, không xoá.</span>
               <code>doi-sang-jpg.mjs</code>
             </li>
+            </ul>
+          </section>
+
+          <!-- Nhóm phụ GẬP LẠI: chúng là thứ tôi thêm để vòng chính sống được, không phải thứ
+               Đức mở bảng bên ra để tìm. Vẫn phải NHẮC TỚI — cất đi không có nghĩa là giấu. -->
+          <details class="nhom nhom-phu" data-nhom="phu">
+            <summary>Tính năng phụ — các bước lẻ của vòng chính</summary>
+            <p class="mo">Vòng chính đã gọi sẵn những bước này. Chỉ cần tới chúng khi muốn chạy tay từng chặng, hoặc khi một chặng hỏng và cần soi riêng.</p>
+            <ul class="viec-huong-dan">
+            <li data-lenh="gui-prompt.mjs">
+              <span class="viec-ten">Gửi một prompt rồi chờ Udin chạy xong</span>
+              <span class="mo">Dùng khi muốn tách riêng lượt gửi. Có --noi-lai để bám vào một lượt ĐANG chạy mà không gửi thêm gì.</span>
+              <code>gui-prompt.mjs</code>
+            </li>
             <li data-lenh="doc-tra-loi.mjs">
               <span class="viec-ten">Đọc câu Udin vừa trả lời</span>
               <span class="mo">Từ chối nếu Udin còn đang nghĩ, và từ chối nếu chữ y hệt lượt trước.</span>
               <code>doc-tra-loi.mjs</code>
-            </li>
-            <li data-lenh="chon-tham-chieu.mjs">
-              <span class="viec-ten">Liệt kê ảnh trên canvas, hoặc chọn ảnh theo thứ tự @1 @2</span>
-              <span class="mo">Chạy không tham số để xem canvas đang có những gì.</span>
-              <code>chon-tham-chieu.mjs</code>
             </li>
             <li data-lenh="qua-man-cho.mjs">
               <span class="viec-ten">Vượt màn chắn User Limit Reached</span>
@@ -179,7 +200,8 @@
               <span class="mo">Qua menu Add to canvas. Thêm một khung RỖNG, không phải thêm ảnh — ảnh Udin tự sinh đã tự vào canvas rồi.</span>
               <code>them-khung.mjs</code>
             </li>
-          </ul>
+            </ul>
+          </details>
         </div>
 
         <div class="the">

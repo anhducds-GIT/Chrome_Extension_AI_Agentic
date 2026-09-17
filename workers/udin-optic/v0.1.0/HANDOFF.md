@@ -1033,3 +1033,30 @@ Nhìn thấy tận mắt rồi mới sửa, và ghim luôn cái luật bố cụ
 được gì (mỗi dòng có một lượt chạy thật đứng sau) · **KHÔNG hứa gì** · cái phanh **giữ nguyên**,
 không nới một chốt nào cho lượt ký. Và nó **không** nâng `T7`: vòng tự cải tiến vẫn `PARTIAL`,
 đó là việc của Scouter và phụ thuộc `R2`.
+
+## 2026-09-17j · `claude-scouter-udine` — bảng tính năng GOM THEO NHÓM, không rải phẳng
+
+**Đức 17/09:** *"trong tương lai tôi sẽ còn có các feature khác liên quan đến tạo video… nên tôi
+prefer bạn tạo thành các group và gói nó lại thay vì là để rải rải ra."*
+
+Bản đầu của tôi là **10 dòng phẳng** — đúng thứ vỡ ngay khi thêm nhóm thứ hai. Nay:
+
+| nhóm | gồm | hình dạng |
+|---|---|---|
+| **Sinh ảnh & thao tác ảnh** | `vong-tham-chieu` · `e2e` · `chon-tham-chieu` · `lay-anh` · `doi-sang-jpg` | `<section data-nhom="anh">`, mở sẵn |
+| **Tính năng phụ** | `gui-prompt` · `doc-tra-loi` · `qua-man-cho` · `chon-che-do` · `them-khung` | `<details data-nhom="phu">`, **gập lại** |
+
+Ranh giới: nhóm chính là thứ Đức mở bảng bên ra để tìm; nhóm phụ là **các bước lẻ của vòng
+chính** — vòng chính đã gọi sẵn chúng, chỉ cần tới khi chạy tay từng chặng hoặc soi một chặng
+hỏng. *Cất đi không có nghĩa là giấu*, nên chúng vẫn được nhắc tới đủ.
+
+**Thêm nhóm video sau này = thêm MỘT khối `[data-nhom="video"]`**, không đụng nhóm cũ. Phép ghim
+cố ý **không kiểm tên nhóm** — kiểm tên thì nhóm mới làm bộ đo đỏ oan. Nó kiểm đúng ba điều:
+mọi dòng việc phải **nằm trong một nhóm** · không việc nào ở **hai** nhóm · nhóm phụ phải là
+`<details>` (mở toang thì lại rải ra như cũ, chỉ khác cái tiêu đề). `8` khối · `9/9` đột biến.
+
+**Và một lượt tự bắn vào chân, ghi lại vì nó đắt:** viết phép ghim qua heredoc, `\1` (tham chiếu
+ngược trong regex) bị Python đọc thành escape bát phân và **một BYTE ĐIỀU KHIỂN `0x01` nằm im
+trong file** — trong đúng dòng chú thích cảnh báo về chuyện ấy. `tests/khong-byte-dieu-khien-smoke.mjs`
+bắt được. Nay dùng **hai regex riêng** thay tham chiếu ngược: dài hơn một dòng, đổi lại không còn
+chỗ nào cho một dấu gạch đi qua ba lớp vỏ.
