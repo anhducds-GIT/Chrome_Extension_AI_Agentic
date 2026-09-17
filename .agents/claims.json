@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
+      "owner": "claude-gpt-chay-het-job",
       "ai": null,
-      "claimed_at": "2026-09-14T15:15:13.560Z",
-      "task": "Nâng trần thời gian chờ cho job text dài, và mở đường chạy tiếp sau halt READINESS_TIMEOUT_AFTER_SAVE",
-      "released_at": "2026-09-14T15:42:49.939Z",
+      "claimed_at": "2026-09-17T09:31:13.607Z",
+      "task": "Chuoi dung vi DOI_HOI_THOAI: cau bao loi chi in hai UUID, nguoi doc khong biet lam gi",
+      "released_at": null,
       "taken_from": "claude-nen-luat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T07:07",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "e5f9fc7025525f08"
+  "_fingerprint": "938a2ea708839e7e"
 }

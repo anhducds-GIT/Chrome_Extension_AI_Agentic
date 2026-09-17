@@ -2451,3 +2451,30 @@ tin dòng X-bị-chặn-bởi-Y mà chưa đo Y”*. **Mục “chờ Đức” 
 **Đo:** suíte gói **36/36** · `npm test` xanh · `backlog-check` 36 mục, 0 vô hình.
 **Việc kế:** `N1` nửa sau (ai gọi cú giết — ứng viên rẻ nhất: `-KhoiDongLai` gọi `Stop-Process -Force`)
 và `N4` (ba lệnh chưa chạm `tldraw`, cần Đức mở một tab).
+
+## 2026-09-17k · `claude-scouter-udine` — `N4` trên tldraw, và bản nạp cũ hơn repo
+
+Đức mở tab `tldraw.com`. Ba lệnh chưa từng chạm trang thứ hai, chạy sống, số vào `TRIALS.md`:
+`scout.text` **122ms** → `"100%"` · `scout.grab` **1020ms**, HTTP 200, **287.003 byte**, URL thật không
+ra khỏi trình duyệt · `scout.type` gõ 20 ký tự, `scout.text` đọc lại đúng từng chữ, `.tl-shape` 1→2.
+tldraw **không có ô nhập nào**, nên ô ấy phải dựng bằng chính bộ lệnh: bấm `tools.text` → bấm `canvas`
+→ `contenteditable` 0→1.
+
+**Nhưng `N4` chưa đóng, và lý do lớn hơn `N4`** (`G-99`). `scout.type` trả về **không có `da_kiem`**,
+trong khi repo từ 16/09 (`S1`) bọc `xetDocLai` quanh mọi lượt gõ và trả ba câu chứ không hai. Đo tiếp:
+`scout.tha` và `scout.upload` trả `METHOD_NOT_FOUND` trên **cả hai** ghế Scouter.
+**Bản extension nạp trong Chrome cũ hơn repo** — tức `Scouter v1` ký 16/09 trên một bản mã **chưa
+từng được nạp vào trình duyệt lần nào**. Mọi lượt live khai `da_kiem:true` đều chạy qua extension
+`udin-optic` (được nạp lại), không qua Scouter — hai gói chia nhau bảy tệp chép, nên **suíte xanh bên
+này không nói gì về bản đang chạy bên kia**. Đây là `S-31` cắn đúng chỗ nó nói sẽ cắn.
+
+**Thứ đáng nhớ nhất: một lời báo THIẾU TRƯỜNG nguy hơn một lời báo sai.** `if (r.data.da_kiem)` đọc
+`undefined` thành *chưa kiểm*; `if (da_kiem === false)` đọc thành *đã kiểm*. Hai kết luận trái ngược từ
+cùng một ô trống, không nhánh nào đỏ. Từ nay: **trước mọi lượt live, hỏi bản nạp biết những method
+nào rồi so với từ vựng trong repo** — một lượt gọi.
+
+**Hai cái bẫy tôi tự đặt rồi tự vấp trong một giờ:** ⓐ in `targetId.slice(0,10)` cho dễ đọc rồi **dùng
+luôn chuỗi cắt ấy làm danh tính** — bốn lượt `PROBE_FAILED`, lần thứ ba trong ba ngày. ⓑ đọc `nodes`
+trong khi `scout.query` trả `items` — mảng rỗng, **không ném gì**, một trang đầy đọc y hệt trang trống.
+
+**Việc kế:** Đức nạp lại extension Scouter → chạy lại `scout.type` trên tldraw, đòi `da_kiem`. `N1` nửa sau.

@@ -72,12 +72,20 @@ nó vẫn ghi `MỞ` · `S-24` đường ⓜ (`scout.grab`) làm xong **14/09**,
 > **Viết một mục “chờ Đức” là một lời khai, và lời khai nào cũng phải đo trước khi viết.** Một lệnh
 > `grep alarms manifest.json` là đủ để không ai mất thời gian.
 
-**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI.**
-`R3` mới đụng **ba** lệnh: `dom.query` · `page.snapshot` · `input.click`. `scout.type` ·
-`scout.text` · `scout.grab` **chưa chạm `tldraw` lần nào** — nên câu *"seed dùng lại được"* hiện
-đúng cho ba lệnh, không phải cho cả bộ.
-**Đóng khi:** ba lệnh ấy chạy thật trên `tldraw` và ghi số vào `TRIALS.md`. Cần **một tab tldraw**
-đang mở; không có method tạo tab, nên gộp lời nhờ Đức vào một lần.
+**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI. Chạy 17/09: **hai phần ba đóng**, phần còn lại kẹt ở `S-31`.**
+Đức mở tab `tldraw.com`, ghế `Dummy_Scout`. Số đã vào `TRIALS.md`:
+· `scout.text` **122ms**, đọc ra `"100%"`, 4 ký tự — **ĐẠT**.
+· `scout.grab` **1020ms**, HTTP 200, **287.003 byte**, URL thật không ra khỏi trình duyệt — **ĐẠT**.
+· `scout.type` gõ được 20 ký tự và `scout.text` đọc lại đúng từng chữ — **nhưng chạy trên MÃ CŨ.**
+
+**Chỗ kẹt, và nó lớn hơn `N4`:** bản extension Scouter đang nạp trong Chrome **cũ hơn repo** (`G-99`).
+`scout.tha` và `scout.upload` trả `METHOD_NOT_FOUND` trên **cả hai** ghế. Tức `Scouter v1` ký 16/09
+trên một bản mã **chưa từng được nạp vào trình duyệt lần nào** — mọi lượt live khai `da_kiem:true`
+đều chạy qua extension `udin-optic`, không qua Scouter.
+**Đóng khi:** Đức nạp lại extension Scouter (`chrome://extensions` → Reload) rồi `scout.type` chạy lại
+trên `tldraw` và trả **`da_kiem`** — ba câu chứ không hai.
+**Trước MỎcI lượt live từ nay:** hỏi bản nạp xem nó biết những method nào, rồi so với từ vựng trong repo.
+Một lượt gọi, và nó là thứ duy nhất phân biệt *mã này chạy đúng* với *mã này chưa bao giờ chạy*.
 
 ### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 
