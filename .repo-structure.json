@@ -45,7 +45,8 @@
       "B3",
       "B4",
       "B10",
-      "B12"
+      "B12",
+      "B16"
     ],
     "_doc_b16": "B16 (bo bien dich luat) CO Y de o nhom CANH BAO, khong CHAN: repo nay co 154 ADR chua khai chu_de, bat chan ngay la tu khoa repo. Bat len khi da khai xong — xem BACKLOG."
   },
@@ -272,28 +273,28 @@
       "bridge": "Soi day Bridge"
     },
     "ra_soat": {
-      "AGENTS.md": "2026-09-09",
-      "CLAUDE.md": "2026-09-09",
+      "AGENTS.md": "2026-09-17",
+      "CLAUDE.md": "2026-09-17",
       "docs/README.md": "2026-09-09",
-      "docs/protocols/HANDOFF.md": "2026-09-09",
+      "docs/protocols/HANDOFF.md": "2026-09-17",
       "docs/protocols/MULTIFLOW.md": "2026-09-09",
       "docs/protocols/ORCHESTRATOR.md": "2026-09-09",
       "docs/protocols/ASSISTANT-V0.1.md": "2026-09-09",
-      "PLATFORM.md": "2026-09-09",
+      "PLATFORM.md": "2026-09-17",
       "PROMPTS.md": "2026-09-09",
-      "README.md": "2026-09-09",
+      "README.md": "2026-09-17",
       "STATUS.template.md": "2026-09-09",
-      "workers/_shared/AGENTS.md": "2026-09-09",
+      "workers/_shared/AGENTS.md": "2026-09-17",
       "workers/hnx-fetch/AGENTS.md": "2026-09-09",
       "workers/hnx-fetch/PROTOCOL.md": "2026-09-09",
       "workers/duc-scouter/v0.1.0/AGENTS.md": "2026-09-09",
       "workers/udin-optic/v0.1.0/AGENTS.md": "2026-09-17",
       "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": "2026-09-09",
       "workers/duc-auto-gemini/v0.2.0/AGENTS.md": "2026-09-09",
-      "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": "2026-09-09",
-      "docs/_TEMPLATE-adr.md": "2026-09-09",
+      "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": "2026-09-17",
+      "docs/_TEMPLATE-adr.md": "2026-09-17",
       "workers/duc-auto-chatgpt/v0.1.0/decisions.md": "2026-09-09",
-      "workers/duc-auto-gg-flow-video/v0.1.0/decisions.md": "2026-09-09",
+      "workers/duc-auto-gg-flow-video/v0.1.0/decisions.md": "2026-09-17",
       "workers/duc-auto-gemini/v0.2.0/decisions.md": "2026-09-09"
     },
     "_mo_coi_co_y_doc": "Quyet dinh CON SONG ma co y KHONG co dong luat nao mang. Khoa la <pham vi><so hieu>, gia tri la LY DO. Phep (2) cua rule-compile.mjs tru chung ra. Chi khai khi da doc va CHAC no khong phai mot luat bi mat — luot gop 09/09 danh roi ba ve that, va chung tung trong y het mo coi co y.",
@@ -363,6 +364,10 @@
         ]
       }
     },
+    "_trung_co_y_doc": "TRUNG CO Y — khoa la DAU VAN TAY (xem vanTay() trong rule-compile.mjs), gia tri la LY DO. Cung ly le voi mo_coi_co_y: mot con so khong bao gio ve 0 la mot phep kiem nguoi ta thoi doc. Khoa la van tay chu KHONG phai cap file, nen sua loi mot trong hai ban la luot mien het hieu luc va cap ay quay lai hoi.",
+    "trung_co_y": {
+      "cua drive duc goc hoac lieu muc sua thu trong xoa": "Ba dong 'Ba viec phai hoi Duc' cua hnx-fetch CO Y nam o ca AGENTS.md lan PROTOCOL.md. Duc chot 08/09: PROTOCOL.md phai TU DUNG MOT MINH, viet cho mot AI khong doc file kia — mot so tu dung ma thieu danh sach an toan cua chinh no la mot so nguy hiem. Cau tra loi da ghi ngay tai cho o ca hai file tu 08/09."
+    },
     "khoi_sinh": {
       "_doc": "Buoc (6) compile: pham vi so cai -> file mang khoi may sinh. KHONG suy tu duong dan — suy ho la doan cho ghi de vao file luat cua nguoi khac. docs/adr/ goc CO Y khong co dich: ban hieu luc goc co thuoc coc 252 dong.",
       "workers/duc-auto-gemini/v0.2.0/docs/adr/": "workers/duc-auto-gemini/v0.2.0/decisions.md",
@@ -413,6 +418,9 @@
   },
   "budget": {
     "_doc_nap": "tokenNap = TRAN TOKEN cho phan MOI phien phai nap (AGENTS.md goc + STATUS.md goc). Do bang: npm run luat -- --nap. Day la con so nhan theo (so phien), nen no dat hon moi muc khac. Dat 6000 luc migrate 09/09; SIET dan, khong noi ra.",
-    "tokenNap": 6000
+    "_tokenNap_siet_1709": "6000 -> 5724 (KHUNG-M3). Do that 17/09: nap ~4403 token (AGENTS.md 3630 + STATUS.md 773); cong bien 30% ra 5724. Thuoc nay CHI DUOC SIET. Noi thang mot dieu de luot sau doi chieu: chinh phien 17/09 lam AGENTS.md phinh 3307 -> 3630 token (hai hang ban do cho file moi + gioi han 6 cho ADR-0038) — day la SU KIEN MOI, khong phai luat thay luat, nhung no van la phinh va van dem vao hoa don nay.",
+    "tokenNap": 5724,
+    "_tongTaiLieu": "BANH COC, dat o dung con so cua HOM NAY (17/09) — cung co che voi docs.tran_dong_khong_ke_adr: no khong doi ai don, no chi chan PHINH. Moi luot xoa thi HA con so nay xuong; cho da ha khong quay lai duoc. Truoc 17/09 repo nay KHONG khai muc nay, nen can-nang do no bang NGAN_SACH_MAC_DINH cua bo khung (2.200) va bao do 9.958/2.200 nhieu ngay lien — mot mau do khong co duong hop le nao lam cho xanh. Xem ADR-0038. DAY KHONG PHAI NOI TRAN DE DI TIEP: phan bot that la docs/studies/ (5.516 dong, 10 file, 55% kho chu) va no CHO DUC CHOT — docs/README.md dang khai chung la 'nghien cuu con song', xoa file la viec phai hoi Duc.",
+    "tongTaiLieu": 9958
   }
 }

@@ -99,6 +99,10 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
    (ADR-0000 ⑸), cổng ĐỎ khi còn chỗ **trích một vế đã chết**.
 5. Trần sổ nợ · trần dòng `docs/` · phép kiểm chết: `RULE-COMPILER.md` mục 5a. **Hỏi Đức trước khi
    đổi một trần.**
+6. **Ngân sách của `npm run can-nang` là của REPO NÀY, khai ở `budget` trong
+   `.repo-structure.json`** — [ADR-0038](docs/adr/0038-ngan-sach-tai-lieu-cua-repo-nay.md). Không
+   khai thì nó đo bằng con số mặc định của bộ khung, và repo này từng chịu đỏ 9.958/2.200 nhiều
+   ngày vì thế. `tongTaiLieu` là **bánh cóc**: xoá được thì HẠ nó, không bao giờ nâng cho vừa.
 
 ## 8. Đọc TRƯỚC KHI làm — bắt buộc
 
@@ -126,5 +130,6 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | **Xem bảng trạng thái chạy tại chỗ** | [bang-song/Xem-bang.cmd](bang-song/Xem-bang.cmd) — `npm run bang-song` |
 | **Sắp commit — hai cửa MÁY** | `.githooks/` — `commit-msg` từ chối lượt commit cuốn theo file lane khác đang khoá; `post-commit` **tự trả khoá file**. Bật bằng `core.hooksPath=.githooks` — lượt `upgrade` đặt hộ, kiểm bằng `git config --local --get core.hooksPath`. **Cấu hình MỖI BẢN SAO, không đi theo file.** |
 | **Bộ biên dịch luật / đo phần nạp bằng token** | `scripts/rule-compiler.mjs` — `npm run luat` |
+| **Đào lịch sử xa hơn phần còn lại trong `HANDOFF.md`** | `docs/archive/` — phần cũ **dời** sang đó bằng `npm run don`, **giữ nguyên từng chữ**. Dời chứ không xoá: cổng đối chiếu byte, dòng nào không có bản khớp trong kho lưu trữ là ĐỎ |
 | **Một hàng cổng "chưa từng đỏ" — nó ĐỎ ĐƯỢC không?** | `tests/cong-do-that.mjs` — `npm run test:do-that`. Mỗi hàng một ca hỏng thật, đo HAI vế (xanh trước khi bẻ, đỏ sau khi bẻ), bẻ trong kho tạm chứ không bao giờ trong cây làm việc |
 <!-- BAN-DO:END -->

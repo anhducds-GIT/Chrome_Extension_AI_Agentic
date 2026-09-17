@@ -80,7 +80,7 @@ báo**, nên nó đỏ mà cổng vẫn xanh — đúng kiểu nợ sống lâu.
 từng ADR (B12 cho phép sửa frontmatter).
 **Đóng khi:** B16 xanh mà **không** hạ nó xuống hạng nhẹ hơn và **không** nới một ngưỡng nào.
 
-**④ `A4` — BA CHỖ QUÁ NGÂN SÁCH, và đừng nới số.**
+**④ `A4` — BA CHỖ QUÁ NGÂN SÁCH, và đừng nới số. ⚠ HAI ĐÓNG, MỘT CHỜ ĐỨC (17/09).**
 `Tổng tài liệu` **9.958/2.200 dòng** (4,5×) · `HANDOFF.md` **877/600** · `thời gian chạy trọn bộ
 kiểm` **199/180 giây**.
 Chỗ an toàn nhất làm trước: HANDOFF có sẵn đường **DỜI CHỖ, không xoá** — chuyển lượt cũ sang
@@ -93,10 +93,50 @@ muộn bị nâng, kể cả bởi tôi.
 **Đóng khi:** cả ba về trong trần **bằng cách bớt**, hoặc một trần đổi kèm ADR nói rõ vì sao con
 số cũ sai — không phải vì nó đang vướng.
 
-**⑤ `A5` — 22 CHỖ QUÁ HẠN RÀ + 1 LUẬT TRÙNG.**
+> **ĐÃ LÀM 17/09.** `HANDOFF.md` **900 → 480** dòng bằng `npm run don -- --apply` (dời nguyên văn,
+> không xoá). `tokenNap` **6000 → 5724** (đo thật 4.403 + biên 30%) — đóng `KHUNG-M3`.
+>
+> **Con số 9.958/2.200 hoá ra không phải "quá ngân sách".** 2.200 là `NGAN_SACH_MAC_DINH` của bộ
+> khung, và repo này **chưa bao giờ khai khối `budget`** — tức bị đo bằng thước của một repo khác.
+> [ADR-0038] khai trần của chính repo, dạng **bánh cóc** (xoá được thì HẠ, không bao giờ nâng).
+>
+> **CÒN CHỜ ĐỨC — một câu thôi:** phần bớt thật là **`docs/studies/` — 5.516 dòng, 10 file, 55%
+> kho chữ**. Tôi **không tự xoá**: `docs/README.md` đang khai chúng là *"nghiên cứu còn sống"*, và
+> xoá file là việc phải hỏi Đức. Tiền lệ đúng đường: 08/09 Đức chốt xoá 14 file `EXP-*` (8.310
+> dòng) — **chúng rời cây làm việc, KHÔNG rời git**, kèm sẵn lệnh đọc lại. Câu hỏi: *còn ai đọc
+> mười file này không?*
+>
+> Một dòng của lộ trình cũ SAI, sửa tại chỗ: *"`draft.md` 3.294 dòng nằm ngay gốc repo"* — thước
+> này **không đếm** `draft.md` (`taiLieu` = `docs/` + README + CHANGELOG + STATUS). Nó không phải
+> phần thừa ở đây.
+
+**⑤ `A5` — 22 CHỖ QUÁ HẠN RÀ + 1 LUẬT TRÙNG. ⚠ MÁY XONG, NGƯỜI ĐỌC ĐƯỢC 9/22 (17/09).**
 22 nơi chứa luật rà lần cuối **09/09**, quá hạn 7 ngày. Đây đúng là thứ sinh ra dòng cũ mà cả
 phiên 17/09 phải đi dọn, nên nó **không phải việc vặt**.
 **Đóng khi:** mỗi nơi được đọc và đổi `ra_soat`, hoặc khai thẳng là không còn ai đọc nó nữa.
+
+> **ĐÃ LÀM 17/09.** Bốn phép của bộ biên dịch: **① 0 · ② 0 · ③ 0 · ④ 22 → 13**.
+> *"1 luật trùng"* hoá ra **không phải nợ**: ba dòng *"Ba việc phải hỏi Đức"* của `hnx-fetch` cố ý
+> nằm ở cả `AGENTS.md` lẫn `PROTOCOL.md`, Đức chốt 08/09, câu trả lời đã ghi ngay tại chỗ từ hôm
+> ấy — mà ③ vẫn đếm nó mỗi lượt. Khai `luat.trung_co_y` (khoá là **vân tay**, không phải cặp file,
+> nên sửa lời một bản là lượt miễn hết hiệu lực).
+>
+> **13 chỗ còn giữ mốc 09/09 là CỐ Ý.** Tôi chỉ đóng dấu cho chỗ **đã đọc thật** — đóng dấu mà
+> không đọc chính là cái bệnh mục này sinh ra để chữa. Chín chỗ đã đọc: `CLAUDE.md` · `README.md` ·
+> `AGENTS.md` · `PLATFORM.md` · `docs/_TEMPLATE-adr.md` · `docs/protocols/HANDOFF.md` ·
+> `workers/_shared/AGENTS.md` · `AGENTS.md`+`decisions.md` của Flow Video.
+>
+> **Lượt đọc trả tiền ngay — ba chỗ đang dạy sai:** ⑴ `decisions.md` của Flow Video còn dạy *"viết
+> ở `Proposed` rồi đổi sang `Accepted` ở một lượt riêng"*, vế Đức chốt **ngược lại** 09/09
+> (ADR-0026 ⑵) — nó sống thêm **8 ngày** vì nó nói bằng lời mình, không trích số hiệu, nên phép ①
+> **không thể** thấy. Đây đúng là khoảng trống mà lượt rà soát sinh ra để lấp. ⑵ `README.md` bảo
+> *"đóng phiên thì dùng `test:song-song`"* — sai, cổng gọi `npm test`. ⑶ `README.md` bỏ sót
+> `udin-optic` khỏi bảng extension.
+>
+> **Hai bẫy mới, đã vào sổ nợ:** `KHUNG-M4` (`don.mjs` và `handoff.mjs` cắt nhật ký theo **hai**
+> quy ước — phần dời đi rơi khỏi chuỗi con trỏ của bộ đếm sự cố **và** khỏi lớp chỉ-THÊM; thiệt
+> hại hôm nay **0**, đếm được) · `KHUNG-M5` (khoá trùng trong `.repo-structure.json` lọt **im
+> lặng** — `JSON.parse` lấy khoá sau, gặp thật hôm nay).
 
 **`N1` — VẪN MỞ, nhưng chờ DỮ LIỆU chứ không chờ mã.** Nhật ký đời sống đã dựng và đã đo thật
 (giết bằng `Stop-Process -Force` → lượt sau báo đúng; đóng tử tế → im lặng). Nó **vào việc từ lượt

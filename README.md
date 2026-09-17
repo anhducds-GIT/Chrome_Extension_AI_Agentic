@@ -28,6 +28,7 @@ nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm
 | `workers/duc-auto-gemini/v0.2.0` | Chạy workbook XLSX sinh ảnh trên Gemini |
 | `workers/duc-auto-gg-flow-video/v0.1.0` | Chạy workbook XLSX sinh video trên Google Flow |
 | `workers/duc-scouter/v0.1.0` | Dò một trang, báo cáo cho AI qua Bridge, tự nạp lại chính nó |
+| `workers/udin-optic/v0.1.0` | Sinh ảnh trên `vinfast.udinbv.com`: vượt màn chờ → gửi prompt → đợi ảnh mới → lấy về đĩa. Tách khỏi Scouter 15/09 |
 | `workers/hnx-fetch` | Lấy dữ liệu HNX mỗi ngày. **Không có quyền `debugger`** nên nó không bấm được gì ([ADR-0021](docs/adr/0021-goi-extension.md) ⑵) |
 
 Mỗi gói tự có `AGENTS.md` · `README.md` · `STATUS.md` · `HANDOFF.md` · `BACKLOG.md` và **khoá
@@ -40,7 +41,12 @@ npm run test:song-song                            # toàn bộ suite, chạy son
 node scripts/session-check.mjs --as <tên-phiên>   # cổng đóng phiên
 ```
 
-`npm test` vẫn chạy được nhưng là chuỗi TUẦN TỰ, chậm hơn nhiều lần — nó tồn tại vì một phép
-ghim đọc thẳng trường đó để bắt "xanh giả" (`AGENTS.md` mục 0a). Đóng phiên thì dùng dòng trên.
+`npm test` là chuỗi TUẦN TỰ, chậm hơn nhiều lần — nhưng **cổng đóng phiên chạy CHÍNH NÓ**
+(`runRootSuite` gọi `npm test --silent`), nên đó là chuỗi phải xanh. `test:song-song` là đường
+chạy nhanh để làm việc, không phải đường đóng phiên.
+
+> Sửa 17/09 (`A5`): chỗ này trước viết *"đóng phiên thì dùng dòng trên"* — sai, cổng không gọi
+> `test:song-song` bao giờ. Một câu hướng dẫn sai ở đây làm người ta tin mình đã chạy đúng thứ
+> cổng sắp chạy.
 
 Không có phụ thuộc ngoài. Mọi phép ghim là script Node thuần.

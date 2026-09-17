@@ -1026,7 +1026,7 @@ khai `sua: <mã>`, đúng đường bộ biên dịch luật mở ra).
 
 Xem: `node scripts/check-bootstrap.mjs --all | grep ADR-EDITED`
 
-### KHUNG-M2 · Khai `luat.chu_de` để bật bộ biên dịch luật (B16)
+### ~~KHUNG-M2~~ · Khai `luat.chu_de` để bật bộ biên dịch luật (B16)
 
 Khung 1.8.0 mang `npm run luat` — bộ biên dịch luật: mỗi ADR khai đúng một `chu_de`, mỗi chủ đề
 có đúng một `dau_moi`, nên hỏi "luật về chuyện X là gì" thì mở **một khối** thay vì đọc bốn file
@@ -1034,14 +1034,50 @@ rồi tự đoán. Repo này có **154 ADR**, chưa ADR nào khai `chu_de`.
 
 B16 **cố ý để ở nhóm CẢNH BÁO**, không CHẶN — bật chặn khi đang đỏ là tự khoá repo.
 
-**đóng khi:** `.repo-structure.json` khai `luat.chu_de`, mọi ADR còn hiệu lực có `chu_de`,
-`npm run luat -- --soat` không còn VI_PHAM, và `B16` được thêm lại vào `bootstrap.blocking`.
+**ĐÓNG 17/09** (`A3`, lane `claude-scouter-udine`): khai **bảy chủ đề** ở `luat.chu_de`; 20 ADR
+gốc nhận `chu_de:` + `nhom:` **cùng một giá trị** (một phân loại, không phải hai) và mỗi chủ đề
+đúng một `dau_moi:`; `npm run luat -- --kiem` thoát 0, **21 ADR / 7 chủ đề / 0 vi phạm**; `B16`
+đã vào `bootstrap.blocking`. Con số 154 ADR ở trên là đếm cả `.claude/worktrees/` — xem `A2`.
 
-### KHUNG-M3 · Trần token mỗi phiên: đo rồi siết
+### ~~KHUNG-M3~~ · Trần token mỗi phiên: đo rồi siết
 
 Khung 1.8.0 mang `npm run luat -- --nap` (Context Compiler) và `npm run can-nang` đo **token**
 chứ không đo dòng. Ngân sách vừa khai `budget.tokenNap: 6000` — con số **lúc migrate**, chưa
 phải con số của repo này.
 
-**đóng khi:** đã chạy `npm run luat -- --nap` một lượt, hạ `tokenNap` xuống sát số thật cộng
-biên 30%, và ghi số đo vào `HANDOFF.md`. Thước chỉ được SIẾT.
+**ĐÓNG 17/09** (`A5`): đo thật **~4.403 token** (AGENTS.md 3.630 + STATUS.md 773), cộng biên
+30% → `tokenNap` **6000 → 5724**. Nói thẳng để lượt sau đối chiếu: chính phiên 17/09 làm
+`AGENTS.md` phình **3.307 → 3.630** token (hai hàng bản đồ cho file mới + giới hạn ⑹ cho
+ADR-0038) — sự kiện MỚI chứ không phải luật thay luật, nhưng vẫn là phình và vẫn vào hoá đơn.
+
+### KHUNG-M4 · `don.mjs` và `handoff.mjs` cắt nhật ký theo HAI quy ước khác nhau
+
+`docs/protocols/HANDOFF.md` mục 3–4 chốt: file lưu trữ **đánh SỐ** (`HANDOFF-ARCHIVE-\d+\.md`) và
+nối bằng **con trỏ đi được bằng máy**, vì bộ đếm sự cố ở `build-overview.mjs` dò đúng hình dạng
+đó. Mục 4 nói thẳng cái giá: *"0 sự cố đọc y hệt sạch sẽ, trong khi thật ra là mù"* — sự cố có
+thật 06/09.
+
+`don.mjs` thì ghi `docs/archive/HANDOFF-<năm>-<tháng>.md` và để lại con trỏ trỏ vào **thư mục**,
+không vào file. Hai chỗ hở, đo 17/09 ngay sau lượt `npm run don -- --apply` đầu tiên ở gốc repo:
+
+1. Tên theo tháng **không khớp** `HANDOFF-ARCHIVE-\d+\.md` → chuỗi con trỏ không đi tiếp được.
+2. `AGENTS.md` mục 5 bảo vệ `HANDOFF-ARCHIVE-*.md` là **chỉ-THÊM**; tên mới **không được che**, và
+   `docs/` là vùng `rw`. Tức phần nhật ký vừa dời đi **mất lớp chống viết lại**.
+
+**Thiệt hại HÔM NAY bằng 0** — đếm được: `HANDOFF.md` gốc và `docs/archive/HANDOFF-2026-09.md`
+đều có **0 dòng `AssistantEvent`**, nên lượt dời không làm rơi sự cố nào. Đây là bẫy đang chờ,
+không phải đám cháy.
+
+**đóng khi:** hai công cụ dùng **một** quy ước tên + con trỏ (hoặc `don.mjs` gọi thẳng
+`handoff.mjs --cat`), và có một phép ghim dựng ca hỏng: dời một mục CÓ dòng `AssistantEvent` rồi
+đòi bộ đếm vẫn đếm đủ. Mẫu sẵn: `tests/build-overview-smoke.mjs` khối (d2).
+
+### KHUNG-M5 · Khoá trùng trong `.repo-structure.json` lọt im lặng
+
+`JSON.parse` lấy khoá SAU và **bỏ khoá trước, không một tiếng nào**. Gặp thật 17/09: chèn một
+khối `"budget"` thứ hai vào file, `node -e` in ra khối CŨ, và mọi phép đo vẫn xanh — bản sửa
+đơn giản là không tồn tại. Cùng họ với `mutation-harness-silent-skip`: một lượt ghi không có
+hiệu lực đọc y hệt một lượt ghi thành công.
+
+**đóng khi:** `readStructureFromDisk` (hoặc một phép ghim) quét thô văn bản tìm khoá trùng ở mỗi
+cấp và NÉM, kèm một ca hỏng dựng sẵn — chỗ đúng là `tests/cong-do-that.mjs`.

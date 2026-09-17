@@ -24,8 +24,18 @@ Chép [`docs/_TEMPLATE-adr.md`](../../../docs/_TEMPLATE-adr.md) thành
 `docs/adr/NNNN-mo-ta-ngan-khong-dau.md`, đánh số tiếp từ `0011`. **Đừng thêm mục vào file này
 nữa** — nó là mục lục.
 
-**Viết ở `Proposed`, đổi sang `Accepted` ở một lượt riêng.** B12 chốt mốc bất biến ở commit ĐẦU
-TIÊN mà `status` thành `Accepted`; viết thẳng `Accepted` là mất luôn lượt sửa chữ.
+**Viết THẲNG `Accepted` khi Đức đã chốt** — và hồ sơ vẫn **sửa được** (gộp, phân nhóm, rút gọn).
+
+> **Vế đã chết, gỡ 17/09 (`A5`).** Chỗ này trước dạy *"viết ở `Proposed`, đổi sang `Accepted` ở
+> một lượt riêng, vì B12 chốt mốc bất biến ở commit ĐẦU TIÊN"*. Đức đã chốt **ngược lại** ngày
+> 09/09 — [ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵ — và
+> `docs/_TEMPLATE-adr.md` đã ghi nó là vế chết từ hôm ấy. File này thì không, nên nó **dạy tiếp
+> một thứ đã bị bãi suốt tám ngày**.
+>
+> Vì sao máy không bắt được: phép ① của bộ biên dịch chỉ đỏ khi có **lượt trích mang số hiệu**
+> (`ADR-0026 ⑵`). Câu cũ ở đây không trích số nào — nó chỉ nói nội dung vế đã chết bằng lời của
+> mình. **Đó đúng là khoảng trống mà lượt rà soát hằng tuần (giới hạn ⑨) sinh ra để lấp**, và
+> đây là lần nó trả tiền.
 
 ## Mục lục — máy sinh
 

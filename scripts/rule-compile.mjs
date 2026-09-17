@@ -280,9 +280,22 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
       theoVanTay.get(v).push({ file: f.duongDan, dong: d.dong, noiDung: d.noiDung });
     }
   }
+  /* TRÙNG CỐ Ý — khai ở `luat.trung_co_y`, khoá là **dấu vân tay**, giá trị là LÝ DO.
+     Cùng lý lẽ đã viết cho `mo_coi_co_y` ngay trên, và có một ca thật: ba dòng *"Ba việc phải
+     hỏi Đức"* của `hnx-fetch` **cố ý** nằm ở CẢ `AGENTS.md` lẫn `PROTOCOL.md` — Đức chốt 08/09
+     rằng `PROTOCOL.md` phải **tự đứng một mình**, viết cho một AI không đọc file kia, và một sổ
+     tự đứng mà thiếu danh sách an toàn của chính nó là một sổ nguy hiểm. Câu trả lời ấy đã ghi
+     ngay tại chỗ từ 08/09, nhưng ③ vẫn đếm nó mỗi lượt chạy — tức một con số KHÔNG BAO GIỜ về 0,
+     và một phép kiểm không bao giờ về 0 thì người ta thôi đọc.
+
+     KHOÁ LÀ VÂN TAY, KHÔNG PHẢI CẶP FILE, và đó là chỗ cố ý không nới: miễn theo cặp file nghĩa
+     là mọi dòng trùng sau này giữa hai file đó cũng im luôn. Vân tay đổi khi CHỮ đổi, nên sửa
+     lời một trong hai bản là lượt miễn hết hiệu lực và cặp ấy quay lại hỏi — đúng chiều
+     fail-toward-asking. */
+  const trungCoY = new Map(Object.entries(dangKy.trung_co_y ?? {}));
   const trung = [];
-  for (const [, cho] of theoVanTay) {
-    if (new Set(cho.map((c) => c.file)).size > 1) trung.push(cho);
+  for (const [v, cho] of theoVanTay) {
+    if (new Set(cho.map((c) => c.file)).size > 1 && !trungCoY.has(v)) trung.push(cho);
   }
 
   /* ④ — hạn rà soát. Giới hạn ⑨ của `AGENTS.md` nói HẰNG TUẦN; trước file này nó chỉ là chữ. */
