@@ -1205,35 +1205,63 @@ là tắt máy cảnh trong 7 ngày cho một file đang sai. **Ba chỗ cho lan
 - **đóng khi:** lệnh: `node -e "const r=require(./.repo-structure.json).luat.ra_soat; process.exit(Object.values(r).some(d=>d<2026-09-17)?1:0)"` thoát 0.
 - **đóng khi:** đức: lane `claude-gpt-chay-het-job` trả khoá `workers/duc-auto-chatgpt`, hoặc Đức chốt chuyển.
 
-## N-67 · Sổ cái MÁY SINH của hai gói bỏ sót quyết định, và cả hai đều tự khai là "đầy đủ"
+## N-67 · ~~Sổ cái MÁY SINH của hai gói bỏ sót quyết định~~ — **VẾ MỘT SAI, tôi viết nó**
 
-**Đo 17/09, trong lượt rà `A5`.** Bộ sinh (`rule-compile.mjs --sinh`) đọc `docs/adr/` của gói và
-nhóm theo `nhom:` ở frontmatter. ADR nào **không khai `nhom:`** thì **vô hình với bộ sinh** — và
-không chỗ nào kêu.
+> **GẠCH TẠI CHỖ 17/09 khuya, không xoá.** Vế *"bộ sinh bỏ sót"* là **của tôi và nó SAI**. Đo lại
+> bằng cách cộng đủ ba đường thay vì trừ hai con số: **0 quyết định không giải thích được.**
+>
+> ```
+> gemini : 67 trên đĩa = 38 trong sổ cái + 25 MIỄN CỐ Ý + 4 đã chết   → thừa 0
+> chatgpt: 54 trên đĩa = 50 trong sổ cái +  2 MIỄN CỐ Ý + 2 đã chết   → thừa 0
+> ```
+>
+> 27 cái tôi gọi là *"vô hình"* nằm trong `luat.mo_coi_co_y` của `.repo-structure.json`, **khai
+> thành bốn nhóm, mỗi nhóm một lý do viết tay** — *"đã lên bản hiệu lực GỐC repo"* · *"việc đã
+> xong, một lần, không còn ràng buộc ai"* · *"bản ghi chẩn đoán, không phải luật"*. Một lane khác
+> đã đọc từng cái và khai ra. Bộ sinh **đang chạy đúng**.
+>
+> **Sai ở đâu, nói thẳng:** tôi đếm hai con số (đĩa và sổ cái), thấy lệch, rồi **đặt tên cho khoảng
+> lệch** thay vì đi hỏi nó là gì. Đúng bệnh `read-the-text-not-just-the-number`. Và tôi đã gán
+> nguyên nhân cho `nhom:` mà **không thử**: thiếu `nhom:` KHÔNG làm ADR biến mất — bộ sinh có sẵn
+> rổ `~chua-phan-nhom` cho đúng ca đó (`rule-compile.mjs:487`). Nếu chạy thử một lượt trước khi
+> viết, con số đã nói ngay.
 
-| Gói | ADR trên đĩa | Trong khối máy sinh | **Bộ sinh không thấy** |
-|---|---:|---:|---:|
-| `duc-auto-gemini` | ~67 | 38 | **25** |
-| `duc-auto-chatgpt` | 54 | 50 | **4** |
+**VẾ HAI VẪN THẬT, và nó lớn hơn tôi tưởng.** Nguồn thứ hai có tồn tại:
+`duc-auto-gemini/v0.2.0/decisions.md` còn **15 mục gõ tay, 120 dòng**, nằm **dưới** khối máy sinh.
+**Cả 67 ADR của gói đều mang `migrated_from: …/decisions.md`** — tức 15 mục ấy chính là bản gốc
+mà lượt migrate đã đọc, và nó được **giữ lại nguyên**. Hai bản của cùng một quyết định, không
+bản nào nói nó là bản phụ.
 
-**Cùng họ `A3`, và đó là chỗ lượt trước bỏ sót.** `A3` (17/09) khai `luat.chu_de` rồi thêm
-`chu_de:`/`nhom:` cho **20 ADR gốc repo** — nhưng **ADR của từng gói không nằm trong lượt đó**.
-`B16` xanh vì nó chỉ đếm ADR gốc.
+**Nhưng KHÔNG được gỡ cả 15 — và đây là chỗ suýt mất một quyết định thật.** Đo theo `date:`:
 
-**Vì sao nó chưa cắn ai, và vì sao vẫn phải sửa.** `duc-auto-gemini/decisions.md` còn **14 bảng
-gõ tay** ở cuối file phủ đúng 25 số hiệu kia, nên hôm nay không quyết định nào thật sự biến mất.
-Nhưng đó là **hai nguồn cho một sự thật** — đúng bệnh cả repo sinh ra để chữa — và header của
-chính file ấy nói bảng tay *"đã chuyển sang ADR"*, tức mô tả một trạng thái file không ở trong.
-`duc-auto-chatgpt` thì đã dọn hết bảng tay (0 bảng), nên **4 ADR của nó không có mạng lưới nào
-đỡ**: chúng vô hình thật.
+| Ngày | Mục gõ tay | ADR tương ứng |
+|---|---|---|
+| 25/08 · 26/08 · 27/08 | 14 mục | `0027`–`0067`, có đủ |
+| **02/09** | *"Port multi-profile Bridge (Đức chỉ thị trong chat)"* | **KHÔNG CÓ ADR NÀO** |
 
-**Đã sửa ở lượt này, chỉ phần lời khai:** `duc-auto-gemini/AGENTS.md` thôi gọi khối ấy là
-*"danh sách đầy đủ"*. Con số thì chưa ai sửa.
+Mục 02/09 là **quyết định còn sống chỉ tồn tại ở đây**: Đức chốt *"triển khai áp dụng cho GPT và
+Gemini"*, khối `instance` trong `auth`, `bridge.sessions` + `--target` + `served_by`. Gỡ nguyên
+đuôi file là xoá nó khỏi repo.
 
-- **đóng khi:** lệnh: với mỗi gói, `ls docs/adr/*.md | wc -l` bằng số dòng `ADR-` trong khối máy
-  sinh của `decisions.md` — tức mọi ADR của gói đều khai `nhom:`.
-- **đóng khi:** lệnh: sau khi số khớp, 14 bảng gõ tay ở cuối `duc-auto-gemini/v0.2.0/decisions.md`
-  được gỡ, và một phép ghim canh *không nguồn thứ hai nào cho cùng danh sách*.
+**Thứ tự đúng, ba bước:** ⑴ ghi mục 02/09 thành một ADR của gói · ⑵ rồi mới gỡ 14 mục kia · ⑶ một
+phép ghim canh *không nguồn thứ hai nào cho cùng danh sách*. Bước ⑴ trước, không đảo.
+
+~~**Cùng họ `A3`.**~~ · ~~**`duc-auto-chatgpt` đã dọn hết bảng tay nên 4 ADR của nó vô
+hình thật.**~~ — **cả hai câu này thuộc vế MỘT và cùng sai.** 4 cái của ChatGPT là 2 miễn cố ý +
+2 đã chết, có lý do viết tay cho cả bốn. Giữ chúng ở đây gạch chân chứ không xoá: một giả thuyết
+bị bác mà bị xoá khỏi sổ thì ba ngày nữa có người mở lại nó, và họ sẽ đo lại từ đầu.
+
+**Một câu vẫn đứng, và nó là phần đáng giá của mục này:** header của `decisions.md` nói bảng tay
+*"đã chuyển sang ADR"* — mô tả một trạng thái file **không ở trong**, vì 15 mục vẫn nằm đó. Đã sửa
+lời khai *"danh sách đầy đủ"* ở `duc-auto-gemini/AGENTS.md` từ lượt trước.
+
+- **đóng khi:** lệnh: `duc-auto-gemini/v0.2.0/decisions.md` không còn mục `## 20` nào dưới dòng
+  `HET KHOI MAY SINH`, **và** quyết định 02/09 (*Port multi-profile Bridge*) đã có một file trong
+  `workers/duc-auto-gemini/v0.2.0/docs/adr/`.
+- **đóng khi:** lệnh: một phép ghim đỏ khi `decisions.md` của bất kỳ gói nào mang nguồn thứ hai
+  cho cùng danh sách quyết định.
+- ~~**đóng khi:** mọi ADR của gói đều khai `nhom:`~~ — **điều kiện của vế sai, bỏ.** Thiếu `nhom:`
+  chỉ đẩy ADR xuống rổ `~chua-phan-nhom`, không làm nó biến mất.
 
 ## N-68 · Một lượt migrate bộ khung đã XOÁ một cửa đã chốt, và phép ghim của nó chết CÂM
 
