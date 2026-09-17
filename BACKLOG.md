@@ -1367,19 +1367,42 @@ file ấy upstream sở hữu và sẽ bị thay lần nữa.
 > đè cùng lúc với cửa nó canh. Phép ghim chết chung một lượt với thứ nó canh là ca tệ nhất:
 > không còn ai sống sót để kêu.
 
-**③ CÒN MỞ — chưa ai đếm lượt migrate ấy còn lấy mất gì.** Đo 18/09, so bề mặt cờ của 11 file
-bị thay: ngoài hai cửa trên, phần còn lại là cờ `git` và biến CSS (không phải cửa của ta). Nhưng
-**phép so đó chỉ thấy thứ khai bằng `--cờ`** — nó mù với hàm bị bỏ, hằng số bị đổi, nhánh bị rút
-gọn. Một lượt rà 12/09 (`8942420e`) đã tìm và dựng lại **7 phép ghim chết + 1 lớp bảo vệ thật của
-`safe-push`** từ cùng lượt migrate ấy, và nó đo được *"18/31 bài kiểm ở gốc repo KHÔNG chạy nổi"*.
-Ba lượt rà, ba lần còn thấy thiệt hại mới.
+**③ ĐÃ ĐO 18/09 — bằng phương pháp KHÁC, và nó đổi hình dạng của `N-65`.**
+
+Phép so `--cờ` chỉ thấy thứ khai bằng cờ. Phép đo thứ hai hỏi câu khác: **có ai đang `import`
+một cái tên không còn tồn tại không?**
+
+```
+9 cặp import gãy, trên ĐÚNG 8 file — và 8 file đó CHÍNH LÀ khu cách ly npm run test:chet
+0 file trong scripts/ gãy
+```
+
+⑴ **Không công cụ đang sống nào hỏng.** Phần lớn trong "119 ký hiệu biến mất" của phép đo thứ
+nhất là một lượt **viết lại**, không phải thiệt hại. Đây là tin tốt, và nó chỉ có được vì đo bằng
+đường thứ hai — con số 119 một mình sẽ dẫn tới một lượt hoảng.
+
+⑵ **Khu cách ly 8 bài KHÔNG phải 8 bài kiểm hỏng vặt.** Nó là **8 lớp bảo vệ mà thứ chúng canh
+đã bị xoá**. `build-overview-smoke.mjs` một mình `import` **44** cái tên không còn — đó không
+phải "hơi lệch API", đó là **toàn bộ chủ thể của nó đã bị thay**. Nên `N-65` không phải việc
+port mã: nó là việc **quyết lớp bảo vệ nào còn đáng giữ**, và đó là việc cần người.
+
+**Phép ghim `tests/import-gay-smoke.mjs`** không đòi 8 bài kia sống lại — nó ghim **cái hàng rào**:
+khu cách ly được phép tồn tại, nhưng **không lớn thêm trong im lặng** ① và **không giữ lại một bài
+đã lành** ②, và danh sách cách ly không được mục ③. Thử phá **4/4 đỏ, mỗi con bởi ĐÚNG câu khẳng
+định của nó** — hai lượt thử đầu bị giết bởi *nhầm* câu, tức chưa chứng minh gì; phải tách ca hỏng
+ra mới đo được.
+
+> **Chính phép ghim ấy tự cắn nó ngay lượt chạy đầu sau khi commit:** docblock của nó mang dòng ví
+> dụ `import { X } from "./y.mjs"`. Nó **không** cắn ở lượt trước đó vì lúc ấy file chưa vào git,
+> mà bộ quét đi qua `git ls-files` — một dương tính giả **biết chọn giờ**, và giờ nó chọn là lượt
+> commit. Đã gỡ chú thích trước khi dò.
 
 - **đóng khi:** ~~lệnh: `grep -c "khai-vung"`~~ — **đã đóng:** `node tests/cua-rieng-repo-smoke.mjs`
   thoát 0 (6 phép), và nó nằm trong `scripts.test`.
 - **đóng khi:** lệnh: `node tests/claim-smoke.mjs` thoát 0, **hoặc** file bị gỡ kèm một dòng lý do
   ở `N-65` — nó vẫn là phép ghim của BẢNG QUYỀN và nó vẫn không nạp nổi.
-- **đóng khi:** đức: một lượt đếm có phương pháp **khác phép so cờ** cho `4da1e9e5` — so danh sách
-  hàm export và hằng số trước/sau, không chỉ so `--cờ`.
+- **đóng khi:** ~~đức: một lượt đếm có phương pháp khác phép so cờ~~ — **đã đo 18/09**, kết quả ở
+  vế ③ trên. `node tests/import-gay-smoke.mjs` giữ chỗ đó từ nay.
 
 ### KHUNG-M8 · Cửa audit của `safe-push` thưởng cho im lặng, phạt người khai thật
 
