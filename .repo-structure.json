@@ -425,6 +425,12 @@
       ]
     }
   },
+  "_audit_doc": "AI duoc tinh la NGUOI DUYET cho dieu (2) cua AGENTS.md muc 2 (code phai QUA AUDIT DOC LAP truoc khi day). safe-push doc danh sach nay; MOI ten ngoai danh sach deu bi coi la CHUA duyet, ke ca mot luot audit co that. Truoc 17/09 khoi nay KHONG TON TAI, nen danh sach rong va khong ten nao co the la 'da duyet' — hai phien cung ngay deu chay audit that, deu khai that, va deu bi chan.",
+  "_audit_khuon_ten": "Ten phai khop /^[a-z0-9][a-z0-9._-]*$/ va la DANH TINH cua nguoi duyet, KHONG phai mo ta luot audit. Vi du dung: `codex`. Vi du sai: `codex-4-vong` (do la so vong, khong phai ai duyet) — mo ta luot audit thi viet o than commit hoac HANDOFF.",
+  "_audit_chot": "Duc chot 2026-09-17: 'Codex duoc tinh.'",
+  "audit": {
+    "nguoi_duyet": ["codex"]
+  },
   "budget": {
     "_doc_nap": "tokenNap = TRAN TOKEN cho phan MOI phien phai nap (AGENTS.md goc + STATUS.md goc). Do bang: npm run luat -- --nap. Day la con so nhan theo (so phien), nen no dat hon moi muc khac. Dat 6000 luc migrate 09/09; SIET dan, khong noi ra.",
     "_tokenNap_siet_1709": "6000 -> 5724 (KHUNG-M3). Do that 17/09: nap ~4403 token (AGENTS.md 3630 + STATUS.md 773); cong bien 30% ra 5724. Thuoc nay CHI DUOC SIET. Noi thang mot dieu de luot sau doi chieu: chinh phien 17/09 lam AGENTS.md phinh 3307 -> 3630 token (hai hang ban do cho file moi + gioi han 6 cho ADR-0038) — day la SU KIEN MOI, khong phai luat thay luat, nhung no van la phinh va van dem vao hoa don nay.",

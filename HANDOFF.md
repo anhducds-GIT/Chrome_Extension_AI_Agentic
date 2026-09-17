@@ -636,4 +636,29 @@ sách, và chốt xem commit KHÔNG khai thì nên chặn hay vẫn chỉ cảnh
 
 **Trạng thái:** 31 commit nằm local, cổng **XANH TOÀN BỘ**, không mất gì. Chờ đúng một câu.
 
+## 2026-09-17 · `claude-scouter-udine` — Đức chốt: `codex` được tính là người duyệt
+
+Khai `audit.nguoi_duyet: ["codex"]` vào `.repo-structure.json`. Trước hôm nay **khối `audit`
+không tồn tại**, nên danh sách rỗng và **không tên nào có thể là "đã duyệt"** — cơ chế đủ, danh
+sách trống, và hai phiên cùng ngày đều chạy audit thật, đều khai thật, đều bị chặn.
+
+**Khai kèm khuôn tên, vì lần chặn này lộ ra một chỗ dễ vấp:** tên phải là **DANH TÍNH người
+duyệt**, không phải mô tả lượt audit. `codex` đúng; `codex-4-vong` sai — bốn vòng là số vòng, chỗ
+của nó là thân commit hoặc nhật ký. Ba commit của lane `claude-gpt-chay-het-job` đang mang đúng
+cái nhãn sai ấy, dù lượt audit của họ là thật.
+
+**Lượt đẩy này đi bằng cửa `--duc-duyet-chua-audit`, Đức chốt miệng *"đẩy đi"*.** Kể thẳng năm
+commit bị cửa giữ và vì sao đẩy vẫn an toàn: ba commit `duc-auto-chatgpt` **đã qua audit Codex
+bốn vòng thật**, chỉ sai khuôn nhãn; hai commit còn lại là `chore(bang)` — **bảng máy sinh**, nhãn
+`chua-co`, không một dòng code.
+
+Vế thứ hai của `KHUNG-M8` **vẫn mở**: commit chạm `scripts/`/`tests/` mà KHÔNG khai `Audit:` hiện
+chỉ bị ⚠ cảnh báo và đẩy được — tức cửa dành cho người im lặng vẫn **rộng hơn** cửa dành cho
+người khai thật. Đó là câu Đức chưa chốt.
+
+**Nói thẳng về commit của chính tôi hôm nay:** mã tôi sửa (`rule-compile`, `session-check`,
+`can-nang`, hai bộ ghim) **đã qua audit Codex hai vòng thật, cả hai đều trả ĐỎ và cả hai đợt phát
+hiện đều đã vá** — nhưng lúc commit tôi **chưa gõ nhãn `Audit:`**, nên chúng đi qua cửa bằng con
+đường im lặng. Từ lượt sau nhãn đi kèm. Ghi ra đây để bản ghi không đẹp hơn sự thật.
+
 <!-- HANDOFF-THANG: 2026-09 -->
