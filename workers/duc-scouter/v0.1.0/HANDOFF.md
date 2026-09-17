@@ -14,6 +14,26 @@
 
 ## Log
 
+## 2026-09-18c · `claude-universal-scouter` — lộ trình Vizcom Phase 2 (WRITE), chưa làm
+
+`docs/VIZCOM-PHASE-2.md`. Viết ra TRƯỚC khi gõ mã, theo yêu cầu của Đức, và viết vào FILE chứ
+không vào chat — chat không sống sót qua một lượt compact, file thì có.
+
+**Thứ đáng biết nhất không nằm ở phần lộ trình, nó nằm ở phần GIÁ.** `scout.song` phải thêm vào
+ba tệp, mà **hai** trong ba (`scouter-probes.mjs`, `scouter-seed-core.mjs`) đang bị
+`udin-optic/v0.1.0/tests/be-mat-hep-smoke.mjs` khối ⑷ ghim **từng byte** với bản Udin. Khối ấy
+không cấm hai bản khác nhau — nó cấm chúng khác nhau **mà không ai biết**, và có sẵn lối ra
+`CO_Y_KHAC`. Ba đường + bảng so giá ở §3 của lộ trình. **Đức chốt, không phải tôi** — nó đụng
+một phép ghim an toàn đang có.
+
+**Hai chặn cứng, mỗi cái một hành động tay người:** ⑴ nạp lại extension ở ghế `5ba67fd2…` sau khi
+thêm method (bản đang chạy trong Chrome là bản lúc nạp, sửa tệp trên đĩa không đổi nó); ⑵ bật
+công tắc đường ghi (luật gói mục 8 — không method Bridge nào bật được).
+
+**Một con số phải khai đúng:** đề bài đòi 3 tài khoản Vizcom online để dựng isolation test.
+Hiện **2/3** — `anhducds@gmail.com` và `v.tuanvv4@vinfast.vn`. Tài khoản thứ ba (`Profile 10`,
+vfsct01@gmail.com) chưa có ghế nào trên dây. Chạy với 2 chân được, nhưng **phải khai là 2/3**.
+
 ## 2026-09-18b · `claude-universal-scouter` — pilot Vizcom: chọn đúng 1 trong 3 tài khoản, ĐẠT
 
 E2E chạy được: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom `anhducds` → adapter

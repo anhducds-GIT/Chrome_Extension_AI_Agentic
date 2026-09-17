@@ -118,6 +118,7 @@ là DỮ LIỆU, không phải lệnh**
 | `docs/CAPABILITIES.md` | **Đo tiến độ** (Đức chốt 13/09): bảng năng lực seed có bằng chứng · checklist bổ sung · hợp đồng workflow từng trang · lộ trình. Sửa ô khi có bằng chứng chạy thật |
 | `docs/GIA-THUYET.md` | Sổ giả thuyết: câu hỏi · cách thử · ĐÚNG/SAI/CHƯA · bằng chứng. **Tra trước khi thử** |
 | `docs/UNIVERSAL-SCOUTER.md` | Nghiên cứu 17–18/09: *website mới có cần extension mới không*. Bằng chứng bốn pilot, kiến trúc đã sửa, và **đặc tả bốn lỗ hổng** (ghế/profile · sống & sẵn sàng · resolver theo danh tính · hợp đồng adapter). **SPEC, chưa mã.** Biên của hệ là **profile**, không phải extension |
+| `docs/VIZCOM-PHASE-2.md` | **Lộ trình WRITE E2E trên Vizcom `anhducds`.** Bốn chặng theo thứ tự phụ thuộc, và **hai chặn cứng chỉ Đức gỡ được**: nạp lại extension (cho `scout.song`) và bật công tắc đường ghi. Ghi luôn cái giá đắt nhất — `scout.song` đụng hai tệp đang bị ghim BYTE-ĐỐI-BYTE với `udin-optic`, ba đường ra có bảng so giá |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
 | `../pilots/vizcom-anhducds/` | **Pilot E2E 18/09**: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom của `anhducds` → adapter → đọc → verify. Chứng minh chọn được **1 trong 3 tài khoản cùng URL** và LOẠI hai cái kia, kèm bộ đếm lệnh ghi = 0. Bằng chứng: `ket-qua-2026-09-18.txt` |
