@@ -62,9 +62,12 @@ kiem(
   (source.match(/els\.destinationFolderBtn\.textContent =/g) || []).length === 1,
   "đúng một chỗ gán nhãn cho nút chọn thư mục"
 );
+// Ghim ĐỦ BA đối số, không phải `[^)]*`: bỏ riêng `state.thuMucDaNho` ở đây thì
+// nhãn tụt về "Choose Folder" trong khi hành vi vẫn dùng thư mục cũ — đúng lời
+// nói dối mà vòng soát 5 vừa gỡ. Đột biến M17 lọt qua phép lỏng, nên siết lại.
 kiem(
-  (source.match(/els\.destinationFolderBtn\.textContent = window\.DacSidepanelUiSemantics\.folderButtonIntent\([^)]*\)\.label;/g) || []).length === 1,
-  "chỗ gán nhãn đó phải đọc folderButtonIntent, không tự tính lại"
+  (source.match(/els\.destinationFolderBtn\.textContent = window\.DacSidepanelUiSemantics\.folderButtonIntent\(permission, values\.image, state\.thuMucDaNho\)\.label;/g) || []).length === 1,
+  "chỗ gán nhãn phải đọc folderButtonIntent với đủ ba đối số"
 );
 
 // ⑹ `reauthorizeSole()` chỉ được gọi bên trong nhánh `reauthorizeFirst`.
