@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-17T15:51:14.687Z",
-      "task": "day loat sua bo do da qua audit codex hai vong",
-      "released_at": "2026-09-17T16:48:37.641Z",
+      "claimed_at": "2026-09-17T17:15:09.953Z",
+      "task": "N-68: dem cua bi migrate 4da1e9e5 xoa mat, roi quyet khoi phuc hay bo",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -75,11 +75,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-14T15:14:50.192Z",
-      "task": "T7 chang 2 tren Udin",
-      "released_at": "2026-09-17T16:01:55.484Z"
+      "claimed_at": "2026-09-17T17:19:21.688Z",
+      "task": "US: land nghien cuu Universal Scouter + 4 dong so gia thuyet",
+      "released_at": null
     },
     "workers/_shared": {
       "owner": null,
@@ -103,5 +103,11 @@
       "released_at": "2026-09-17T16:01:55.683Z"
     }
   },
-  "_fingerprint": "8a9f4310d718859c"
+  "_fingerprint": "9496eb47fe863dc6",
+  "tam": {
+    "workers/duc-scouter": {
+      "owner": "claude-universal-scouter",
+      "luc": "2026-09-17T17:18:20.288Z"
+    }
+  }
 }

@@ -179,7 +179,39 @@ export function thangHienTai(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+/* CỜ LẠ PHẢI NỔ, KHÔNG ĐƯỢC LỜ ĐI — `N-68`.
+ *
+ * Bản trước lọc `argv` bằng `!a.startsWith("--")` rồi đi tiếp, nên **mọi** cờ không nhận ra đều
+ * bị nuốt im lặng: lệnh in bảng số liệu và **thoát 0**. Đo 17/09, và nó không phải giả định —
+ * `--cat <file> --giu 20` là cửa CÓ THẬT, dựng ngày 09/09 để đóng `N-53` (cắt theo SỐ MỤC, kèm
+ * chứng minh ghép lại khớp từng byte). Lượt migrate bộ khung `4da1e9e5` thay nguyên file này và
+ * cửa ấy mất. Từ đó `handoff.mjs --cat HANDOFF.md --giu 20` — câu vẫn đang nằm trong
+ * `MULTIFLOW.md` mục 3b, `ADR-0008`, `ADR-0033` và `.repo-structure.json` — **chạy như thành
+ * công mà không cắt gì**. Một cửa đã mất mà báo lỗi thì người ta sửa; một cửa đã mất mà thoát 0
+ * thì người ta tin.
+ *
+ * Nên: cờ nào không nhận ra thì DỪNG, và **kể tên thứ còn sống** thay cho nó. */
+const CO_HOP_LE = new Set(["--check", "--rotate", "--thang"]);
+
+function coLa(argv) {
+  return argv.filter((a) => a.startsWith("--") && !CO_HOP_LE.has(a));
+}
+
 function chayCLI(argv) {
+  const la = coLa(argv);
+  if (la.length) {
+    console.error(`CO_LA: ${la.join(" ")} — lệnh này không có cờ đó, và nó KHÔNG lặng lẽ bỏ qua nữa.`);
+    console.error("Hợp lệ: --check · --rotate <file> [--thang YYYY-MM]");
+    if (la.includes("--cat") || la.includes("--giu")) {
+      console.error("");
+      console.error("`--cat/--giu` (cắt theo SỐ MỤC, N-53 ngày 09/09) đã MẤT trong lượt migrate bộ");
+      console.error("khung 4da1e9e5. Hai đường còn sống, chọn theo thứ bạn cần:");
+      console.error("  · theo THÁNG   : node scripts/handoff.mjs --rotate <file> [--thang YYYY-MM]  (ADR-0011)");
+      console.error("  · theo NGÂN SÁCH: npm run don            — dời phần cũ sang docs/archive/, đối chiếu byte");
+      console.error("Xem N-68 trong BACKLOG.md trước khi dựng lại đường thứ ba.");
+    }
+    return 2;
+  }
   const rotate = argv.indexOf("--rotate");
   const thangEp = argv.indexOf("--thang") >= 0 ? argv[argv.indexOf("--thang") + 1] : null;
   if (rotate >= 0) {

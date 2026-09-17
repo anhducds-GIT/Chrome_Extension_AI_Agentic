@@ -17,6 +17,9 @@
  * Dùng:
  *   node scripts/claim.mjs --list
  *   node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu" [--ai Codex]
+ *   node scripts/claim.mjs --khai-vung <khoá> --as <phiên>
+ *       ↑ mở MỘT VÙNG MỚI: tạo một ô TRỐNG CHỦ cho khoá mà `.repo-structure.json` đã công
+ *         nhận VÀ thư mục có thật. Không có cửa này thì lối duy nhất là sửa tay rồi `--restamp`.
  *   node scripts/claim.mjs --release <khoá> --as <phiên> [--task "một câu"] [--du-biet "vì sao"]
  *   node scripts/claim.mjs --xong <đường-dẫn> --as <phiên> --duc-duyet "<câu chốt của Đức>"
  *       ↑ gỡ một khoá mức FILE bỏ quên của phiên khác. Không có cửa này thì một dòng bỏ quên
@@ -58,6 +61,33 @@ export const EXIT = Object.freeze({ OK: 0, MISUSE: 2, REFUSED: 3, CLOBBERED: 4 }
  * KHÔNG hứa chống người cố tình: ai muốn thì tính lại dấu được. Nó chặn ĐƯỜNG TẮT, không
  * chặn kẻ địch — và đường tắt mới là thứ đã xảy ra. */
 export const FINGERPRINT_FIELD = "_fingerprint";
+
+/* MỘT KHOÁ VÙNG CÓ KHAI ĐƯỢC KHÔNG — dùng bởi `--khai-vung` (N-41, khôi phục ở N-68).
+ *
+ * HỎI CHÍNH BỘ QUY VÙNG, đừng tự đoán luật. Một khoá hợp lệ là khoá mà `stewardOf()` của một
+ * file BÊN TRONG nó trả về đúng nó. Viết lại luật ở đây là đẻ ra bản sao thứ hai của một luật
+ * — và hai bản sao đã trả hai câu khác nhau cho cùng một file ngày 02/09. */
+export function kiemKhoaKhaiDuoc(khoa, { structure, prefixes, coThuMuc }) {
+  if (typeof khoa !== "string" || khoa.trim() === "" || khoa !== khoa.trim()) {
+    return { ok: false, ly_do: "tên khoá rỗng hoặc dính khoảng trắng" };
+  }
+  const thu = stewardOf(`${khoa}/.kiem-mot-file-khong-co-that`, structure, prefixes);
+  if (thu !== khoa) {
+    return {
+      ok: false,
+      ly_do: `\`.repo-structure.json\` chưa công nhận "${khoa}" là một vùng — file bên trong nó `
+        + `quy về "${thu}". Khai khối \`areas\` trước, rồi chạy lại.`,
+    };
+  }
+  if (!coThuMuc(khoa)) {
+    return {
+      ok: false,
+      ly_do: `thư mục "${khoa}" chưa có trên đĩa. Khoá cho một vùng không tồn tại là một dòng `
+        + "không ai đọc, và nó sẽ nằm đó mãi.",
+    };
+  }
+  return { ok: true };
+}
 
 export const VO_DAU = "DAU_VO: `.agents/claims.json` đã bị sửa NGOÀI lệnh này — dấu niêm phong không khớp nội dung.\n"
   + "Nghĩa là có người mở file ra sửa tay. Chuyện này đã lấy mất khoá của một phiên đang làm dở,\n"
@@ -1199,6 +1229,57 @@ async function main() {
       }
       if (cua.trangThai === "bat-khong-duoc") console.log(`⚠ không bật được cửa index: ${cua.loi}`);
     }
+    process.exit(EXIT.OK);
+  }
+
+  /* MỞ MỘT VÙNG MỚI — `N-41`, và đây là lượt KHÔI PHỤC thứ hai của nó (`N-68`).
+   *
+   * Lịch sử ngắn, vì nó là lý do khối này mang một phép ghim riêng: cửa này được chốt, dựng và
+   * ghim ngày 08/09 (`38574081`), rồi **biến mất cùng ngày hôm sau** khi lượt migrate bộ khung
+   * `4da1e9e5` thay nguyên `scripts/claim.mjs` bằng bản upstream. Không ai kêu trong 8 ngày:
+   * phép ghim của nó (`tests/claim-smoke.mjs`) vỡ ở bước import và đang nằm trong khu cách ly
+   * `npm run test:chet`, mà một phép ghim bị cách ly trông y hệt một phép ghim đang canh.
+   *
+   * ĐẶT TRƯỚC `--take` vì nó là điều kiện tiên quyết: `--take` một khoá chưa có trong bảng thì
+   * từ chối, và không có cửa này thì lối duy nhất là **sửa tay `claims.json` rồi `--restamp`** —
+   * một đường hợp lệ trông giống hệt một vụ cướp khoá. Đo 17/09: vùng đi từ 8 → 11 trong 16
+   * ngày, nên đây không phải cửa hiếm dùng.
+   *
+   * Phép ghim nằm ở `tests/cua-rieng-repo-smoke.mjs`, **không** ở `claim-smoke.mjs`: file kia
+   * do upstream sở hữu và sẽ bị thay lần nữa ở lượt migrate sau. */
+  const khaiVung = flag("khai-vung");
+  if (khaiVung) {
+    const as = flag("as");
+    if (typeof khaiVung !== "string" || typeof as !== "string") {
+      console.error("Dùng: node scripts/claim.mjs --khai-vung <khoá> --as <phiên>");
+      process.exit(EXIT.MISUSE);
+    }
+    if (Object.prototype.hasOwnProperty.call(parsed.claims, khaiVung)) {
+      console.error(`KHOA_DA_CO: "${khaiVung}" đã có trong bảng. Nhận nó bằng --take, đừng khai lại.`);
+      process.exit(EXIT.MISUSE);
+    }
+    let cauTruc;
+    try { cauTruc = readStructureFromDisk(ROOT); }
+    catch (loi) { console.error(`CAU_HINH_HONG: ${loi.message}`); process.exit(EXIT.MISUSE); }
+    const xet = kiemKhoaKhaiDuoc(khaiVung, {
+      structure: cauTruc,
+      prefixes: claimPrefixesFrom(cauTruc),
+      coThuMuc: (d) => { try { return fs.statSync(path.join(ROOT, d)).isDirectory(); } catch { return false; } },
+    });
+    if (!xet.ok) {
+      console.error(`KHONG_KHAI_DUOC: ${xet.ly_do}`);
+      process.exit(EXIT.REFUSED);
+    }
+    /* KHÔNG chụp chủ sở hữu trước/sau để so — đây là quyết định, không phải bỏ sót. Khoá này
+       vừa được kiểm là CHƯA CÓ ở ngay trên, nên lượt gán dưới đây không thể chạm chủ của khoá
+       nào; không đột biến nào giết được lớp ấy. Bất biến *"không chạm chủ của khoá nào"* vẫn
+       được canh, ở phép ghim chạy THẬT. */
+    const dauCu = parsed[FINGERPRINT_FIELD] ?? "(chưa có)";
+    parsed.claims[khaiVung] = { owner: null, ai: null, claimed_at: null, task: null, released_at: null };
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
+    ghiBangNguyenTu(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}${String.fromCharCode(10)}`);
+    console.log(`đã khai vùng: ${khaiVung} — TRỐNG CHỦ. Nhận nó: node scripts/claim.mjs --take ${khaiVung} --as ${as}`);
+    console.log(`dấu cũ: ${dauCu}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     process.exit(EXIT.OK);
   }
 
