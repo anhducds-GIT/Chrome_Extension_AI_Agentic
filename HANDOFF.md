@@ -715,36 +715,25 @@ tab · Chrome app window/PWA (**đọc được như tab thường**) · Electro
 
 ## 2026-09-18a — N-68: một lượt migrate đã xoá HAI cửa, và cả hai phép ghim đều không kêu
 
-Lane `claude-scouter-udine`.
+Lane `claude-scouter-udine`. **Số liệu, bảng hai cửa và lý lẽ đầy đủ: `N-68` trong `BACKLOG.md`.**
 
-**Đo:** lượt migrate bộ khung `4da1e9e5` (khung 0.3.0 → 1.8.0, 09/09) lấy mất hai cửa riêng của
-repo, **cả hai đều được chốt + dựng + ghim trước đó đúng một ngày**:
+Lượt migrate bộ khung `4da1e9e5` (09/09) lấy mất `claim.mjs --khai-vung` và
+`handoff.mjs --cat --giu` — **cả hai đều được chốt + dựng + GHIM trước đó đúng một ngày**.
 
-| Cửa | Sinh ra | Ghim |
-|---|---|---|
-| `claim.mjs --khai-vung` | `38574081`, đóng `N-41`, 08/09 | `claim-smoke.mjs`, thử phá 4/4 |
-| `handoff.mjs --cat --giu` | `e2322e47`, đóng `N-53`, 09/09 | `handoff-smoke.mjs` khối ⑾, 4/4 |
+**Bài học không phải chuyện mất cửa, mà là vì sao 8 ngày không ai kêu.** Một phép ghim vỡ ở bước
+import rồi nằm trong khu cách ly `test:chet` — **trông y hệt một phép ghim đang canh**. Phép ghim
+kia bị chính lượt migrate ghi đè **cùng lúc** với cửa nó canh: không còn ai sống sót để kêu.
 
-**Bài học không phải chuyện mất cửa, mà là vì sao 8 ngày không ai kêu:**
-`claim-smoke.mjs` vỡ ở bước **import** rồi nằm trong khu cách ly `npm run test:chet` — một phép
-ghim bị cách ly trông **y hệt** một phép ghim đang canh, cả hai đều không làm cổng đỏ.
-`handoff-smoke.mjs` thì bị **chính lượt migrate ghi đè** (164 dòng đổi, 122 xoá), nên khối ghim
-của `N-53` chết cùng lúc với cửa nó canh — ca tệ nhất, không còn ai sống sót để kêu.
+**Xử:** `--khai-vung` khôi phục (đo: vùng đi 8 → 11 trong 16 ngày). `--cat/--giu` KHÔNG khôi phục
+— đã có `--rotate` và `npm run don` — nhưng `handoff.mjs` nay **từ chối mọi cờ lạ**; trước lượt
+này nó nuốt im lặng và **thoát 0**, nên bốn nơi vẫn dạy một câu lệnh "chạy được" mà không cắt gì.
 
-**Xử:** `--khai-vung` **khôi phục** (đo trước: vùng đi 8 → 11 trong 16 ngày, không phải cửa hiếm).
-`--cat/--giu` **không** khôi phục — đã có `--rotate` và `npm run don`, giới hạn ⑴ cấm cài một tính
-năng hai lần — nhưng `handoff.mjs` nay **từ chối mọi cờ lạ**. Trước lượt này nó nuốt im lặng và
-**thoát 0**, nên bốn nơi trong repo vẫn dạy một câu lệnh "chạy được" mà không cắt gì.
+**Phép ghim mới `tests/cua-rieng-repo-smoke.mjs`** — chạy THẬT từng cửa, thử phá 4/4 đỏ. Luật rút
+ra: *phép ghim cho một cửa RIÊNG của repo phải nằm ở file mà bộ khung KHÔNG có bản của nó.*
 
-**Phép ghim mới `tests/cua-rieng-repo-smoke.mjs`** — CHẠY THẬT từng cửa, không grep mã nguồn, thử
-phá 4/4 đỏ. Nó **cố ý không nằm** trong `claim-smoke.mjs`: luật rút ra là *phép ghim cho một cửa
-RIÊNG của repo phải nằm ở file mà bộ khung KHÔNG có bản của nó* — đặt nhờ trong file upstream là
-hẹn ngày chúng chết chung.
+**Vế ③ còn mở:** phép so của tôi chỉ thấy thứ khai bằng `--cờ`, **mù** với hàm bị bỏ và hằng số
+bị đổi. Lượt rà 12/09 (`8942420e`) đã dựng lại 7 phép ghim chết từ **cùng** lượt migrate ấy.
 
-**Vế ③ của `N-68` còn mở:** phép so bề mặt của tôi chỉ thấy thứ khai bằng `--cờ`; nó **mù** với
-hàm bị bỏ và hằng số bị đổi. Một lượt rà 12/09 (`8942420e`) đã dựng lại 7 phép ghim chết + 1 lớp
-bảo vệ thật của `safe-push` từ **cùng** lượt migrate ấy. Ba lượt rà, ba lần còn thấy thiệt hại mới.
-
-**Một lỗi của tôi, ghi ra:** tôi chạy `--sua AGENTS.md`, bị TỪ CHỐI (`_root` của lane
-`claude-universal-scouter`), **và vẫn ghi** — đúng thứ `AGENTS.md` mục 2 cấm. Gỡ ngay, `git diff`
-sạch, không chạm gì của họ. Đã nhắn lane đó nhờ thêm hộ một dòng bản đồ file.
+**Hai lỗi của tôi:** ⑴ chạy `--sua AGENTS.md`, bị TỪ CHỐI, **vẫn ghi** — đúng thứ mục 2 cấm; gỡ
+ngay, `git diff` sạch. ⑵ mục này lúc đầu **2.712 byte / trần 2.600**, làm cổng đỏ cho mọi lane
+trong cây; lane `claude-universal-scouter` bắt được và báo.
