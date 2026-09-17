@@ -73,8 +73,16 @@ const nhu = (p) => `file:///${path.resolve(ROOT, p).replace(/\\/g, "/")}`;
 let soCap = 0;
 const gay = new Map();   // file → [lý do…]
 
+/* GỠ CHÚ THÍCH TRƯỚC KHI DÒ — và đây không phải đề phòng suông, phép ghim này đã tự cắn mình
+   ngay lượt chạy đầu sau khi được commit: docblock của chính nó mang dòng ví dụ
+   `import { X } from "./y.mjs"`, nên nó báo mình là một file có import gãy. Nó **không** cắn ở
+   lượt chạy trước đó vì lúc ấy file chưa vào git, mà bộ quét đi qua `git ls-files` — tức một
+   dương tính giả BIẾT CHỌN GIỜ, và giờ nó chọn là lượt commit. Một dòng `import` bị comment
+   cũng không phải một lượt import thật, nên gỡ chú thích là đúng cả hai nghĩa. */
+const goChuThich = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
 for (const f of FILE) {
-  const chu = fs.readFileSync(path.join(ROOT, f), "utf8");
+  const chu = goChuThich(fs.readFileSync(path.join(ROOT, f), "utf8"));
   for (const d of chu.matchAll(/import\s*\{([^}]+)\}\s*from\s*["'](\.[^"']+)["']/g)) {
     soCap += 1;
     const ten = d[1].split(",").map((x) => x.trim().split(/\s+as\s+/)[0].trim()).filter(Boolean);
