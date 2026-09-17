@@ -1088,3 +1088,21 @@ công thức vào phép ghim là dựng bản thứ BA của cùng một luật.
 **Hai đột biến sống sót, cả hai tố MÃ chứ không tố ghim** — hai chỗ tôi đặt *hai lớp canh cùng
 một thứ*, gỡ lớp trên thì lớp dưới che mất. Sửa còn một lớp; lý do đầy đủ ở chú thích trong
 `chon-ghe.mjs`. `8/8`.
+
+## 2026-09-17c · `claude-scouter-udine` — máy chủ Udin nay ghi lại nó chết thế nào
+
+Máy chủ Udin là gói **chết nhiều nhất** 17/09 — ba lần trong một phiên, `stderr` rỗng cả ba, mỗi lần
+mất sạch dấu vết và tốn một lượt đoán rồi một lượt bật lại. Khối CLI của `udin-optic-host.mjs` nay gọi
+`theoDoiDoiSong` — **hai dòng**, lõi ở `_shared/bridge-host/nhat-ky-doi-song.mjs`.
+
+Tệp ghi đè `BRIDGE.doi-song.json` nằm **cạnh tệp ghép cặp**, cùng chỗ hai tệp log — ngoài repo.
+Đóng tử tế → `tat_sach: true` kèm mã thoát. **Bị giết → không dòng nào**, vì `Stop-Process` của Windows
+gọi `TerminateProcess` và không gửi tín hiệu nào cho Node — và chính sự im lặng ấy là thứ phân biệt
+được hai nhánh. Lượt bật sau tự in ra: pid nào, chết trong cửa sổ 30 giây nào, sống bao lâu.
+
+**Không đổi một hành vi nào của máy chủ:** không thêm method, không đụng vùng ghi, không đụng phanh.
+Đồng hồ nhịp tim có `unref` và mọi lượt ghi nứt trong `try/catch` — ổ đĩa hỏng không được giết máy chủ.
+
+**Chưa chạy trên máy chủ đang bật** (pid 17760, bật 15:10) — nó vào việc từ lượt bật Bridge kế tiếp.
+Đây là **khởi động lại một TIẾN TRÌNH**, không phải nạp lại extension — hai việc khác nhau, và 16/09
+tôi đã lẫn chúng một lần rồi.
