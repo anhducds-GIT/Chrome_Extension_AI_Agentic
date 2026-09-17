@@ -961,3 +961,31 @@ vì mọi khối của nó chỉ dựng ca *tắt ngay ở cú đầu* hoặc *k
 (màn chắn chịu tắt ở cú thứ N) và một khối đòi `bam: 3`; cộng một khối khẳng định câu đỏ
 **KHÔNG** chứa chữ *"đầy chỗ"* — thiếu vế ấy thì một bản chỉ sửa số lần bấm mà giữ nguyên lời
 khai bậy vẫn xanh. `10` khối · `5/5` đột biến.
+
+## 2026-09-17g · `claude-scouter-udine` — `RD` ĐÓNG: ca thả ảnh ngoài chạy trọn bảy chặng
+
+**Ngay sau khi `quaManCho` chịu bấm lại, màn chắn tắt ở CÚ ĐẦU TIÊN** (`{daChan: true, bam: 1}`).
+Đúng như Đức nói: bug, cứ ấn. Luật *"chỉ có đợi"* đã tốn của tôi hơn một giờ và một lời báo sai.
+
+**Chạy thật `2026-09-17T02-22-30-537Z`**, bảy chặng, 4 ảnh JPG về đĩa:
+
+| | nguồn | mã |
+|---|---|---|
+| `@1` | ảnh đã có trên canvas (`canvas:2u4vdq`) | `image-1789566611569-cmy3iqb0b` |
+| `@2` | **tệp trên đĩa, thả vào bằng `scout.tha`** | `image-1789611506928-vyqc9zbu2` |
+
+**Đây đúng là ca sáng nay gãy**, và nó gãy ở chỗ không ai nhìn ra: canvas đang giữ nhiều ảnh thả
+mang `src` **giống hệt nhau trong 200 ký tự đầu**, nên phép so `src` thấy 0 ảnh mới. Nay danh
+tính là `data-image-id` nên chỗ đặt mới có mã riêng ngay từ lượt thả đầu.
+
+**Câu Udin trả lời tự chứng minh thứ tự tham chiếu đúng chiều:** *"…all while keeping that
+dramatic sunlight from **the first** image."* — `@1` cho ánh sáng, `@2` là vật thể. Không phép
+ghim nào kiểm được vế này; chỉ một lượt chạy thật mới nói được.
+
+**Trạng thái gói:** cả hai ca Đức nêu 16/09 nay đều chạy trọn bằng MỘT lệnh — ⒜ ảnh Udin tự sinh
+(`canvas:<mẩu src>`) và ⒝ ảnh từ ngoài (`<đường vùng ghi>`). Không một cú Cancel, không một hộp
+thoại (đo `0/14` và `0/11`).
+
+**Còn mở, và cần Đức chốt chứ không cần thêm thời gian:** `S-31` — Udin không tự nạp lại được
+(`scout.reload` cắt ở `T21`), nên mỗi lần sửa mã extension đều phải nhờ Đức bấm một lần. Mở lại
+là **thêm một method Bridge** = đổi luật an toàn.
