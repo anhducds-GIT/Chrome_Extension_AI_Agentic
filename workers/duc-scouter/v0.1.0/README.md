@@ -65,13 +65,14 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-**Hai mươi lăm** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Hai mươi sáu** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
 |---|---|---|
 | `session.hello` · `system.ping` · `system.capabilities` | không | bắt tay, kiểm còn sống, đọc bề mặt |
 | `scout.targets` | không | liệt kê và phân loại các target debug của Chrome |
+| `scout.song` | không | tab này còn đáp không, và trong bao lâu — **không đọc một chữ nào của trang**. Trả lời ~1,5s thay vì chờ hết trần CDP 20s. `song:true` nghĩa là renderer còn đáp, KHÔNG nghĩa là trang dựng xong |
 | `scout.page` | không | metadata trang + kiểm kê phần tử tương tác, có phân trang |
 | `scout.query` | không | một selector khớp mấy phần tử, và chúng là gì |
 | `scout.view` | không | **Scouter đang nhìn phần nào của trang**: độ cuộn, cỡ khung nhìn, cỡ cả trang, **còn bao nhiêu để cuộn nữa**, và mức thu phóng. Đọc nó TRƯỚC và SAU mọi lệnh đổi tầm nhìn ([ADR-0007](docs/adr/0007-nhom-nhin-va-di-lai-va-uy-quyen-mo-rong.md)) |

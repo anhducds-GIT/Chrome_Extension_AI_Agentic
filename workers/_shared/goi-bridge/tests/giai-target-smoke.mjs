@@ -235,4 +235,97 @@ const DT = { selector: "title", chua: "anhducds" };
   assert.equal(r.ghe, "iid-0", "và `ghe` vẫn phải là địa chỉ gọi được, kể cả khi ghế không có tên");
 }
 
-console.log("giai-target-smoke: 14 khối ĐẠT");
+// ⓞ DANH TÍNH PHỤ KHÔNG ĐƯỢC QUYẾT ĐỊNH GÌ CẢ.
+//    Hai ứng viên khai **cùng một chuỗi phụ** và khác nhau ở chuỗi chính. Bản đúng chọn theo
+//    chính ⇒ UNIQUE. Ai đảo hai trường (lấy phụ làm cổng chính) thì hai ứng viên cùng thoả
+//    ⇒ TARGET_AMBIGUOUS, và khối này ĐỎ. Đó là toàn bộ lý do nó tồn tại.
+{
+  const { goi } = bridgeGia({
+    ghe: { A: [trang("t1", VIZ + "a"), trang("t2", VIZ + "b")] },
+    a11y: { t1: ["nguoi-khac@gmail.com"], t2: ["anhducds@gmail.com"] },
+    chu: { t1: "Đức Nguyễn's Workspace Free plan", t2: "Đức Nguyễn's Workspace Free plan" }
+  });
+  const r = await taoGiaiTarget({ goi }).giai({
+    origin: VIZ,
+    danh_tinh: { a11y_chua: "anhducds@gmail.com" },
+    danh_tinh_phu: { selector: "[data-testid=org]", chua: "Đức Nguyễn's Workspace" }
+  });
+  assert.equal(r.ok, true, "chuỗi phụ trùng nhau KHÔNG được làm nhập nhằng một danh tính chính đã duy nhất");
+  assert.equal(r.target_id, "t2");
+  assert.equal(r.phu.khop, true, "phụ vẫn phải được ĐỌC và IN — nó là bằng chứng cho người, chỉ không phải phiếu bầu");
+}
+
+// ⓞ′ PHỤ LỆCH THÌ IN RA, KHÔNG CHẶN. Đức chốt phụ là supplementary — cho nó quyền chặn là
+//     lặng lẽ nâng nó lại thành cổng chính.
+{
+  const { goi } = bridgeGia({
+    ghe: { A: [trang("t1", VIZ + "a")] },
+    a11y: { t1: ["anhducds@gmail.com"] },
+    chu: { t1: "Workspace nao do khac" }
+  });
+  const r = await taoGiaiTarget({ goi }).giai({
+    origin: VIZ,
+    danh_tinh: { a11y_chua: "anhducds@gmail.com" },
+    danh_tinh_phu: { selector: "[data-testid=org]", chua: "Đức Nguyễn's Workspace" }
+  });
+  assert.equal(r.ok, true, "phụ lệch KHÔNG được chặn — nó không có quyền đó");
+  assert.equal(r.phu.khop, false);
+  assert.match(r.phu.doc_duoc, /khac/, "và phải in ra chữ đọc được để người tự thấy chỗ lệch");
+}
+
+// ⓟ KHOÁ ĐẠT: target còn, đúng origin, danh tính còn đọc ra ⇒ ok, kèm bằng chứng
+{
+  const { goi } = bridgeGia({
+    ghe: { A: [trang("t1", VIZ + "files/aaa/recent")] },
+    a11y: { t1: ["Vizcom", "anhducds@gmail.com"] }
+  });
+  const R = taoGiaiTarget({ goi });
+  const k = await R.khoaDanhTinh({ ghe: "iid-0", target_id: "t1", origin: VIZ, danh_tinh: { a11y_chua: "anhducds@gmail.com" } });
+  assert.equal(k.ok, true);
+  assert.match(k.bang_chung, /anhducds@gmail\.com/, "một lượt khoá không in bằng chứng thì không kiểm lại được");
+  assert.equal(k.url, VIZ + "files/aaa/recent");
+}
+
+// ⓠ TARGET BIẾN MẤT ⇒ TARGET_BIEN_MAT, và KHÔNG tốn một lượt đọc danh tính nào.
+//    Đọc danh tính trên một id đã chết chỉ sinh ra một thông báo lỗi khó hiểu hơn.
+{
+  const { goi, dem } = bridgeGia({ ghe: { A: [trang("t1", VIZ + "a")] }, a11y: {} });
+  const k = await taoGiaiTarget({ goi }).khoaDanhTinh({ ghe: "iid-0", target_id: "da-dong", origin: VIZ, danh_tinh: { a11y_chua: "x@y.z" } });
+  assert.equal(k.ok, false);
+  assert.equal(k.ma, MA.TARGET_BIEN_MAT);
+  assert.equal(dem.a11y, 0);
+}
+
+// ⓡ CÙNG MỘT id, ĐÃ RỜI ORIGIN ⇒ TARGET_BIEN_MAT kèm URL mới.
+//    `G-102`: target_id sống qua điều hướng SPA. Một bộ khoá chỉ kiểm "id còn không" sẽ cho qua.
+{
+  const { goi } = bridgeGia({ ghe: { A: [trang("t1", "https://accounts.google.com/signin")] }, a11y: { t1: ["anhducds@gmail.com"] } });
+  const k = await taoGiaiTarget({ goi }).khoaDanhTinh({ ghe: "iid-0", target_id: "t1", origin: VIZ, danh_tinh: { a11y_chua: "anhducds@gmail.com" } });
+  assert.equal(k.ok, false);
+  assert.equal(k.ma, MA.TARGET_BIEN_MAT);
+  assert.match(k.url, /accounts\.google\.com/, "phải nói ra nó đã đi đâu");
+}
+
+// ⓢ ĐÚNG id, ĐÚNG origin, NHƯNG ĐÃ SANG TÀI KHOẢN KHÁC ⇒ DANH_TINH_MAT.
+//    Đây là ca đắt nhất cả chặng ③: URL vẫn app.vizcom.com, id vẫn thế, người đã khác.
+{
+  const { goi } = bridgeGia({
+    ghe: { A: [trang("t1", VIZ + "files/bbb/recent")] },
+    a11y: { t1: ["Vizcom", "Vinfast Enterprise plan", "v.tuanvv4@vinfast.vn"] }
+  });
+  const k = await taoGiaiTarget({ goi }).khoaDanhTinh({ ghe: "iid-0", target_id: "t1", origin: VIZ, danh_tinh: { a11y_chua: "anhducds@gmail.com" } });
+  assert.equal(k.ok, false);
+  assert.equal(k.ma, MA.DANH_TINH_MAT);
+}
+
+// ⓣ ĐỌC KHÔNG RA CŨNG LÀ TRƯỢT. "Không đọc được" KHÔNG phải "chắc vẫn đúng" — một bộ khoá
+//    hiểu nhầm hai câu đó sẽ mở đúng vào lúc trang đang ở trạng thái nó không hiểu.
+{
+  const { goi } = bridgeGia({ ghe: { A: [trang("t1", VIZ + "a")] }, a11y: {} });
+  const k = await taoGiaiTarget({ goi }).khoaDanhTinh({ ghe: "iid-0", target_id: "t1", origin: VIZ, danh_tinh: { a11y_chua: "anhducds@gmail.com" } });
+  assert.equal(k.ok, false);
+  assert.equal(k.ma, MA.DANH_TINH_MAT);
+  assert.match(k.ly_do, /Không đọc được KHÔNG phải là vẫn đúng/);
+}
+
+console.log("giai-target-smoke: 20 khối ĐẠT");

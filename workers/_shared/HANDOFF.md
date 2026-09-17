@@ -371,3 +371,25 @@ một **quyết định cố ý** — đưa thay đổi ấy sang lõi, hay khai
 sửa lõi cho khớp một cái mốc vừa trôi. Đã ghi thẳng vào docblock của phép ghim.
 
 Không đổi một hành vi nào; sáu khối vẫn xanh.
+
+## 2026-09-18b · `claude-universal-scouter` — danh tính chính = email, và một cái KHOÁ trước mỗi lượt ghi
+
+`goi-bridge/giai-target.mjs` thêm **`khoaDanhTinh()`**: chạy ngay trước MỖI lượt GHI và ngay
+sau MỖI lần điều hướng. Nó kiểm ba thứ theo thứ tự — target còn sống · còn ở đúng `origin` ·
+danh tính còn đọc ra được — và trả ba mã khác nhau vì chúng dẫn tới ba việc khác nhau.
+
+**Vì sao không dùng lại kết quả `giai()`:** `G-102` đo được `target_id` **sống qua điều hướng
+SPA cùng nguồn**. Nên *"vẫn đúng target"* KHÔNG kéo theo *"vẫn đúng tài khoản"* — một cú bấm
+sang workspace khác giữ nguyên id. Kết quả `giai()` là một phép đo tại MỘT thời điểm.
+
+**ĐỌC KHÔNG RA CŨNG LÀ TRƯỢT.** Một bộ khoá coi "không đọc được" là "chắc vẫn đúng" sẽ mở đúng
+vào lúc trang đang ở trạng thái nó không hiểu. Khối ⓣ ghim đúng câu đó.
+
+`adapters/vizcom.mjs`: danh tính chính giờ là **email** (`a11y_chua`), workspace/gói xuống
+`danh_tinh_phu` — **chỉ in ra, không quyền cho qua và không quyền chặn**. Lý do không phải sở
+thích: tên workspace là thứ người ta ĐẶT ĐƯỢC, email thì không. Ghim ⓞ dựng hai ứng viên **cùng
+chuỗi phụ, khác chuỗi chính**: bản đúng trả UNIQUE, bản đảo hai trường trả AMBIGUOUS.
+
+Cả bốn khối khoá (ⓟⓠⓡⓢⓣ) đã thử **đột biến** — bỏ kiểm origin · coi đọc-không-ra là đạt · cho
+phụ quyền chặn · bỏ kiểm target còn sống — và cả bốn đều ĐỎ. Một phép ghim xanh dưới cả bản
+đúng lẫn bản hỏng là màu xanh giả.

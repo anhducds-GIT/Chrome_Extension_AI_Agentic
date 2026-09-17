@@ -24,8 +24,12 @@ bằng chứng đọc từ trang, và **hai tài khoản kia có 0 lượt ghi**
 | `c8568b34-…` | `Scouter_blank` | — | — |
 | `f3f7264e-…` | `Dummy_Scout` | — | — |
 
-**Tài khoản thứ BA chưa online.** `Profile 10` (vfsct01@gmail.com) có cài Vizcom nhưng **chưa
-thấy ghế Scouter nào của nó trên dây**. Isolation test ba chân **chưa đủ chân** — xem §6.
+> ~~**Tài khoản thứ BA chưa online.** `Profile 10` (vfsct01@gmail.com) có cài Vizcom nhưng chưa
+> thấy ghế Scouter nào của nó trên dây.~~ **SAI, đo lại chiều 18/09 (`G-108`).** Đủ **3/3**, và
+> chân thứ ba là **`vf.styling01@vinfast.vn`** ở ghế `c8568b34` (`Scouter_blank`) — **không phải**
+> `vfsct01@gmail.com`. Bảng trên là ảnh chụp lúc sáng; buổi chiều ghế `c8568b34` có 1 target
+> Vizcom. Gạch tại chỗ chứ không xoá, vì một dòng *"đang chờ Đức làm X"* là thứ không ai đọc lại,
+> và tôi đã suýt lập kế hoạch tiếp trên nó.
 
 Đã quét: `app.vizcom.com/files/<org>/recent` = **trình duyệt tệp**, 23 phần tử tương tác.
 **CHƯA quét:** `/workbench/…` — bề mặt sinh ảnh. Đi tới đó cần lệnh GHI.
@@ -136,14 +140,26 @@ Không có ⑵ thì Phase 2 dừng ở *"đã chứng minh sẵn sàng ghi"*, kh
 
 ---
 
-## 6. CHƯA ĐỦ ĐỂ ĐẠT §2 CỦA ĐỀ BÀI
+## 6. ĐỦ BA CHÂN — ĐO ĐƯỢC, KHÔNG SUY RA
 
-Đề bài đòi *"verify cả 3 Vizcom accounts đều online/có thể discover"*. Hiện **2/3**.
-Tài khoản thứ ba (`Profile 10` = vfsct01@gmail.com) cần **Đức mở Vizcom ở profile đó** — và
-profile đó phải có Scouter đang nối.
+Đề bài đòi *"verify cả 3 Vizcom accounts đều online/có thể discover"*. **ĐẠT 3/3**, đo bằng
+`pilots/vizcom-anhducds/kiem-ke-tai-khoan.mjs` chiều 18/09:
 
-Không có chân thứ ba thì isolation test vẫn chạy được với 2 chân và **phải khai rõ là 2/3**,
-không được viết thành 3/3.
+| Ghế | Target | Org UUID | Email |
+|---|---|---|---|
+| `c8568b34…` (`Scouter_blank`) | `0A65DC0A1F…` | `fc25a65d…` | `vf.styling01@vinfast.vn` |
+| `5ba67fd2…` *(không nhãn)* | `C39F1D994F…` | `ca2ab962…` | **`anhducds@gmail.com`** |
+| `b5f89960…` *(không nhãn)* | `8CF657F436…` | `799fc2a1…` | `v.tuanvv4@vinfast.vn` |
+
+Ba ghế khác nhau, ba org khác nhau, ba email khác nhau. **8 lượt gọi, 0 lệnh GHI**, đếm theo
+từng target.
+
+Bộ lọc dùng **hình dạng** email (`/[^@\s]+@[^@\s]+\.[a-z]{2,}/`), không phải danh sách ba địa
+chỉ. Gõ cứng ba địa chỉ thì file chỉ tìm thấy thứ tôi đã tin là có — và một tài khoản thứ tư
+sẽ vô hình.
+
+~~§6 cũ: "Hiện 2/3 … phải khai rõ là 2/3, không được viết thành 3/3."~~ Câu đó đúng lúc viết và
+sai hai tiếng sau. Xem `G-108`.
 
 ---
 
@@ -158,3 +174,24 @@ không được viết thành 3/3.
 ```
 
 ①③ làm được ngay và không cần Đức. ② và ④ mỗi cái chặn bởi **một** hành động tay người.
+
+---
+
+## 8. ĐÃ LÀM — 18/09 chiều, Đức chốt đường ⒝
+
+| Chặng | Trạng thái | Ở đâu |
+|---|---|---|
+| ① danh tính chính = email | **XONG** | `_shared/adapters/vizcom.mjs` — `danh_tinh` = `{a11y_chua:"anhducds@gmail.com"}`, workspace/gói xuống `danh_tinh_phu`. Ghim: `hop-dong-smoke` ⓙ · `giai-target-smoke` ⓞ/ⓞ′ |
+| ③ khoá danh tính trước/sau | **XONG** | `_shared/goi-bridge/giai-target.mjs` → `khoaDanhTinh()`. Ghim ⓟ–ⓣ, cả bốn đã thử **đột biến** và đều ĐỎ |
+| ② `scout.song` | **CODE XONG, CHƯA CHẠY ĐƯỢC** | `scouter-bridge-core.mjs` (bảng method) + `scouter-seed-core.mjs` (xử lý + `SONG_HAN_MS`). Ghim ⑳. **Chặn bởi lượt nạp lại extension** — đo thật lúc 18/09: `METHOD_NOT_FOUND` sau **22ms** |
+| ④ pilot ghi | **CHƯA** | Chặn bởi công tắc đường ghi |
+
+**Ba chỗ pilot sửa lại lộ trình này** — ghi ra vì lộ trình là một lời khai, không phải một sự thật:
+
+1. **§6 sai**: 3/3 chứ không phải 2/3, và sai luôn địa chỉ chân thứ ba (`G-108`).
+2. **§3 đắt hơn thực tế**: `scout.song` **không** cần đụng `scouter-probes.mjs` — nó chạy lại
+   `page.view`, tức đúng một `Page.getLayoutMetrics` đã mở từ 14/09. Nên chỉ **1** tệp lệch
+   khỏi bản chép Udin, không phải 2, và **không cửa CDP nào mới** (`G-109`).
+3. **Khai `CO_Y_KHAC` chưa đủ**: nó làm `continue`, tức tắt hẳn phép ghim byte trên cả tệp.
+   Đã đổi sang **neo bằng băm hai bên** — và nó bắt thật một lượt sửa của chính tôi ngay
+   trong phiên (`G-110`).

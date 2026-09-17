@@ -305,6 +305,35 @@ const METHOD_ENTRIES = [
     description: "List and classify Chrome debug targets. Read-only: no attach to any page.",
     params_schema: {}, params_validator: noParams
   }),
+  /* ---- `scout.song` MỞ 18/09 — phép dò SỐNG, và nó KHÔNG mở thêm cửa CDP nào ----
+   *
+   * ═══ VÌ SAO CẦN MỘT METHOD RIÊNG, KHI ĐÃ CÓ `scout.view` ═══
+   * Đo 18/09 trên 19 target thật (`G-107`): target sống trả lời **min 8ms · p50 28ms · p90 87ms
+   * · max 282ms**; target chết không trả lời gì cho tới khi đụng trần `CDP_HAN_MS` là **~20.020ms**.
+   * Hai cực cách nhau **~70 lần**, và giữa chúng không có gì. Nên câu *"target này còn sống
+   * không"* trả lời được trong 1,5 giây — nhưng mọi phép đọc hiện có đều chờ tới 20 giây trước
+   * khi chịu nói, vì chúng được đặt hạn cho một câu hỏi khác.
+   *
+   * ═══ `song: true` KHÔNG CÓ NGHĨA TRANG DỰNG XONG ═══
+   * `G-101`: ở 74ms renderer của Vizcom trả lời bình thường trong khi DOM còn RỖNG. Ba trạng
+   * thái phải giữ riêng, và gộp hai cái đầu là cách sinh ra một lượt ghi bắn vào trang trắng:
+   *
+   *     scout.song  → false → DỪNG
+   *                 → true  → scout.wait(selector) → rồi mới kiểm danh tính → rồi mới đi tiếp
+   *
+   * ═══ KHÔNG NỚI RANH GIỚI AN TOÀN ═══
+   * Nó dùng lại ĐÚNG phép dò `page.view` đã mở 14/09, tức đúng một lệnh `Page.getLayoutMetrics`
+   * đã nằm trong `READ_ONLY_CDP_METHODS`. **Không method CDP mới, không phép dò mới.** Thứ duy
+   * nhất mới là một cái hạn ngắn hơn và một lời hứa không ném. */
+  registryEntry({
+    name: "scout.song", read_only: true, deadline_ms: 10000,
+    description: "Ask whether one target's renderer still answers, and how fast, WITHOUT reading any content. Answers in about 1.5s instead of waiting out the 20s CDP ceiling. song:true means the renderer replied — it does NOT mean the page has finished rendering (a Vizcom tab answered in 74ms with an empty DOM), so still follow it with scout.wait and an identity read before acting.",
+    params_schema: { target_id: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id"]);
+      return { target_id: requiredTargetId(params.target_id) };
+    }
+  }),
   registryEntry({
     name: "scout.page", read_only: true, deadline_ms: 30000,
     description: "Page metadata plus a paged inventory of interactive elements on one target.",

@@ -16,27 +16,34 @@
  *     [data-testid="organization-switcher-button"]  →  "ĐĐức Nguyễn's WorkspaceFree plan"
  *     [data-testid="organization-switcher-button"]  →  "VinfastEnterprise plan"
  *
- * Nên danh tính đi qua **selector ổn định** (khớp đúng một, có mặt trên cả hai tài khoản),
- * còn `xac_nhan_truoc_khi_ghi` là **cổng thứ hai độc lập**: chuỗi email trong cây trợ năng,
- * đo được ổn định 3/3 lượt. Hai cổng vì đây là ranh giới an toàn, không phải một lượt tra cứu:
- * một cổng hỏng thì cổng kia vẫn phải chặn.
+ * ─── 18/09, ĐỨC CHỐT: DANH TÍNH CHÍNH LÀ EMAIL, KHÔNG PHẢI WORKSPACE ───────
+ * Bản đầu lấy tên workspace làm cổng chính. Nó **chạy đúng** trong pilot — và vẫn sai luật, vì
+ * một cái tên workspace là thứ người ta đặt được: hai tài khoản khác nhau có thể cùng đặt
+ * `"Đức Nguyễn's Workspace"`, còn *bị thêm vào một workspace trùng tên* là chuyện xảy ra được.
+ * Không ai được thêm vào một địa chỉ email. Nên:
+ *
+ *     danh_tinh      = email trong cây trợ năng   → QUYẾT ĐỊNH
+ *     danh_tinh_phu  = workspace + gói cước       → CHỈ IN RA CHO NGƯỜI ĐỌC
+ *
+ * `danh_tinh_phu` **không có quyền cho qua và không có quyền chặn**. Nó lệch thì bộ giải in
+ * `phu_lech` để người thấy, rồi vẫn đi tiếp theo email — vì Đức chốt nó là *supplementary*.
+ * Khối ⓞ của `giai-target-smoke.mjs` ĐỎ nếu ai đảo ngược hai dòng này.
  */
 export const VIZCOM = {
   id: "vizcom",
   origin: "https://app.vizcom.com/",
   tai_khoan: "anhducds",
 
-  /* Cổng ①: khớp đúng một, chuỗi có nghĩa với người đọc. */
-  danh_tinh: {
+  /* DANH TÍNH CHÍNH — thứ DUY NHẤT được quyền quyết định. Chuỗi email nằm trong `StaticText`
+   * nên `scout.page` (chỉ liệt kê phần tử tương tác) không với tới; đường đọc duy nhất không
+   * phải đoán selector là cây trợ năng. Đo 18/09: ổn định 3/3 lượt, xuất hiện 2 lần mỗi lượt. */
+  danh_tinh: { a11y_chua: "anhducds@gmail.com" },
+
+  /* PHỤ — in ra cho người đọc, không tham gia quyết định. Xem đầu file. */
+  danh_tinh_phu: {
     selector: '[data-testid="organization-switcher-button"]',
     chua: "Đức Nguyễn's Workspace"
   },
-
-  /* Cổng ②: BẮT BUỘC chạy trước bất kỳ bước GHI nào. Email là chính TÀI KHOẢN, còn cổng ① chỉ
-   * là tên workspace — một người có thể được thêm vào một workspace trùng tên, không ai được
-   * thêm vào một địa chỉ email. Nằm trong `StaticText` nên `scout.page` (chỉ liệt kê phần tử
-   * tương tác) không với tới; đường đọc duy nhất không phải đoán selector là cây trợ năng. */
-  xac_nhan_truoc_khi_ghi: { a11y_chua: "anhducds@gmail.com" },
 
   /* Bề mặt đã quét được, 18/09. Mỗi dòng là một phần tử CÓ THẬT với `matchCount` đã đo. */
   be_mat: {

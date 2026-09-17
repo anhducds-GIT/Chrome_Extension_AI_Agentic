@@ -75,18 +75,18 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T18:21:14.930Z",
-      "task": "pilot vizcom-anhducds: E2E resolver + adapter",
-      "released_at": "2026-09-17T18:35:26.862Z"
+      "claimed_at": "2026-09-17T18:40:36.481Z",
+      "task": "Vizcom Phase 2: scout.song + pilot ghi",
+      "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-17T18:31:23.151Z",
-      "task": "ghi Log _shared",
-      "released_at": "2026-09-17T18:35:27.011Z"
+      "claimed_at": "2026-09-17T18:40:36.386Z",
+      "task": "Vizcom Phase 2: danh tinh email + re-check truoc write",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -96,12 +96,12 @@
       "released_at": "2026-09-17T16:48:21.633Z"
     },
     "workers/udin-optic": {
-      "owner": null,
+      "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-14T20:10:10.346Z",
-      "task": "T21 chang (2)+(3): dung nha + vo extension, roi dua 10 file logic sang",
-      "released_at": "2026-09-17T16:01:55.683Z"
+      "claimed_at": "2026-09-17T18:48:19.413Z",
+      "task": "khai CO_Y_KHAC cho scout.song",
+      "released_at": null
     }
   },
-  "_fingerprint": "1ee2a25c828ef0c8"
+  "_fingerprint": "4f2c8ef0ae66a5d7"
 }

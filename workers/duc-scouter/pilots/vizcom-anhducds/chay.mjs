@@ -43,30 +43,41 @@ console.log("\n## ① KIỂM KÊ GHẾ");
 for (const g of await R.lietKeGhe()) console.log(`    ${(g.nhan || "(KHÔNG NHÃN)").padEnd(18)} ${g.instance_id}`);
 
 console.log("\n## ② GIẢI TARGET theo adapter — KHÔNG nêu ghế, để resolver tự tìm");
-const r = await R.giai({ origin: VIZCOM.origin, danh_tinh: VIZCOM.danh_tinh });
+const r = await R.giai({ origin: VIZCOM.origin, danh_tinh: VIZCOM.danh_tinh, danh_tinh_phu: VIZCOM.danh_tinh_phu });
 console.log("    ok:", r.ok, "| mã:", r.ma ?? "-");
 for (const h of r.da_hoi) console.log(`    hỏi ${h.ghe_nhan.padEnd(16)} ${h.tong} target · ${h.trang} page · ${h.hop} khớp origin`);
 console.log(`    ứng viên: ${r.ung_vien ?? 0} · khớp: ${r.khop ?? 0} · lệch: ${r.lech?.length ?? 0} · đọc không ra: ${r.khong_doc_duoc?.length ?? 0}`);
 if (r.ok) {
   console.log(`    → CHỌN  ${r.ghe_nhan} (${r.ghe.slice(0, 8)}…)  id=${r.target_id}`);
   console.log(`      url=${r.url}`);
-  console.log(`      bằng chứng danh tính: ${JSON.stringify(r.doc_duoc)}`);
+  console.log(`      bằng chứng danh tính (CHÍNH, email): ${JSON.stringify(r.doc_duoc)}`);
+  console.log(`      phụ (workspace/gói — chỉ để đọc, không quyết định gì): ${JSON.stringify(r.phu)}`);
 }
 /* In cả cái BỊ LOẠI, kèm chữ đọc được. Đây là bằng chứng §1 đòi — và nó phải in ra được,
  * vì một resolver chỉ khoe cái nó chọn thì không ai kiểm được nó đã loại đúng hay chưa. */
 for (const l of r.lech ?? []) console.log(`    → LOẠI  ${l.ghe_nhan} (${l.ghe.slice(0, 8)}…) id=${l.target_id.slice(0, 10)}… vì đọc ra ${JSON.stringify(l.doc_duoc)}`);
 if (!r.ok) { console.log(`\nDỪNG — fail closed (${r.ma}). Không thao tác gì.`); process.exit(2); }
 
-console.log("\n## ③ CỔNG THỨ HAI — danh tính TÀI KHOẢN, chạy trước mọi bước GHI");
-const a = await goiCoSo("scout.a11y", { target_id: r.target_id }, { ghe: r.ghe });
-const ten = (a.data.nodes || []).map((n) => n.name || "");
-const moc = VIZCOM.xac_nhan_truoc_khi_ghi.a11y_chua;
-const hit = ten.filter((t) => t.includes(moc));
-/* `>= 1`, không phải `=== 1`. Đo 18/09: chuỗi email xuất hiện **2 lần** trong cây trợ năng.
- * Bản đầu viết `=== 1` và báo CỔNG ĐÓNG cho đúng tài khoản — một phép kiểm chặt quá tay vẫn
- * là một phép kiểm SAI, nó chỉ sai về phía an toàn nên dễ trôi. */
-console.log(`    tìm ${JSON.stringify(moc)} trong ${ten.length} tên node → ${hit.length} khớp`);
-console.log(`    → danh tính tài khoản ${hit.length >= 1 ? "XÁC NHẬN" : "KHÔNG XÁC NHẬN"}. Công tắc đường ghi vẫn do TAY ĐỨC, không method nào bật được nó.`);
+/* ─── CHẶNG ③ — KHOÁ DANH TÍNH ─────────────────────────────────────────────
+ * Bản trước gõ tay một cổng thứ hai ngay tại đây. Nó chạy đúng, và vẫn sai chỗ: một phép kiểm
+ * an toàn viết trong file gọi thì nó chỉ bảo vệ đúng file gọi ấy. `khoaDanhTinh` sống trong
+ * bộ giải, nên trang thứ hai, thứ ba dùng lại được — và có phép ghim canh nó (khối ⓟ–ⓣ).
+ *
+ * Nó cũng kiểm nhiều hơn bản gõ tay: target CÒN SỐNG · CÒN Ở ĐÚNG ORIGIN · rồi mới đọc danh
+ * tính. `G-102` đo được `target_id` sống qua điều hướng SPA, nên "vẫn đúng id" không hề kéo
+ * theo "vẫn đúng người". */
+const khoa = async (nhan) => {
+  const k = await R.khoaDanhTinh({ ghe: r.ghe, target_id: r.target_id, origin: VIZCOM.origin,
+    danh_tinh: VIZCOM.danh_tinh, danh_tinh_phu: VIZCOM.danh_tinh_phu });
+  console.log(`    [khoá ${nhan}] ${k.ok ? "ĐẠT" : `TRƯỢT ${k.ma}`} · url=${k.url ?? "-"} · bằng chứng=${JSON.stringify(k.bang_chung ?? k.ly_do)}`);
+  if (k.phu) console.log(`               phụ: ${JSON.stringify(k.phu.doc_duoc)} (khớp=${k.phu.khop}, không quyết định gì)`);
+  if (!k.ok) { console.error("DỪNG fail-closed — không thao tác."); process.exit(2); }
+  return k;
+};
+
+console.log("\n## ③ KHOÁ DANH TÍNH — chạy trước MỖI lượt ghi và sau MỖI lần điều hướng");
+await khoa("trước-khi-đọc");
+console.log("    → Công tắc đường ghi vẫn do TAY ĐỨC, không method Bridge nào bật được nó.");
 
 console.log("\n## ④ CHẠY CÁC BƯỚC ĐỌC CỦA ADAPTER");
 for (const [nhom, buoc] of Object.entries(VIZCOM.viec)) {

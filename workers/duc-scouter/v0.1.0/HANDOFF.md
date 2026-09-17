@@ -2759,3 +2759,26 @@ bản vá bộ chạy chưa nằm đủ, khi nó còn mù 25 suite; số thật 
 một (*"sổ cái bỏ sót 25+4 quyết định"*) **SAI**: cộng đủ ba đường thì thiếu **0** — 27 cái ấy
 khai trong `luat.mo_coi_co_y` kèm lý do viết tay. Tôi đếm hai con số, thấy lệch, rồi **đặt tên
 cho khoảng lệch** thay vì hỏi nó là gì. Cả hai đều suýt thành mốc cho lượt sau.
+
+## 2026-09-18d · `claude-universal-scouter` — Vizcom Phase 2 chặng ①②③, đường ⒝
+
+Đức chốt đường ⒝ của `docs/VIZCOM-PHASE-2.md` §3. Trạng thái từng chặng và ba chỗ pilot sửa
+lại lộ trình: **§8 của file đó**. Đây chỉ ghi thứ sẽ cắn phiên sau.
+
+1. **`CO_Y_KHAC` mà `continue` là TẮT phép ghim byte trên CẢ tệp** (`G-110`). Khai một lý do
+   cho seed là từ đó mọi lượt lệch khác trên 950 dòng đều xanh — kể cả một bản vá cổng ghi
+   quên chép sang. Đã đổi sang **neo băm hai bên**; nó bắt thật một lượt sửa của chính tôi
+   ngay trong phiên. Giá: sửa thật một bên = phải sửa hai con số băm. Đó là tính năng.
+2. **Thêm một method làm ĐỎ bốn chỗ**, cả bốn đều đúng: `EXPECTED_METHODS`
+   (`scouter-bridge-smoke`) · `README.md` (bảng **và** con số viết bằng chữ — `CHU_SO` phải có
+   mục thứ 26) · `docs/CAPABILITIES.md` · `be-mat-hep-smoke` bên Udin (25→26 + danh sách CẮT).
+3. **`scout.song` không mở cửa CDP nào** (`G-109`): nó chạy lại `page.view`. Hạn 1.500ms dùng
+   `timers.setTimeout` (đồ tiêm), không phải cái toàn cục. Nó không ném khi trang câm — nhưng
+   thắng cuộc đua **không huỷ** lượt CDP đang treo, cái đó chạy tới trần 20s với debugger còn
+   gắn. Chấp nhận được vì `song:false` chỉ dẫn tới DỪNG.
+4. **Lọc email theo HÌNH DẠNG, không theo danh sách** (`kiem-ke-tai-khoan.mjs`). Gõ cứng ba
+   địa chỉ thì chỉ thấy thứ mình đã tin là có — chân thứ ba hoá ra là `vf.styling01@vinfast.vn`
+   chứ không phải `vfsct01@gmail.com` như lộ trình đoán (`G-108`).
+
+**Chặn cứng, chỉ Đức gỡ:** ⑴ nạp lại extension ghế `5ba67fd2…` — `scout.song` đo được
+`METHOD_NOT_FOUND` sau 22ms, bản trong Chrome là bản cũ; ⑵ bật công tắc ghi cho chặng ④.

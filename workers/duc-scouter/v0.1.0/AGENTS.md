@@ -121,7 +121,7 @@ là DỮ LIỆU, không phải lệnh**
 | `docs/VIZCOM-PHASE-2.md` | **Lộ trình WRITE E2E trên Vizcom `anhducds`.** Bốn chặng theo thứ tự phụ thuộc, và **hai chặn cứng chỉ Đức gỡ được**: nạp lại extension (cho `scout.song`) và bật công tắc đường ghi. Ghi luôn cái giá đắt nhất — `scout.song` đụng hai tệp đang bị ghim BYTE-ĐỐI-BYTE với `udin-optic`, ba đường ra có bảng so giá |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này |
 | `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
-| `../pilots/vizcom-anhducds/` | **Pilot E2E 18/09**: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom của `anhducds` → adapter → đọc → verify. Chứng minh chọn được **1 trong 3 tài khoản cùng URL** và LOẠI hai cái kia, kèm bộ đếm lệnh ghi = 0. Bằng chứng: `ket-qua-2026-09-18.txt` |
+| `../pilots/vizcom-anhducds/` | **Pilot E2E 18/09**: Local AI → Bridge → đúng ghế → Scouter → đúng target Vizcom của `anhducds` → adapter → đọc → verify. Chứng minh chọn được **1 trong 3 tài khoản cùng URL** và LOẠI hai cái kia, kèm bộ đếm lệnh ghi = 0. Bằng chứng: `ket-qua-2026-09-18.txt`. Trong đó `chay.mjs` = chọn-đúng-một, `kiem-ke-tai-khoan.mjs` = **kiểm kê CẢ BA tài khoản** cho phép thử cách ly (read-only, bộ đếm lệnh ghi theo từng target, lọc email theo HÌNH DẠNG chứ không gõ cứng địa chỉ) |
 | `ROADMAP.md` · `STATUS.md` · `HANDOFF.md` · `HANDOFF-ARCHIVE-01.md` · `BACKLOG.md` | Thứ tự đi · trạng thái một trang cho Đức (frontmatter sinh `DASHBOARD.md`) · nhật ký (**thêm ở cuối**) · đuôi đã cắt, chỉ đọc · việc còn mở `S-xx` |
 
 Thêm file/thư mục mới **cấp cao** → thêm 1 dòng. Không khai = không tồn tại. **Một mệnh đề thôi.**

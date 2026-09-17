@@ -27,7 +27,11 @@ export const MA = {
   GHE_CHUA_KHAI: "GHE_CHUA_KHAI",
   TARGET_NOT_FOUND: "TARGET_NOT_FOUND",
   DANH_TINH_LECH: "DANH_TINH_LECH",
-  TARGET_AMBIGUOUS: "TARGET_AMBIGUOUS"
+  TARGET_AMBIGUOUS: "TARGET_AMBIGUOUS",
+  /* Chỉ `khoaDanhTinh` trả hai mã này, và chúng KHÁC `TARGET_NOT_FOUND`/`DANH_TINH_LECH` vì
+   * dẫn tới hành động khác: ở đây target ĐÃ từng được chứng minh đúng rồi mới trượt. */
+  TARGET_BIEN_MAT: "TARGET_BIEN_MAT",
+  DANH_TINH_MAT: "DANH_TINH_MAT"
 };
 
 /* Hai lược đồ này KHÔNG BAO GIỜ là target của một trang web, và đo được là chúng từ chối ở
@@ -90,6 +94,26 @@ export function taoGiaiTarget({ goi, soGhe = null }) {
     const r = await goi("scout.text", { selector: dt.selector, target_id: uv.target_id }, { ghe: uv.ghe });
     const chu = String(r.data.text ?? "");
     return { khop: chu.includes(dt.chua), doc_duoc: chu };
+  };
+
+  /* DANH TÍNH PHỤ — đọc để IN RA, không bao giờ để quyết định.
+   *
+   * Đức chốt 18/09: *"identity chính ưu tiên email/account marker; workspace/plan chỉ
+   * supplementary"*. Nên hàm này không trả `ok`, và không người gọi nào trong file này rẽ
+   * nhánh theo nó — nó chỉ gắn thêm `{ chua, doc_duoc, khop }` vào kết quả. Một trường phụ
+   * lệch được IN, không được CHẶN: cho nó quyền chặn là lặng lẽ nâng nó lên thành cổng chính,
+   * đúng cái Đức vừa bỏ.
+   *
+   * Chỉ chạy trên ứng viên ĐÃ THẮNG. Đọc phụ trên các ứng viên bị loại là tiêu thêm lượt gọi
+   * lên hai tài khoản kia mà không đổi được kết luận nào. */
+  const docPhu = async (uv, phu) => {
+    if (!phu) return null;
+    try {
+      const kq = await docDanhTinh(uv, phu);
+      return { chua: phu.chua ?? phu.a11y_chua, doc_duoc: String(kq.doc_duoc).slice(0, 120), khop: kq.khop };
+    } catch (loi) {
+      return { chua: phu.chua ?? phu.a11y_chua, doc_duoc: null, khop: null, loi: String(loi.message).slice(0, 120) };
+    }
   };
 
   /**
@@ -168,7 +192,7 @@ export function taoGiaiTarget({ goi, soGhe = null }) {
 
     const nen = { da_hoi: daHoi, ung_vien: ungVien.length, khop: khop.length, lech, khong_doc_duoc: khongDocDuoc };
 
-    if (khop.length === 1) return { ok: true, ...khop[0], ...nen };
+    if (khop.length === 1) return { ok: true, ...khop[0], ...nen, phu: await docPhu(khop[0], khai.danh_tinh_phu) };
     if (khop.length === 0) {
       return { ok: false, ma: MA.DANH_TINH_LECH, ...nen,
         ly_do: `${ungVien.length} target đúng origin, không cái nào đọc ra "${danh_tinh.chua}" qua \`${danh_tinh.selector}\`. Đúng URL không có nghĩa đúng trang — và với nhiều tài khoản cùng một site, đúng URL còn không có nghĩa đúng người.` };
@@ -177,5 +201,64 @@ export function taoGiaiTarget({ goi, soGhe = null }) {
       ly_do: `${khop.length} target cùng thoả danh tính. DỪNG — người chọn, máy không chọn hộ.` };
   };
 
-  return { lietKeGhe, giai, MA };
+  /**
+   * KHOÁ DANH TÍNH — chạy NGAY TRƯỚC mỗi lượt GHI, và NGAY SAU mỗi lần điều hướng.
+   *
+   * ─── VÌ SAO MỘT LƯỢT GIẢI TARGET KHÔNG ĐỦ CHO CẢ PHIÊN ────────────────────
+   * `G-102` đo được: `target_id` **sống qua điều hướng SPA cùng nguồn** — URL đổi mà id giữ
+   * nguyên. Nên câu *"vẫn đúng target"* KHÔNG kéo theo *"vẫn đúng tài khoản"*: một cú bấm sang
+   * workspace khác, hay một lượt đăng xuất rồi đăng nhập tài khoản kia, giữ nguyên id. Kết quả
+   * của `giai()` là một phép đo tại MỘT thời điểm; dùng lại nó cho một lượt ghi xảy ra sau đó
+   * là đọc một điểm thành một đường thẳng.
+   *
+   * ─── BA CÁCH TRƯỢT, BA MÃ KHÁC NHAU ───────────────────────────────────────
+   *   target không còn trong danh sách ghế ấy   → TARGET_BIEN_MAT
+   *   URL rời khỏi `origin` đã khai             → TARGET_BIEN_MAT (kèm `url`)
+   *   đọc danh tính không khớp, hoặc đọc không ra → DANH_TINH_MAT
+   *
+   * ĐỌC KHÔNG RA CŨNG LÀ TRƯỢT. Một bộ khoá coi "không đọc được" là "chắc vẫn đúng" thì nó
+   * mở đúng vào lúc trang đang ở trạng thái nó không hiểu — tức đúng lúc nguy hiểm nhất.
+   *
+   * @param {{ghe: string, target_id: string, origin: string,
+   *           danh_tinh: object, danh_tinh_phu?: object}} khai
+   * @returns {Promise<{ok: boolean, ma?: string, url?: string, bang_chung?: string,
+   *                    phu?: object|null, ly_do?: string}>}  KHÔNG ném — người gọi phải in
+   *          được bằng chứng của lượt từ chối, chứ không bắt một exception rồi mất nó.
+   */
+  const khoaDanhTinh = async ({ ghe, target_id, origin, danh_tinh, danh_tinh_phu = null }) => {
+    if (!ghe || !target_id) throw new Error("khoaDanhTinh: thiếu `ghe` hoặc `target_id`.");
+    if (!danh_tinh) throw new Error("khoaDanhTinh: thiếu `danh_tinh` — không có gì để khoá.");
+
+    let tg;
+    try {
+      tg = await goi("scout.targets", {}, { ghe });
+    } catch (loi) {
+      return { ok: false, ma: MA.TARGET_BIEN_MAT, ly_do: `không hỏi được ghế ${ghe}: ${String(loi.message).slice(0, 120)}` };
+    }
+    const con = (tg.data.targets || []).find((t) => t.targetId === target_id);
+    if (!con) {
+      return { ok: false, ma: MA.TARGET_BIEN_MAT, ly_do: `target ${target_id} không còn ở ghế ${ghe} — cửa sổ đã đóng, hoặc đã sang ghế khác.` };
+    }
+    if (origin && !con.url.startsWith(origin)) {
+      return { ok: false, ma: MA.TARGET_BIEN_MAT, url: con.url,
+        ly_do: `target còn sống nhưng đã rời ${origin} sang ${con.url}. Cùng một id, khác một trang.` };
+    }
+
+    const uv = { ghe, target_id };
+    let kq;
+    try {
+      kq = await docDanhTinh(uv, danh_tinh);
+    } catch (loi) {
+      return { ok: false, ma: MA.DANH_TINH_MAT, url: con.url,
+        ly_do: `đọc danh tính không ra: ${String(loi.message).slice(0, 120)}. Không đọc được KHÔNG phải là vẫn đúng.` };
+    }
+    const bangChung = String(kq.doc_duoc).slice(0, 120);
+    if (!kq.khop) {
+      return { ok: false, ma: MA.DANH_TINH_MAT, url: con.url, bang_chung: bangChung,
+        ly_do: `dấu hiệu danh tính không còn đọc ra được trên target này. DỪNG.` };
+    }
+    return { ok: true, url: con.url, bang_chung: bangChung, phu: await docPhu(uv, danh_tinh_phu) };
+  };
+
+  return { lietKeGhe, giai, khoaDanhTinh, MA };
 }

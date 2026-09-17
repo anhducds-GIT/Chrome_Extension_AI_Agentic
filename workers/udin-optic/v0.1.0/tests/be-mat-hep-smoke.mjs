@@ -36,7 +36,11 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     "từ vựng đổi = đổi luật an toàn (luật gói số 4). Thêm/bớt phải hỏi Đức, không sửa lén dòng này.");
 
   const CAT = ["scout.page", "scout.view", "scout.tree", "scout.a11y", "scout.network", "scout.shot",
-    "scout.hover", "scout.scroll", "scout.history", "scout.key", "scout.fetch", "scout.reload"];
+    "scout.hover", "scout.scroll", "scout.history", "scout.key", "scout.fetch", "scout.reload",
+    /* `scout.song` mở bên Scouter 18/09 và CỐ Ý không sang đây — xem khai ở `CO_Y_KHAC`
+     * khối ⑷. Nó ở danh sách CẮT chứ không phải bị quên: một method vắng mặt vì bị cắt và một
+     * method vắng mặt vì chưa ai chép sang trông giống hệt nhau từ ngoài. */
+    "scout.song"];
   for (const ten of CAT) {
     assert.ok(!METHOD_NAMES.includes(ten), `\`${ten}\` phải KHÔNG TỒN TẠI ở gói này`);
   }
@@ -44,9 +48,12 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
    * dùng — ảnh Udin nằm sau URL ký hạn giờ nên `scout.fetch` trả 403 (`S-24`, đo 14/09). */
   assert.ok(!METHOD_NAMES.includes("scout.fetch"));
 
-  /* Bản gốc phải còn ĐỦ 25 — lệch nghĩa là ai đó cắt nhầm bên Scouter, và bảng trên thành vô nghĩa. */
+  /* Bản gốc phải còn ĐỦ 26 — lệch nghĩa là ai đó cắt nhầm bên Scouter, và bảng trên thành vô nghĩa.
+   * 25 → 26 ngày 18/09: `scout.song`, Đức duyệt trong đề bài Vizcom Phase 2. Con số này ĐỎ được
+   * đúng một lần cho mỗi lượt đổi từ vựng bên kia, và đó là toàn bộ việc của nó — nó bắt người
+   * ở gói này nhìn sang xem method mới có cần chép về không, thay vì để im lặng quyết hộ. */
   const banGocMethod = doc(scouter, "scripts", "scouter-bridge-core.mjs").match(/^    name: "/gm) || [];
-  assert.equal(banGocMethod.length, 25, "Scouter phải còn 25 method; đổi thì xem lại bảng CẮT ở trên");
+  assert.equal(banGocMethod.length, 26, "Scouter phải còn 26 method; đổi thì xem lại bảng CẮT ở trên");
 
   const c = capabilities();
   /* TÁM lệnh GHI từ 16/09 khuya. `scout.upload` và `scout.tha` là HAI lệnh của gói đưa
@@ -110,7 +117,20 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
  * chúng là chỗ gói này hẹp lại và là chỗ Đức nói UI sẽ đổi. Khối ⑴ và ⑵ canh đúng thứ đáng canh
  * ở chúng — từ vựng và quyền. */
 {
-  const CO_Y_KHAC = Object.create(null);   /* tên tệp → lý do. Rỗng là đúng cho tới khi có lý do thật. */
+  /* tên tệp → lý do. Rỗng là đúng cho tới khi có lý do thật. Mỗi dòng ở đây là một chữ ký:
+   * nó nói *ai quyết, khi nào, vì sao* — và nó phải đọc được bởi người sẽ gặp nó sáu tháng nữa
+   * mà không có mặt lúc quyết. */
+  const CO_Y_KHAC = Object.create(null);
+  CO_Y_KHAC["scripts/scouter-seed-core.mjs"] = { bam_day: "4c966af358e8d18c", bam_goc: "4d65e73c647ce05f", ly_do:
+    "18/09, Đức chốt đường ⒝ của `duc-scouter/v0.1.0/docs/VIZCOM-PHASE-2.md` §3: `scout.song` " +
+    "(phép dò SỐNG, read-only, hạn 1.500ms) chỉ triển khai trong Scouter, KHÔNG chép sang đây. " +
+    "Lý do: nó là năng lực của BỘ ĐỒ NGHỀ duyệt web nói chung — trả lời 'renderer còn đáp không' " +
+    "khi Local AI phải chọn giữa nhiều target lạ. Udin chạy trên đúng MỘT trang đã biết, không " +
+    "có bài toán đó, nên nó sẽ nhận một method không ai gọi. `G-93` ghi lý do Đức tách hai gói " +
+    "chính là TÁCH NHỊP THAY ĐỔI — và đây đúng là một nhịp chỉ thuộc về một gói. " +
+    "Nó KHÔNG mở thêm cửa CDP nào (dùng lại `page.view`/`Page.getLayoutMetrics` đã mở 14/09), " +
+    "nên bản chép ở đây KHÔNG thiếu một bản vá an toàn nào. Ngày nào Udin cần dò sống thì chép " +
+    "sang rồi XOÁ dòng này — đừng để nó ở lại che một lượt lệch khác." };
   const CAP = [
     ["scouter-engine.js", "scouter-engine.js"],
     ["scripts/scouter-probes.mjs", "scripts/scouter-probes.mjs"],
@@ -141,8 +161,33 @@ const doc = (...p) => fs.readFileSync(path.join(...p), "utf8");
     /* Bản gốc BIẾN MẤT thì ĐỎ, không lặng lẽ bỏ qua: một phép kiểm tự tắt khi mất mỏ neo đọc y
      * hệt một phép kiểm đang chạy tốt. Scouter đổi tên tệp thì sửa bảng CẶP này. */
     assert.ok(fs.existsSync(banGoc), `không thấy bản gốc ${tenGoc} bên Scouter — sửa bảng CẶP, đừng bỏ khối này`);
-    if (CO_Y_KHAC[tenDay]) continue;
-    assert.equal(bam(path.join(goc, ...tenDay.split("/"))), bam(banGoc),
+    const banDay = path.join(goc, ...tenDay.split("/"));
+
+    /* ═══ MỘT LƯỢT LỆCH ĐÃ KHAI KHÔNG ĐƯỢC TẮT PHÉP GHIM ═══
+     * Bản đầu của khối này viết `if (CO_Y_KHAC[tenDay]) continue;`. Nó đúng về ý và sai về giá:
+     * khai MỘT lý do cho `scouter-seed-core.mjs` là từ đó về sau **mọi** lượt lệch khác trên
+     * 950 dòng của tệp ấy — kể cả một bản vá cổng ghi làm bên Scouter mà quên chép sang — đều
+     * đi qua trong im lặng, và phép ghim vẫn xanh. Một phép ghim tự tắt đọc y hệt một phép
+     * ghim đang chạy tốt; đó đúng là thứ cả khối ⑷ sinh ra để chặn.
+     *
+     * Nên lượt lệch được khai bị **NEO BẰNG BĂM**: khai xong thì hai bản phải giữ nguyên đúng
+     * hai cái băm đã ghi. Bên nào nhúc nhích thì ĐỎ, và người phải mở lý do ra đọc lại xem nó
+     * còn đúng không. Giá phải trả: mỗi lần sửa thật ở một trong hai bản là một lần phải sửa
+     * hai con số ở đây. Đó KHÔNG phải phiền toái thừa — đó chính là lượt bắt người nhìn lại. */
+    const khai = CO_Y_KHAC[tenDay];
+    if (khai) {
+      assert.ok(khai.ly_do?.length > 80, `${tenDay}: khai lệch phải kèm LÝ DO thật, không phải một chữ`);
+      const [bDay, bGoc] = [bam(banDay), bam(banGoc)];
+      assert.notEqual(bDay, bGoc, `${tenDay} khai là CỐ Ý KHÁC nhưng hai bản đang GIỐNG nhau — xoá dòng khai đi, nó đang che một phép ghim còn sống`);
+      if (khai.bam_day === null || khai.bam_goc === null) {
+        console.log(`   ⚠ ${tenDay}: khai lệch chưa neo băm. Điền: bam_day: "${bDay}", bam_goc: "${bGoc}"`);
+        continue;
+      }
+      assert.equal(bDay, khai.bam_day, `${tenDay} (bản Udin) đã đổi SAU khi khai lệch — mở lý do ra đọc lại, rồi cập nhật băm`);
+      assert.equal(bGoc, khai.bam_goc, `${tenDay} (bản gốc Scouter) đã đổi SAU khi khai lệch — bản vá đó có cần sang Udin không?`);
+      continue;
+    }
+    assert.equal(bam(banDay), bam(banGoc),
       `${tenDay} đã trôi khỏi bản gốc. Đồng bộ lại, HOẶC khai vào CO_Y_KHAC kèm lý do.`);
   }
 }

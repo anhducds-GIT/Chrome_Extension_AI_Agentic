@@ -46,6 +46,16 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.view": "page.view"
 });
 
+/* Hạn của `scout.song`, và con số này rút thẳng từ phép đo chứ không chọn cho tròn.
+ * `G-107`, 19 target thật ngày 18/09: sống **max 282ms**, chết **~20.020ms**. 1.500ms nằm ở
+ * giữa với biên **5,3×** so với cái chậm nhất còn sống — tức một target phải chậm gấp năm lần
+ * cái chậm nhất từng đo mới bị gọi oan là chết. Đặt sát 300ms là mời máy chậm bị báo chết;
+ * đặt 10s là bỏ mất chính cái lợi đã sinh ra method này.
+ *
+ * CỐ Ý không nhận tham số. Một cái hạn mở cho người gọi chỉnh sẽ bị nới dần cho tới khi nó
+ * bằng trần cũ, và lúc đó không ai nhớ vì sao nó từng là 1.500. */
+const SONG_HAN_MS = 1500;
+
 /* Ba hành động GHI, ánh xạ sang tên của `scripts/scouter-actions-core.mjs`. Bảng riêng, cố ý:
  * đọc và ghi đi qua hai lõi khác nhau với hai danh sách method CDP khác nhau, và gộp hai bảng
  * này lại là bước đầu tiên để hai danh sách kia cũng bị gộp. */
@@ -447,6 +457,35 @@ export function createSeedHandlers(deps = {}) {
     async "scout.page"(params) {
       const target = await resolveTarget(params.target_id);
       return await runProbe("scout.page", target, { offset: params.offset, limit: params.limit });
+    },
+
+    /* `scout.song` — CÒN TRẢ LỜI KHÔNG, và trong bao lâu. Giải trình đầy đủ ở bảng method của
+     * `scouter-bridge-core.mjs`; ở đây chỉ nói ba chỗ chỉ nhìn code này mới thấy:
+     *
+     * ⑴ Nó KHÔNG có phép dò riêng. Nó chạy lại `page.view` — đúng một lệnh
+     *    `Page.getLayoutMetrics` đã mở từ 14/09. Đẻ thêm một phép dò để hỏi cùng một câu là
+     *    thêm một cửa phải canh mà không đổi được câu trả lời nào.
+     *
+     * ⑵ Nó KHÔNG NÉM khi trang câm. Một phép dò sống mà ném thì người gọi phải bọc `try`
+     *    quanh nó để hỏi *"còn sống không"* — tức chính cái nó sinh ra để khỏi phải làm.
+     *    Nhưng `resolveTarget` VẪN được ném: một `target_id` không tồn tại là câu hỏi khác
+     *    ("tìm target nào?"), không phải một câu trả lời về sự sống.
+     *
+     * ⑶ CÁI GIÁ, nói thẳng: thắng cuộc đua ở 1.500ms **không huỷ** lượt gọi CDP đang treo.
+     *    Nó chạy tiếp tới trần 20s của `createReadOnlySender`, và debugger còn gắn suốt quãng
+     *    đó. Chấp nhận được vì `song:false` chỉ dẫn tới một hành động duy nhất — DỪNG — nên
+     *    không có lượt gọi nào xếp hàng sau nó. Ai dùng `song:false` rồi vẫn đọc tiếp trên
+     *    cùng target ấy sẽ chờ nốt phần 20s còn lại; đó là hành vi đúng, không phải lỗi. */
+    async "scout.song"(params) {
+      const target = await resolveTarget(params.target_id);
+      const batDau = Date.now();
+      const song = await Promise.race([
+        runProbe("scout.view", target, {}).then(() => true, () => false),
+        /* `timers.setTimeout`, không phải cái toàn cục: `timers` được tiêm đúng để phép ghim
+         * khỏi phải chờ thật 1,5 giây mỗi lượt chạy suite (xem khối `deps` ở đầu tệp). */
+        new Promise((giai) => timers.setTimeout(() => giai(false), SONG_HAN_MS))
+      ]);
+      return { probe: "page.view", data: { song, ms: Date.now() - batDau, han_ms: SONG_HAN_MS }, cdp: [] };
     },
 
     /* `scout.view` — phép ĐỌC của nhóm "nhìn & đi lại" ([ADR-0007]). Không tham số nào ngoài

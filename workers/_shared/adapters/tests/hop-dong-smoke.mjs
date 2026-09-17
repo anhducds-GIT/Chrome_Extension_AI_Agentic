@@ -98,4 +98,24 @@ assert.deepEqual(soatAdapter(HOP_LE), { dat: true, loi: [] });
   }
 }
 
-console.log("hop-dong-smoke: 9 khối ĐẠT");
+// ⓙ VIZCOM: DANH TÍNH CHÍNH PHẢI LÀ EMAIL, WORKSPACE CHỈ ĐƯỢC LÀM PHỤ.
+//    Đức chốt 18/09. Lý do không phải sở thích: tên workspace là thứ người ta ĐẶT ĐƯỢC, nên
+//    hai tài khoản khác nhau có thể cùng mang một tên; không ai đặt trùng được một địa chỉ
+//    email. Khối này ĐỎ nếu ai đảo hai trường lại — kể cả khi đảo xong pilot vẫn chạy xanh,
+//    vì nó chạy xanh đúng cho tới ngày có hai workspace trùng tên.
+{
+  const { VIZCOM } = await import("../vizcom.mjs");
+  assert.ok(VIZCOM.danh_tinh?.a11y_chua?.includes("@"),
+    "`danh_tinh` của Vizcom phải là dấu hiệu TÀI KHOẢN (email), không phải tên workspace");
+  assert.equal(VIZCOM.danh_tinh.selector, undefined,
+    "danh tính chính đi đường a11y — khai thêm selector ở đây là mở lại đường quyết định theo workspace");
+  assert.ok(!JSON.stringify(VIZCOM.danh_tinh).includes("Workspace"),
+    "tên workspace KHÔNG được nằm trong danh tính chính");
+  assert.ok(VIZCOM.danh_tinh_phu?.chua?.includes("Workspace"),
+    "workspace vẫn phải được giữ — ở `danh_tinh_phu`, để in ra cho người đọc");
+  assert.equal(VIZCOM.xac_nhan_truoc_khi_ghi, undefined,
+    "cổng trước-khi-ghi cũ đã bị `khoaDanhTinh` thay: một trường còn sót lại là hai nguồn sự thật cho cùng một phép kiểm");
+  assert.equal(soatAdapter(VIZCOM).dat, true);
+}
+
+console.log("hop-dong-smoke: 10 khối ĐẠT");

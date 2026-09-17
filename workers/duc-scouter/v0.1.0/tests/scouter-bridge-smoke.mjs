@@ -25,6 +25,10 @@ const EXPECTED_METHODS = [
   "system.capabilities",
   "system.ping",
   "scout.targets",
+  /* `scout.song` — mở 18/09, Đức duyệt trong đề bài Vizcom Phase 2. Đứng ngay sau
+   * `scout.targets` vì đó là thứ tự dùng thật: liệt kê target → hỏi cái nào còn sống → rồi mới
+   * đọc nội dung. Nó KHÔNG mở cửa CDP nào mới (chạy lại `page.view`). */
+  "scout.song",
   "scout.page",
   "scout.view",
   "scout.query",
@@ -621,6 +625,51 @@ function request(method, params) {
   for (const e of muc) {
     assert.ok(Number.isInteger(e.deadline_ms) && e.deadline_ms > 0,
       `method "${e.name}" không khai hạn chờ hợp lệ: ${e.deadline_ms}`);
+  }
+}
+
+/* ---- ⑳ `scout.song` — PHÉP DÒ SỐNG, và ba lời hứa của nó ------------------
+ * Nó hứa ba chuyện, và mỗi chuyện hỏng một kiểu riêng nếu không có ai canh:
+ *   ⑴ trang đáp  ⇒ `song: true`, và KHÔNG đọc một chữ nào của trang
+ *   ⑵ trang câm  ⇒ `song: false` sau đúng hạn 1.500ms, **không ném**
+ *   ⑶ dùng lại `page.view`, không đẻ phép dò mới, không mở cửa CDP mới
+ *
+ * Đồng hồ ở đây là đồ giả (`makeTimers`), nên suite không tốn 1,5 giây thật mỗi lượt chạy —
+ * và quan trọng hơn: hạn được kiểm bằng con số ĐÃ KHAI, không bằng một lượt bấm giờ ngoài đời
+ * vốn đo cả độ chậm của máy chạy test. */
+{
+  /* ⑴ Trang đáp */
+  {
+    const { engine, dispatch } = makeSeed();
+    const ok = await dispatch(request("scout.song", { target_id: TARGET_ID }));
+    assert.equal(ok.ok, true, JSON.stringify(ok.error || {}));
+    assert.equal(ok.result.data.song, true);
+    assert.equal(ok.result.data.han_ms, 1500, "hạn phải được KHAI RA trong kết quả — một con số không nói mình đo bằng gì thì không đối chiếu được");
+    assert.equal(engine.calls.length, 1, "đúng MỘT lượt dò");
+    assert.equal(engine.calls[0].name, "page.view", "phải chạy lại `page.view` — đẻ một phép dò mới là thêm một cửa phải canh mà không đổi câu trả lời");
+  }
+
+  /* ⑵ Trang CÂM: `runProbe` treo mãi mãi, đúng như một renderer chết ngoài đời.
+   *    Không có hạn thì `dispatch` treo theo và khối này không bao giờ kết thúc — tức phép
+   *    ghim ĐỎ bằng cách treo, và đó vẫn là đỏ. */
+  {
+    const timers = makeTimers();
+    const engine = makeEngine();
+    engine.runProbe = () => new Promise(() => {});
+    const handlers = createSeedHandlers({
+      engine, chromeApi: makeChrome(), timers, now,
+      BridgeProtocolError: core.BridgeProtocolError,
+      negotiateVersion: core.negotiateVersion, capabilities: core.capabilities
+    });
+    const dispatch = core.createDispatcher({ handlers, now });
+    const dangCho = dispatch(request("scout.song", { target_id: TARGET_ID }));
+    await flush();
+    assert.equal(timers.pending.length, 1, "phải có đúng một hẹn giờ đang chờ — không có nghĩa là không có hạn");
+    assert.equal(timers.pending[0].delay, 1500, "hạn 1.500ms rút từ `G-107`: sống max 282ms, chết ~20.020ms");
+    timers.fireAll();
+    const het = await dangCho;
+    assert.equal(het.ok, true, "trang câm KHÔNG được thành một lượt NÉM — người gọi phải bọc try để hỏi 'còn sống không' thì đúng bằng việc không có method này");
+    assert.equal(het.result.data.song, false);
   }
 }
 

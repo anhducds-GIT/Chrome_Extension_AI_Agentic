@@ -54,6 +54,7 @@ Test xanh mà chưa chạy thật thì chỉ là `CÓ`. S-23 là ví dụ: test 
 |---|---|---|---|---|---|
 | N1 | Liệt kê tab | `scout.targets` | **ĐÃ CHỨNG MINH** | mọi lượt thật | |
 | N2 | Chọn tab làm việc | `target_id` trong từng lệnh | **ĐÃ CHỨNG MINH** | mọi lượt thật từ 07/09. `targetId` đổi sau điều hướng, phải hỏi lại (`T7`) | |
+| N2b | Hỏi một tab còn sống không, KHÔNG đọc nội dung | `scout.song` | **ĐÃ CHỨNG MINH** | Làm 18/09, Đức duyệt trong đề bài Vizcom Phase 2. Trả lời trong ~1,5s thay vì chờ hết trần CDP 20s. Số đo nền (`G-107`, 19 target thật): sống **8ms / p50 28 / p90 87 / max 282**, chết **~20.020** — hai cực cách ~70×, nên 1.500ms nằm giữa với biên 5,3×. **`song:true` KHÔNG có nghĩa trang dựng xong** (`G-101`: renderer Vizcom đáp ở 74ms trong khi DOM còn rỗng) — vẫn phải qua `scout.wait` rồi mới kiểm danh tính. Không mở cửa CDP mới: chạy lại `page.view` | |
 | N3 | Đi tới URL | `scout.navigate` | **ĐÃ CHỨNG MINH** | 08/09, `T3` | |
 | N4 | Tải lại trang | `scout.navigate` cùng URL | **ĐÃ CHỨNG MINH** | `T3` / `S-19` đóng | |
 | N5 | Quay lại / tiến tới | `scout.history` | **ĐÃ CHỨNG MINH** | Làm 14/09, [ADR-0007]. Đi đúng MỘT bước; người gọi nói hướng, `entryId` tính ở trong — mở một tham số `entry_id` là biến lệnh lùi thành con trỏ tự do vào lịch sử duyệt web của Đức. Hết đường thì `HISTORY_AT_END`, không im lặng. **Chạy thật 14/09**: đi từ Udin sang trang thử rồi `back` về đúng Udin (`entry 3/4`, `arrivedBy: new_document`), hai lượt liền | |

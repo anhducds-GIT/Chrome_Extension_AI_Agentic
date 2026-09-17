@@ -54,7 +54,7 @@ const { METHOD_NAMES, capabilities } = await import("../scripts/scouter-bridge-c
    * "Mười một" trong khi bảng ngay dưới đáng lẽ có 15 dòng. */
   const CHU_SO = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười",
     "mười một", "mười hai", "mười ba", "mười bốn", "mười lăm", "mười sáu", "mười bảy", "mười tám",
-    "mười chín", "hai mươi", "hai mươi mốt", "hai mươi hai", "hai mươi ba", "hai mươi bốn", "hai mươi lăm"];
+    "mười chín", "hai mươi", "hai mươi mốt", "hai mươi hai", "hai mươi ba", "hai mươi bốn", "hai mươi lăm", "hai mươi sáu"];
   const dung = CHU_SO[trongMa.size];
   assert.ok(dung !== undefined, `bảng chữ số chưa có mục cho ${trongMa.size} — thêm vào rồi chạy lại`);
   const cauDan = readme.match(/^\**([A-ZĐÀ-ỹa-zà-ỹ ]+?)\** method, \*\*từ vựng đóng\*\*/m);
