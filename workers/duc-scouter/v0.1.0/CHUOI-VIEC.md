@@ -33,126 +33,62 @@
 
 ### Đang ở đâu — một câu
 
-**Phần NĂNG LỰC đã xong.** Bảng `W` của Udin **8/8**, không còn hàng CHẶN nào, E2E ĐẠT →
-Udin đạt `MASTERED`. Đường ghi không còn lệnh nào nói dối: `scout.type` · `scout.click` ·
-`scout.clear` đều tự kiểm hoặc khai thẳng là chưa kiểm được. `Scouter v1` đã ký
-([ADR-0008](docs/adr/0008-duc-ky-scouter-v1.md) — đọc mục *KHÔNG hứa gì* trước khi dựa vào lệnh nào).
+**Ba câu hỏi lớn của lộ trình đều đã trả lời xong, bằng lượt chạy thật chứ không bằng lời khai.**
+`R1` (một lệnh chạy trọn vòng việc thật) · `R2` (vòng tự cải tiến khép, `T7` → `MASTERED`) ·
+`R3` (seed chạy trên **trang thứ hai khác loại** — `tldraw` — mà **không sửa một dòng nào**, và
+đã khép cả trên Chrome sạch lẫn **qua dây extension**). `Scouter v1` ký ở ADR-0008, `Udin v1` ký
+ở `udin-optic/v0.1.0/docs/adr/0001`.
 
-**Nên giai đoạn tiếp KHÔNG phải mở thêm năng lực.** Chín tháng việc còn lại chia làm ba, và
-`R1` là thứ Đức thật sự cần dùng.
+**Nên giai đoạn tới KHÔNG phải mở năng lực, cũng không phải chứng minh gì nữa.** Nó là **dọn chỗ
+hỏng hằng ngày** — hai thứ làm Đức mất buổi, và một lượt rà sổ.
 
-### Việc còn lại, theo đúng thứ tự nên làm
+### Việc còn lại — theo thứ tự nên làm
 
-**① `R1` — MỘT LỆNH chạy trọn vòng việc thật. XONG TRỌN 17/09, HẾT VẾT.**
-`vong-tham-chieu.mjs` chạy **bảy** chặng `W1 → NGUỒN → CHỌN → W2 → W3 → JPG → W4`, có `@1` / `@2`
-đọc ngược từ huy hiệu trên trang, và **không một cú Cancel nào** — `scout.tha` (kéo-thả) thay
-`scout.upload` ở mọi lượt đưa ảnh từ ngoài. Chạy thật 17/09: 4 ảnh mới về đĩa.
+**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. AI tự đo được, làm trước.**
+Đo 17/09: máy chủ Udin chết **ba lần** trong một phiên, `stderr` **rỗng** — tức bị **giết**, không
+tự lỗi. Triệu chứng phía người gọi là `fetch failed`, đọc không ra nguyên nhân, và mỗi lần lại
+tốn một lượt bật lại.
+**Giả thuyết CHƯA ĐO** (đừng chép nó thành kết luận): `Start-Process` chạy từ PowerShell của
+phiên AI bị dọn theo tiến trình cha khi phiên ấy đóng. Nếu đúng thì nó **chỉ hỏng khi AI bật**,
+không hỏng khi Đức tự bật — và đó là một khác biệt phải đo chứ không suy.
+**Đóng khi:** biết nguyên nhân bằng phép đo, và máy chủ sống qua một lượt chạy dài mà không ai
+bật lại. Câu báo `fetch failed` nói thêm được *"máy chủ có đang nghe không"*.
 
-**17/09 khép nốt ba mép** (Đức: *“tập trung hoàn thiện extension Udin, tránh lan man”*):
-① `vong-style.mjs` **XOÁ** (Đức chốt) và đường `mo_bang` + `Page.setInterceptFileChooserDialog`
-**GỠ** — không còn lối nào bật được hộp thoại lên màn hình Đức, `WRITE_CDP_METHODS` 17 → 16.
-② bộ khởi động Udin nhận `-KhoiDongLai`: **một lệnh** dừng máy chủ cũ rồi bật lại, vì sửa
-`bridge\*.mjs` là khởi động lại một TIẾN TRÌNH chứ không phải nạp lại extension.
-③ `W4` (đọc câu Udin viết) **vào vòng**, đứng sau lượt ghi đĩa nên đọc đỏ không làm mất ảnh.
+**② `N3` — RÀ SỔ NỢ. Rẻ, và hai mục đã chết mà chưa ai gạch.**
+Đo 17/09, đọc lại đúng điều kiện đóng của từng mục:
+· `S-01` đủ **cả ba** vế (`scout.click`/`scout.type` có trong từ vựng · mỗi cái một phép ghim ·
+  đột biến kiểm có con canh đường ghi) → **đóng được ngay**.
+· `T8` đã **ĐÓNG 14/09** mà mục ④ bên dưới vẫn liệt kê là còn — gạch tại chỗ.
+**Đóng khi:** mỗi mục `MỞ` còn lại được đọc **điều kiện đóng của chính nó** rồi kết luận, không
+đếm. Mục nào chết thì gạch kèm ngày và lý do.
 
-Bản cũ của mục này giữ lại bên dưới vì nó ghi ba giả định bị lật:
+**③ `N4` — VỐN TỪ CHƯA CHẠM TRANG THỨ HAI.**
+`R3` mới đụng **ba** lệnh: `dom.query` · `page.snapshot` · `input.click`. `scout.type` ·
+`scout.text` · `scout.grab` **chưa chạm `tldraw` lần nào** — nên câu *"seed dùng lại được"* hiện
+đúng cho ba lệnh, không phải cho cả bộ.
+**Đóng khi:** ba lệnh ấy chạy thật trên `tldraw` và ghi số vào `TRIALS.md`. Cần **một tab tldraw**
+đang mở; không có method tạo tab, nên gộp lời nhờ Đức vào một lần.
 
-~~**① `R1` — ĐÃ KHÉP 16/09 tối, CÒN MỘT VẾT.**~~
-`tu-dong/vong-style.mjs` đã có, nối đúng các chặng đã ĐẠT: chọn ảnh lượt trước → đính kèm →
-prompt style mới → gửi → chờ → ảnh mới về đĩa → JPG. **16 khối ghim · 16 đột biến, 0 sống sót ·
-lượt chọn ảnh chạy thật trên vùng ghi.** Không mở method nào mới.
+### Chờ ĐỨC — AI không tự quyết được, đừng tự làm
 
-**ĐÃ CHẠY SỐNG TRỌN VÒNG 16/09 tối.** Lấy tấm `01-batch-…sn3w1x3b.jpg` của lượt sáng, đính kèm
-ngược vào Udin, xin *"1950s enamel travel poster"* → **4 ảnh mới** về đĩa và đã đổi JPG
-(`xe-dien-2026/2026-09-16T13-51-37-688Z`), canvas **2 → 7**.
+**`N2` — EXTENSION RỤNG KẾT NỐI (`S-02`, mở từ 07/09).** Service worker ngủ thì `setTimeout`
+chết theo, nên bộ hẹn giờ nối lại không chạy; triệu chứng là `EXTENSION_OFFLINE`. Ba worker kia
+dùng `chrome.alarms`, nhưng **quyền `alarms` chưa được duyệt**, và thêm quyền là việc phải hỏi.
+Đường nâng đã chừa sẵn (`options.schedule` của `createTransport`).
+**Đức chốt MỘT trong hai:** thêm quyền `alarms` · hoặc KHÔNG thêm, và mục đóng bằng một dòng ghi
+lý do. Cả hai chiều đều đóng được mục này.
 
-**CÒN MỘT VẾT, và nó là vết của tôi:** chặng đính kèm **vẫn bật lên hộp thoại `Open` của Windows**
-trên máy Đức, và Đức phải bấm **Cancel**. Lượt tải lên vẫn thành công dù có hộp thoại, nên nó hỏng
-theo kiểu **im lặng** — đó đúng là kiểu hỏng đắt nhất. Câu *"không một cú bấm nào của người"* ở hàng
-`W8` **sai**, đã gạch tại chỗ trong `CAPABILITIES.md`.
+**`N5` — NHÓM VIDEO trong bảng "Udin làm được gì".** Đức nêu trước 17/09: sẽ có tính năng tạo
+video. Bảng đã dựng sẵn hình dạng nhóm — thêm **một** khối `[data-nhom="video"]`, không đụng nhóm
+cũ, và `tests/huong-dan-smoke.mjs` **cố ý không kiểm tên nhóm** nên nhóm mới không làm bộ đo đỏ.
+**Chưa làm gì cho tới khi Udin thật sự có tính năng video.**
 
-**Ba giả thuyết đã đo và ĐỀU TRƯỢT** (`scripts` tạm, Chrome hồ sơ trống, không đụng tab của Đức):
-⒜ tắt chặn trong `finally` khi yêu cầu còn treo · ⒝ trang bấm TRỄ (React) nên chạy đua ·
-⒞ thiếu `Page.enable`. Cả ba lượt đều: trang nhận file, pill hiện, **0 hộp thoại**. Nên khác biệt
-nằm ở đường `chrome.debugger` của extension, **chưa đo được**, và đó là việc kế.
+### Việc của TÔI, không phải của Đức — ghi ra để khỏi đẩy nhầm
 
-**Đường DÁN đã đóng, đo xong 16/09 tối:** Udin bỏ qua cả tệp lẫn ảnh bitmap trên clipboard hệ điều
-hành. Đức đo thêm một vế quyết định: copy–paste **trong nội bộ canvas Udin thì được**. Tức paste là
-tính năng riêng của ứng dụng, không phải một đường nhập tệp — đừng quay lại đường này.
+`S-31` (Udin không tự nạp lại được) **không chờ Đức**. Sổ nợ đã chốt đường mặc định ⒝ — *gộp mọi
+lượt sửa mã extension của một phiên, xin nạp lại **đúng một lần** ở cuối*. 17/09 tôi phá nó (xin
+hai lượt trong một phiên) và còn đẩy nhầm nó thành câu hỏi cho Đức.
 
-~~Lượt thử tối 16/09 dừng ở chặng đính
-kèm vì **Udin đang ĐẦY CHỖ** — lý do nằm ngoài repo, không phải trong mã. Dấu hiệu nhận ra:
-`.concurrency-overlay` có mặt và đọc ra *“User Limit Reached · Please try again in a few minutes
-when other users finish their sessions.”*. Đo: **~25 phút** và **6 lượt bấm `Try Again`** cách
-nhau một phút đều không tắt được nó, nên ~~**đừng bấm thêm — chỉ có đợi**~~.
-
-> **CÂU GẠCH TRÊN SAI, Đức bác 17/09:** *"đây chỉ là bug thôi, từ sau bạn cứ ấn."* Màn chắn là
-> **lỗi giao diện của Udin**, không phải hết chỗ thật. Nay `quaManCho` bấm lại tới 12 lần.
->
-> Và cái sai nằm sâu hơn một con số: phép đo 16/09 ghi ĐÚNG triệu chứng (~25 phút, 6 lượt bấm,
-> không tắt) rồi **tôi tự đặt tên cho nguyên nhân** — *"máy chủ đầy chỗ"* — và viết cái tên ấy
-> thành luật. Hôm sau chính luật ấy chặn một lượt chạy thật và tôi báo cho Đức là *bị chặn bởi
-> sức chứa máy chủ*, một câu chỉ mình anh bác được. **Triệu chứng thì đo được; nguyên nhân thì
-> phải hỏi người biết.**
-
-Làm tiếp:
-
-```
-# ~~vong-style.mjs~~ — TEP NAY DA XOA 17/09 (Duc chot). Duong thay the, lam duoc moi thu no lam:
-UDIN_GHE=<id> node workers/udin-optic/tu-dong/vong-tham-chieu.mjs "<prompt CHUA DUNG BAO GIO> @1" \
-                                --anh canvas:<mau src> --du-an xe-dien-2026 --bo-chon-cu --mo
-```
-
-Đợt đo ấy đổi ba chỗ trong chính thiết kế, và cả ba đều là giả định của tôi bị lật:
-⑴ `[class*=agent-context-pill]` đếm **2 cho MỘT ảnh** (cái hàng chứa + cái thumb) — nay đếm
-`.agent-context-pill-thumb`, đúng một nút mỗi ảnh. ⑵ Lượt chạy trước **để lại ảnh của nó đang
-đính kèm**, nên lượt sau phải gỡ — và gỡ là thứ phải **XIN** (`--xoa-pill-cu`), y hệt
-`--xoa-o-cu` của ô prompt và cùng một lý do: cái đang nằm đó có thể là ảnh Đức tự đưa vào.
-⑶ Sau lượt gỡ thì mốc **luôn bằng 0**, nên hiệu số `sau > truoc` là một biến thừa — đổi sang
-một con số tuyệt đối, và hai con đột biến của nó hoá ra **tương đương**.
-
-**② `R2` — khép vòng tự cải tiến LẦN HAI. ✅ ĐÓNG 17/09, `T7` lên `MASTERED`.**
-Chạy thật trên ghế `Dummy_Scout`, thư mục `r2-udin-17-09`: chặng ② ra báo cáo 403.389 byte;
-chặng ③ dựng adapter **không một selector nào gõ sẵn** (ô nhập và vùng kết quả rút TỪ BÁO CÁO,
-cái nút lấy TỪ CHÍNH TRANG bằng phần đổi trước/sau lượt gõ) → gõ → bấm → **1 kết quả mới trong
-24 giây**.
-
-**Lượt này tự chứng minh chỗ đắt nhất của thiết kế:** `ketQuaTruoc: 28 → ketQuaSau: 28`,
-`ketQuaMoi: 1`. Con số KHÔNG ĐỔI mà vẫn có thành viên mới — đúng ca đã hạ bản cũ. So **TẬP**
-thay so **SỐ** là thứ cứu lượt này.
-
-**PHẠM VI:** bộ sinh adapter mới chạy trên Udin; hình dạng của nó giả định *gõ prompt → bấm nút
-→ ra kết quả*, nên trên `tldraw` nó sẽ không có ô prompt nào để bám. `R3` chứng minh **seed**
-dùng lại được ở trang khác loại; `R2` chứng minh **vòng tự cải tiến** khép. Hai câu khác nhau.
-
-**③ `R3` — TRANG THỨ HAI, khác loại. ✅ ĐÓNG 17/09 trên `tldraw.com`.**
-Điều kiện đóng là *một* `W`; đóng bằng **hai**: ⓐ đổi màu vẽ (`Color — Black (selected)` 1 → 0,
-`Color — Red (selected)` 0 → 1 — trang tự khai trạng thái nên chặng tự kiểm được) · ⓑ vẽ một hình
-(bấm `Rectangle — R` → bấm `.tl-canvas` → `.tl-shape` **0 → 1**). Vốn từ dùng: `dom.query` ·
-`page.snapshot` · `input.click`. **Không một dòng seed nào bị sửa.**
-
-**Nên câu *"Scouter là bộ đồ nghề chung"* hết là lời khai.** Udin và tldraw khác loại thật: một
-bên chat sinh ảnh + canvas ảnh, bên kia bảng công cụ + canvas vector, không chat, không sinh gì.
-
-**Và một giả thuyết của tôi bị chính phép đo bác:** tôi đoán vẽ hình cần *nhấn-di-thả* — thao tác
-seed không có — và đã định ghi đó là khoảng trống. Đo lại: **một cú bấm là đủ**. Suýt ghi một
-giới hạn không tồn tại vào sổ, và một giới hạn ghi nhầm thì không ai đi kiểm lại.
-
-~~**PHẠM VI:** chạy lõi seed trên Chrome hồ sơ trống, không đi qua dây extension.~~
-**VẾ ẤY ĐÃ KHÉP cùng ngày.** Đức mở một tab tldraw, và cả hai `W` chạy lại **qua đúng dây
-extension** trên ghế `Dummy_Scout`: `Color — Red (selected)` 0 → 1 · `Color — Black (selected)`
-1 → 0 · `.tl-shape` 0 → 1. Cùng kết quả với lượt trên Chrome sạch, nên phần "seed dùng lại được"
-nay đúng ở **cả hai đường**.
-
-**Phạm vi CÒN LẠI, và nó là thật:** vốn từ đụng tới mới là ba lệnh — `dom.query` · `page.snapshot`
-· `input.click`. `scout.type` · `scout.text` · `scout.grab` chưa chạm trang này lần nào.
-
-~~**Đóng khi:** có `W` ĐẠT trên trang mới mà không sửa một dòng nào của seed.~~
-
-**④ Dọn sổ, không cái nào chặn cái nào.** `S-31` (Udin không tự nạp lại được — chọn một trong
-ba đường đã ghi; mặc định ⒝ *gộp nhiều lượt sửa thành một lượt nạp lại*) · `T8` đổi tên
-`observer`→`scouter` · và một lượt rà `BACKLOG.md`: nhiều mục `MỞ` từ 07/09 có thể đã chết theo
-thời gian, cần đọc lại chứ đừng đếm.
 
 ### NĂM thứ ĐỪNG làm lại — mỗi cái đã tốn một lần
 

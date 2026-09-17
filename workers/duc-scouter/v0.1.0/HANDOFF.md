@@ -2402,3 +2402,26 @@ qua máy chủ Bridge. Chúng **có thể** cho kết quả khác nhau, và ch�
 **Phạm vi còn lại, viết ra để đừng ai đọc rộng hơn thứ đã đo:** vốn từ đụng tới mới là ba lệnh —
 `dom.query` · `page.snapshot` · `input.click`. `scout.type` · `scout.text` · `scout.grab` chưa
 chạm trang này lần nào.
+
+## 2026-09-17i · `claude-scouter-udine` — viết lại khối SAU COMPACT cho giai đoạn tới
+
+Đức: *"tổng hợp lại thành một roadmap triển khai tiếp theo, sau đó tôi sẽ compact."* Khối cũ đã
+thành một bản kể chuyện đã qua — đúng thứ `CHUOI-VIEC.md` tự khai là **không** làm (chuyện đã qua
+là việc của HANDOFF). Viết lại quanh đúng một câu: *việc kế tiếp là gì, và làm xong biết bằng cách nào.*
+
+**Và lượt đo trước khi viết đã lật hai dòng của chính roadmap cũ** — đây mới là phần đáng giữ:
+
+| dòng cũ | đo lại 17/09 |
+|---|---|
+| `T8` (đổi tên `observer`→`scouter`) còn nằm trong mục "dọn sổ" | **đã ĐÓNG 14/09** |
+| `S-01` là mục MỞ lâu nhất | **đủ CẢ BA vế** điều kiện đóng của chính nó — đóng được ngay |
+
+Cả hai sống sót vì mục ④ cũ bảo *"nhiều mục MỞ từ 07/09 có thể đã chết, cần đọc lại chứ đừng
+đếm"* — và rồi **không ai đọc lại**, kể cả tôi, suốt ba ngày. Một việc "rà sổ" nằm trong roadmap
+thì cũng chỉ là một dòng chữ như mọi dòng khác.
+
+**Giai đoạn tới không mở năng lực nào**: `N1` máy chủ Bridge chết giữa phiên (đo được, AI tự làm)
+· `N3` rà sổ nợ · `N4` ba lệnh chưa chạm trang thứ hai. Chờ Đức: `N2` (`S-02` — quyền `alarms`,
+chốt chiều nào cũng đóng được mục) · `N5` (nhóm video, chỉ làm khi Udin có tính năng thật).
+
+`S-31` ghi thẳng vào roadmap là **việc của tôi, không phải của Đức** — để không đẩy nhầm lần nữa.
