@@ -2582,54 +2582,30 @@ không có nhà · `A4` ba chỗ quá ngân sách (tài liệu **9.958/2.200**, 
 **`A1` đặt trước `Đ2` (audit độc lập) có lý do:** giao cho một AI khác một bộ đo **chưa biết có đỏ được
 không** thì nó audit trên cát. Kiểm lại người kiểm trước đã.
 
+
 ## 2026-09-17p · `claude-scouter-udine` — hội tụ với GPT, và một câu lỗi thôi nói dối
 
-**Lượt này không mở năng lực nào.** Nó đóng hai mục sinh ra từ một lượt nghiên cứu đối chiếu
-(GPT dựng bản vendor study, tôi đo lại từng claim trên repo trước khi đồng ý).
+**Không mở năng lực nào.** Đo lại từng claim của một bản nghiên cứu đối chiếu (GPT dựng) trước khi
+đồng ý. Bốn gap nêu ra, đo xong còn **hai**, và cả hai nhỏ hơn bản gốc mô tả — chi tiết đủ ở
+[`S-32`](BACKLOG.md) và [`S-33`](BACKLOG.md), lý do xếp thứ tự ở [`CHUOI-VIEC.md`](CHUOI-VIEC.md).
 
-**Bốn gap GPT nêu, đo xong còn lại hai — và cả hai nhỏ hơn bản gốc mô tả.**
+Hai gap **bị bác**: *"thiếu tầng Task/Workflow"* — nó đã tồn tại và đang chạy thật
+(`udin-optic/tu-dong/`, 2.007 dòng); *"`<all_urls>` là gap"* — [ADR-0003](docs/adr/0003-mo-het-quyen-truy-cap-va-cai-gi-thay-cho-hang-rao-cu.md)
+chốt có chủ ý 07/09. Nửa còn lại của vế sau thì đúng, và thành
+[ADR-0010](docs/adr/0010-chu-doc-tu-trang-la-du-lieu-khong-phai-lenh.md) — kèm một mục *cái giá*
+nói thẳng nó là policy contract, **không** phải lớp ngăn chặn kỹ thuật.
 
-⑴ *"Thiếu tầng Task/Workflow"* → **SAI, nó đã tồn tại**: `udin-optic/tu-dong/` 2.007 dòng, 13
-file, đang chạy thật. Vấn đề không phải thiếu tầng, mà là tầng ấy **viết riêng cho từng trang và
-bị chép**. GPT đã sửa kết luận theo (`Đ4`).
+**Thứ đắt nhất lượt này lại không ai đặt hàng.** Sửa xong hai câu lỗi ở `_shared/bridge-host`,
+chạy lại cả năm phép ghim — **xanh hết**, trong khi đầu `tuong-duong-voi-ban-goc.mjs` khai *"mọi
+thứ khác phải khớp từng ký tự"*. `ERRORS` là `const` không xuất nên không khối nào với tới. Đúng
+họ `A1`. Vá bằng khối ⑥, và **dựng 2 ca hỏng, giết được 2/2** — bẻ trên file đã commit rồi khôi
+phục bằng `git checkout`, cây sạch. Suite sau đó: `test:scouter` 37/37 · `udin:test` 19/19.
 
-⑵ *`<all_urls>` là gap an toàn* → **SAI**: [ADR-0003](docs/adr/0003-mo-het-quyen-truy-cap-va-cai-gi-thay-cho-hang-rao-cu.md)
-chốt có chủ ý 07/09, Đức được báo bằng đúng câu *"chạm được mọi trang Đức đang đăng nhập"*, năm
-chốt hình dạng thay hàng rào cũ. **Nửa còn lại thì đúng** và đã viết: [ADR-0010](docs/adr/0010-chu-doc-tu-trang-la-du-lieu-khong-phai-lenh.md).
+**Hai dòng chờ Đức đổi trạng thái.** `Đ1` (đẩy) **chết tại thời điểm đo** — `git fetch` thật cho
+`origin/main == HEAD`, 0 commit chưa đẩy; nó tái phát mỗi lượt commit mới, đừng đọc thành vĩnh
+viễn. `Đ2` nay mở bằng một **cò độ tươi** gắn vào nội dung chứ không vào SHA: GPT báo `fbb1bd6f`
+*"không resolve trên main"* trong khi nó có ở đó từ 17:44 — connector phục vụ chỉ mục cũ, và đó
+đúng là cơ chế đẻ ra hai trong bốn gap.
 
-⑶ *Lỗ idempotency* → **ĐÚNG NHƯNG NHỎ HƠN 20 LẦN**, thành `S-32`. GPT tìm chuỗi `idempotency_key`
-không thấy nên tưởng cả khế ước thiếu; thật ra nó tên `request_id`, và **có** kho phát lại — ở
-`duc-auto-chatgpt` và `duc-auto-gemini`. Cái sai là **câu chữ được chép sang `_shared/bridge-host`
-mà máy móc không đi theo**. Chưa cắn ai vì mọi lệnh GHI đều `retryable:false` kèm đọc-lại, và chỗ
-duy nhất tự thử lại là `lay-anh.mjs` — một lệnh ĐỌC, có trần, có ghim.
-
-⑷ *Thứ tự: khoá Architecture Contract trước* → giữ `A1`–`A5` trước, vì `A1` là *kiểm lại người
-kiểm*: một bản khế ước mà phép kiểm của nó không đỏ nổi thì là văn xuôi. GPT đồng ý.
-
-**Thứ đắt nhất lượt này lại là thứ không ai đặt hàng.** Sửa xong hai câu lỗi, chạy lại cả năm
-phép ghim của `_shared/bridge-host/` — **xanh hết**. Trong khi đầu `tuong-duong-voi-ban-goc.mjs`
-khai nguyên văn *"mọi thứ khác phải khớp từng ký tự"*. Gốc: `ERRORS` là `const` không xuất, nên
-bốn khối so sánh không với tới; khối ⑤ chỉ so ba hằng số có `export`. **Đúng họ `A1`** — một phép
-kiểm *giải thích* thay vì *assert*, và đúng cái cơ chế đẻ ra `S-32`. Thành `S-33`, đã vá bằng
-khối ⑥ (đọc thẳng văn bản, neo vào khối `Object.freeze`, khai `LECH_CO_CHU_Y`, tự đếm mỏ neo).
-
-**Hai ca hỏng dựng thật, 2/2 giết được** *(khối ⑥ không phải một màu xanh giả nữa)*:
-
-| Ca hỏng | Phép ghim nói gì |
-|---|---|
-| đồng bộ ngược `REQUEST_TIMEOUT` về nguyên văn cũ | `khai la LECH CO CHU Y nhung hai ben lai giong nhau — ai do da dong bo nguoc` |
-| gõ sai tên mã trong `LECH_CO_CHU_Y` | `lech mot cau loi ma khong khai o LECH_CO_CHU_Y` |
-
-Khôi phục bằng `git checkout` **một file tôi vừa commit** (không phải file trạng thái sống), cây
-sạch, xanh lại. Suite sau lượt sửa: `test:scouter` **37/37** · `udin:test` **19/19**.
-
-**Một mục chờ Đức đã CHẾT, đo chứ không đoán.** `Đ1` (đẩy) — sau `git fetch` thật: `origin/main`
-== `HEAD`, **0 commit chưa đẩy**. Nó tự giải quyết giữa chừng phiên.
-
-**Và một mục chờ Đức mới, sinh từ một lỗi của GPT chứ không của repo.** GPT báo SHA `fbb1bd6f`
-*"không resolve trên main"* — sai; connector GitHub của nó phục vụ chỉ mục cũ. Đó chính là cơ chế
-đẻ ra hai trong bốn gap ở trên. Nên `Đ2` nay mở bằng một **cò độ tươi** gắn vào nội dung (`A1`–`A5`
-có trong `CHUOI-VIEC.md` không), **không gắn vào SHA** — SHA rồi sẽ cũ.
-
-**Còn lại của `A1`–`A5`: `A4` và `A5`.** `A4` đang có lane khác động tới (`docs/adr/0038` và
-`docs/archive/` mới hiện trong cây làm việc) — **đừng giành**, hỏi trước.
+**Một lỗi của tôi, đã trả.** `next_step` tôi viết dài thêm 325 ký tự, và đó là phần đẩy
+`PHIEN.md` vượt trần cứng 6.600 (`S-34`, một phiên khác cùng nhãn lane đo ra). Đã cắt lại ngắn.

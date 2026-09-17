@@ -310,3 +310,26 @@ Node, tức bộ đo đổi hành vi thứ nó đo; `exit` vẫn chạy khi sậ
 
 Nó **không** nói được *ai* giết. Muốn biết phải bật kiểm toán tiến trình của Windows — đổi cài đặt
 hệ thống, việc của Đức. Đừng suy một cái tên từ dữ liệu ở đây.
+
+## 2026-09-17 · `claude-scouter-udine` — hai câu lỗi thôi hứa thứ lõi này không có
+
+`REQUEST_TIMEOUT` và `TRANSPORT_DISCONNECTED` dặn người gọi *"retry the identical idempotency
+key"*. Câu ấy **đúng ở nơi nó ra đời** — phía extension của `duc-auto-chatgpt` và `duc-auto-gemini`
+đều có kho phát lại khoá `client_id\0request_id` kèm `REQUEST_ID_REUSED`. Nó được chép sang đây
+cùng bảng mã lỗi; **máy móc thì không đi theo**. Đo 17/09: lõi này **0 chỗ** khai
+`REQUEST_ID_REUSED`, `request_id` chỉ dùng để khớp lượt gọi với lượt trả — và phía extension của
+`duc-scouter`/`udin-optic` cũng 0. Trên dây ấy, lời hứa không có ai đỡ từ đầu tới cuối.
+
+Nay hai câu nói đúng sự thật: *"the call may already have taken effect. This bridge does NOT
+de-duplicate requests: retry read-only methods only."* **Nợ chưa đóng** — lõi vẫn không khử trùng
+lặp; ngày nào có người gọi tự thử lại một lệnh GHI thì phải chép kho phát lại sang
+(`duc-scouter/v0.1.0/BACKLOG.md`, `S-32`). Một chỗ **cùng bệnh** lượt này KHÔNG chạm vì khác vùng
+sở hữu: `duc-auto-chatgpt/.../bridge-host-v1/bridge-host.mjs:18-19`.
+
+**Và đây là phần đáng nhớ hơn bản vá.** Đổi xong hai câu, chạy lại **cả năm** phép ghim của thư
+mục này — **xanh hết**. Trong khi đầu `tests/tuong-duong-voi-ban-goc.mjs` khai nguyên văn *"mọi thứ
+khác phải khớp từng ký tự"*: `ERRORS` là `const` không `export`, nên bốn khối so sánh không với
+tới nó, còn khối ⑤ chỉ so ba hằng số có xuất. Lời khai ấy **chưa bao giờ đúng** với bảng mã lỗi.
+Khối ⑥ mới đọc thẳng văn bản hai file, neo vào đúng khối `Object.freeze({…})` (neo cả file thì nó
+khớp phải chính đoạn chú thích vừa viết), khai hai mã lệch là `LECH_CO_CHU_Y`, và **tự đếm mỏ
+neo** — gõ sai tên mã thì ĐỎ chứ không im lặng bỏ qua. Hai ca hỏng dựng thật, **giết được 2/2**.
