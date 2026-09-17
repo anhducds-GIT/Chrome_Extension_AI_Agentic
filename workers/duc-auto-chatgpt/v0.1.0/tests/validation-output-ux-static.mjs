@@ -45,7 +45,11 @@ assert.match(js, /DacXlsxRunPlan\.validate/);
 assert.match(js, /DacOutputProfiles\.bind/);
 assert.match(uiSemantics, /Next readiness check in/);
 assert.doesNotMatch(js, /Earliest next readiness check/);
-assert.match(js, /destinationFolderBtn\.textContent = permission === "permission_required" \? "Re-authorize"/);
+// B-101 · Nhãn nút này từng tính tại chỗ bằng một ternary; nay nó và hành vi
+// của nút cùng đọc `folderButtonIntent`. Chi tiết ba trạng thái nằm ở
+// tests/nut-doi-thu-muc-smoke.mjs.
+assert.match(js, /destinationFolderBtn\.textContent = window\.DacSidepanelUiSemantics\.folderButtonIntent\(/);
+assert.match(uiSemantics, /permissionState === "permission_required"\) return \{ label: "Re-authorize"/);
 assert.doesNotMatch(js, /chooseImageFolderBtn|useSourceFolderBtn|changeImageFolderBtn/);
 
 console.log("validation and output UX static checks: PASS");

@@ -122,6 +122,21 @@
     return { showDownloads: mode === "downloads", showProfile: mode === "profile" };
   }
 
-  const api = { delayDescription, runtimeInfo, outputFolderAction, queueElapsed, normalizeUiZoom, destinationVisibility };
+  // B-101 · Chữ trên nút VÀ việc nút làm phải ra từ MỘT chỗ. Trước đây chữ tính
+  // ở `renderOutput` còn việc tính trong `choosePrimaryDestination`, nên nút ghi
+  // "Change Folder" mà bấm vào lại đi xin-lại-quyền cho đúng thư mục đang gắn —
+  // hộp chọn KHÔNG BAO GIỜ mở ra, Đức không đổi được thư mục.
+  //
+  // `reauthorizeFirst` chỉ bật khi phiên CHƯA cầm handle sống: vừa nạp lại
+  // (nhãn "Choose Folder", handle còn trong IndexedDB) hoặc quyền đã mất (nhãn
+  // "Re-authorize"). Đã gắn rồi thì bấm nghĩa là ĐỔI, và đi thẳng ra hộp chọn.
+  function folderButtonIntent(permissionState, imageLocation) {
+    const daGanHandle = imageLocation?.kind === "directory" && Boolean(imageLocation.handle);
+    if (permissionState === "permission_required") return { label: "Re-authorize", reauthorizeFirst: true };
+    if (daGanHandle) return { label: "Change Folder", reauthorizeFirst: false };
+    return { label: "Choose Folder", reauthorizeFirst: true };
+  }
+
+  const api = { delayDescription, runtimeInfo, outputFolderAction, queueElapsed, normalizeUiZoom, destinationVisibility, folderButtonIntent };
   (typeof window !== "undefined" ? window : globalThis).DacSidepanelUiSemantics = api;
 })();

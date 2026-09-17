@@ -3484,7 +3484,7 @@
         els.folderHintText.title = values.folderHint || "";
       }
       if (els.copyFolderHintBtn) els.copyFolderHintBtn.disabled = !values.folderHint || values.image.kind !== "directory";
-      els.destinationFolderBtn.textContent = permission === "permission_required" ? "Re-authorize" : values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
+      els.destinationFolderBtn.textContent = window.DacSidepanelUiSemantics.folderButtonIntent(permission, values.image).label;
       state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
       els.separateResultDestinationInput.checked = state.separateResultDestination;
       els.separateResultDestinationControls.hidden = !state.separateResultDestination;
@@ -4771,11 +4771,22 @@
     // nên Chrome CÓ THỂ coi là hết user gesture và ném. Khi đó Đức bấm lần
     // nữa là ra hộp chọn. Đổi lại: ca thường gặp nhất — một hồ sơ, vừa reload
     // — chỉ còn một cú bấm. Không giấu cái giá này, nó nằm ngay đây.
-    const xinLai = await window.DacOutputProfiles.reauthorizeSole();
-    if (xinLai?.state === "authorized") {
-      apDungHoSo(xinLai.profile, xinLai.profile.directory_handle);
-      els.outputPermissionText.textContent = `Đã xin lại quyền cho thư mục đã nhớ: ${xinLai.profile.last_known_handle_name || xinLai.profile.profile_id}. Không phải chọn lại.`;
-      return;
+    //
+    // B-101 · Tắt đường tắt này khi phiên ĐÃ cầm handle sống. Nút lúc đó ghi
+    // "Change Folder", và xin-lại-quyền cho chính thư mục đang gắn thì không
+    // đổi được gì — Đức bấm mãi vẫn ra một dòng "Không phải chọn lại", hộp
+    // chọn không bao giờ mở. Nhãn nút và nhánh này nay cùng đọc một hàm.
+    const yDinh = window.DacSidepanelUiSemantics.folderButtonIntent(
+      state.outputProfileState?.state,
+      state.outputSettings?.image
+    );
+    if (yDinh.reauthorizeFirst) {
+      const xinLai = await window.DacOutputProfiles.reauthorizeSole();
+      if (xinLai?.state === "authorized") {
+        apDungHoSo(xinLai.profile, xinLai.profile.directory_handle);
+        els.outputPermissionText.textContent = `Đã xin lại quyền cho thư mục đã nhớ: ${xinLai.profile.last_known_handle_name || xinLai.profile.profile_id}. Không phải chọn lại. Bấm "Change Folder" lần nữa nếu muốn chọn thư mục khác.`;
+        return;
+      }
     }
     if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
     // The picker must run first: it needs the click's user gesture, and every
