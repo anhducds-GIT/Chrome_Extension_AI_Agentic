@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { createBridgeHostCore, MAX_ENVELOPE_BYTES, validatePairing } from "../../../_shared/bridge-host/bridge-host-core.mjs";
 import { timVungGhi, canhTrumLenNhau } from "./vung-ghi.mjs";
 import { docFile, FileError, ghiFile, lietKe, MAX_FILE_BYTES, trongGoc } from "./file-core.mjs";
+import { theoDoiDoiSong } from "../../../_shared/bridge-host/nhat-ky-doi-song.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -211,6 +212,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToP
   /* NÓI RA vùng ghi LẤY TỪ ĐÂU, không chỉ nói nó ở đâu: Đức sửa `vung-ghi.txt` rồi bật lại mà
    * thấy đường cũ thì câu này là thứ duy nhất nói cho anh ấy biết tệp đó có được đọc hay không. */
   process.stdout.write(`Udin Optic Bridge nghe ở 127.0.0.1:${pairing.port} · vùng ghi: ${chon.duong} (lấy từ ${chon.tu})\n`);
+  /* NHẬT KÝ ĐờI SỐNG — `N1`, 17/09. Máy chủ chết giữa phiên ba lần với `stderr` rỗng, và mỗi
+   * lần lại mất sạch dấu vết. Đặt **cạnh tệp ghép cặp**, cùng chỗ với hai tệp log — không vào repo:
+   * repo này PUBLIC, và một dấu vết vận hành thì đi theo máy, không đi theo mã. */
+  const doi = theoDoiDoiSong({ duong: path.join(path.dirname(path.resolve(duongGhepCap)), "BRIDGE.doi-song.json") });
+  if (doi.cau) process.stdout.write(`${doi.cau}\n`);
   const dong = async () => { await may.stop(); process.exit(0); };
   process.on("SIGINT", dong);
   process.on("SIGTERM", dong);

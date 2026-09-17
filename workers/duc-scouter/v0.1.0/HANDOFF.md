@@ -2532,3 +2532,31 @@ Trên đĩa có đúng hai bản Scouter: repo và worktree `nifty-benz-a66fbf`.
 
 **Luật cho phiên sau:** một trường *“biến mất”* thì **nghi cách đọc trước khi nghi cái máy**; in cả vật
 trước, thu hẹp sau.
+
+## 2026-09-17n · `claude-scouter-udine` — `N1`: giữ được dấu vết của lần chết sau
+
+Máy chủ Bridge chết giữa phiên ba lần 17/09, `stderr` rỗng cả ba — bị giết, không tự lỗi. Mỗi lần
+mất sạch dấu vết, nên không ai truy được. Nay có `_shared/bridge-host/nhat-ky-doi-song.mjs`.
+
+**Thứ làm nó chạy được là một đặc tính của Windows:** `Stop-Process` (kể cả không `-Force`) gọi thẳng
+`TerminateProcess`, **không gửi tín hiệu nào**, nên `SIGTERM` và `process.on("exit")` của Node đều không chạy.
+**Chính sự im lặng ấy phân biệt hai nhánh:** đóng tử tế / tự sập → `tat_sach: true` kèm mã thoát; bị giết
+→ tệp giữ nguyên `tat_sach: false` và một mốc nhịp tim đã cũ. Lượt bật sau tự in ra câu chẩn đoán.
+
+**Ghi ĐÈ một tệp một dòng, không nối thêm vào log.** Đường rẻ hơn là in nhịp tim ra `stdout` (đã chuyển
+hướng sẵn vào log) — nhưng 30 giây một nhịp là **2.880 dòng mỗi ngày** trên một tệp không ai dọn, và dòng
+khai vùng ghi mà Đức cần đọc sẽ trôi mất. Ghi đè thì **kích thước không đổi**, và lời chẩn đoán hiện ra
+**đúng lúc có ích** — ở dòng khởi động, chỗ Đức vốn đã nhìn.
+
+**Đo thật, không đụng máy chủ đang chạy của Đức:** dựng một tiến trình bỏ đi, giết bằng
+`Stop-Process -Force` → lượt sau báo *“pid 15000 … sống được 4 giây, đã phục vụ 3 lượt gọi”*; đóng tử tế
+→ lượt sau **im lặng**. 7 khối ghim · 7 đột biến tay chết cả 7.
+
+**Một con đột biến sống sót ở lượt đầu, và nó đáng ghi:** tôi viết hẳn một câu trong phép ghim giải thích
+*vì sao `unref` quan trọng* rồi **không assert gì cả** — con gỡ `unref` sống ngay. **Một lời giải thích không
+phải một phép kiểm.**
+
+**Chưa đóng, và nó chờ một lần chết nữa chứ không chờ thêm mã:** nhật ký nói được *bị giết từ ngoài*
+và khoanh lần chết trong 30 giây, **không** nói được *ai* giết — muốn biết phải bật kiểm toán tiến trình
+của Windows, **đổi cài đặt hệ thống, việc của Đức**. Đừng ghi *“X giết máy chủ”* từ dữ liệu này.
+**Nhật ký chưa chạy trên máy chủ đang bật** — nó vào việc từ lượt bật Bridge kế tiếp.

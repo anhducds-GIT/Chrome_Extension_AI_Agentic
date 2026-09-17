@@ -44,21 +44,27 @@ hỏng hằng ngày** — hai thứ làm Đức mất buổi, và một lượt 
 
 ### Việc còn lại — theo thứ tự nên làm
 
-**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. NỬA ĐÃ ĐÓNG 17/09, nửa còn lại chưa biết nguyên nhân.**
-~~*“`Start-Process` chạy từ PowerShell của phiên AI bị dọn theo tiến trình cha”*~~ — **SAI, đã đo**
-(`G-98`). Ba máy chủ đang sống lúc đo đều có tiến trình cha **đã chết**, kể cả một máy chủ do
-chính Đức bật. Windows không dọn con theo cha. **Đừng dựng gì trên dòng đã gạch ấy nữa.**
+**① `N1` — MÁY CHỦ BRIDGE CHẾT GIỮA PHIÊN. DẤU VẾT ĐÃ GIỮ ĐƯỢC 17/09; nguyên nhân chờ lần chết sau.**
+~~*“`Start-Process` chạy từ PowerShell của phiên AI bị dọn theo tiến trình cha”*~~ — **SAI, đã đo** (`G-98`):
+ba máy chủ đang sống đều có cha **đã chết**, kể cả một cái do chính Đức bật. **Đừng dựng gì trên dòng đã gạch.**
 
-**ĐÃ XONG:** câu báo `fetch failed` nay tách đúng hai ca đòi hai việc trái ngược nhau — *KHÔNG CÓ AI
-NGHE ở cổng N* (bật máy chủ lên, kèm đường dẫn chỗ bật) so với *CÓ NGƯỜI NGHE nhưng lượt gọi đứt
-giữa chừng* (bật lại **không** chữa được, đọc `stderr` trước). Không thêm dụng cụ nào: đáp án nằm
-sẵn trong `err.cause.code` mà bản cũ vứt đi. `workers/_shared/goi-bridge/` — ghim khối ⓗ, 4 đột biến chết.
+**ĐÃ XONG — hai nửa, cả hai đo được:**
+· Câu báo `fetch failed` nay tách `ECONNREFUSED` (*không ai nghe* — bật máy chủ, kèm thư mục START-BRIDGE)
+  khỏi ca còn lại (*có người nghe, đứt giữa chừng* — bật lại **không** chữa được).
+· **Nhật ký đời sống** (`_shared/bridge-host/nhat-ky-doi-song.mjs`): một tệp **ghi đè**, cạnh tệp ghép cặp,
+  nhịp 30 giây. Chết tử tế → `tat_sach: true` kèm mã thoát. **Bị giết → không dòng nào**, và chính sự im lặng
+  ấy là thứ phân biệt hai nhánh — lượt bật sau **tự in ra** lượt trước chết lúc nào, pid nào, sống bao lâu.
+  Đo thật 17/09: giết một tiến trình bằng `Stop-Process -Force` → lượt sau báo đúng; đóng tử tế → **im lặng**.
+  7 khối ghim, 7 đột biến tay chết cả 7.
 
-**CÒN LẠI — và đừng đoán thêm một lần nữa:** *cái gì giết máy chủ?* Chỉ biết chữ ký: `stderr` **rỗng**
-⇒ bị giết chứ không tự lỗi. Ứng viên rẻ nhất chưa đo: **chính bộ khởi động** — `-KhoiDongLai` gọi
-`Stop-Process -Force`, đúng một cái giết không để lại byte nào.
-**Đóng khi:** một lượt đo nói được **ai** gọi cú giết (ví dụ: ghi nhật ký dòng đời của máy chủ —
-bật lúc nào, PID nào, biến mất lúc nào), và máy chủ sống qua một lượt chạy dài mà không ai bật lại.
+**CÒN LẠI, và nó chờ MỘT LẦN CHẾT NỮA chứ không chờ thêm mã:** nguyên nhân. Nhật ký nói được
+*“bị giết từ ngoài”* và khoanh lần chết trong một cửa sổ 30 giây — **không** nói được *ai* giết.
+Muốn biết tên tiến trình ra lệnh thì phải bật **kiểm toán tiến trình của Windows** hoặc cài Sysmon —
+**đổi cài đặt hệ thống, việc của Đức.** Ứng viên rẻ nhất vẫn chưa đo: chính bộ khởi động —
+`-KhoiDongLai` gọi `Stop-Process -Force`, đúng một cú giết không để lại byte nào.
+**Đóng khi:** một lần chết thật nữa xảy ra và nhật ký nói được nó xảy ra lúc nào, rồi đối chiếu mốc ấy
+với việc đang làm; **hoặc** máy chủ sống qua một lượt chạy dài mà không ai bật lại.
+**LưU Ý cho Đức:** nhật ký **chưa chạy trên máy chủ đang bật** — nó vào việc từ lượt bật Bridge **kế tiếp**.
 
 **② `N3` — RÀ SỔ NỢ. ĐÃ XONG 17/09, và nó tìm thấy **bốn** mục chết chứ không phải hai.**
 Đọc **điều kiện đóng của chính từng mục**, không đếm: `S-01` và `S-02` đóng từ **07/09** mà dòng đầu

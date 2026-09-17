@@ -293,3 +293,20 @@ Ghim khối ⓗ đòi hai câu **phân biệt được nhau**, không chỉ “c
 bản gộp hai nhánh về một câu vẫn xanh. 4 đột biến tay (gộp nhánh · bỏ cổng · bỏ đường dẫn ·
 đảo điều kiện) chết cả 4.
 
+## 2026-09-17b · `claude-scouter-udine` — `nhat-ky-doi-song.mjs`: máy chủ chết thế nào
+
+Một tệp **ghi đè**, đặt cạnh tệp ghép cặp (ngoài repo — repo này PUBLIC, và dấu vết vận hành đi theo
+máy chứ không đi theo mã). Hai máy chủ đang sống — `duc-scouter` và `udin-optic` — mỗi bên nối bằng
+**hai dòng** trong khối CLI. `hnx-fetch` **cố ý chưa nối**: nó chưa từng chết, và nối một gói đang yên
+để cho đủ bộ là thêm một chỗ hỏng cho một vấn đề nó không có.
+
+**Việc nó làm được nằm ở một đặc tính của Windows:** `Stop-Process` gọi `TerminateProcess` và **không gửi
+tín hiệu nào**, nên `SIGTERM`/`exit` của Node không chạy. **Sự im lặng đó chính là dữ liệu**: đóng tử tế
+→ `tat_sach: true`; bị giết → `false` kèm một mốc nhịp tim cũ. Lượt bật sau in ra câu chẩn đoán.
+
+**Hai chỗ cố ý, đừng “sửa”:** ⓐ không móc `uncaughtException` — móc vào là **chặn cú sập mặc định** của
+Node, tức bộ đo đổi hành vi thứ nó đo; `exit` vẫn chạy khi sập (mã 1). ⓑ mọi lượt ghi đều nứt trong
+`try/catch` và đồng hồ có `unref` — một bộ chẩn đoán làm hỏng thứ nó chẩn đoán là ca tệ nhất (`G-91`).
+
+Nó **không** nói được *ai* giết. Muốn biết phải bật kiểm toán tiến trình của Windows — đổi cài đặt
+hệ thống, việc của Đức. Đừng suy một cái tên từ dữ liệu ở đây.
