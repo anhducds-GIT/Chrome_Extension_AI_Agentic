@@ -369,6 +369,27 @@ Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy
 
 **ĐÃ XOÁ 03/09, Đức chốt.** Trước khi xoá đã kiểm: `tests/bridge-install-static.mjs` ghim mười lăm tính chất an toàn của script cài, và chúng ghim vào **bộ ChatGPT** — xoá thẳng là mất trắng mười lăm lớp bảo vệ (luật vàng 3). Nên chuyển chúng sang bộ Gemini trước và chạy thử: **bộ Gemini chịu được cả mười lăm**. Giờ lớp bảo vệ ghim vào script THẬT SỰ đang dùng, mạnh hơn trước. Có phép ghim chặn hai file mọc lại.
 
+### G-15 · Gói này có HAI quyển nhật ký, và một quyển nằm sai chỗ — **[ĐO]**
+
+`workers/duc-auto-gemini/HANDOFF.md` ra đời 17/09 (`49f9452c`) với một mục Log thật, nhưng nó
+nằm ở **gốc gói**, ngoài thư mục phiên bản.
+
+**Đo được, không phải cảm tính:** trong cả repo chỉ `workers/_shared/` và `workers/hnx-fetch/`
+giữ nhật ký ở gốc gói — và **cả hai đều KHÔNG có thư mục phiên bản**. Mọi gói có phiên bản
+(`duc-auto-chatgpt`, `duc-auto-gg-flow-video`, `duc-scouter`, `udin-optic`) đều giữ nhật ký ở
+`<phiên-bản>/HANDOFF.md`. Gói này có `v0.1.0` **và** `v0.2.0`, nên nó thuộc nhóm sau. Cổng cũng
+nhận đường dẫn có phiên bản: bốn lượt ghi Log hôm nay đều vào `<phiên-bản>/HANDOFF.md` và xanh.
+
+**Vì sao đáng sửa chứ không phải để đó:** hai quyển nhật ký cho một gói thì sớm muộn nói hai
+chuyện khác nhau, và phiên sau đọc đúng một quyển. File lạc đã được khai vào Bản đồ file để nó
+**đếm được** — đó là khai cho khỏi vô hình, không phải hợp thức hoá chỗ đứng của nó.
+
+**Không tự xoá:** file do một phiên khác tạo, và xoá file là việc phải hỏi Đức.
+
+- **đóng khi:** lệnh: `node scripts/session-check.mjs --as <phiên>` xanh sau khi mục Log ấy được
+  **nối vào cuối** `workers/duc-auto-gemini/v0.2.0/HANDOFF.md` nguyên văn, file ở gốc gói được
+  Đức duyệt cho gỡ, và dòng khai trong Bản đồ file của `v0.2.0/AGENTS.md` bỏ theo.
+
 ## Đã đóng
 
 ### ~~G-11~~ · **ĐÓNG 28/08** ✅ — Đo live bản trần 5 giây

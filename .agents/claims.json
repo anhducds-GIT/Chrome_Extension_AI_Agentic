@@ -15,11 +15,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Nhac lai chot 09/09 truoc do: 'toi cho phep mo khoa gg flow'.)"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
+      "owner": "claude-scouter-udine",
       "ai": null,
-      "claimed_at": "2026-09-09T09:20",
-      "task": "Compile PHIEN.md: mot file cho mot phien gap, tran cung 2-3k token (Duc chot)",
-      "released_at": "2026-09-09T10:06",
+      "claimed_at": "2026-09-17T15:30:59.726Z",
+      "task": "khai file nhat ky lac cho vao ban do + ghi so no",
+      "released_at": null,
       "taken_from": "claude-gemini-crlf",
       "taken_by": "claude-luat-rasoat",
       "taken_at": "2026-09-09T03:11",
@@ -103,5 +103,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "6753138b7d6234e4"
+  "_fingerprint": "694b9487c3f289db"
 }

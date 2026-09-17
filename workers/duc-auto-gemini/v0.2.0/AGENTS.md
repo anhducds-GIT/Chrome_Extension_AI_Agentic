@@ -104,6 +104,7 @@ chứng bác bỏ · `ADR-0051` bất đối xứng **cố ý** giữa `run.stop
 | `AGENTS.md` | File này |
 | `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Ghi vào **cuối** |
+| `../HANDOFF.md` *(ở GỐC GÓI — LẠC CHỖ, chờ gộp)* | Một mục Log 17/09 bị ghi nhầm ra ngoài thư mục phiên bản. **Đo được:** chỉ `_shared` và `hnx-fetch` giữ nhật ký ở gốc gói, và cả hai **không có thư mục phiên bản**; gói này có `v0.1.0` + `v0.2.0` nên nhật ký thuộc về đây. Khai ra để nó đếm được chứ **không phải để hợp thức hoá** — cửa ra ở `G-15` của `BACKLOG.md`. Hai quyển nhật ký cho một gói thì sớm muộn nói hai chuyện khác nhau |
 | `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` | Đuôi đã cắt, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
 | `BACKLOG.md` | Việc còn mở của nhánh này, đánh số `G-xx`, P1/P2/P3 |
 | `decisions.md` | **Sổ cái máy sinh** — mục lục quyết định đang sống, `rule-compile.mjs --sinh` |

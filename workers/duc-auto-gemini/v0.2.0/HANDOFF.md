@@ -650,6 +650,23 @@ duy nhất soi nó là `run.trial` — chính là lệnh tiêu tiền.
 **Số.** Suite gói 95/95. Bằng chứng: `evidence-multiprofile-nghiem-thu-20260907/`.
 `G-01`/`G-02` vẫn MỞ — gộp được vào **một** lượt Đức bấm.
 
+## 2026-09-17 · `claude-scouter-udine` — gói này đang có HAI quyển nhật ký, ghi ra sổ nợ
+
+`workers/duc-auto-gemini/HANDOFF.md` ra đời hôm nay ở **gốc gói**, ngoài thư mục phiên bản, mang
+một mục Log thật. Cổng đóng phiên bắt nó vì chưa khai vào Bản đồ file.
+
+**Đo trước khi kết luận:** cả repo chỉ `workers/_shared/` và `workers/hnx-fetch/` giữ nhật ký ở
+gốc gói — **cả hai đều không có thư mục phiên bản**. Mọi gói CÓ phiên bản đều giữ nhật ký ở
+`<phiên-bản>/HANDOFF.md`, và cổng nhận đường dẫn ấy: bốn lượt ghi Log hôm nay đều vào đó và xanh.
+Gói này có `v0.1.0` **và** `v0.2.0`, nên file kia đặt lạc chỗ.
+
+**Tôi khai nó vào Bản đồ file để nó ĐẾM ĐƯỢC, không phải để hợp thức hoá chỗ đứng** — dòng khai
+nói thẳng nó lạc chỗ và trỏ sang `G-15`. **Không tự xoá:** file do một phiên khác tạo, và xoá
+file là việc phải hỏi Đức. Cửa ra đầy đủ ở `G-15`: nối mục Log ấy vào cuối file này nguyên văn,
+xin Đức gỡ file kia, rồi bỏ dòng khai.
+
+Hai quyển nhật ký cho một gói thì sớm muộn nói hai chuyện khác nhau, và phiên sau chỉ đọc một.
+
 <!-- HANDOFF-THANG: 2026-09 -->
 
 ## 2026-09-07 — `claude-gemini-crlf`: soi bệnh CRLF cả gói, đúng hai phép kiểm đỏ, đã nới
@@ -665,7 +682,8 @@ duy nhất soi nó là `run.trial` — chính là lệnh tiêu tiền.
 }
 
 function pathTailMatches`).
-Nới thành `?
+Nới thành `
+?
 `, **không nới rộng hơn**. Suite **95/95 mỗi chiều**.
 
 **Đột biến 8/8 bị bắt, và chạy LẠI ĐỦ 8 con ở CHIỀU CRLF** — cái phải chứng minh không phải "mỏ
