@@ -3,11 +3,19 @@
 > **SỬA 03/09.** File này từng mang tiêu đề "Duc Auto ChatGPT" — nó là bản chép từ gói ChatGPT lúc fork, và **đây là file AI đọc ĐẦU TIÊN mỗi phiên**, nên một AI mở ra có thể tưởng mình đang làm trên ChatGPT. Đã sửa những chỗ có bằng chứng.
 > Hai khối prompt `#01` / `#02` ở cuối file **cố ý giữ nguyên chữ "ChatGPT"**: đó là prompt onboarding đã dùng thật của dự án ChatGPT, tức bản ghi lịch sử. Sửa chúng là viết lại lịch sử. **Đừng đọc chúng như luật của gói này.**
 
-CORE của project này. Đọc file này cùng `README.md` (đóng vai design_brief —
-project là gì, kiến trúc, phạm vi) và `HANDOFF.md` (trạng thái, việc tiếp
-theo, Log) trước khi làm bất cứ việc gì. File này chỉ tổng hợp luật đã có sẵn
-rải rác trong lịch sử — không đặt luật mới nào ngoài những gì đã được Đức
-chốt.
+CORE của project này. **Mở phiên thì đọc [`PHIEN.md`](../PHIEN.md) — bó máy sinh, tự chứa, và
+chỉ nó là đủ để bắt đầu** ([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)).
+File này và `README.md` (đóng vai design_brief) là thứ **mở khi cần**; `HANDOFF.md` thì **nạp
+theo yêu cầu**, mở khi muốn biết phiên trước vấp gì ([ADR-0034](../../../docs/adr/0034-mo-phien-doc-status-khong-doc-handoff.md)).
+File này chỉ tổng hợp luật đã có sẵn rải rác trong lịch sử — không đặt luật mới nào ngoài
+những gì đã được Đức chốt.
+
+> **Dòng trên trước 17/09 viết: *"Đọc file này cùng `README.md` và `HANDOFF.md` … trước khi làm
+> bất cứ việc gì."*** Câu ấy chết từ **09/09** (`ADR-0034` + `ADR-0035`) nhưng vẫn nằm đây tám
+> ngày, ở **file AI đọc đầu tiên mỗi phiên** — một phiên làm theo nó trả thêm ~12.000 token
+> trước dòng code đầu tiên. Bắt được ở lượt rà `A5`, sửa theo chốt của Đức 17/09: *"nếu cần thì
+> vẫn cứ phải mở băng để sửa cho chuẩn chỉnh, bởi vì các extension đó tôi vẫn làm việc bình
+> thường."* *(Và gói này **chưa bao giờ cần mở băng** — `frozen` là `[]` từ 08/09, `ADR-0024` ⑴.)*
 
 ## Vai từng bên
 
@@ -68,8 +76,8 @@ trên · `drafts/` là nơi DUY NHẤT agent được tự ghi.
 
 ## Sổ cái của gói — đọc ở đâu
 
-> **Danh sách đầy đủ, do MÁY sinh:** [`decisions.md`](decisions.md) — nhóm theo chủ đề, một dòng
-> một quyết định, sinh lại bằng `node scripts/rule-compile.mjs --sinh`
+> **Danh sách do MÁY sinh — và nó CHƯA đầy đủ, đo 17/09:** [`decisions.md`](decisions.md) — nhóm
+> theo chủ đề, một dòng một quyết định, sinh lại bằng `node scripts/rule-compile.mjs --sinh`
 > ([ADR-0030](../../../docs/adr/0030-rule-compiler-v1.md)). **Đừng chép nó xuống đây:** khối ấy dài
 > ~5.700 ký tự và mọi phiên đụng gói này phải nạp, trong khi hầu hết phiên chỉ cần **một** quyết
 > định. Chuyển xuống 09/09, [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.

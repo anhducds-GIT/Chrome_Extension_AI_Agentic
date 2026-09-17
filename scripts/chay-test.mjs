@@ -204,10 +204,17 @@ export function danhSachSuite(root = ROOT) {
    * đo được ngày 17/09 sau khi đã sống 8 ngày mà không phép kiểm nào thấy.
    *
    * Nó ĐÚNG với hình dạng BỘ KHUNG (`test` = chính bộ chạy này, chuỗi thật ở `test:tuan-tu`) và
-   * SAI với repo này, nơi `N-43` **cố ý** giữ `test` là chuỗi thật — vì một phép ghim trong gói
-   * ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test` để bắt xanh giả, mà gói đóng băng thì chỉ-đọc. Lượt
-   * migrate `4da1e9e5` (09/09) thêm `test:tuan-tu` vào **sau** khi `N-43` đóng, nên từ hôm ấy
-   * `??` lấy 10 bài của bộ khung và **bỏ 25 bài của repo**.
+   * SAI với repo này, nơi `N-43` **cố ý** giữ `test` là chuỗi thật — vì một phép ghim ở
+   * `duc-auto-chatgpt` đọc thẳng `scripts.test` để bắt xanh giả. Lượt migrate `4da1e9e5` (09/09)
+   * thêm `test:tuan-tu` vào **sau** khi `N-43` đóng, nên từ hôm ấy `??` lấy 10 bài của bộ khung
+   * và **bỏ 25 bài của repo**.
+   *
+   * ~~*"gói ĐÃ ĐÓNG BĂNG, mà gói đóng băng thì chỉ-đọc"*~~ — **LỜI KHAI SAI, tôi viết chính nó
+   * sáng 17/09 rồi tự gạch chiều cùng ngày.** Đức mở băng **toàn bộ** từ 08/09
+   * ([ADR-0024](../docs/adr/0021-goi-extension.md) ⑴, nguyên văn *"tôi mở băng để chuẩn bị làm
+   * các extension đó"*), và `frozen` trong `.repo-structure.json` là `[]`. Lý do `N-43` giữ
+   * nguyên `npm test` vẫn đứng — nó là **một phép ghim đọc `scripts.test`**, không phải một
+   * lệnh cấm sửa. Gạch tại chỗ chứ không xoá: sửa ở nơi khác thì lời khai sai vẫn nằm đây.
    *
    * Cái giá không phải chậm: **dấu xác nhận băm theo 10 bài, trong khi thứ nó cho cổng bỏ qua là
    * `npm test` — 28 bài.** Chạy `npm run test:song-song` rồi chạy cổng thì cổng in *"DÙNG LẠI

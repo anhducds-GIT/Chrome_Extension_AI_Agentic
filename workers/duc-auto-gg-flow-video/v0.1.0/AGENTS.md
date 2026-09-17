@@ -1,9 +1,14 @@
 # AGENTS — Duc Auto GG Flow Video
 
-CORE của package này. Đọc cùng `README.md` (project là gì) và `HANDOFF.md`
-(trạng thái, Log) trước khi làm bất cứ việc gì. Package là **fork từ
-`workers/duc-auto-gemini/v0.2.0`** — luật nào không ghi khác ở đây thì áp dụng
-y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
+CORE của package này. **Mở phiên thì đọc [`PHIEN.md`](../PHIEN.md) — bó máy sinh, tự chứa, chỉ
+nó là đủ** ([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)); `README.md` và
+`HANDOFF.md` **nạp khi cần** ([ADR-0034](../../../docs/adr/0034-mo-phien-doc-status-khong-doc-handoff.md)).
+Package là **fork từ `workers/duc-auto-gemini/v0.2.0`** — luật nào không ghi khác ở đây thì áp
+dụng y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
+
+> *(Dòng trên dặn đọc `HANDOFF.md` **"trước khi làm bất cứ việc gì"** tới 17/09 — luật ấy chết
+> từ 09/09. Sửa ở lượt rà `A5`, cùng lượt với `duc-auto-gemini`; gói thứ ba `duc-auto-chatgpt`
+> mang y hệt câu đó và **chưa sửa được** vì một lane khác đang giữ khoá — ghi ở `N-66`.)*
 
 **Sổ cái của gói: [`docs/adr/`](docs/adr/)**, mục lục ở [`decisions.md`](decisions.md).
 Gói sinh ra bởi [ADR-0001](docs/adr/0001-ba-chot-khai-sinh-package-flow-00.md) (trang đích ·

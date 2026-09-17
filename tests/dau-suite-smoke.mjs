@@ -516,8 +516,12 @@ try {
  * Lỗ đo được 17/09, đã sống **8 ngày** và không phép kiểm nào thấy. `danhSachSuite` từng viết
  * `test:tuan-tu ?? test`. Dấu `??` ấy ĐÚNG với hình dạng bộ khung (ở đó `test` = bộ chạy, chuỗi
  * thật nằm ở `test:tuan-tu`) và SAI với repo này, nơi `N-43` **cố ý** giữ `test` là chuỗi thật vì
- * một phép ghim trong gói ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test`. Lượt migrate `4da1e9e5` (09/09)
+ * một phép ghim ở `duc-auto-chatgpt` đọc thẳng `scripts.test`. Lượt migrate `4da1e9e5` (09/09)
  * thêm `test:tuan-tu` vào **sau** khi `N-43` đóng — nên từ hôm ấy bộ chạy lấy 10 bài, bỏ 25 bài.
+ *
+ * ~~*"trong gói ĐÃ ĐÓNG BĂNG"*~~ — **lời khai SAI, tôi viết sáng 17/09 và tự gạch chiều cùng
+ * ngày.** Đức mở băng toàn bộ từ **08/09** (`ADR-0024` ⑴), `frozen` là `[]`. Lý do `N-43` giữ
+ * nguyên `npm test` vẫn đứng: đó là một phép ghim ĐỌC `scripts.test`, không phải lệnh cấm sửa.
  *
  * Cái giá không phải chậm. Là **dấu xác nhận băm theo 10 bài trong khi thứ nó cho cổng bỏ qua là
  * `npm test` — 28 bài**: chạy `npm run test:song-song` rồi chạy cổng thì cổng in *"DÙNG LẠI DẤU"*

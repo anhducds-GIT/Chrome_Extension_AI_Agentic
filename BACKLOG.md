@@ -172,8 +172,13 @@ thái sống — đã ở `AGENTS.md` mục 1) · `N-26` (`git commit --amend` k
 **Tự khai "một ca chưa đủ để đổi cơ chế" (2):** `Y-09` `Y-15` — cả hai viết sẵn trong mục
 rằng phép đo hiện có đúng **một** ca, và một ca thì luật cho từng vai là đủ.
 
-**Nợ của gói đã ĐÓNG BĂNG, nên không lane nào chạm (2):** `N-17` (`npm run test:worker` trỏ
-cứng vào gói ChatGPT) · `N-28` (mục sổ nợ không có mã, ở gói Flow Video và Gemini).
+~~**Nợ của gói đã ĐÓNG BĂNG, nên không lane nào chạm (2):**~~ **LÝ DO NÀY ĐÃ CHẾT — sửa 17/09.**
+`N-17` (`npm run test:worker` trỏ cứng vào gói ChatGPT) · `N-28` (mục sổ nợ không có mã, ở gói
+Flow Video và Gemini) **vẫn còn thật**, nhưng cái giữ chúng đứng yên thì không: Đức **mở băng
+toàn bộ 08/09** ([ADR-0024](docs/adr/0021-goi-extension.md) ⑴) và `frozen` là `[]` từ hôm ấy.
+Hai mục này nằm im **chín ngày sau khi lý do hoãn hết hạn**, và không ai đọc lại dòng hoãn —
+đúng hình dạng *"một lý do hoãn cũng là một lời khai"*. Nay chúng là **nợ bình thường**, lane nào
+giữ khoá vùng thì làm được. *(Đo 17/09: `test:worker` vẫn trỏ cứng, nên `N-17` chưa tự khỏi.)*
 
 **Việc chăm sóc bảng và sổ, không chặn ai (5):** `Y-03` `Y-05` `Y-08` `Y-10` `Y-11`.
 
@@ -1113,7 +1118,7 @@ hàng, và cả bảy khối vẫn xanh.
 `includes`; kèm một ca hỏng: hai hàng tên lồng nhau thì bộ đo phải chọn đúng cái được hỏi.
 
 
-## N-66 · `A5` — còn 8 nơi chứa luật chưa rà, và ba trong số đó nằm sau một cửa đóng băng
+## N-66 · `A5` — còn 6 nơi chứa luật chưa rà
 
 **Lượt rà 17/09 đóng 5/13 nơi.** Không đóng nốt 8 nơi kia là **cố ý**, và lý do nằm ngay trong
 bản khai của chính trường này (`.repo-structure.json` → `luat._ra_soat_doc`):
@@ -1145,14 +1150,49 @@ Chỗ đắt nhất là `PROMPTS.md` mục 1: **đó là câu Đức DÁN**, nê
 tốn hơn **12.000 token** trước dòng code đầu tiên. Ba nơi ấy vẫn **chưa đặt ngày** vì tôi mới sửa
 đúng chỗ trôi đã biết, chưa đọc hết file.
 
-**Bốn file của hai gói đóng băng — đo trước khi lo:** cả hai `AGENTS.md` vẫn mang đúng dòng chết
-ấy (*"đọc … `HANDOFF.md` … trước khi làm bất cứ việc gì"*). Nhưng `PHIEN.md` của chúng — **cửa
-duy nhất một phiên mở ngày nay** — khai **0 lần** dòng đó. Nên nó là luật chết **sau một cánh cửa
-không ai mở**, không phải luật chết đang dạy người. Gói đóng băng thì chỉ-đọc, nên lượt này
-**không sửa**; ghi ra đây để lượt sau khỏi tưởng là bỏ sót.
+**~~Bốn file của hai gói đóng băng~~ — KHÔNG GÓI NÀO ĐÓNG BĂNG, và tôi đã hỏi Đức một câu anh
+chốt rồi.** Đo 17/09 tối: `frozen` trong `.repo-structure.json` là **`[]`**, và Đức mở băng
+**toàn bộ năm gói** từ **08/09** ([ADR-0024](docs/adr/0021-goi-extension.md) ⑴), nguyên văn
+*"tôi mở băng để chuẩn bị làm các extension đó."* Tôi vẫn đẩy cho anh câu *"mở băng hay bỏ?"* —
+**lần thứ ba trong ba ngày** tôi hỏi một quyết định đã ship. Anh trả lời: *"nếu cần thì vẫn cứ
+phải mở băng để sửa cho chuẩn chỉnh, bởi vì các extension đó tôi vẫn làm việc bình thường."*
+
+**Đã sửa theo chốt đó, 2 trong 3 gói:** `duc-auto-gemini` và `duc-auto-gg-flow-video` —
+`AGENTS.md` của chúng nay trỏ `PHIEN.md`, và dòng cũ để lại nguyên văn kèm ngày chết.
+`duc-auto-chatgpt` mang y hệt câu ấy nhưng **một lane khác đang giữ khoá và đang sửa trong đó**,
+nên lượt này không chạm.
 
 - **đóng khi:** lệnh: `node scripts/rule-compile.mjs` in `④ CHUA_RA_SOAT … [0]`, và mỗi nơi được
   đổi ngày là nơi **đã đọc hết**, không phải nơi đã quét.
-- **đóng khi:** đức: với 4 file của hai gói đóng băng — **mở băng để sửa dòng chết**, hay **khai
-  thẳng là không ai đọc chúng nữa** và gỡ khỏi bản đăng ký `luat.ra_soat`. Tôi nghiêng về đường
-  thứ hai: rẻ hơn, và bó mở phiên (`PHIEN.md`) đã thay chúng rồi.
+- **đóng khi:** lệnh: `grep -c "trước khi làm bất cứ việc gì" workers/duc-auto-*/v*/AGENTS.md`
+  trả **0** ở cả ba gói — còn thiếu `duc-auto-chatgpt`, chờ lane kia trả khoá.
+
+## N-67 · Sổ cái MÁY SINH của hai gói bỏ sót quyết định, và cả hai đều tự khai là "đầy đủ"
+
+**Đo 17/09, trong lượt rà `A5`.** Bộ sinh (`rule-compile.mjs --sinh`) đọc `docs/adr/` của gói và
+nhóm theo `nhom:` ở frontmatter. ADR nào **không khai `nhom:`** thì **vô hình với bộ sinh** — và
+không chỗ nào kêu.
+
+| Gói | ADR trên đĩa | Trong khối máy sinh | **Bộ sinh không thấy** |
+|---|---:|---:|---:|
+| `duc-auto-gemini` | ~67 | 38 | **25** |
+| `duc-auto-chatgpt` | 54 | 50 | **4** |
+
+**Cùng họ `A3`, và đó là chỗ lượt trước bỏ sót.** `A3` (17/09) khai `luat.chu_de` rồi thêm
+`chu_de:`/`nhom:` cho **20 ADR gốc repo** — nhưng **ADR của từng gói không nằm trong lượt đó**.
+`B16` xanh vì nó chỉ đếm ADR gốc.
+
+**Vì sao nó chưa cắn ai, và vì sao vẫn phải sửa.** `duc-auto-gemini/decisions.md` còn **14 bảng
+gõ tay** ở cuối file phủ đúng 25 số hiệu kia, nên hôm nay không quyết định nào thật sự biến mất.
+Nhưng đó là **hai nguồn cho một sự thật** — đúng bệnh cả repo sinh ra để chữa — và header của
+chính file ấy nói bảng tay *"đã chuyển sang ADR"*, tức mô tả một trạng thái file không ở trong.
+`duc-auto-chatgpt` thì đã dọn hết bảng tay (0 bảng), nên **4 ADR của nó không có mạng lưới nào
+đỡ**: chúng vô hình thật.
+
+**Đã sửa ở lượt này, chỉ phần lời khai:** `duc-auto-gemini/AGENTS.md` thôi gọi khối ấy là
+*"danh sách đầy đủ"*. Con số thì chưa ai sửa.
+
+- **đóng khi:** lệnh: với mỗi gói, `ls docs/adr/*.md | wc -l` bằng số dòng `ADR-` trong khối máy
+  sinh của `decisions.md` — tức mọi ADR của gói đều khai `nhom:`.
+- **đóng khi:** lệnh: sau khi số khớp, 14 bảng gõ tay ở cuối `duc-auto-gemini/v0.2.0/decisions.md`
+  được gỡ, và một phép ghim canh *không nguồn thứ hai nào cho cùng danh sách*.

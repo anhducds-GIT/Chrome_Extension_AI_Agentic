@@ -4,9 +4,20 @@
  * chạy không"; câu hỏi thật ở đây là **"tách ra có làm rơi mất hành vi nào không"** — và cách
  * duy nhất trả lời là hỏi cả hai bản cùng một câu rồi so đáp án.
  *
- * Bản gốc lấy từ `workers/duc-auto-chatgpt/…` — gói ĐÃ ĐÓNG BĂNG. File này chỉ ĐỌC nó, đúng
- * luật mục 1. Và đóng băng lại là điều làm nó thành một cái mốc tốt: nó không đổi nữa, nên
- * lệch nhau bao giờ cũng là lỗi của bản mới.
+ * Bản gốc lấy từ `workers/duc-auto-chatgpt/…`. File này chỉ ĐỌC nó.
+ *
+ * ⚠ **MỐC NÀY DI CHUYỂN ĐƯỢC — sửa lời khai 17/09, và đây là chỗ đắt nhất của file.**
+ * Dòng cũ viết: *"gói ĐÃ ĐÓNG BĂNG… nó không đổi nữa, nên lệch nhau bao giờ cũng là lỗi của bản
+ * mới."* **Sai hai lần, đo 17/09:**
+ *   ⑴ Đức **mở băng toàn bộ 08/09** ([ADR-0024](../../../../docs/adr/0021-goi-extension.md) ⑴);
+ *      `frozen` trong `.repo-structure.json` là `[]` từ hôm ấy.
+ *   ⑵ Và bản gốc **đã đổi thật**: `e10dc65f` (11/09) thêm **40 dòng** vào chính
+ *      `bridge-host.mjs` — một lượt hết giờ nay tự khai mình thuộc loại nào (`B-50`/`B-58`).
+ *
+ * Hệ quả phải nhớ khi file này ĐỎ: **đừng mặc định lỗi nằm ở lõi mới.** Chạy
+ * `git log -1 --oneline -- <đường dẫn bản gốc>` trước; nếu bản gốc vừa nhúc nhích thì việc cần
+ * làm là **quyết định cố ý** — đưa thay đổi ấy sang lõi, hay khai nó là lệch có chủ ý — chứ
+ * không phải sửa lõi cho khớp một cái mốc vừa trôi.
  *
  * KHÔNG so `protocol`: đó là thứ CỐ Ý khác (bản gốc gõ cứng tên một sản phẩm, lõi mới nhận qua
  * tham số). Mọi thứ khác phải khớp từng ký tự.
