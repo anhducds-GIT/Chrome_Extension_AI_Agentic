@@ -616,4 +616,24 @@ Cả bốn đều ở vùng `workers/duc-auto-chatgpt`, vùng lane ấy đang gi
 chạm vào đó. Lượt đẩy không `--force`, không sửa lịch sử. Sòng phẳng hai chiều: hôm nay lane ấy
 đã đẩy hộ commit của tôi **hai lần**, và lần này tôi đẩy hộ họ.
 
+## 2026-09-17 · `claude-scouter-udine` — cửa audit chặn lượt đẩy, và nó đang thưởng cho im lặng
+
+Lượt đẩy bị `safe-push` từ chối. Đọc kỹ thì chỗ chặn **không phải việc của tôi**, và cái tìm ra
+đáng hơn lần chặn.
+
+**Đo trên đúng dải commit đang chờ:** 4 commit chạm `scripts/`/`tests/` mà **không** khai `Audit:`
+→ chỉ **⚠ cảnh báo**, đẩy được. 5 commit **có** khai (`codex-4-vong`, `chua-co`) → **CHẶN**.
+Nghĩa là **gõ nhãn cho thật thì bị chặn, không gõ gì thì đi lọt** — cửa đang dạy người dùng đừng
+khai. Hai phiên hôm nay đều chạy audit độc lập thật và đều khai; cả hai đều bị giữ lại.
+
+**Gốc trực tiếp:** `.repo-structure.json` **chưa khai khối `audit`**, nên `nguoiDuyetFrom()` trả
+mảng rỗng và **không tên nào có thể là "đã duyệt"** — kể cả tên của một lượt audit có thật. Cơ
+chế có đủ, danh sách thì trống.
+
+**Không tự sửa.** Khai ai được quyền duyệt code trước khi đẩy là **đổi luật an toàn** → hỏi Đức.
+Đã đẩy câu hỏi lên cho anh kèm đúng một dòng sửa, và ghi `KHUNG-M8` với cả hai vế: khai danh
+sách, và chốt xem commit KHÔNG khai thì nên chặn hay vẫn chỉ cảnh báo.
+
+**Trạng thái:** 31 commit nằm local, cổng **XANH TOÀN BỘ**, không mất gì. Chờ đúng một câu.
+
 <!-- HANDOFF-THANG: 2026-09 -->

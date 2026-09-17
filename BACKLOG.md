@@ -1196,3 +1196,31 @@ chính file ấy nói bảng tay *"đã chuyển sang ADR"*, tức mô tả mộ
   sinh của `decisions.md` — tức mọi ADR của gói đều khai `nhom:`.
 - **đóng khi:** lệnh: sau khi số khớp, 14 bảng gõ tay ở cuối `duc-auto-gemini/v0.2.0/decisions.md`
   được gỡ, và một phép ghim canh *không nguồn thứ hai nào cho cùng danh sách*.
+
+### KHUNG-M8 · Cửa audit của `safe-push` thưởng cho im lặng, phạt người khai thật
+
+Đo 17/09, trên đúng dải commit đang chờ đẩy:
+
+| Commit chạm `scripts/` hoặc `tests/` | Nhãn `Audit:` | Kết quả |
+|---|---|---|
+| **4** commit | **không có** | ⚠ chỉ CẢNH BÁO — **đẩy được** |
+| **5** commit | `codex-4-vong` / `chua-co` | **CHẶN** |
+
+Nghĩa là: **gõ nhãn cho thật thì bị chặn, không gõ gì thì đi lọt.** Hai phiên hôm nay đều đã
+chạy audit độc lập thật (Codex, 4 vòng ở nhánh ChatGPT và 2 vòng ở bộ đo), cả hai đều khai, và
+cả hai đều bị chặn — trong khi những commit không khai gì thì qua cửa.
+
+Chú thích của chính `safe-push` đã ghi chỗ hở này: *"Nhãn `Audit:` chỉ chặn được khi có người GÕ
+nó, mà không ai gõ một nhãn mình chưa biết là có."* Nó nhận ra lỗ, nhưng chưa nêu ra rằng lỗ ấy
+**đảo ngược động cơ**: cửa hiện dạy người dùng đừng khai.
+
+Gốc trực tiếp của lần chặn này thì khác và dễ sửa hơn: `.repo-structure.json` **chưa khai khối
+`audit`**, nên `nguoiDuyetFrom()` trả mảng rỗng và **không tên nào có thể là "đã duyệt"** — kể cả
+tên của một lượt audit có thật.
+
+**Không tự sửa:** khai ai được quyền duyệt code trước khi đẩy là **đổi luật an toàn** → hỏi Đức.
+
+- **đóng khi:** đức: khai `audit.nguoi_duyet` trong `.repo-structure.json` (ví dụ `["codex"]`),
+  và chốt xem commit chạm `scripts/`/`tests/` mà **không** khai `Audit:` thì nên CHẶN hay vẫn chỉ
+  cảnh báo — hiện tại nó là cửa rộng hơn cửa dành cho người khai thật.
+
