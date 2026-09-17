@@ -1112,3 +1112,46 @@ hàng, và cả bảy khối vẫn xanh.
 **đóng khi:** `hang()` tách tên hàng ra khỏi dòng (`[XANH] <tên>`) rồi so **bằng**, không
 `includes`; kèm một ca hỏng: hai hàng tên lồng nhau thì bộ đo phải chọn đúng cái được hỏi.
 
+
+## N-66 · `A5` — còn 8 nơi chứa luật chưa rà, và ba trong số đó nằm sau một cửa đóng băng
+
+**Lượt rà 17/09 đóng 5/13 nơi.** Không đóng nốt 8 nơi kia là **cố ý**, và lý do nằm ngay trong
+bản khai của chính trường này (`.repo-structure.json` → `luat._ra_soat_doc`):
+
+> *"Chỉ đặt ngày khi bạn **ĐÃ ĐỌC HẾT** file và đã đối chiếu với sổ cái — đặt ngày cho xong là
+> tự tắt máy cảnh."*
+
+8 nơi còn lại tôi mới **quét**, chưa đọc hết: `MULTIFLOW.md` (319 dòng) · `ORCHESTRATOR.md` (569)
+· `PROMPTS.md` (341) · `hnx-fetch/PROTOCOL.md` (519) · và 4 file của **hai gói đóng băng**
+(`duc-auto-chatgpt` · `duc-auto-gemini`: `AGENTS.md` + `decisions.md`).
+
+**Năm nơi đã đóng, và mỗi nơi trả về một chỗ trôi THẬT** — lượt rà này không phải thủ tục:
+
+| Nơi | Trôi gì | Sống bao lâu |
+|---|---|---|
+| `docs/README.md` | khai `docs/archive/` **"ĐÃ XOÁ"** trong khi nó sống lại 17/09 (xoay nhật ký theo tháng, `A4`) — và git đang track file trong đó | 9 ngày |
+| `docs/README.md` | bảng brief khai **6**, thư mục có **16** · bảng ADR khai **9**, thư mục có **21** · bảng protocol thiếu `RULE-COMPILER.md` | 8 ngày |
+| `STATUS.template.md` | thiếu hẳn 3 trường `lam_duoc` · `khong_lam_duoc` · `dung_the_nao` — chúng **hiện thẳng lên bảng Đức đọc** và có phép ghim, nên gói mới khai theo khuôn sẽ để trống 3 ô mà không ai biết vì sao | từ đầu |
+| `hnx-fetch/AGENTS.md` | `du-lieu/tests/` khai **9**, thực tế **10** | — |
+
+Ba bảng gõ tay ở `docs/README.md` **không được thêm tay lần nữa** — chính file đó đã dự báo vòng
+mục này từ phiên S6. Thay bằng lệnh đếm, cùng khuôn `ROADMAP.md` dùng.
+
+**Hai chỗ trôi NẶNG nhất lại không nằm trong 5 nơi trên, và đã sửa ở lượt này:** `ORCHESTRATOR.md`
+(2 chỗ) và `PROMPTS.md` (1 chỗ) đều còn dặn **đọc `HANDOFF.md` lúc mở phiên** — thứ
+[ADR-0034](docs/adr/0034-mo-phien-doc-status-khong-doc-handoff.md) chuyển sang nạp-theo-yêu-cầu
+và [ADR-0035](docs/adr/0035-mot-file-cho-mot-phien-gap.md) thay bằng `PHIEN.md` từ **09/09**.
+Chỗ đắt nhất là `PROMPTS.md` mục 1: **đó là câu Đức DÁN**, nên mọi phiên đều đi qua nó, và bản cũ
+tốn hơn **12.000 token** trước dòng code đầu tiên. Ba nơi ấy vẫn **chưa đặt ngày** vì tôi mới sửa
+đúng chỗ trôi đã biết, chưa đọc hết file.
+
+**Bốn file của hai gói đóng băng — đo trước khi lo:** cả hai `AGENTS.md` vẫn mang đúng dòng chết
+ấy (*"đọc … `HANDOFF.md` … trước khi làm bất cứ việc gì"*). Nhưng `PHIEN.md` của chúng — **cửa
+duy nhất một phiên mở ngày nay** — khai **0 lần** dòng đó. Nên nó là luật chết **sau một cánh cửa
+không ai mở**, không phải luật chết đang dạy người. Gói đóng băng thì chỉ-đọc, nên lượt này
+**không sửa**; ghi ra đây để lượt sau khỏi tưởng là bỏ sót.
+
+· **đóng khi:** 8 nơi còn lại mỗi nơi được **đọc hết** rồi đổi `ra_soat` — hoặc, với 4 file gói
+đóng băng, Đức chốt một câu: **mở băng để sửa dòng chết**, hay **khai thẳng là không ai đọc chúng
+nữa** và gỡ khỏi bản đăng ký `luat.ra_soat`. Đường thứ hai rẻ hơn và tôi nghiêng về nó, vì bó mở
+phiên đã thay chúng.

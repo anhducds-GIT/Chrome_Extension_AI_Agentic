@@ -74,7 +74,7 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `du-lieu/kiem-ssot.mjs` | **bộ soi tệp SSOT, CHỈ ĐỌC**: ngày cuối · ngày thiếu hẳn · dòng lệch cột · khoá trùng (ngày + ISIN). Đây là thứ AI vận hành dựa vào để nói *"dữ liệu ổn"* |
 | `du-lieu/tests/loai-san-pham-smoke.mjs` | ghim cờ `--loai` (H-05). Có khối **chạy thật tệp lệnh** và đọc mã thoát — hai khối soi mã nguồn ở trên bắt được "quên viết" nhưng không bắt được "viết sai" |
 | `du-lieu/tests/ngay-nghi-smoke.mjs` | ghim tệp ngày nghỉ (H-03). Canh CẢ cửa vào lẫn **cửa thoát**: xoá một dòng là ngày đó được lấy lại — không có cửa thoát thì cái dấu thành quyết định vĩnh viễn |
-| `du-lieu/tests/` | 9 phép ghim, không chạm mạng thật |
+| `du-lieu/tests/` | phép ghim tầng dữ liệu, **không chạm mạng thật**. Đếm: `ls du-lieu/tests/*.mjs \| wc -l` — *(hàng này từng gõ cứng "9" và tới 17/09 thì thư mục có 10; số gõ tay trong bản đồ file là đúng thứ luật vàng 4 của repo cấm)* |
 
 ## BA tệp chép nguyên văn — và cách chúng KHÔNG trôi
 

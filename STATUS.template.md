@@ -76,6 +76,23 @@ này, việc chờ Đức nằm **lẫn** trong câu đó, nên bảng phải đ
 | `ref_handoff` | ✅ luôn | con trỏ canonical | file không tồn tại → **đỏ** |
 | `ref_runbook` | tuỳ chọn | hướng dẫn vận hành, nếu có | file không tồn tại → **đỏ** |
 | `ref_backlog` | tuỳ chọn | sổ việc còn mở, nếu có | file không tồn tại → **đỏ** |
+| `lam_duoc` | tuỳ chọn | **một câu**: gói này làm được gì, tiếng Việt không thuật ngữ | lọt số machine-owned → **đỏ** |
+| `khong_lam_duoc` | tuỳ chọn | **một câu**: nó KHÔNG làm gì — mục đắt nhất, xem ghi chú dưới | như trên |
+| `dung_the_nao` | tuỳ chọn | **một câu**: dùng nó ra sao, cho người chưa đọc repo | như trên |
+
+> **Ba trường cuối bảng thiếu ở khuôn mẫu này từ đầu tới 17/09, và đó là một lỗ có giá.** Chúng
+> **hiện thẳng lên bảng Đức đọc** (`DASHBOARD.md` và trang tổng), và có phép ghim canh —
+> `tests/build-dashboard-smoke.mjs` · `tests/build-overview-smoke.mjs`. Nhưng khuôn mẫu không hề
+> nhắc, nên một gói mới khai theo đúng file này sẽ **để trống ba ô** mà các gói khác có chữ, và
+> không ai biết vì sao. Bắt được ở lượt rà `A5` bằng một phép đối chiếu, không bằng mắt:
+>
+> ```bash
+> # trường nào đang được dùng thật mà khuôn mẫu chưa khai
+> for f in workers/*/v*/STATUS.md; do sed -n '/^---$/,/^---$/p' "$f" | grep -oE '^[a-z_]+:'; done | sort -u
+> ```
+>
+> `khong_lam_duoc` là trường đáng viết nhất trong ba: nó chặn đúng câu hỏi tốn tiền nhất —
+> *"gói này có làm được việc kia không"* — trước khi ai đó thử.
 
 > **ĐƯỜNG DẪN TRONG `current_focus` VÀ `next_step` TÍNH TỪ GỐC REPO, KHÔNG TỪ FILE NÀY.**
 > Bộ sinh **chép nguyên văn** hai trường đó vào `DASHBOARD.md` ở gốc repo, nên một đường dẫn đúng

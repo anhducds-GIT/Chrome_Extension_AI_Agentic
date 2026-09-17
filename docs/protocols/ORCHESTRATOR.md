@@ -11,7 +11,14 @@ product_code: forbidden
 
 > Mở file này khi bạn là **phiên điều phối**: phiên Đức nói chuyện với để biết *đang có gì,
 > làm gì tiếp, việc nào chạy song song được*. Không phải phiên nào cũng là vai này — phiên
-> đi code một gói thì đọc `AGENTS.md` + `HANDOFF.md` của gói đó là đủ.
+> đi code một gói thì đọc **`workers/<gói>/<phiên-bản>/PHIEN.md`** của gói đó, **và chỉ nó**
+> ([ADR-0035](../adr/0035-mot-file-cho-mot-phien-gap.md)): bó ấy máy sinh, tự chứa, và mang sẵn
+> lõi luật + luật riêng của gói + trạng thái mới nhất.
+>
+> *(Dòng này viết **`AGENTS.md` + `HANDOFF.md`** cho tới 17/09 — đúng lúc nó ra đời, sai từ 09/09.
+> `ADR-0034` chuyển `HANDOFF.md` sang **nạp theo yêu cầu**, `ADR-0035` gom cửa mở phiên về một
+> file, và một phiên làm theo dòng cũ trả thêm ~12.000 token trước khi gõ dòng đầu tiên. Bắt được
+> ở lượt rà `A5`.)*
 >
 > Luật chung vẫn là `AGENTS.md` ở gốc. Sổ này **không thay** luật nào, nó chỉ nói vai điều
 > phối làm gì trong khuôn luật đó.
@@ -262,7 +269,13 @@ node scripts/what-next.mjs              # bản đồ việc: song song được
 node scripts/claim.mjs --list           # bảng quyền, trạng thái sống
 ```
 
-Rồi đọc `AGENTS.md` (luật) và **phần cuối** `HANDOFF.md` gốc (phiên trước làm gì).
+Rồi đọc `AGENTS.md` (luật) và **`STATUS.md`** (đang ở đâu · việc kế · chờ Đức gì).
+
+> **KHÔNG đọc `HANDOFF.md` lúc mở phiên** — [ADR-0034](../adr/0034-mo-phien-doc-status-khong-doc-handoff.md) ⑴,
+> chốt 09/09. `STATUS.md` vốn được thiết kế đúng cho lúc mở: một trang, có `lifecycle` ·
+> `last_verified` + bằng chứng · `next_step` · `human_action`. `HANDOFF.md` chuyển sang **nạp theo
+> yêu cầu** — mở khi cần biết *phiên trước vấp gì*. Đo lượt chốt ấy: **24.000–30.500 → ~7.800
+> token**. *(Dòng này dặn đọc `HANDOFF.md` từ 09/09 tới 17/09; sửa ở lượt rà `A5`.)*
 
 `what-next.mjs` **chỉ đọc**, không đòi khoá nào, chạy được cả khi mọi vùng đã có chủ. Nó
 giao ba nguồn mà trước đây không giao được với nhau: bảng quyền × sổ nợ từng gói × sổ ý

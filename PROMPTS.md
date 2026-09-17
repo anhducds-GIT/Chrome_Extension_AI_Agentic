@@ -106,13 +106,19 @@ thẳng là phải xếp hàng, đừng hứa.
 **Dùng khi nào:** mỗi lần bắt đầu nói chuyện với một AI trong repo này.
 
 ```text
-Đọc AGENTS.md ở gốc repo trước khi làm gì. Rồi đọc HANDOFF.md của phần bạn sắp đụng
-(phần cuối file là trạng thái mới nhất). Nói lại cho tôi trong ba câu: bạn hiểu mình
-được làm gì, không được làm gì, và vùng nào đang có chủ khác.
+Đụng một gói extension thì đọc ĐÚNG MỘT file: workers/<gói>/<phiên-bản>/PHIEN.md —
+nó máy sinh, tự chứa, không cần đọc gì thêm để bắt đầu. Làm việc luật hay hạ tầng repo
+thì đọc AGENTS.md ở gốc. ĐỪNG đọc HANDOFF.md lúc mở phiên. Nói lại cho tôi trong ba câu:
+bạn hiểu mình được làm gì, không được làm gì, và vùng nào đang có chủ khác.
 ```
 
 **AI sẽ chạy:** `node scripts/claim.mjs --list`
 **Xong khi nào:** AI nói được tên vùng nó sắp làm, và vùng đó đang trống hay có chủ.
+
+> **Câu này dặn đọc `HANDOFF.md` từ 09/09 tới 17/09 — và đây là chỗ đắt nhất trong cả lượt rà
+> `A5`, vì nó là câu Đức DÁN, tức mọi phiên đều đi qua nó.** [ADR-0034](docs/adr/0034-mo-phien-doc-status-khong-doc-handoff.md)
+> chuyển `HANDOFF.md` sang nạp-theo-yêu-cầu và [ADR-0035](docs/adr/0035-mot-file-cho-mot-phien-gap.md)
+> gom cửa mở phiên của một gói về `PHIEN.md`. Bản cũ **hơn 12.000 token** trước dòng code đầu tiên.
 
 > Với **Antigravity** thì câu này là **bắt buộc** — nó chưa chứng minh được là tự nạp luật lúc mở
 > phiên. Ba giây, và nếu nó vốn tự nạp thì câu này chỉ thừa vô hại.
