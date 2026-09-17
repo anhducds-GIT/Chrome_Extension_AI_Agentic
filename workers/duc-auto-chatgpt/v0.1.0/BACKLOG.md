@@ -2605,6 +2605,31 @@ còn sót vẫn mở được cổng. Suite **132/132**, thử phá **10/10 đ�
 - **đóng khi:** ~~Đức chốt, vá xong, và có phép ghim cho **cả hai** ca.~~ Còn lại **một** việc:
   nghiệm thu **live** một job có ảnh mẫu — suite và thử phá không thay được lượt chạy thật.
 
+### B-100 · (P2) Sáu chỗ còn gây nhầm lẫn — Đức nêu 17/09 sau lượt chạy 8/8 vòng
+
+Gom từ đúng một buổi vận hành thật. Mỗi mục là một thứ ĐÃ làm người đọc hiểu sai, không phải
+ý tưởng suông. Chưa mục nào được vá.
+
+⒜ **`lan-truoc.txt` nhớ CẢ địa chỉ hội thoại, và Enter dùng lại im lặng.** Đây là cái bẫy đắt
+nhất: tên chuỗi `Scouter Improve 01` chạy trên hội thoại **vẽ ảnh** `aves-contest`, năm lượt
+chết liên tiếp. `~~B-97~~` mới thêm lối `g` để chọn lại; mặc định vẫn là dùng lại. Nên cân
+nhắc: khi địa chỉ ghim KHÁC hội thoại ghế đang nhìn, phải hỏi chứ đừng chạy.
+
+⒝ **Launcher in địa chỉ hội thoại dạng URL thô.** Người đọc không nhận ra `6aaae0ae` là hội
+thoại nào. `chon-profile.choNgoi()` đã biết in *tên dự án · 8 ký tự*; launcher chưa dùng.
+
+⒞ **`--tiep` in *"nhật ký chưa có lượt gửi nào — chạy như một lượt mới"*** trong khi nhật ký
+có đầy dòng. Đúng về kỹ thuật (chưa có `DA_GUI`), sai về cảm giác.
+
+⒟ **`TARGET_NOT_CONNECTED` ở vòng 1** khi người bấm chạy trước lúc gắn ghế (đo 17/09: lệch
+18 giây). Đọc như lỗi hệ thống, thực ra là một cuộc đua với thao tác của người.
+
+⒠ **Tên ghế và tên chuỗi đều là số** (`01`, `02`) nên nhìn nhật ký không biết cái nào là cái
+nào. Menu chọn ghế nay có in *đang nhìn: …*, nhưng nhật ký thì chưa.
+
+⒡ **Hai nguồn sự thật cho câu "nó còn chạy không"**: màn hình và nhật ký, hai nhịp khác nhau.
+`~~B-98~~` đã thêm nhịp tim vào sổ; vẫn nên để `dung-chuoi.bat` đọc được nhịp ấy.
+
 ### B-50 · (P1) Panel trả lời cửa router nhưng KHÔNG trả lời cửa executor — "chết một nửa"
 
 > **ĐỔI TIÊU ĐỀ 11/09, vì tiêu đề cũ khẳng định một nguyên nhân đã bị đo BÁC.** Nguyên văn cũ:

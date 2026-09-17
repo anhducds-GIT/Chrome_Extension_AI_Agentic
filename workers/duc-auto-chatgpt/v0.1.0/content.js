@@ -162,8 +162,37 @@
     return matchesGenerationLimit(latestAssistantText()) ? "ChatGPT image generation limit reached for now." : null;
   }
 
+  /* B-99 — BÓC ĐỒ ĐẠC CỦA TRANG RA KHỎI CHỮ CỦA MỘT LƯỢT NÓI.
+   *
+   * Đo live 17/09, chuỗi `02`: chuỗi gửi 869 ký tự, trang đọc ra 879 — dư đúng một xuống dòng
+   * cộng nhãn nút "Show more" mà ChatGPT gắn vào một lượt hỏi dài bị gấp gọn. Phép khẳng định
+   * "tin nhắn đã gửi chưa" so 160 ký tự ĐẦU + 160 ký tự CUỐI, nên cái đuôi thừa ấy làm MỌI
+   * lượt gửi dài trả `CHAT_SAY_UNCONFIRMED` — 8/8 vòng trong một lượt chạy thật.
+   *
+   * CẮT TỪ ĐUÔI, VÀ CHỈ CẮT ĐÚNG NHÃN CỦA CHÍNH NÚT ĐÓ, đọc tại thời điểm chạy. Không so với
+   * một danh sách chữ đóng cứng: "Show more" đổi thành "Show less" khi mở ra, và đổi hẳn sang
+   * tiếng khác nếu Đức đổi ngôn ngữ giao diện. Mỏ neo để TÌM là `data-testid` trong
+   * `SELECTORS.turnChrome` — cấu trúc, không phải chữ.
+   *
+   * KHÔNG nhân bản rồi xoá nút trên bản sao: `innerText` của một nút RỜI KHỎI TRANG không còn
+   * theo bố cục, nên nó trả về chữ dính liền không xuống dòng — mà chuỗi chuyển tiếp NGUYÊN
+   * VĂN, tức bản vá sẽ tự tay làm hỏng đúng thứ nó đi cứu. Đọc bản thật, cắt cái đuôi. */
+  /* MỘT HÀM, KHÔNG TÁCH HELPER — và đó là một ràng buộc của phép ghim, không phải kiểu viết.
+     `tests/chat-read-smoke.mjs` và `canvas-block-smoke.mjs` CẮT hàm này ra khỏi tệp đã ship rồi
+     chạy nó trong `node:vm` (hàm là closure, không xuất ra được). Tách phần bóc ra một hàm
+     riêng thì lát cắt không còn chứa nó, và cả hai phép ghim đỏ với `ReferenceError` — đo được
+     ngay lượt chạy đầu. Giữ mọi thứ trong thân hàm để cái được ghim đúng là cái được chạy. */
   function assistantMessageText(message) {
-    return message ? (message.innerText || message.textContent || "").trim() : "";
+    if (!message) return "";
+    let ra = (message.innerText || message.textContent || "").trim();
+    const nhom = (typeof window !== "undefined" && window.DacProviderAdapter?.SELECTORS?.turnChrome) || [];
+    for (const sel of nhom) {
+      for (const nut of message.querySelectorAll(sel)) {
+        const nhan = (nut.innerText || nut.textContent || "").trim();
+        if (nhan && ra.endsWith(nhan)) ra = ra.slice(0, ra.length - nhan.length).trimEnd();
+      }
+    }
+    return ra;
   }
 
   /* chat.read — ĐỌC TRỌN CHỮ CỦA CÁC LƯỢT HỘI THOẠI. Hàm THUẦN: nhận `doc` và hai selector,

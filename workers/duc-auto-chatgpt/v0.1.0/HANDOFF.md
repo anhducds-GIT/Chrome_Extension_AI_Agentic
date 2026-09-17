@@ -871,3 +871,36 @@ Menu nay in thêm **ghế ấy đang nhìn đâu** (tên dự án, không phải
 
 Suite **142/142** · đột biến **25/25**; `Q1` (dựng khối rồi vứt đi) và `S5` (đo khoảng cách
 thay vì ĐẾM) lọt ở lượt đầu — đúng họ cũ.
+
+## 2026-09-17 (lượt 3) · `claude-gpt-chay-het-job` — `B-99`: nhãn nút "Show more" lọt vào chữ, và nó làm MỌI lượt gửi dài "không khẳng định được"
+
+**Nghiệm thu live: chuỗi `02` chạy 8/8 vòng, thoát `HET_SO_VONG`, 0 lượt trùng.** `~~B-96~~`
+lần đầu được chứng minh ngoài đời (`CON_DANG_VIET 3594 → 3712`); `~~B-88~~` cứu **cả 8 lượt**.
+
+**NHƯNG `CHAT_SAY_UNCONFIRMED` nổ 8/8 vòng — 100%, không phải chập chờn.** Tôi đoán sai một lần trước khi
+đo — nói *"tab bị che"*; Đức bác ngay. Đo lại đúng tab: `visibility: "visible"`. **Số đo tôi
+dùng là của tab KHÁC, lúc KHÁC.**
+
+**GỐC, đo từng ký tự:** chuỗi gửi **869**, trang đọc ra **879** — dư đúng `"\nShow more"`.
+`dom-probe` chỉ thẳng thủ phạm: `data-testid="collapsible-user-message-toggle"`, txt
+`"Show more"`, trên **cả hai** lượt hỏi dài. ChatGPT **gấp gọn** lượt hỏi dài và gắn nút ấy
+vào cuối; `innerText` của cả lượt chở luôn nhãn nút.
+
+`soleUserTurnIndex` so **160 ký tự ĐẦU + 160 ký tự CUỐI**. 160 đầu khớp hoàn hảo, 160 cuối thì
+không → không tìm thấy → `CHAT_SAY_UNCONFIRMED`, mỗi vòng. Chỉ nổ với prompt **đủ dài để bị
+gấp** (>320 ký tự sau khi làm phẳng), nên nó sống sót qua mọi lượt thử tay từ trước tới nay.
+
+**ĐÃ VÁ Ở BỘ ĐỌC, không ở phép so** — cùng cái đuôi ấy cũng bẩn cả `answerAfterPrompt` và
+đường đối soát ảnh. `assistantMessageText` cắt nhãn **của chính nút đó**, đọc lúc chạy, và
+**chỉ cắt Ở ĐUÔI**. Mỏ neo để TÌM là `data-testid` (khai ở `SELECTORS.turnChrome`), không phải
+chữ — nên "Show less" hay "Hiện thêm" đều đúng mà không liệt kê trước chữ nào.
+
+⛔ **KHÔNG nhân bản node rồi xoá nút:** `innerText` của nút rời khỏi trang mất bố cục, trả về
+chữ dính liền không xuống dòng — mà chuỗi chuyển tiếp NGUYÊN VĂN.
+
+⛔ **KHÔNG tách helper:** hai phép ghim khác CẮT hàm này ra chạy trong `node:vm`; tách ra là
+cả hai đỏ `ReferenceError` — đo được ngay lượt đầu.
+
+Ghim: `tests/luot-hoi-bi-gap-b99-smoke.mjs` chạy HÀM THẬT rồi đưa sang `soleUserTurnIndex`
+THẬT, và chứng minh cả hai chiều: chữ đã bóc thì tìm ra, chữ chưa bóc thì trượt.
+Sáu chỗ còn gây nhầm lẫn ghi ở `~~B-100~~`. Suite **143/143** · đột biến **6/6**.

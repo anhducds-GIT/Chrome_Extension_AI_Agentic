@@ -188,6 +188,28 @@
       "pre",
       '[data-testid="writing-block-container"]',
     ]),
+    /* B-99 · ĐỒ ĐẠC CỦA TRANG NẰM BÊN TRONG MỘT LƯỢT NÓI — phải bóc ra trước khi đọc chữ.
+     *
+     * ĐO LIVE 17/09 trên chuỗi `02`, hội thoại `6aaba9e8`, bằng `dom-probe`:
+     *     { testid: "collapsible-user-message-toggle", txt: "Show more" }   × 2 lượt hỏi dài
+     * ChatGPT GẤP GỌN một lượt hỏi dài và gắn nút "Show more" vào cuối. `innerText` của cả
+     * lượt vì thế chở luôn nhãn nút ấy.
+     *
+     * SỐ ĐO, từng ký tự: chuỗi gửi 869, trang đọc ra 879 — dư đúng một xuống dòng + nhãn nút.
+     * Hậu quả: `soleUserTurnIndex` so *160 ký tự ĐẦU + 160 ký tự CUỐI*; 160 đầu khớp hoàn hảo,
+     * 160 cuối thì không — nên lượt gửi nào cũng trả `CHAT_SAY_UNCONFIRMED`. Đo được 8/8 vòng
+     * trong một lượt chạy thật. Không chập chờn, không phải mạng: một lỗi PHÉP SO.
+     *
+     * Nó chỉ nổ với prompt ĐỦ DÀI ĐỂ BỊ GẤP — prompt ngắn khẳng định bình thường, nên nó sống
+     * sót qua mọi phiên thử tay từ trước tới nay.
+     *
+     * MỎ NEO LÀ `data-testid`, KHÔNG PHẢI CHỮ "Show more": chữ ấy đổi theo ngôn ngữ giao diện,
+     * còn testid thì không. Nhãn để cắt thì đọc từ CHÍNH nút đó lúc chạy (`boDoDacTrang` trong
+     * `content.js`), nên "Show less" hay "Hiện thêm" đều đúng mà không phải liệt kê trước một
+     * chữ nào. */
+    turnChrome: Object.freeze([
+      '[data-testid="collapsible-user-message-toggle"]',
+    ]),
     attachmentChip: Object.freeze([
       'form div[role="group"][aria-label]',      // ✔ MỚI 09/09 — khung chip, aria-label = TÊN FILE
       'form div[data-default-action="true"]',    // ✔ MỚI 09/09 — 0 khi chưa gắn, có khi đã gắn
