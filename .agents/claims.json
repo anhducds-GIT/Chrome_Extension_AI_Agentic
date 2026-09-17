@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-17T14:38:19.279Z",
       "task": "doi lien ket studies -> archive theo chot cua Duc",
-      "released_at": null,
+      "released_at": "2026-09-17T15:46:13.436Z",
       "taken_from": "claude-flow-f28-f33",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)",
       "taken_by": "claude-luat-rasoat",
@@ -15,11 +15,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Nhac lai chot 09/09 truoc do: 'toi cho phep mo khoa gg flow'.)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T15:30:59.726Z",
-      "task": "khai file nhat ky lac cho vao ban do + ghi so no",
-      "released_at": null,
+      "claimed_at": "2026-09-17T16:13:30.952Z",
+      "task": "N-67: khai nhom: cho 28 ADR con thieu de so cai may sinh phu du",
+      "released_at": "2026-09-17T16:48:21.794Z",
       "taken_from": "claude-gemini-crlf",
       "taken_by": "claude-luat-rasoat",
       "taken_at": "2026-09-09T03:11",
@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-15T20:19:29.907Z",
       "task": "giu den khi Duc nap lai extension va nghiem thu U4 (sang 17/09)",
-      "released_at": null,
+      "released_at": "2026-09-17T16:48:37.770Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -50,11 +50,11 @@
       "tra_khi_chua_day": null
     },
     "_docs": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T13:58:41.951Z",
-      "task": "A5: ra soat 13 noi chua luat qua han tu 09/09",
-      "released_at": null,
+      "claimed_at": "2026-09-17T16:02:02.308Z",
+      "task": "A5: ra soat 5 noi chua luat con lai (MULTIFLOW, ORCHESTRATOR, PROMPTS, hnx PROTOCOL)",
+      "released_at": "2026-09-17T16:48:21.945Z",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -65,9 +65,9 @@
     "_code": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T11:05:02.382Z",
-      "task": "A1: dung ca hong cho 6 hang cong chua tung do",
-      "released_at": "2026-09-17T12:32:54.853Z",
+      "claimed_at": "2026-09-17T15:51:14.687Z",
+      "task": "day loat sua bo do da qua audit codex hai vong",
+      "released_at": "2026-09-17T16:48:37.641Z",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -75,33 +75,33 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-14T15:14:50.192Z",
       "task": "T7 chang 2 tren Udin",
-      "released_at": null
+      "released_at": "2026-09-17T16:01:55.484Z"
     },
     "workers/_shared": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-17T09:12:32.477Z",
       "task": "N1: fetch failed noi duoc may chu co dang nghe khong",
-      "released_at": null
+      "released_at": "2026-09-17T16:01:55.843Z"
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T13:58:42.054Z",
-      "task": "A5: ra soat AGENTS.md + PROTOCOL.md",
-      "released_at": null
+      "claimed_at": "2026-09-17T16:02:02.428Z",
+      "task": "A5: ra soat PROTOCOL.md (doc het 519 dong)",
+      "released_at": "2026-09-17T16:48:21.633Z"
     },
     "workers/udin-optic": {
-      "owner": "claude-scouter-udine",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-14T20:10:10.346Z",
       "task": "T21 chang (2)+(3): dung nha + vo extension, roi dua 10 file logic sang",
-      "released_at": null
+      "released_at": "2026-09-17T16:01:55.683Z"
     }
   },
-  "_fingerprint": "694b9487c3f289db"
+  "_fingerprint": "8a9f4310d718859c"
 }
