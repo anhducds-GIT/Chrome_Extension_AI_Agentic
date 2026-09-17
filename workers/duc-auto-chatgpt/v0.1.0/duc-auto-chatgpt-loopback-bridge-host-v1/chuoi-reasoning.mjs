@@ -810,6 +810,33 @@ async function chinh() {
       if (canh.cuaToi) { mocLuotNguoi = idLuotNguoiCuoi; }
       if (canh.dung) {
         console.log(`  vòng ${vong}: ${canh.vi}`);
+        /* B-97 — NÓI RA CÁCH CHỮA, ĐỪNG CHỈ IN HAI DÃY HEX. Đo thật 17/09, chuỗi "Scouter
+           Improve 01": Đức bấm chạy NĂM lần trong hai phút, cả năm lần chết ở đúng dòng trên.
+           Dòng ấy in `ghim 6aaae0ae…, giờ là 6aaba9e8…` — hai UUID. Đức không chuyên kỹ thuật;
+           hai dãy hex không nói được hội thoại nào, cũng không nói được phải làm gì, nên anh
+           bấm lại y nguyên năm lần rồi đi hỏi người. Phép canh CHẠY ĐÚNG; thứ hỏng là câu nói.
+
+           NGUYÊN NHÂN GỐC, đo bằng mã chứ không đoán: một ghế PROFILE (`--target anhducds`)
+           không gắn vào tab nào cả. `chat.read` rơi vào `send()` → `activeTab()` → không có run
+           nào đang chạy nên `state.boundTabId === null` → `pickActiveChatGPTTab()` =
+           `chrome.tabs.query({ active: true, currentWindow: true })`. Tức nó đọc **tab đang ở
+           trước mặt** trong cửa sổ Chrome có side panel. Đức mở một hội thoại khác trong cùng
+           cửa sổ là chuỗi đọc nhầm hội thoại ấy — và phép canh này chặn lại, đúng việc của nó.
+
+           CÁCH CHỮA THẬT đã có sẵn trong tiện ích, không cần viết thêm dòng mã nào: *Phiên làm
+           việc theo tab* trong side panel gắn CHẶT một ghế có tên vào ĐÚNG một tab, ghế ấy báo
+           danh trên Bridge như một phiên riêng, và `--target <tên ghế>` đi thẳng vào tab đó —
+           `resolveWorkspaceTab()` dùng `workspace.tab_id`, không bao giờ hỏi tab nào đang ở
+           trước. Chưa chạy live lần nào; mới đọc hết đường dây trên mã. */
+        if (/^DOI_HOI_THOAI/.test(canh.vi || "")) {
+          console.log(`     hội thoại đã ghim: ${urlGhim}`);
+          console.log(`     tab đang đọc được: ${r.url}`);
+          console.log("     Vì sao: ghế profile đọc TAB ĐANG Ở TRƯỚC MẶT trong cửa sổ Chrome có side panel.");
+          console.log("     Chữa ngay: đưa hội thoại đã ghim ra tab trước mặt của cửa sổ đó, rồi chạy lại.");
+          console.log("     Chữa hẳn: side panel → \"Phiên làm việc theo tab\" → mở đúng tab, đặt tên, bấm");
+          console.log("       \"Gắn tab đang mở\"; lần sau chọn CHÍNH TÊN ẤY ở bước chọn profile. Ghế đó dính");
+          console.log("       vào một tab, nên anh dùng Chrome thoải mái mà chuỗi không đọc nhầm.");
+        }
         /* GHI CẢ HAI ĐẦU CỦA PHÉP SO, không chỉ câu kết luận. Lượt 14:31 ngày 12/09 chỉ ghi
            `vi`, nên "có lượt gõ lạ" đọc ra y hệt nhau ở hai ca hoàn toàn khác nhau: người ta
            gõ thật, và mốc bị ghim bằng `null` (B-80). Phải đọc mã nguồn mới phân biệt được —

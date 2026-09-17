@@ -810,3 +810,34 @@ Ghim ⑷ canh đúng chỗ ấy (`M7`, `M8`).
 Suite **140/140**. Đột biến **18/18 bắt được**: 8 cho nhánh chạy-tiếp, 10 cho trần timeout —
 trong đó `N7` canh riêng ca **nới trần người mà kéo theo phanh máy** (ADR-0015), và `N10` canh ca
 **nới luôn nắp `chat.say`**.
+
+## 2026-09-17 (lượt 1) · `claude-gpt-chay-het-job` — B-97: chuỗi chết 5 lần vì một câu nói, không phải vì một lỗi
+
+Đức chạy chuỗi "Scouter Improve 01", **năm lần trong hai phút, cả năm `da_gui: 0`**. Nhật ký:
+`DOI_HOI_THOAI — ghim 6aaae0ae…, giờ là 6aaba9e8…`. **Phép canh `canhTab` CHẠY ĐÚNG** — nó chặn
+đúng việc gõ nhầm hội thoại. Thứ hỏng là **câu nói**: hai dãy hex, không tên hội thoại, không
+cách chữa. Đức bấm lại y nguyên năm lần rồi đi hỏi người.
+
+**NGUYÊN NHÂN GỐC — đọc bằng mã, không đoán.** Ghế **profile** (`--target anhducds`) KHÔNG gắn
+vào tab nào. `chat.read` → `send()` → `activeTab()`; ngoài run thì `state.boundTabId === null`
+→ `pickActiveChatGPTTab()` = `chrome.tabs.query({ active: true, currentWindow: true })`. Tức
+chuỗi đọc **TAB ĐANG Ở TRƯỚC MẶT** trong cửa sổ có side panel. Đức mở hội thoại khác trong cùng
+cửa sổ là chuỗi đọc hội thoại ấy — kể cả **giữa lúc đang chạy**, và nó dừng hẳn.
+
+**CÁCH CHỮA HẲN ĐÃ CÓ SẴN, KHÔNG CẦN MỘT DÒNG MÃ NÀO:** *Phiên làm việc theo tab* trong side
+panel (`sidepanel.html:489`) gắn một ghế CÓ TÊN vào ĐÚNG một tab; ghế ấy **báo danh trên Bridge
+như một phiên riêng** (`bridge-workspace-core.deriveInstance`), host khớp `--target` theo
+`instance.label` (`bridge-host.mjs:372`), và `resolveWorkspaceTab()` dùng `workspace.tab_id` —
+không bao giờ hỏi tab nào đang ở trước. `chon-profile.mjs` liệt kê thẳng từ `bridge.sessions`
+nên ghế ấy **tự hiện trong menu chọn**, không phải sửa launcher.
+⚠ Mới đọc hết đường dây trên mã, **chưa chạy live lần nào**.
+
+**ĐÃ SỬA:** nhánh `DOI_HOI_THOAI` nay in **hai ĐỊA CHỈ đầy đủ** (tên Project đọc được, khác hẳn
+UUID) · một câu **vì sao** · **hai lối chữa** (đưa tab ra trước · gắn phiên làm việc). Không đổi
+một hành vi nào — phép canh vẫn dừng y như cũ.
+
+Ghim Ⓚ: lời khuyên phải **nằm trong** nhánh `DOI_HOI_THOAI` (in vô điều kiện thì ca
+`NGUOI_DANG_DUNG` bị khuyên sai), và **tên mục + tên nút phải khớp `sidepanel.html`**.
+
+Suite **140/140**. Đột biến **7/7** (`P1` in vô điều kiện · `P2`/`P3` bỏ địa chỉ · `P4` vì sao
+chung chung · `P5`/`P6` sai tên mục/nút · `P7` side panel đổi chữ mà lời khuyên không đổi theo).

@@ -1615,3 +1615,55 @@ console.log("chuoi reasoning smoke tests: PASS");
 
   console.log("  ok  Ⓙ lượt dừng có số đo riêng, cùng bộ với lượt nạp lại, cùng nguồn với phép đo tăng trưởng");
 }
+
+/* ---- Ⓚ B-97: lượt dừng DOI_HOI_THOAI phải NÓI CÁCH CHỮA, không chỉ in hai dãy hex -----
+ *
+ * Đo thật 17/09, chuỗi "Scouter Improve 01": Đức bấm chạy NĂM lần trong hai phút, cả năm lần
+ * dừng ở `DOI_HOI_THOAI`, `da_gui: 0`. Dòng in ra là `ghim 6aaae0ae…, giờ là 6aaba9e8…` —
+ * hai UUID và không gì khác. Đức không chuyên kỹ thuật: hai dãy hex không nói được hội thoại
+ * nào, càng không nói được phải làm gì. Phép canh CHẠY ĐÚNG; thứ hỏng là câu nói.
+ *
+ * Nguyên nhân gốc nằm ở tiện ích, đọc bằng mã: ghế PROFILE không gắn vào tab nào, nên
+ * `chat.read` đi qua `send()` → `activeTab()` → `pickActiveChatGPTTab()` =
+ * `chrome.tabs.query({ active: true, currentWindow: true })` — TAB ĐANG Ở TRƯỚC MẶT.
+ *
+ * Ghim CÁI GIÁ chứ không ghim nguyên văn: bắt buộc phải có ⑴ hai địa chỉ đầy đủ (tên Project
+ * đọc được, khác hẳn UUID), ⑵ một câu vì sao, ⑶ lối chữa hẳn bằng phiên-làm-việc-theo-tab.
+ * Và phải NẰM TRONG nhánh DOI_HOI_THOAI: in vô điều kiện thì lượt dừng `NGUOI_DANG_DUNG` —
+ * ca Đức đang gõ thật — lại được khuyên đi gắn phiên làm việc, tức khuyên sai.
+ */
+{
+  const src = fs.readFileSync(
+    new URL("../duc-auto-chatgpt-loopback-bridge-host-v1/chuoi-reasoning.mjs", import.meta.url), "utf8");
+  const ma = boChuThich(src);
+
+  const iCua = ma.indexOf('DOI_HOI_THOAI/.test(canh.vi');
+  assert.ok(iCua > 0, "lời khuyên phải đứng sau MỘT phép kiểm mã lỗi — không được in cho mọi lượt dừng");
+
+  const iHet = ma.indexOf("lyDo = canh.vi;", iCua);
+  assert.ok(iHet > iCua, "khối khuyên phải nằm gọn trước lúc chốt lý do dừng");
+  const khoi = ma.slice(iCua, iHet);
+
+  /* ⑴ HAI ĐẦU CỦA PHÉP SO, dạng ĐỊA CHỈ. `canh.vi` đã có hai UUID rồi — thứ nó thiếu là
+     đường dẫn, vì tên Project nằm trong đường dẫn và đó là thứ người đọc nhận ra. */
+  assert.ok(khoi.includes("${urlGhim}"), "phải in ĐỊA CHỈ đã ghim, không chỉ id");
+  assert.ok(khoi.includes("${r.url}"), "phải in ĐỊA CHỈ đang đọc được, không chỉ id");
+
+  /* ⑵ VÌ SAO — và phải nêu đúng cơ chế, không nói chung chung "sai tab". */
+  assert.ok(/TAB ĐANG Ở TRƯỚC MẶT/.test(khoi), "phải nói rõ ghế profile đọc tab đang ở trước mặt");
+
+  /* ⑶ LỐI CHỮA HẲN. Chỉ bảo "đưa tab ra trước" là dạy một mẹo vá tạm: Đức chạy chuỗi 60 phút
+     rồi đi làm việc khác, nên cái anh cần là ghế dính vào một tab. */
+  assert.ok(/Phiên làm việc theo tab/.test(khoi), "phải chỉ đúng tên mục trong side panel");
+  assert.ok(/Gắn tab đang mở/.test(khoi), "phải chỉ đúng tên nút bấm");
+  assert.ok(/--target|profile/.test(khoi), "và phải nói dùng tên ghế ấy ở bước chọn, nếu không thì gắn xong vẫn chạy nhầm");
+
+  /* Tên mục và tên nút phải khớp CHÍNH XÁC chữ trên side panel. Khuyên bấm một nút không tồn
+     tại còn tệ hơn không khuyên gì: Đức sẽ đi tìm, không thấy, rồi quay lại hỏi người. */
+  const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf8");
+  for (const chu of ["Phiên làm việc theo tab", "Gắn tab đang mở"]) {
+    assert.ok(html.includes(chu), `sidepanel.html không còn chữ "${chu}" — lời khuyên đã trỏ vào hư không`);
+  }
+
+  console.log("  ok  Ⓚ DOI_HOI_THOAI nói ra cách chữa, và tên nút khớp side panel");
+}
