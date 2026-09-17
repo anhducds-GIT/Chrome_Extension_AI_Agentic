@@ -86,5 +86,5 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 - lifecycle: active
 - last_verified: 2026-09-16
-- next_step: "N1 nua sau: CAI GI giet may chu Bridge giua phien. Gia thuyet Start-Process-bi-don-theo-cha da bi LAT 17/09 (G-98: ba may chu dang song deu co cha da chet) — nguyen nhan that CHUA BIET, dung chep dong da gach thanh ket luan. Chu ky duy nhat biet duoc: stderr rong, tuc bi giet chu khong tu loi; ung vien re nhat chua do la chinh bo khoi dong (-KhoiDongLai goi Stop-Process -Force). Nua mang lai tien da xong: fetch failed nay tach ECONNREFUSED (khong ai nghe) khoi ca dut-giua-chung (bat lai khong chua duoc). Ke do N4: scout.type, scout.text, scout.grab chua cham tldraw lan nao — can Duc mo mot tab. R2 va R3 KHONG con parked: ca hai da dong 17/09 bang luot chay that."
-- human_action: "khong"
+- next_step: "A1 A2 A3 dong 17/09; con A4 va A5, ca hai dang co phien khac dong toi — hoi truoc khi gianh. Roi D2 (audit doc lap) va D4 (rut phan dung chung khoi udin-optic/tu-dong ma khong de them fork). Ba muc do, kem co do tuoi bat buoc cua D2: CHUOI-VIEC.md."
+- human_action: "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai."
