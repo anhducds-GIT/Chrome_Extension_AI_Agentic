@@ -49,6 +49,27 @@ export const MAX_INFLIGHT = 32;
  * Đây chỉ là một lượt đặt tên — không đổi một hành vi nào, không đổi giao thức. */
 export const DEFAULT_REQUEST_TIMEOUT_MS = 35000;
 
+/* HAI CÂU LỖI DƯỚI ĐÂY TỪNG HỨA MỘT THỨ MÁY CHỦ NÀY KHÔNG CÓ. Sửa 17/09.
+ *
+ * Nguyên văn cũ: *"retry the identical idempotency key."* Câu ấy ĐÚNG ở nơi nó ra đời —
+ * `duc-auto-chatgpt/bridge-core.js` và `duc-auto-gemini/bridge-core.js` phía extension đều có
+ * kho phát lại khoá `client_id\0request_id` kèm `REQUEST_ID_REUSED`, nên gọi lại cùng khoá thì
+ * lượt hai KHÔNG ghi lần nữa. Nó được chép sang đây cùng bảng mã lỗi, nhưng **máy móc thì không
+ * đi theo**. Đo 17/09: máy chủ này 0 chỗ khai `REQUEST_ID_REUSED`, `request_id` chỉ dùng để
+ * khớp lượt gọi với lượt trả; phía extension của `duc-scouter` và `udin-optic` cũng 0.
+ * Tức là trên dây Scouter/Udin, lời hứa ấy KHÔNG có ai đỡ, từ đầu tới cuối.
+ *
+ * Vì sao chưa ai chết: mọi lệnh GHI của Scouter đều `retryable:false` kèm đọc-lại
+ * (`WRITE_NOT_OBSERVED` · `CLICK_NOT_OBSERVED` · `CLEAR_NOT_OBSERVED`), và chỗ DUY NHẤT tự thử
+ * lại trong repo là `udin-optic/tu-dong/lay-anh.mjs` — một lệnh ĐỌC, có trần, có phép ghim.
+ * Nên đây là một CÂU NÓI DỐI, chưa phải một lượt ghi hai lần. Nhưng cái giá của nó có tiền lệ
+ * đo thật ngày 08/09 ở gói chatgpt (`bridge-cli.mjs`): một lượt ghi hết giờ, thử lại bằng khoá
+ * MỚI, và checkpoint nhảy v2 → v3 cho hai lượt ghi có ý định.
+ *
+ * NỢ CÒN LẠI, và nó không đóng bằng lượt sửa này: máy chủ vẫn KHÔNG khử trùng lặp. Ngày nào một
+ * người gọi tự thử lại một lệnh ghi thì phải chép kho phát lại từ `bridge-core.js` sang. Ghi ở
+ * `workers/duc-scouter/v0.1.0/BACKLOG.md` (`S-32`). Một chỗ nữa CÙNG BỆNH mà lượt này KHÔNG
+ * chạm vì khác vùng sở hữu: `duc-auto-chatgpt/.../bridge-host-v1/bridge-host.mjs:18-19`. */
 const ERRORS = Object.freeze({
   INVALID_ENVELOPE: { retryable: false, message: "The RPC envelope is invalid." },
   UNAUTHENTICATED: { retryable: false, message: "Bridge authentication failed." },
@@ -56,8 +77,8 @@ const ERRORS = Object.freeze({
   EXTENSION_OFFLINE: { retryable: true, message: "No authenticated extension connection is available." },
   TARGET_AMBIGUOUS: { retryable: false, message: "More than one extension session is connected; name exactly one target." },
   TARGET_NOT_CONNECTED: { retryable: true, message: "The named target session is not connected." },
-  REQUEST_TIMEOUT: { retryable: true, message: "The request timed out; retry the identical idempotency key." },
-  TRANSPORT_DISCONNECTED: { retryable: true, message: "The transport disconnected; retry the identical idempotency key." },
+  REQUEST_TIMEOUT: { retryable: true, message: "The request timed out; the call may already have taken effect. This bridge does NOT de-duplicate requests: retry read-only methods only." },
+  TRANSPORT_DISCONNECTED: { retryable: true, message: "The transport disconnected; the call may already have taken effect. This bridge does NOT de-duplicate requests: retry read-only methods only." },
   INTERNAL_ERROR: { retryable: false, message: "The bridge could not complete the request." }
 });
 

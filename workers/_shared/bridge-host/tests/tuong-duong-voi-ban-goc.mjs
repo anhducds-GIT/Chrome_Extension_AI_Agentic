@@ -13,6 +13,7 @@
  */
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -142,4 +143,58 @@ function soSanh(ten, chay) {
   assert.equal(moi.MAX_INFLIGHT, goc.MAX_INFLIGHT);
 }
 
-console.log("tuong-duong-voi-ban-goc: PASS (5 khoi)");
+/* ---- ⑥ BẢNG MÃ LỖI — khối này SINH RA VÌ ĐẦU FILE NÓI DỐI ---------------
+ *
+ * Đầu file khai *"mọi thứ khác phải khớp từng ký tự"*. Ngày 17/09 tôi đổi hai câu lỗi của lõi
+ * mới và **cả suite vẫn xanh** — vì `ERRORS` là `const` trong thân module, không xuất ra, nên
+ * bốn khối trên KHÔNG với tới nó. Lời khai kia chưa bao giờ đúng với bảng mã lỗi.
+ *
+ * Khối này đọc THẲNG VĂN BẢN của hai file, vì đó là đường duy nhất tới một `const` không xuất.
+ * Nó neo vào đúng khối `Object.freeze({…})` chứ không quét cả file — quét cả file thì nó sẽ
+ * khớp phải chính đoạn chú thích này.
+ *
+ * LỆCH CÓ KHAI: hai mã dưới `LECH_CO_CHU_Y`. Bản gốc dặn *"retry the identical idempotency
+ * key"* và ở đó câu ấy ĐÚNG; lõi này không có kho phát lại nên câu ấy là lời hứa suông (xem
+ * khối chú thích ở `bridge-host-core.mjs`). Mọi mã KHÁC lệch nhau vẫn là lỗi.
+ */
+{
+  const docBang = async (duong) => {
+    const chu = await fs.readFile(duong, "utf8");
+    const khoi = chu.match(/const ERRORS = Object\.freeze\(\{([\s\S]*?)\n\}\);/);
+    assert.ok(khoi, `${duong}: khong tim thay khoi ERRORS — mo neo gay, dung doc ket qua duoi`);
+    const bang = new Map();
+    for (const d of khoi[1].matchAll(/^\s*([A-Z_]+):\s*\{\s*retryable:\s*(true|false),\s*message:\s*"((?:[^"\\]|\\.)*)"/gm)) {
+      bang.set(d[1], { retryable: d[2] === "true", message: d[3] });
+    }
+    assert.ok(bang.size >= 8, `${duong}: chi doc duoc ${bang.size} ma — mo neo doc SAI, khong phai bang ngan`);
+    return bang;
+  };
+
+  const bangGoc = await docBang(BAN_GOC);
+  const bangMoi = await docBang(path.resolve(HERE, "..", "bridge-host-core.mjs"));
+  const LECH_CO_CHU_Y = new Set(["REQUEST_TIMEOUT", "TRANSPORT_DISCONNECTED"]);
+
+  assert.deepEqual([...bangMoi.keys()].sort(), [...bangGoc.keys()].sort(),
+    "hai ban khai KHAC BO ma loi — them hay bot mot ma la mot lech that");
+
+  let daLech = 0;
+  for (const [ma, moiV] of bangMoi) {
+    const gocV = bangGoc.get(ma);
+    assert.equal(moiV.retryable, gocV.retryable, `${ma}: co retryable lech nhau — khong bao gio duoc phep`);
+    if (LECH_CO_CHU_Y.has(ma)) {
+      assert.notEqual(moiV.message, gocV.message,
+        `${ma}: khai la LECH CO CHU Y nhung hai ben lai giong nhau — ai do da dong bo nguoc, hoac dong khai nay da chet`);
+      assert.doesNotMatch(moiV.message, /idempotency key/,
+        `${ma}: loi hua kho phat lai da quay lai, trong khi may chu nay van khong khu trung lap`);
+      daLech += 1;
+    } else {
+      assert.equal(moiV.message, gocV.message, `${ma}: lech mot cau loi ma khong khai o LECH_CO_CHU_Y`);
+    }
+  }
+  /* Đếm mỏ neo, đừng tin im lặng: `LECH_CO_CHU_Y` gõ sai tên mã thì vòng trên không vào nhánh
+   * nào và khối này xanh mà chẳng kiểm gì — đúng hình dạng "harness SKIP im lặng". */
+  assert.equal(daLech, LECH_CO_CHU_Y.size,
+    `chi ${daLech}/${LECH_CO_CHU_Y.size} ma lech duoc kiem — ten ma trong LECH_CO_CHU_Y sai chinh ta`);
+}
+
+console.log("tuong-duong-voi-ban-goc: PASS (6 khoi)");

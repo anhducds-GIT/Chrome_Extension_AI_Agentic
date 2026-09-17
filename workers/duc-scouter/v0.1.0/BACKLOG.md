@@ -830,3 +830,60 @@ CloudFront signed, Firebase, Cloudinary có hạn giờ) đều dừng ở đây
 hoặc Đức chốt là KHÔNG làm, và mục này đóng bằng một dòng ghi lý do.
 
 **~~S-24~~ ĐÓNG 14/09 — đường ⓜ được chọn và ĐÃ LÀM XONG.** `scout.grab` nhận selector, extension tự đọc `src` đầy đủ **bên trong** rồi tải, nên URL ký sẵn không bao giờ ra khỏi trình duyệt. `stripQuery` **không bị nới một chốt nào** — đúng điều mục này đòi. Đo 17/09: phép ghim riêng `tests/scouter-grab-smoke.mjs`; đột biến kiểm khai `scout.grab` là *đường vào thứ BA* và đếm 2→3; chạy thật mỗi lượt `W3` của Udin (bốn `.jpg` về đĩa, [bằng chứng 17/09](../../udin-optic/v0.1.0/evidence/2026-09-17-vong-tham-chieu-tron-ven.md)). *(Tiêu đề vẫn ghi `MỞ` suốt ba ngày dù chính lệnh này chạy hàng ngày.)*
+
+## S-32 — máy chủ Bridge KHÔNG khử trùng lặp, và câu lỗi từng hứa ngược lại
+
+**MỞ 17/09.** Nêu ra từ một lượt nghiên cứu đối chiếu (GPT dựng, tôi đo lại). Bản GPT xếp đây là
+gap kiến trúc lớn nhất; đo xong thì nó **nhỏ hơn 20 lần** — nhưng không phải là không có.
+
+**Đo được gì.** Bốn máy chủ trong repo dùng chung một bảng mã lỗi, và **hai trong bốn nói dối**:
+
+| File | Có kho phát lại (`REQUEST_ID_REUSED`) | Câu *"retry the identical idempotency key"* |
+|---|---|---|
+| `duc-auto-chatgpt/v0.1.0/bridge-core.js` | **CÓ** (3 chỗ) | đúng |
+| `duc-auto-gemini/v0.2.0/bridge-core.js` | **CÓ** (2 chỗ) | đúng |
+| `_shared/bridge-host/bridge-host-core.mjs` | **KHÔNG** | **SAI** — đã sửa 17/09 |
+| `duc-auto-chatgpt/.../bridge-host-v1/bridge-host.mjs` | **KHÔNG** | **SAI** — còn nguyên, khác vùng sở hữu |
+
+Phía extension của `duc-scouter` và `udin-optic` cũng **0 chỗ** khai `REQUEST_ID_REUSED`. Tức là
+trên dây Scouter/Udin lời hứa ấy không có ai đỡ, từ đầu tới cuối.
+
+**Vì sao nó CHƯA cắn ai.** Mọi lệnh GHI của Scouter đều `retryable:false` kèm đọc-lại
+(`WRITE_NOT_OBSERVED` · `CLICK_NOT_OBSERVED` · `CLEAR_NOT_OBSERVED`, cái cuối đóng 16/09), và chỗ
+DUY NHẤT tự thử lại trong repo là `udin-optic/tu-dong/lay-anh.mjs` — một lệnh **ĐỌC**, có trần,
+có phép ghim. Nên hôm nay đây là **một câu nói dối**, chưa phải một lượt ghi hai lần.
+
+**Giá của nó có tiền lệ đo thật.** 08/09, gói chatgpt (`bridge-cli.mjs`): một lượt ghi hết giờ,
+công cụ thử lại bằng khoá **MỚI**, checkpoint nhảy **v2 → v3** cho hai lượt ghi có ý định.
+
+**Đã làm 17/09 (không đóng mục này).** ⑴ Hai câu lỗi ở `bridge-host-core.mjs:59–60` nay nói đúng
+sự thật: *"the call may already have taken effect. This bridge does NOT de-duplicate requests:
+retry read-only methods only."* ⑵ Một lượt sửa **phép ghim** đi kèm, vì nó là một màu xanh giả —
+xem `S-33`.
+
+· **đóng khi:** máy chủ khử trùng lặp thật (chép kho phát lại từ `bridge-core.js` sang, khoá
+`client_id\0request_id`, có `REQUEST_ID_REUSED`, có phép ghim bắt được lượt gọi thứ hai) — **hoặc**
+khai thẳng là không làm, và khi ấy phải có một phép ghim canh *không người gọi nào tự thử lại một
+lệnh GHI*, vì hôm nay điều đó chỉ đúng do may.
+
+## S-33 — phép ghim "khớp từng ký tự" không hề so bảng mã lỗi
+
+**MỞ và ĐÓNG 17/09.** Tìm ra **trong lúc** sửa `S-32`, và nó là lý do mục này đáng ghi riêng:
+tôi đổi hai câu lỗi của lõi dùng chung, chạy lại cả năm phép ghim của `_shared/bridge-host/` —
+**xanh hết**. Trong khi đầu file `tests/tuong-duong-voi-ban-goc.mjs` khai nguyên văn *"Mọi thứ
+khác phải khớp từng ký tự."*
+
+**Gốc bệnh.** `ERRORS` là `const` trong thân module, **không xuất ra**, nên bốn khối so sánh của
+phép ghim không với tới nó; khối ⑤ chỉ so ba hằng số có `export`. Lời khai kia chưa bao giờ đúng
+với bảng mã lỗi — nó đúng với thứ phép ghim **với tới được**.
+
+**Đúng họ với `A1`** (sáu hàng cổng chưa đỏ lần nào): một phép kiểm *giải thích* thay vì *assert*.
+Và đúng cái cơ chế đẻ ra `S-32` — bản chép trôi ở đúng chỗ không ai ghim.
+
+**Đã sửa.** Khối ⑥ mới đọc thẳng văn bản hai file, neo vào đúng khối `Object.freeze({…})` (không
+quét cả file — quét cả file thì nó khớp phải chính đoạn chú thích vừa viết), dựng bảng
+`mã → {retryable, message}` rồi so. Hai mã lệch nay là **lệch CÓ KHAI** (`LECH_CO_CHU_Y`), và
+khối tự đếm mỏ neo: gõ sai tên mã thì nó ĐỎ chứ không im lặng bỏ qua.
+
+· **đóng khi:** ~~khối ⑥ chạy và chứng minh đỏ được~~ — **ĐÓNG**: xanh ở bản hiện tại, và đỏ khi
+đồng bộ ngược câu lỗi về nguyên văn cũ (đo 17/09, xem `HANDOFF.md`).
