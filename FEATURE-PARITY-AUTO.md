@@ -75,7 +75,7 @@ GPT 35 file `.js` · Gemini 34.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 7259 | 5245 | 2014 |
+| `sidepanel.js` | 7270 | 5245 | 2025 |
 | `content.js` | 1919 | 1197 | 722 |
 | `bridge-transport-loopback.js` | 980 | 516 | 464 |
 | `provider-adapter.js` | 426 | 210 | 216 |
@@ -89,6 +89,7 @@ GPT 35 file `.js` · Gemini 34.
 | `output-location-core.js` | 424 | 373 | 51 |
 | `output-profile-core.js` | 149 | 100 | 49 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
+| `sidepanel-ui-semantics.js` | 143 | 128 | 15 |
 | `bridge-proposal-core.js` | 380 | 387 | 7 |
 | `halt-instructions-core.js` | 147 | 140 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
@@ -98,7 +99,6 @@ GPT 35 file `.js` · Gemini 34.
 | `operator-messages-core.js` | 80 | 80 | 0 |
 | `orchestrator-review-core.js` | 120 | 120 | 0 |
 | `plan-diagnostics-core.js` | 195 | 195 | 0 |
-| `sidepanel-ui-semantics.js` | 128 | 128 | 0 |
 | `xlsx-run-plan-core.js` | 60 | 60 | 0 |
 <!-- AUTO:MODULES END -->
 
