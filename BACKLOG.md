@@ -1167,6 +1167,44 @@ nên lượt này không chạm.
 - **đóng khi:** lệnh: `grep -c "trước khi làm bất cứ việc gì" workers/duc-auto-*/v*/AGENTS.md`
   trả **0** ở cả ba gói — còn thiếu `duc-auto-chatgpt`, chờ lane kia trả khoá.
 
+### Lượt rà lần hai, 17/09 khuya — 6 nơi → **1**, và nó lòi ra một chỗ trôi HỆ THỐNG
+
+Bốn nơi còn lại đã **đọc hết** và đặt ngày: `MULTIFLOW.md` · `ORCHESTRATOR.md` · `PROMPTS.md` ·
+`hnx-fetch/PROTOCOL.md`. Thứ chúng trả về **không phải bốn lỗi rời** mà là một bệnh:
+
+> **`AGENTS.md` đã được đánh số lại khi nén luật, và 21 chỗ trên mặt luật SỐNG vẫn trích số cũ.**
+
+Ba chỗ dẫn người đọc tới một mục nói chuyện **khác hẳn** — `ORCHESTRATOR` *"mục 3 (Phải hỏi Đức
+trước)"* khi mục 3 nay là *Kiểm, commit, đẩy*; *"mục 7 (Sổ tay)"* khi mục 7 nay là *Giới hạn*;
+`MULTIFLOW` *"mục 1 (Khoá)"* khi mục 1 nay là *Một phiên*. Trích sai số **không nổ**: người đọc
+mở đúng file, thấy một mục có thật, rồi làm theo một luật không liên quan.
+
+Đã vá 21 chỗ và **đóng đường về bằng máy**: `tests/trich-muc-agents-smoke.mjs` đọc tiêu đề thật
+của `AGENTS.md` rồi đối chiếu **số · tên · liên kết neo** trên 30 file luật sống (miễn `docs/adr/`,
+`docs/archive/`, `docs/briefs/` — bản ghi quá khứ, sửa cho "khớp hôm nay" là làm giả hồ sơ).
+Thử phá **4/4 đỏ**, mỗi con một câu khẳng định riêng. Đã vào `scripts.test` (35 → 36 suite).
+
+**Phép ghim ấy bắt thêm 2 chỗ `A5` không nhìn tới**, và một trong hai là **câu ví dụ của chính
+luật** *"trỏ tới `AGENTS.md` thì kèm TÊN mục"* trong `RULE-COMPILER.md`. Luật đó viết ra từ 09/09
+đúng vì lý do này, và nó **vẫn ruỗng** — vì không gì cưỡng chế nó.
+
+**Ba chỗ trôi khác, không phải số mục** (chi tiết ở `2218c682`): `MULTIFLOW` dạy một lệnh KHÔNG
+tồn tại (`--khai-vung`, xem `N-68`) · đọc như thể `.agents/claims.json` khai ở `append_only_exempt`
+trong khi chính `.repo-structure.json` nói nó **không được** nằm đó · *"Ba cái bẫy"* rồi liệt kê bốn.
+
+**Nơi cuối cùng — `duc-auto-chatgpt/v0.1.0/AGENTS.md` — đã ĐỌC HẾT nhưng CỐ Ý KHÔNG đặt ngày.**
+Lane `claude-gpt-chay-het-job` giữ khoá, nên ba chỗ trôi dưới đây chưa sửa được; đặt ngày lúc này
+là tắt máy cảnh trong 7 ngày cho một file đang sai. **Ba chỗ cho lane đó:**
+
+| Dòng | Trôi gì |
+|---|---|
+| 3–5 | *"Đọc file này cùng `README.md` và `HANDOFF.md` **trước khi làm bất cứ việc gì**"* — luật chết từ 09/09 (ADR-0034 + ADR-0035). Hai gói kia đã gỡ; đây là bản thứ ba |
+| 86 | *"**Chín** luật vàng ngay trên"* — mục *Luật vàng* chỉ còn **bốn** mục, từ lượt đưa ⑴–⑷ về lõi dùng chung |
+| 17 | *"`run.trial` trong đúng các nắp cứng ở **luật 7**"* — không có luật 7; bốn nắp cứng nằm ở **luật 2** |
+
+- **đóng khi:** lệnh: `node -e "const r=require(./.repo-structure.json).luat.ra_soat; process.exit(Object.values(r).some(d=>d<2026-09-17)?1:0)"` thoát 0.
+- **đóng khi:** đức: lane `claude-gpt-chay-het-job` trả khoá `workers/duc-auto-chatgpt`, hoặc Đức chốt chuyển.
+
 ## N-67 · Sổ cái MÁY SINH của hai gói bỏ sót quyết định, và cả hai đều tự khai là "đầy đủ"
 
 **Đo 17/09, trong lượt rà `A5`.** Bộ sinh (`rule-compile.mjs --sinh`) đọc `docs/adr/` của gói và
@@ -1196,6 +1234,51 @@ chính file ấy nói bảng tay *"đã chuyển sang ADR"*, tức mô tả mộ
   sinh của `decisions.md` — tức mọi ADR của gói đều khai `nhom:`.
 - **đóng khi:** lệnh: sau khi số khớp, 14 bảng gõ tay ở cuối `duc-auto-gemini/v0.2.0/decisions.md`
   được gỡ, và một phép ghim canh *không nguồn thứ hai nào cho cùng danh sách*.
+
+## N-68 · Một lượt migrate bộ khung đã XOÁ một cửa đã chốt, và phép ghim của nó chết CÂM
+
+**Đo 17/09, trong lượt rà `A5`.** `docs/protocols/MULTIFLOW.md` mục 3a dạy:
+
+```bash
+node scripts/claim.mjs --khai-vung <khoá> --as <phiên>    # mở MỘT VÙNG MỚI
+```
+
+**Lệnh đó không tồn tại.** Chạy nó ra bảng hướng dẫn dùng; `grep -c "khai-vung" scripts/claim.mjs`
+trả **0**.
+
+Nó **từng có thật**: commit `38574081` mở cửa ấy và đóng `N-41` ngày 08/09, kèm **2 phép ghim**
+và một lượt thử phá 4/4 đỏ. Nó biến mất trong `4da1e9e5` — *migrate bộ khung 0.3.0 → 1.8.0*,
+09/09 — lượt thay `scripts/claim.mjs` bằng bản của bộ khung. Thông điệp commit ấy khai *"36 file
+máy + 5 tài liệu"* và khai rõ **không** chạm `workers/`; nó **không** khai rằng một cửa của repo
+này bị thay mất.
+
+**Vì sao 8 ngày không ai kêu — và đây mới là phần đáng sợ:** phép ghim của cửa đó,
+`tests/claim-smoke.mjs`, nay **không nạp nổi**:
+
+```
+SyntaxError: The requested module ../scripts/claim.mjs does not provide an export named BASELINE
+```
+
+Nó nằm trong khu cách ly `npm run test:chet` (`N-65`), tức **không lượt chạy nào của cổng đụng
+tới nó**. Một phép ghim chết trong khu cách ly trông y hệt một phép ghim đang canh: cả hai đều
+không làm cổng đỏ.
+
+**Ba việc, theo thứ tự:**
+
+1. Quyết cửa `--khai-vung` **khôi phục hay bỏ hẳn**. Bỏ thì đường mở vùng mới là sửa
+   `.repo-structure.json` rồi `--restamp` — **phải viết ra**, vì đó chính là đường mà `N-41` gọi
+   là *"một đường hợp lệ trông giống hệt một vụ cướp khoá"*.
+2. `tests/claim-smoke.mjs` viết lại theo API mới, hoặc bỏ kèm lý do — nó là phép ghim của **bảng
+   quyền**, thứ giữ cho hai phiên không cùng ghi một chỗ.
+3. **Câu hỏi lớn hơn cả hai việc trên:** lượt migrate ấy thay 36 file máy. Cửa này là cái tôi
+   tình cờ đụng phải. **Chưa ai đếm xem còn bao nhiêu cửa nữa của repo này bị thay mất cùng
+   lượt đó** — và khu cách ly 8 bài nghĩa là 8 phép ghim không kêu được.
+
+- **đóng khi:** lệnh: `grep -c "khai-vung" docs/protocols/MULTIFLOW.md scripts/claim.mjs` — hoặc
+  cả hai > 0 (khôi phục), hoặc cả hai = 0 kèm một dòng ghi lý do bỏ trong mục này.
+- **đóng khi:** lệnh: `node tests/claim-smoke.mjs` thoát 0, hoặc file đã bị gỡ kèm lý do.
+- **đóng khi:** đức: có một lượt đếm cửa `4da1e9e5` đã thay mất — so danh sách lệnh/cờ của
+  `scripts/*.mjs` trước và sau commit đó.
 
 ### KHUNG-M8 · Cửa audit của `safe-push` thưởng cho im lặng, phạt người khai thật
 
