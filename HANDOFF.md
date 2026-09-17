@@ -601,4 +601,19 @@ còn lại** của 14 hồ sơ `EXP-*` Đức chốt xoá 08/09 — đụng vào
 ý**, cùng lý lẽ đã áp 02/09 cho các dòng `Nguồn: drafts/…`: sửa trích nguồn trong một bản ghi là
 làm sai bản ghi.
 
+## 2026-09-17 · `claude-scouter-udine` — lượt đẩy `--carry`, kể tên lane bị cuốn theo
+
+`safe-push` từ chối lượt đẩy thẳng: 22 commit chưa đẩy của tôi nằm **sau** bốn commit của lane
+`claude-gpt-chay-het-job`, và git đẩy cả chuỗi. Luật mục 3 cho `--carry` không phải hỏi
+([ADR-0005](docs/adr/0005-lam-viec-song-song.md) ⑶), đổi lại **kể tên**. Bốn commit bị cuốn theo:
+
+- `4331a43` fix(gpt): nút chọn thư mục khai đúng việc nó sắp làm (B-101 phần 2)
+- `1e3095a` test(gpt): siết phép ghim nhãn nút — đột biến M17 từng lọt
+- `4e9d0f9` docs(gpt): ghi vòng soát chéo Codex vào B-101, STATUS, HANDOFF
+- `93a270c` chore(bang): sinh lại trang tổng theo HEAD mới
+
+Cả bốn đều ở vùng `workers/duc-auto-chatgpt`, vùng lane ấy đang giữ; không commit nào của tôi
+chạm vào đó. Lượt đẩy không `--force`, không sửa lịch sử. Sòng phẳng hai chiều: hôm nay lane ấy
+đã đẩy hộ commit của tôi **hai lần**, và lần này tôi đẩy hộ họ.
+
 <!-- HANDOFF-THANG: 2026-09 -->
