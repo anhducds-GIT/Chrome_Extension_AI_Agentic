@@ -132,4 +132,5 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | **Bộ biên dịch luật / đo phần nạp bằng token** | `scripts/rule-compiler.mjs` — `npm run luat` |
 | **Đào lịch sử xa hơn phần còn lại trong `HANDOFF.md`** | `docs/archive/` — phần cũ **dời** sang đó bằng `npm run don`, **giữ nguyên từng chữ**. Dời chứ không xoá: cổng đối chiếu byte, dòng nào không có bản khớp trong kho lưu trữ là ĐỎ |
 | **Một hàng cổng "chưa từng đỏ" — nó ĐỎ ĐƯỢC không?** | `tests/cong-do-that.mjs` — `npm run test:do-that`. Mỗi hàng một ca hỏng thật, đo HAI vế (xanh trước khi bẻ, đỏ sau khi bẻ), bẻ trong kho tạm chứ không bao giờ trong cây làm việc |
+| **Trỏ tới một mục của file này từ chỗ khác** | Kèm **TÊN** mục, đừng chỉ số — số là vị trí và nó đổi mỗi lượt sắp xếp lại. `tests/trich-muc-agents-smoke.mjs` canh số · tên · liên kết neo trên mọi file luật sống (17/09: 21 chỗ đã trỏ sai) |
 <!-- BAN-DO:END -->
