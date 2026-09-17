@@ -93,5 +93,5 @@ thì Chrome chỉ trao cho một, và cái mất phím là cái không còn phan
 ## Trạng thái mới nhất
 
 - lifecycle: building
-- next_step: "VONG THAM CHIEU BAY CHANG (W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4), chay that 17/09. Lam ca hai ca cua Duc: --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai (tha bang scout.tha, KHONG hop thoai — do 0/14 va 0/11 lan dem). Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src: src bi cat o 200 ky tu va hai anh khac han nhau cho ra hai chuoi y het. Duc khoanh pham vi 17/09: CHI hoan thien Udin — R2 va R3 (phuc vu Scouter) PARKED."
+- next_step: "CA HAI CA CUA DUC CHAY TRON BANG MOT LENH (do that 17/09): --anh canvas:<mau src> cho anh Udin tu sinh, --anh <duong vung ghi> cho anh tu ngoai. Bay chang W1 -> NGUON -> CHON -> W2 -> W3 -> JPG -> W4, khong mot hop thoai nao. Danh tinh anh canvas la data-image-id (ADR-0009), KHONG phai src. Man chan User Limit Reached la BUG: Duc chot cu an, quaManCho bam lai toi 12 luot. Con mo: S-31 — CAN DUC CHOT. R2/R3 PARKED."
 - human_action: "khong"
