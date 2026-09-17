@@ -68,7 +68,11 @@ dựng nổi ca hỏng*, và khi ấy nó chưa bao giờ là phép kiểm, ph�
 `.claude/worktrees/nifty-benz-a66fbf/`** — một worktree mà **git không track một file nào**
 (`git ls-files` đếm 0). Repo thật chỉ có ~**5**.
 Cùng họ `worktree-hostile-checks`: bộ đo quét ĐĨA trong khi repo được định nghĩa bởi GIT.
-**Đối chứng để khỏi vơ đũa:** `can-nang.mjs` đọc từ git nên nó **KHÔNG** bị thổi — ba con số ngân
+**Đối chứng — và câu này SAI, audit độc lập bác 17/09.** Tôi viết *"`can-nang.mjs` đọc từ git nên
+nó KHÔNG bị thổi"*. Sai: `liet()` của nó **cũng `fs.readdirSync`**, cũng quét đĩa. Kết luận đúng
+nhưng **lý do sai**, mà lý do mới là thứ phiên sau tin theo. Đo lại: 42 file `.md` dưới `docs/`,
+**42/42 đều được git track** — số 9.958 sạch vì CÂY HÔM NAY sạch, không phải vì công cụ hỏi git.
+*(Dòng cũ để nguyên bên dưới, đúng luật gạch-tại-chỗ.)* ~~`can-nang.mjs` đọc từ git nên nó~~ ba con số ngân
 sách ở `A4` là thật, đừng gạch chúng theo.
 **Đóng khi:** bộ quét bỏ qua `.claude/worktrees/`, con số mồ côi đo lại, và **5 mục thật** kia
 được xử từng cái.

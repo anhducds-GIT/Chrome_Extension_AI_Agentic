@@ -280,22 +280,45 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
       theoVanTay.get(v).push({ file: f.duongDan, dong: d.dong, noiDung: d.noiDung });
     }
   }
-  /* TRÙNG CỐ Ý — khai ở `luat.trung_co_y`, khoá là **dấu vân tay**, giá trị là LÝ DO.
-     Cùng lý lẽ đã viết cho `mo_coi_co_y` ngay trên, và có một ca thật: ba dòng *"Ba việc phải
-     hỏi Đức"* của `hnx-fetch` **cố ý** nằm ở CẢ `AGENTS.md` lẫn `PROTOCOL.md` — Đức chốt 08/09
-     rằng `PROTOCOL.md` phải **tự đứng một mình**, viết cho một AI không đọc file kia, và một sổ
-     tự đứng mà thiếu danh sách an toàn của chính nó là một sổ nguy hiểm. Câu trả lời ấy đã ghi
-     ngay tại chỗ từ 08/09, nhưng ③ vẫn đếm nó mỗi lượt chạy — tức một con số KHÔNG BAO GIỜ về 0,
-     và một phép kiểm không bao giờ về 0 thì người ta thôi đọc.
+  /* TRÙNG CỐ Ý — khai ở `luat.trung_co_y`. Khoá là **dấu vân tay**, giá trị PHẢI là
+     `{ ly_do, o: [<các file>] }`. Ca thật: ba dòng *"Ba việc phải hỏi Đức"* của `hnx-fetch`
+     **cố ý** nằm ở CẢ `AGENTS.md` lẫn `PROTOCOL.md` — Đức chốt 08/09 rằng `PROTOCOL.md` phải
+     **tự đứng một mình**, viết cho một AI không đọc file kia. Câu trả lời ấy ghi ngay tại chỗ từ
+     08/09, nhưng ③ vẫn đếm nó mỗi lượt — một con số không bao giờ về 0 là một phép kiểm người ta
+     thôi đọc.
 
-     KHOÁ LÀ VÂN TAY, KHÔNG PHẢI CẶP FILE, và đó là chỗ cố ý không nới: miễn theo cặp file nghĩa
-     là mọi dòng trùng sau này giữa hai file đó cũng im luôn. Vân tay đổi khi CHỮ đổi, nên sửa
-     lời một trong hai bản là lượt miễn hết hiệu lực và cặp ấy quay lại hỏi — đúng chiều
-     fail-toward-asking. */
+     ─── PHẢI KHAI CẢ DANH SÁCH FILE, VÀ ĐÂY LÀ CHỖ BẢN ĐẦU SAI ─────────────────
+     Bản đầu (17/09) chỉ khoá theo VÂN TAY, kèm một lời tự khen rằng như thế là fail-toward-asking
+     vì "sửa lời một bản thì lượt miễn hết hiệu lực". **Audit độc lập bác đúng chiều tôi không
+     nhìn:** vân tay chỉ canh chiều SỬA CHỮ, không canh chiều THÊM BẢN CHÉP. Chép nguyên câu ấy
+     sang một file luật THỨ BA thì nhóm trùng vẫn mang đúng vân tay đó và **bị miễn im lặng** —
+     tức lượt miễn rộng hơn hẳn quyết định mà nó ghi lại. Nặng hơn: `vanTay()` bỏ thứ tự từ, số
+     và dấu, nên hai luật NGƯỢC NGHĨA nhau ("xoá X trước khi thêm Y" ↔ "thêm X trước khi xoá Y")
+     có thể ra cùng một vân tay và ăn theo lượt miễn.
+
+     Nay phải khớp **cả tập file**: đúng những file đã khai, không thừa không thiếu. Bản chép thứ
+     ba làm tập file lệch đi ⇒ lượt miễn hết hiệu lực ⇒ nhóm quay lại bảng. Khai thiếu `o` thì
+     KHÔNG miễn gì cả và nói ra — một khai báo hỏng phải ồn, không được im. */
   const trungCoY = new Map(Object.entries(dangKy.trung_co_y ?? {}));
+  const khaiHong = [];
+  const duocMien = (vanTayNhom, cacFile) => {
+    if (!trungCoY.has(vanTayNhom)) return false;
+    const khai = trungCoY.get(vanTayNhom);
+    const o = Array.isArray(khai?.o) ? khai.o : null;
+    if (!o) { khaiHong.push(vanTayNhom); return false; }
+    const daKhai = new Set(o);
+    return daKhai.size === cacFile.size && [...cacFile].every((f) => daKhai.has(f));
+  };
   const trung = [];
   for (const [v, cho] of theoVanTay) {
-    if (new Set(cho.map((c) => c.file)).size > 1 && !trungCoY.has(v)) trung.push(cho);
+    const cacFile = new Set(cho.map((c) => c.file));
+    if (cacFile.size > 1 && !duocMien(v, cacFile)) trung.push(cho);
+  }
+  if (khaiHong.length) {
+    /* Không ném: bộ này còn ba phép kiểm khác phải chạy xong. Nhưng phải hiện ra ở nhóm ③, vì
+       một lượt miễn khai hỏng đọc y hệt một lượt miễn đang chạy. */
+    trung.unshift([{ file: ".repo-structure.json", dong: 0,
+      noiDung: `KHAI_MIEN_HONG: luat.trung_co_y[${khaiHong.join(", ")}] thiếu mảng \`o\` (danh sách file được phép trùng) — KHÔNG miễn gì cả.` }]);
   }
 
   /* ④ — hạn rà soát. Giới hạn ⑨ của `AGENTS.md` nói HẰNG TUẦN; trước file này nó chỉ là chữ. */
@@ -336,7 +359,12 @@ function quet(thuMuc, nhan) {
        * khi repo được định nghĩa bởi GIT**. Hậu quả không phải một con số xấu, mà một con số
        * KHÔNG BAO GIỜ VỀ 0 — và một phép kiểm như thế thì người ta thôi đọc.
        *
-       * Đối chứng để khỏi vơ đũa: `can-nang.mjs` đọc từ git nên nó KHÔNG bị thổi.
+       * ĐỐI CHỨNG — và câu đối chứng ĐẦU TIÊN của tôi ở đây SAI, audit độc lập 17/09 bác:
+       * tôi viết *"`can-nang.mjs` đọc từ git nên nó KHÔNG bị thổi"*. **`liet()` của nó cũng
+       * `fs.readdirSync` — cũng quét ĐĨA.** Kết luận thì đúng, LÝ DO thì sai, và lý do mới là
+       * thứ phiên sau tin theo. Đo lại 17/09: 42 file `.md` dưới `docs/` (trừ adr/archive/
+       * migrations), **42/42 đều được git track, 0 file lạc** — nên con số 9.958 không bị thổi
+       * vì CÂY HÔM NAY SẠCH, không phải vì công cụ hỏi git.
        *
        * ponytail: chặn theo TÊN vì đó đúng chỗ đã đo được. Ngày nào có một bản sao repo nằm ở
        * tên khác, đổi sang hỏi git (`git check-ignore` / `ls-files`) — đắt hơn nhưng tổng quát. */

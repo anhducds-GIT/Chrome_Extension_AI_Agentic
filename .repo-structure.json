@@ -364,9 +364,12 @@
         ]
       }
     },
-    "_trung_co_y_doc": "TRUNG CO Y — khoa la DAU VAN TAY (xem vanTay() trong rule-compile.mjs), gia tri la LY DO. Cung ly le voi mo_coi_co_y: mot con so khong bao gio ve 0 la mot phep kiem nguoi ta thoi doc. Khoa la van tay chu KHONG phai cap file, nen sua loi mot trong hai ban la luot mien het hieu luc va cap ay quay lai hoi.",
+    "_trung_co_y_doc": "TRUNG CO Y — khoa la DAU VAN TAY (xem vanTay() trong rule-compile.mjs), gia tri PHAI la { ly_do, o: [cac file] }. Cung ly le voi mo_coi_co_y: mot con so khong bao gio ve 0 la mot phep kiem nguoi ta thoi doc. SUA 17/09 sau audit doc lap: ban dau chi khoa theo van tay, va nhu the luot mien RONG HON quyet dinh no ghi lai — chep nguyen cau ay sang mot file luat THU BA thi ban chep do cung duoc mien im lang, va vanTay() bo thu tu tu nen hai luat NGUOC NGHIA co the trung van tay. Nay phai khop CA TAP FILE (dung nhung file da khai, khong thua khong thieu). Thieu `o` thi KHONG mien gi ca va bo bien dich noi ra.",
     "trung_co_y": {
-      "cua drive duc goc hoac lieu muc sua thu trong xoa": "Ba dong 'Ba viec phai hoi Duc' cua hnx-fetch CO Y nam o ca AGENTS.md lan PROTOCOL.md. Duc chot 08/09: PROTOCOL.md phai TU DUNG MOT MINH, viet cho mot AI khong doc file kia — mot so tu dung ma thieu danh sach an toan cua chinh no la mot so nguy hiem. Cau tra loi da ghi ngay tai cho o ca hai file tu 08/09."
+      "cua drive duc goc hoac lieu muc sua thu trong xoa": {
+        "ly_do": "Ba dong 'Ba viec phai hoi Duc' cua hnx-fetch CO Y nam o ca AGENTS.md lan PROTOCOL.md. Duc chot 08/09: PROTOCOL.md phai TU DUNG MOT MINH, viet cho mot AI khong doc file kia — mot so tu dung ma thieu danh sach an toan cua chinh no la mot so nguy hiem.",
+        "o": ["workers/hnx-fetch/AGENTS.md", "workers/hnx-fetch/PROTOCOL.md"]
+      }
     },
     "khoi_sinh": {
       "_doc": "Buoc (6) compile: pham vi so cai -> file mang khoi may sinh. KHONG suy tu duong dan — suy ho la doan cho ghi de vao file luat cua nguoi khac. docs/adr/ goc CO Y khong co dich: ban hieu luc goc co thuoc coc 252 dong.",

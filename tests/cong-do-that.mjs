@@ -199,6 +199,25 @@ function doHaiVe(k, tenHang, be) {
   ok("Mọi lệnh git đọc được — kho mất .git thì ĐỎ, không im lặng báo 0");
 }
 
+/* ---- ④b HAI HÀNG NẰM TRÊN CÙNG MỘT CHÂN — audit độc lập 17/09 ------------
+ * Codex nêu đúng một lỗ mà năm khối trên không thấy: sửa `git()` để nó CHỈ ghi lại lỗi của vài
+ * lệnh (ví dụ chỉ `git status`) thì **cả sáu khối này vẫn xanh** — khối ④ vẫn đỏ được vì xoá
+ * `.git` làm mọi lệnh hỏng — trong khi ở một kho THẬT, chỉ cần `ls-files` hỏng là phép quét
+ * secret nhận danh sách rỗng và báo **"sạch"**, còn hàng "Mọi lệnh git đọc được" thì xanh.
+ *
+ * Bẻ ở đây hẹp hơn hẳn khối ④: **hỏng ĐÚNG MỘT lệnh**. `.git/index` hỏng thì `ls-files` chết,
+ * nhưng `rev-parse`/`log` vẫn chạy — nên đây đo đúng cái chân thứ hai vừa dựng, không đo lại
+ * cái chân cũ. */
+{
+  const k = dungKho("secret-rong", { remote: true });
+  try {
+    doHaiVe(k, "Không có secret lọt vào repo", () => {
+      writeFileSync(join(k.fx, ".git", "index"), "khong phai mot index git", "utf8");
+    });
+  } finally { k.don(); }
+  ok("Không có secret lọt vào repo — danh sách file rỗng là KHÔNG BIẾT, không phải SẠCH");
+}
+
 /* ---- ⑤ Nhãn lane trong commit -------------------------------------------
  * Bẻ: một commit mang HAI nhãn khác nhau → không quy thuộc được cho ai.
  * Thiếu nhãn thì chỉ NHẮC (cố ý: 509 commit cũ không nhãn), nên ca hỏng phải là nhãn HỎNG. */
@@ -228,4 +247,4 @@ function doHaiVe(k, tenHang, be) {
   ok("Vùng CHỈ-THÊM không bị viết lại — sửa một dòng bằng chứng cũ thì ĐỎ");
 }
 
-console.log(`${NL}${dat}/6 hàng cổng chứng minh được là ĐỎ ĐƯỢC.`);
+console.log(`${NL}${dat}/7 lượt bẻ — mỗi hàng cổng chứng minh được là ĐỎ ĐƯỢC.`);

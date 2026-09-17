@@ -517,4 +517,33 @@ vài dòng **trong mục nhật ký đã commit** cho gọn. Cổng bắt đúng
 bản khớp byte trong kho lưu trữ. Dời chỗ thì được, xoá thì không. **Sửa dòng cũ không phải là ghi
 Log**."* Mục cũ đã trả về nguyên văn; phần thêm nằm ở đây, đúng chỗ nó phải nằm.
 
+## 2026-09-17 · `claude-scouter-udine` — audit độc lập trả ĐỎ, và nó đúng ở bốn chỗ
+
+Đức chốt gọi Codex CLI chạy `Đ2`. Nó đọc thẳng repo trên `HEAD 4f59dc32`, trả **ĐỎ**. `HEAD` và
+`git status` không đổi trước/sau — nó không sửa gì.
+
+**① CAO — lượt miễn `trung_co_y` RỘNG HƠN quyết định nó ghi lại.** Bản đầu khoá theo **vân tay**
+thôi, kèm lời tôi tự khen là fail-toward-asking vì *"sửa lời một bản thì miễn hết hiệu lực"*. Vân
+tay canh chiều SỬA CHỮ — **không canh chiều THÊM BẢN CHÉP**: chép câu ấy sang file luật thứ BA
+thì bản chép đó cũng được miễn, im lặng. Nay phải khớp **cả tập file** (`{ ly_do, o: [...] }`);
+khai thiếu `o` thì KHÔNG miễn gì và bộ biên dịch nói ra. Ghim ⒜⒝⒞ ở `rule-compile-smoke`, **2/2
+đột biến chết**.
+
+**② Hai hàng cổng nằm trên CÙNG MỘT CHÂN.** Sửa `git()` để nó chỉ ghi lỗi của vài lệnh thì cả
+sáu khối `cong-do-that` vẫn xanh — mà ở kho thật, `ls-files` hỏng là phép quét secret nhận danh
+sách rỗng và báo **"sạch"**. Nay danh sách rỗng là `KHONG_SOI_DUOC`, đỏ. Khối ④b bẻ hẹp hơn hẳn
+(hỏng `.git/index` — `ls-files` chết, `log` vẫn sống). Đột biến gỡ chốt → khối ấy đỏ.
+
+**③ Bánh cóc chưa có răng.** `budget.*` tự xưng *"chỉ được HẠ"* nhưng không gì so nó với chính
+nó của hôm qua: nâng trần trong CÙNG commit với phần phình là xanh. Nay `can-nang` so với `HEAD`
+và gọi tên lượt nới. Thử `9958 → 12000`: `✗ TRẦN VỪA BỊ NỚI`.
+
+**④ Một câu đối chứng của tôi SAI.** Tôi viết *"`can-nang.mjs` đọc từ git nên KHÔNG bị thổi"* —
+`liet()` của nó cũng `fs.readdirSync`. **Kết luận đúng, lý do sai**, và lý do mới là thứ phiên
+sau tin. Đo lại: 42/42 file `.md` dưới `docs/` đều được git track — số 9.958 sạch vì **cây hôm
+nay sạch**, không vì công cụ hỏi git. Gạch tại chỗ ở `rule-compile.mjs` và `CHUOI-VIEC.md`.
+
+Hai mục nhận nhưng chưa làm, có số và có chuỗi hỏng: `KHUNG-M6` (bộ đo vẫn quét ĐĨA — chặn một
+cái tên không phải chặn cả lớp) · `KHUNG-M7` (`hang()` khớp `includes`, hôm nay đúng do MAY).
+
 <!-- HANDOFF-THANG: 2026-09 -->

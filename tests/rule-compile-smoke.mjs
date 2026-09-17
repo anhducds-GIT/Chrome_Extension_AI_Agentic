@@ -327,6 +327,42 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
   ok("③ bỏ qua lặp trong cùng một file");
 }
 
+/* ---- ③ LƯỢT MIỄN "TRÙNG CỐ Ý" PHẢI HẸP BẰNG ĐÚNG QUYẾT ĐỊNH NÓ GHI LẠI ----
+ *
+ * Audit độc lập 17/09 bác bản đầu của lượt miễn này, và bác đúng chiều tôi không nhìn. Bản ấy
+ * khoá theo **vân tay** thôi, kèm lời tự khen rằng thế là fail-toward-asking vì *"sửa lời một bản
+ * thì lượt miễn hết hiệu lực"*. Vân tay canh được chiều SỬA CHỮ — nhưng **không canh chiều THÊM
+ * BẢN CHÉP**: chép nguyên câu ấy sang một file luật THỨ BA thì nhóm vẫn mang đúng vân tay đó và
+ * bị miễn im lặng, tức lượt miễn RỘNG HƠN quyết định của Đức.
+ *
+ * Ba vế dưới đây là ba nửa của cùng một câu hỏi, và **thiếu vế ⒝ thì bản hỏng vẫn xanh**. */
+{
+  const vt = vanTay(CAU);
+  const dangKyMien = { ...dangKySach, trung_co_y: { [vt]: { ly_do: "Đức chốt", o: ["AGENTS.md", "docs/protocols/X.md"] } } };
+  const hai = [
+    { duongDan: "AGENTS.md", noiDung: CAU },
+    { duongDan: "docs/protocols/X.md", noiDung: CAU },
+  ];
+
+  /* ⒜ ĐÚNG tập file đã khai → im lặng. Đây là việc lượt miễn sinh ra để làm. */
+  assert.equal(bienDich({ soCai, banHieuLuc: hai, dangKy: dangKyMien, homNay: HOM_NAY }).trung.length, 0,
+    "đúng tập file đã khai thì phải được miễn");
+
+  /* ⒝ BẢN CHÉP THỨ BA → phải quay lại bảng. Vế này là cả lý do khối tồn tại. */
+  const ba = [...hai, { duongDan: "docs/protocols/Z.md", noiDung: CAU }];
+  const kqBa = bienDich({ soCai, banHieuLuc: ba, dangKy: dangKyMien, homNay: HOM_NAY });
+  assert.equal(kqBa.trung.length, 1, "bản chép THỨ BA không nằm trong quyết định của Đức — không được miễn theo");
+  assert.equal(kqBa.trung[0].length, 3);
+
+  /* ⒞ KHAI HỎNG (thiếu `o`) → KHÔNG miễn gì, và phải NÓI RA. Một khai báo hỏng mà im lặng đọc
+     y hệt một lượt miễn đang chạy — đúng bẫy `mutation-harness-silent-skip`. */
+  const kqHong = bienDich({ soCai, banHieuLuc: hai, dangKy: { ...dangKySach, trung_co_y: { [vt]: "chỉ có lý do" } }, homNay: HOM_NAY });
+  assert.ok(kqHong.trung.length >= 1, "khai thiếu `o` thì KHÔNG được miễn");
+  assert.ok(JSON.stringify(kqHong.trung).includes("KHAI_MIEN_HONG"), "và phải kể ra là khai hỏng, đừng im");
+
+  ok("③ lượt miễn trùng cố ý hẹp đúng bằng tập file đã khai (bản chép thứ ba vẫn bị bắt)");
+}
+
 {
   assert.equal(dongLuat("| - dòng này nằm trong bảng nên không phải câu luật đâu nhé |").length, 0);
   assert.equal(dongLuat("```\n- dòng này nằm trong khối mã nên không phải câu luật\n```").length, 0);

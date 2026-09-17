@@ -227,6 +227,32 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS)) {
   const NS = nganSachTu(readStructureFromDisk(ROOT));
   console.log(`${NL}CÂN NẶNG BỘ KHUNG — "có đáng không", không phải "có đúng không"${NL}`);
 
+  /* ---- BÁNH CÓC PHẢI CÓ RĂNG ---------------------------------------------
+   * Audit độc lập 17/09: `budget.*` tự xưng là bánh cóc (*"chỉ được HẠ"*), nhưng **không gì so
+   * nó với chính nó của hôm qua**. Chuỗi hỏng Codex đưa ra, và nó chạy được:
+   *   ⑴ thêm 1.500 dòng tài liệu · ⑵ nâng `tongTaiLieu` lên trong CÙNG commit ·
+   *   ⑶ `can-nang` chỉ so số thực với con số MỚI · ⑷ XANH, và không máy nào nói trần vừa bị nới.
+   * Tức "chỉ được HẠ" là một lời hứa, không phải một cơ chế — đúng bài
+   * `hard-cap-at-generation-not-a-ratchet` mà chính repo này đã ghi.
+   *
+   * Nay so với `HEAD`. Nới một trần là một dòng ✗ có tên, không phải một lượt im lặng.
+   * KHÔNG đọc được `HEAD` thì nói KHÔNG ĐO ĐƯỢC — đừng lặng lẽ cho qua, vì "không có gì nới"
+   * và "không kiểm được" đọc y hệt nhau. */
+  try {
+    const cu = JSON.parse(execSync("git show HEAD:.repo-structure.json", { cwd: ROOT, encoding: "utf8" }))?.budget ?? {};
+    const noi = Object.entries(NS)
+      .filter(([k, v]) => typeof cu[k] === "number" && typeof v === "number" && v > cu[k])
+      .map(([k, v]) => `${k} ${cu[k]} → ${v}`);
+    if (noi.length) {
+      canh.push(`TRẦN VỪA BỊ NỚI: ${noi.join(" · ")}`);
+      console.log(`  ✗ ${"Trần so với HEAD".padEnd(34)} NỚI LÊN: ${noi.join(" · ")}`);
+      console.log("      Bánh cóc chỉ được HẠ. Nới thì phải có ADR nói vì sao con số CŨ sai —");
+      console.log("      không phải vì nó đang vướng. Hạ lại, hoặc viết ADR rồi nói ra ở HANDOFF.");
+    }
+  } catch (e) {
+    console.log(`  · Trần so với HEAD: KHÔNG ĐO ĐƯỢC (${String(e.message).split(NL)[0].slice(0, 60)})`);
+  }
+
   /* ĐO BẰNG TOKEN, không bằng dòng — Đức chốt 09/09. Dùng chung `napContext` với cổng đóng
      phiên và với `npm run luat -- --nap`: ba chỗ hỏi cùng một câu thì phải đọc cùng một phép đo,
      không thì sớm muộn chúng nói ba con số. */

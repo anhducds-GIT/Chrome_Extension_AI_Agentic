@@ -1081,3 +1081,34 @@ hiệu lực đọc y hệt một lượt ghi thành công.
 
 **đóng khi:** `readStructureFromDisk` (hoặc một phép ghim) quét thô văn bản tìm khoá trùng ở mỗi
 cấp và NÉM, kèm một ca hỏng dựng sẵn — chỗ đúng là `tests/cong-do-that.mjs`.
+
+### KHUNG-M6 · Bộ đo vẫn quét ĐĨA trong khi repo được định nghĩa bởi GIT
+
+Audit độc lập 17/09 (Codex) xác nhận: lượt vá `A2` chặn **đúng một cái tên** (`.claude`), không
+chặn cả lớp lỗi. Chuỗi hỏng nó đưa ra, chạy được:
+
+1. Đặt một bản sao repo ở `scratch/repo-copy/docs/adr/…`
+2. Cho `scratch/` vào `.git/info/exclude` → `git ls-files` đếm **0 file** từ đó
+3. `quet(ROOT, …)` vẫn đi vào, vì chỉ bốn cái tên được bỏ qua
+4. ADR trong đó vào `soCai`, con số mồ côi lại phồng
+
+**Không chỉ `rule-compile.mjs`:** `liet()` của `can-nang.mjs` cũng `fs.readdirSync`, tức
+**câu đối chứng tôi viết ngày 17/09 — *"can-nang đọc từ git nên không bị thổi"* — là SAI.** Kết
+luận thì đúng (đo lại: 42/42 file `.md` dưới `docs/` đều được git track, 0 file lạc), nhưng đúng
+vì **cây hôm nay sạch**, không vì công cụ hỏi git. Đã gạch tại chỗ ở `rule-compile.mjs` và
+`CHUOI-VIEC.md`.
+
+**đóng khi:** hai bộ quét ấy lấy danh sách file **từ git** (hoặc hỏi `git check-ignore` cho từng
+thư mục trước khi đi vào), và có một ca hỏng dựng sẵn: một bản sao repo ở tên BẤT KỲ, bị git bỏ
+qua, không được làm đổi một con số nào.
+
+### KHUNG-M7 · `cong-do-that.mjs` khớp tên hàng bằng `includes`, không bằng so đúng
+
+Audit 17/09: hàm `hang()` tìm dòng chứa `"] " + tên`. Hôm nay **không** hàng nào là tiền tố của
+hàng khác nên nó đúng — Codex kiểm và xác nhận thế. Nhưng nó đúng do **may**, không do thiết kế:
+thêm một hàng tên `Mọi lệnh git đọc được trong HEAD` đặt TRƯỚC hàng cũ là bộ đo lặng lẽ đọc nhầm
+hàng, và cả bảy khối vẫn xanh.
+
+**đóng khi:** `hang()` tách tên hàng ra khỏi dòng (`[XANH] <tên>`) rồi so **bằng**, không
+`includes`; kèm một ca hỏng: hai hàng tên lồng nhau thì bộ đo phải chọn đúng cái được hỏi.
+

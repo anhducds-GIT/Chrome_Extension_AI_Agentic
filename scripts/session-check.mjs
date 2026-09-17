@@ -469,6 +469,18 @@ function laHangGia(doan) {
 /* ---- 3. Secret ---------------------------------------------------------- */
 check("Không có secret lọt vào repo", () => {
   const tracked = git("ls-files").split("\n").filter(Boolean);
+  /* DANH SÁCH RỖNG KHÔNG PHẢI "SẠCH" — nó là "KHÔNG SOI ĐƯỢC GÌ". Audit độc lập 17/09 nêu, và
+     nó đúng ở chỗ tôi tưởng đã kín.
+     Hàng *"Mọi lệnh git đọc được"* vốn canh ca này: `git()` ghi lại mọi lượt thất bại, nên
+     `ls-files` hỏng thì hàng ấy ĐỎ. Nhưng đó là **hai lớp nằm trên cùng một chân** — thu hẹp
+     `git()` để nó chỉ ghi lỗi của vài lệnh là hàng kia xanh trở lại, mà **hàng này vẫn báo
+     "Đọc thật 0/0 file, sạch"**. Đúng cái câu mà khối chú thích dưới đây kể là đã hỏng thật:
+     *"0 file được track · secret 0/0 sạch · XANH TOÀN BỘ"*.
+     Nên chân thứ hai, ngay tại chỗ: không có file nào để soi thì nói KHÔNG BIẾT, đừng nói ĐẠT.
+     Một kho git thật luôn có ít nhất một file được track. */
+  if (!tracked.length) {
+    return { ok: false, msg: "KHONG_SOI_DUOC: `git ls-files` không trả về file nào, nên phép quét secret không đọc được một byte nào — đó là KHÔNG BIẾT, không phải SẠCH. Kiểm xem đây có phải kho git không, git có trong PATH không, và output có vượt buffer không." };
+  }
   const badName = tracked.filter((f) => /pairing.*\.json$/i.test(f));
   if (badName.length) return { ok: false, msg: `File pairing bị track: ${badName.join(", ")}. Gỡ khỏi git và cho vào .gitignore.` };
   /* QUÉT THEO DANH SÁCH LOẠI TRỪ, KHÔNG THEO DANH SÁCH CHO PHÉP.
