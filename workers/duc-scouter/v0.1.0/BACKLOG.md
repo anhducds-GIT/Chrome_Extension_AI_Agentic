@@ -887,3 +887,27 @@ khối tự đếm mỏ neo: gõ sai tên mã thì nó ĐỎ chứ không im l�
 
 · **đóng khi:** ~~khối ⑥ chạy và chứng minh đỏ được~~ — **ĐÓNG**: xanh ở bản hiện tại, và đỏ khi
 đồng bộ ngược câu lỗi về nguyên văn cũ (đo 17/09, xem `HANDOFF.md`).
+
+## S-34 — `PHIEN.md` của Scouter KHÔNG sinh lại được, và cổng KHÔNG thấy
+
+`node scripts/rule-compile.mjs --sinh` **từ chối ghi** `workers/duc-scouter/v0.1.0/PHIEN.md`:
+bó mở phiên sẽ là **6.878 ký tự**, trần CỨNG **6.600** ([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)).
+Trần làm đúng việc của nó. Vấn đề là **cái bóng nó để lại**.
+
+**Ai làm nó tràn — đo 17/09, hai phía, không đổ cho ai:** `## Luật vàng` của gói **2.728 → 3.116**
+(+388, lane này, khi thêm trích dẫn ADR cho `A2`) · `STATUS.md` **6.291 → 6.616** (+325, một phiên
+khác chạy **cùng nhãn lane**). Trước hai lượt ấy bó còn **47 ký tự** dư. Lane này **đã trả hết
+phần của mình**: khối `## Luật vàng` trả về nguyên trạng, bốn trích dẫn ADR chuyển ra **ngoài** bó
+(mục *Sổ cái của gói*) — phép ② vẫn **0 mồ côi**. Còn lại **278 ký tự** là phần của lượt kia, và
+**tôi không tự viết lại chữ của phiên khác**.
+
+**Vì sao đây là nợ chứ không phải phiền toái.** Phép kiểm *"Sự thật máy sinh còn tươi"* chạy bộ
+sinh rồi so với `HEAD`. Bộ sinh **từ chối ghi** ⇒ file trên đĩa **không đổi** ⇒ khớp `HEAD` ⇒
+**XANH**. Nên một gói có thể nằm nhiều ngày với bó mở phiên cũ mà **không hàng cổng nào kêu** —
+đúng họ với `falsified-must-be-marked-in-place`. Phiên sau mở gói này đọc `PHIEN.md` **cũ**.
+
+**đóng khi:** ⑴ bó về dưới 6.600 bằng cách BỚT (ứng viên rẻ nhất: `next_step` trong `STATUS.md`,
+hoặc rút chuyện kể ở `## Luật vàng` sang ADR của gói) — **không nới trần**, đó là trần Đức đặt; và
+⑵ có một hàng đo được cho ca *"bộ sinh từ chối ghi"*, để lần sau nó kêu thay vì im. Chỗ đúng cho
+ca hỏng: `tests/cong-do-that.mjs`.
+
