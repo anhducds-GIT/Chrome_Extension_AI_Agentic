@@ -232,3 +232,84 @@ credit hoặc gây thay đổi khó đảo ngược: STOP trước action và b�
 
 `scout.key` **không** trả `da_kiem` (khác `scout.type`/`scout.clear`). Lượt `Escape` được kiểm
 bằng một phép đọc riêng, không bằng lời tự khai của lệnh. Ghi ở `G-114`.
+
+---
+
+## 10. BỀ MẶT `/workbench/<uuid>` — BẢN ĐỒ ĐO THẬT 18/09, VÀ MỘT LƯỢT DỪNG
+
+Đức mở sẵn `Car trial 1` (`/workbench/5c805df7…`). Target **giữ nguyên id qua lượt điều hướng
+SPA** — `G-102` lại đúng lần nữa. **0 lệnh GHI trong toàn bộ lượt này, cả ba tài khoản.**
+
+### 10.1 Bản đồ bề mặt — 25 phần tử tương tác
+
+| Neo | Khớp | Ghi chú |
+|---|---|---|
+| `textarea[placeholder="What are you creating?"]` | **2** | ô prompt, mỗi phần tử canvas một ô |
+| `[data-testid="asset-library-toolbar-button"]` | 1 | thư viện tài nguyên |
+| `a[href="/settings/account/profile"]` | 1 | đường sang hồ sơ |
+| `iframe#intercom-frame` | 1 | khung hỗ trợ |
+| `button[aria-expanded]` | 2 | menu thả xuống |
+| `button[disabled]` | 2 | đang tắt |
+
+**13/25 có neo ngữ nghĩa · 12/25 chỉ có hash styled-components.** Nhóm 12 gồm cả thanh công cụ
+trái và các nút `Render` / `Generate`. Hợp đồng luật ⑸ cấm neo vào hash, nên **12 nút đó hiện
+không có đường gọi hợp lệ** — không phải vì Scouter thiếu năng lực, mà vì trang không khai tên.
+
+Tên đọc được từ cây trợ năng: `Export` · `Share` · `Render` · `Generate` · `Describe` · `LEGACY`
+· `EN` · `Car trial 1` · `Đ` · `89%` · `100%`.
+
+### 10.2 ACTION GUIDELINE — xác nhận được gì, ở đâu
+
+| Năng lực | `/files/<org>/recent` | `/workbench/<uuid>` |
+|---|---|---|
+| giải target theo tài khoản | **ĐƯỢC** — email trong a11y | **KHÔNG** — xem 10.3 |
+| `scout.song` | ĐƯỢC (8ms) | ĐƯỢC |
+| kiểm kê bề mặt (`scout.page`) | ĐƯỢC — 23 phần tử | ĐƯỢC — 25 phần tử |
+| đọc cây trợ năng | ĐƯỢC | ĐƯỢC — 50 node |
+| khoá danh tính trước ghi | **ĐƯỢC** | **KHÔNG** |
+| lượt ghi đảo ngược được | **ĐƯỢC** — gõ/xoá ô tìm tệp | **KHÔNG** — xem 10.3 |
+
+### 10.3 VÌ SAO DỪNG Ở READ-ONLY — hai lý do độc lập, mỗi cái tự đủ
+
+**⑴ Canvas không phơi danh tính** (`G-115`). 50 tên node: không email, không workspace, không
+gói cước. Thứ duy nhất dính tới người dùng là chữ `"Đ"` của avatar — một ký tự không do ai
+khai, trùng với mọi tài khoản bắt đầu bằng chữ đó. `khoaDanhTinh` trả `DANH_TINH_LECH`
+**4/4 lượt, đều ~100ms**: dấu hiệu KHÔNG TỒN TẠI, chứ không phải trang chưa dựng xong. Điều
+kiện ⑼ của đề bài — *khoá danh tính ngay trước write* — vì thế **không thoả được**.
+
+**⑵ Hai ô prompt đang giữ chữ thật của Đức** (`G-116`): `"Elegan nice coupe silver car"` và
+`"Racing morden car colorful"`. Lượt ghi *gõ rồi xoá* — thứ chạy sạch ở `/files/…` — ở đây sẽ
+**xoá mất chữ của người dùng**. Và selector khớp **2**, trong khi luật gói số 7 đòi đúng một.
+
+> Tính đảo ngược là thuộc tính của **trạng thái**, không phải của **lệnh**. Cùng một `scout.clear`:
+> vô hại trên ô trống, phá hoại trên ô đầy.
+
+### 10.4 PRIMITIVE CÒN THIẾU — và chỉ đúng một cái là thật
+
+**Danh tính theo TỪNG BỀ MẶT.** `danh_tinh` hôm nay là một dấu hiệu cho cả site; thực tế mỗi
+route phơi một bộ khác nhau. Hợp đồng adapter cần `danh_tinh` khai được theo bề mặt, và
+`khoaDanhTinh` chọn bộ theo URL hiện tại.
+
+Nhưng **đó chưa phải việc gõ code**: phải ĐO ra trước một dấu hiệu vừa ổn định vừa phân biệt
+được trên canvas. Hiện chưa có. Ba đường đã loại, kèm lý do:
+
+| Đường | Vì sao loại |
+|---|---|
+| org UUID trong `srcRoute=` của URL | vết của lượt điều hướng vừa rồi, mất sau một lượt tải lại |
+| chữ `"Đ"` của avatar | một ký tự, không do ai khai |
+| mở menu avatar để lộ email | mở menu là một lệnh GHI — cần danh tính trước, mà danh tính là thứ đang đi tìm |
+
+**Không thiếu primitive nào khác.** `scout.song`, `scout.page`, `scout.a11y`, `scout.query`,
+`scout.type`, `scout.clear`, `scout.key` đều đủ; chỗ gãy nằm ở **hợp đồng danh tính**, không ở
+từ vựng.
+
+### 10.5 BẤT BIẾN MỚI — có máy canh, không chỉ có chữ
+
+> **Sau mỗi lượt nối lại Bridge/phiên: KHÔNG dùng lại `target_id` cũ.** Giải lại từ adapter +
+> danh tính tài khoản, mỗi lượt chạy.
+
+Đo 18/09 (`G-118`): host tắt rồi bật lại, ghế tự nối lại, **mọi `target_id` cũ chết**. Nguy hiểm
+không nằm ở lượt chết — nằm ở khả năng Chrome cấp lại đúng chuỗi ấy cho một tab **khác**.
+
+Khối **ⓤ** của `giai-target-smoke.mjs` quét mã thật của mọi pilot và ĐỎ nếu thấy một chuỗi 32
+hex gõ cứng. Đã thử đột biến: gõ một id vào `ghi.mjs` → ĐỎ đúng dòng.

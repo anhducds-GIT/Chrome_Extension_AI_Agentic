@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-18T01:23:40.796Z",
       "task": "sinh lai trang tong",
-      "released_at": null,
+      "released_at": "2026-09-18T01:24:30.931Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -77,15 +77,15 @@
     "workers/duc-scouter": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-18T01:18:34.943Z",
-      "task": "chang 4: pilot ghi Vizcom",
+      "claimed_at": "2026-09-18T01:37:34.662Z",
+      "task": "ghi lai bang chung workbench",
       "released_at": null
     },
     "workers/_shared": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-18T01:18:35.032Z",
-      "task": "adapter Vizcom: sua ghi chu tep_moi",
+      "claimed_at": "2026-09-18T01:37:34.574Z",
+      "task": "be mat workbench + bat bien target_id",
       "released_at": null
     },
     "workers/hnx-fetch": {
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T19:16:07.756Z"
     }
   },
-  "_fingerprint": "17479829698e9ac1"
+  "_fingerprint": "98f66ab93ae638af"
 }

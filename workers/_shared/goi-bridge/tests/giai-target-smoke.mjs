@@ -328,4 +328,30 @@ const DT = { selector: "title", chua: "anhducds" };
   assert.match(k.ly_do, /Không đọc được KHÔNG phải là vẫn đúng/);
 }
 
-console.log("giai-target-smoke: 20 khối ĐẠT");
+// ⓤ BẤT BIẾN: KHÔNG PILOT NÀO ĐƯỢC GÕ CỨNG MỘT `target_id`.
+//    Đo 18/09, hai lần trong một buổi: máy chủ Bridge tắt rồi bật lại → ghế tự nối lại, nhưng
+//    **mọi `target_id` cũ đều chết** (`PROBE_FAILED — No Chrome debug target with id …`). Một
+//    id gõ cứng vì thế có hai số phận, và số phận thứ hai mới là cái đáng sợ: hoặc nó chết
+//    sạch, hoặc Chrome đã cấp lại đúng chuỗi đó cho một tab KHÁC. Đường đúng chỉ có một:
+//    giải lại từ adapter + danh tính tài khoản, mỗi lượt chạy.
+//
+//    Khối này quét mã THẬT của các pilot, không tin một dòng luật viết trong tài liệu — một
+//    bất biến không có máy canh là một bất biến đã hỏng mà chưa ai biết.
+{
+  const goc = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "duc-scouter", "pilots");
+  const quet = (thuMuc) => fs.readdirSync(thuMuc, { withFileTypes: true }).flatMap((d) =>
+    d.isDirectory() ? quet(path.join(thuMuc, d.name)) : d.name.endsWith(".mjs") ? [path.join(thuMuc, d.name)] : []);
+  const tep = quet(goc);
+  /* Bộ quét trả RỖNG thì ĐỎ: "0 tệp, 0 vi phạm" đọc y hệt "đã kiểm, sạch". */
+  assert.ok(tep.length >= 3, `chỉ thấy ${tep.length} tệp pilot — bộ quét hỏng, KHÔNG phải pilot sạch`);
+  for (const t of tep) {
+    /* Bóc chú thích trước: chính các file này CHÉP một `target_id` thật vào văn xuôi làm bằng
+     * chứng, và đó là việc nên làm. Luật cấm GÕ NÓ VÀO MÃ, không cấm kể lại nó. */
+    const ma = fs.readFileSync(t, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const dinh = ma.match(/["'][0-9A-F]{32}["']/g) || [];
+    assert.deepEqual(dinh, [],
+      `${path.basename(t)} gõ cứng target_id ${dinh.join(", ")}. Sau một lượt nối lại Bridge, id đó hoặc đã chết hoặc đã thuộc về một tab khác — giải lại qua adapter + danh tính, mỗi lượt chạy.`);
+  }
+}
+
+console.log("giai-target-smoke: 21 khối ĐẠT");

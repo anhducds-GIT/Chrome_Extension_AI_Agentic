@@ -59,6 +59,47 @@ export const VIZCOM = {
     khung_intercom: "iframe#intercom-frame"
   },
 
+  /* ─── BỀ MẶT `/workbench/<uuid>` — quét thật 18/09, 25 phần tử tương tác ───────────────
+   * 13/25 có neo ngữ nghĩa, 12/25 chỉ có hash styled-components. Mọi dòng dưới đây kèm số
+   * khớp ĐÃ ĐO; không dòng nào là đoán.
+   *
+   * ═══ KHÔNG GHI ĐƯỢC Ở ĐÂY, VÀ ĐÓ LÀ PHÉP ĐO CHỨ KHÔNG PHẢI SỰ THẬN TRỌNG ═══
+   * Xem `workbench_khong_ghi_duoc` ngay dưới. Hai lý do độc lập, mỗi lý do tự nó đủ. */
+  be_mat_workbench: {
+    /* Ô nhập prompt. **KHỚP 2** — mỗi phần tử trên canvas một ô. Luật gói số 7 đòi selector
+     * khớp ĐÚNG MỘT trước khi ghi, nên selector này KHÔNG dùng để ghi được. */
+    o_prompt: 'textarea[placeholder="What are you creating?"]',
+    thu_vien_tai_nguyen: '[data-testid="asset-library-toolbar-button"]',   /* khớp 1 */
+    duong_ho_so: 'a[href="/settings/account/profile"]',                    /* khớp 1 */
+    khung_intercom: "iframe#intercom-frame"                                /* khớp 1 */
+  },
+
+  /* ─── VÌ SAO PILOT 18/09 DỪNG Ở READ-ONLY TRONG WORKBENCH ────────────────────────────
+   *
+   * ⑴ **KHÔNG CÓ DẤU HIỆU DANH TÍNH.** Quét cây trợ năng của canvas: 50 tên node, và
+   *    **không có** email, **không có** tên workspace, **không có** tên gói cước. Thứ duy
+   *    nhất dính tới người dùng là chữ `"Đ"` — một ký tự đầu của avatar. Một ký tự không
+   *    phải một danh tính: nó không do ai khai, và nó trùng với bất kỳ tài khoản nào bắt đầu
+   *    bằng chữ đó. Nên `khoaDanhTinh` trả `DANH_TINH_LECH` — **4/4 lượt, đều ~100ms**, tức
+   *    không phải đua thời gian mà là dấu hiệu KHÔNG TỒN TẠI trên bề mặt này.
+   *
+   *    Hệ quả cho kiến trúc: `danh_tinh` hôm nay là MỘT dấu hiệu cho cả site, còn thực tế
+   *    mỗi route phơi ra một bộ khác nhau. Muốn ghi trong workbench thì phải khai danh tính
+   *    THEO TỪNG BỀ MẶT — và trước đó phải ĐO ra một dấu hiệu vừa ổn định vừa phân biệt được.
+   *    Hiện tại chưa đo ra cái nào. Đừng lấy `srcRoute=…/files/<org-uuid>/…` trong URL: nó
+   *    là vết của lượt điều hướng vừa rồi, mất ngay sau một lượt tải lại.
+   *
+   * ⑵ **Ô PROMPT ĐANG GIỮ CHỮ CỦA NGƯỜI DÙNG.** Đọc bằng a11y, không gõ gì:
+   *    `"Elegan nice coupe silver car"` và `"Racing morden car colorful"`. Nên lượt ghi
+   *    "gõ rồi xoá" — thứ chạy sạch ở trang `/files/…` — ở đây sẽ **xoá mất chữ thật của
+   *    Đức**. Một lượt ghi đảo ngược được trên ô trống là một lượt ghi PHÁ HOẠI trên ô đầy.
+   *
+   * Mỗi lý do tự nó đủ để dừng. Cộng lại thì không còn gì để cân nhắc. */
+  workbench_khong_ghi_duoc: {
+    ly_do_danh_tinh: "canvas không phơi email/workspace/plan — chỉ có một ký tự avatar",
+    ly_do_o_prompt: "cả 2 ô prompt đang giữ chữ thật của người dùng; selector lại khớp 2, không khớp 1"
+  },
+
   /* Trang đã quét là **trình duyệt tệp**, không phải trình soạn thảo. Bề mặt sinh ảnh (ô nhập
    * prompt · tải ảnh tham chiếu · nút render · vùng kết quả) nằm ở `/workbench/…` và **chưa
    * được quét** — đi tới đó cần `scout.navigate` hoặc `scout.click`, cả hai là lệnh GHI, mà

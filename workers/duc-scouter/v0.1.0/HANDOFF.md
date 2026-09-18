@@ -2824,3 +2824,29 @@ là điều hướng.
 3. **Máy chủ Bridge tắt thì mọi thứ im lặng giống hệt "không có target"**. Bật lại bằng
    `START-BRIDGE_Scouter.cmd` ở `C:\WORKING ZONE\Chrome Extension Bridge\duc-scouter`. Ghế tự
    nối lại, nhưng **mọi `target_id` cũ đều chết** — phải giải lại qua adapter.
+
+## 2026-09-18g · `claude-universal-scouter` — workbench: quét xong, DỪNG ở read-only
+
+Đức mở sẵn `Car trial 1`. Bản đồ bề mặt + Action Guideline: `docs/VIZCOM-PHASE-2.md` §10.
+**0 lệnh GHI, cả ba tài khoản.** Target giữ nguyên id qua điều hướng SPA (`G-102` lần nữa).
+
+**Không ghi được trong workbench, và đó là phép đo chứ không phải sự thận trọng:**
+⑴ canvas **không phơi danh tính** — 50 tên node, không email/workspace/plan, chỉ một ký tự
+avatar `"Đ"`; `khoaDanhTinh` đỏ **4/4 lượt đều ~100ms** nên là KHÔNG TỒN TẠI chứ không phải
+chưa dựng xong (`G-115`). ⑵ hai ô prompt **đang giữ chữ thật của Đức**, và selector khớp **2**
+chứ không phải 1 (`G-116`). Mỗi lý do tự nó đủ.
+
+**Primitive còn thiếu: đúng một** — `danh_tinh` phải khai được **theo từng bề mặt**, vì mỗi
+route phơi một bộ dấu hiệu khác nhau. Nhưng chưa tới lúc gõ code: phải ĐO ra một dấu hiệu ổn
+định trên canvas trước, và ba đường đã loại (org UUID trong `srcRoute` là vết điều hướng · một
+ký tự avatar không phải danh tính · mở menu avatar là lệnh GHI, mà ghi thì cần danh tính trước).
+
+**Hai bẫy đọc đã trả giá trong phiên:**
+1. **a11y kể cả nhánh ẨN.** Nó phơi `"Delete account"` của trang Settings chưa hề mở; tôi báo
+   với Đức là "đang có modal Settings" — **sai**, `scout.page` chỉ thấy một thẻ `a[href=…]`.
+   *Có mặt trong a11y* ≠ *bấm được* (`G-117`).
+2. **Tính đảo ngược thuộc về TRẠNG THÁI, không thuộc về LỆNH.** Cùng một `scout.clear`: vô hại
+   trên ô trống ở `/files/`, phá hoại trên ô prompt đang có chữ.
+
+**Bất biến mới, có máy canh:** sau mỗi lượt nối lại Bridge → **không dùng lại `target_id` cũ**.
+Khối ⓤ của `giai-target-smoke.mjs` quét mã thật của mọi pilot, ĐỎ nếu thấy chuỗi 32 hex gõ cứng.
