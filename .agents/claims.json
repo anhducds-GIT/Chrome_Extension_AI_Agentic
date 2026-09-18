@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-v1",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-18T06:09:12.934Z",
       "task": "V1 closeout STEP1 — dong khu cach ly",
-      "released_at": null,
+      "released_at": "2026-09-18T08:37:24.770Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": "claude-v1",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-18T06:09:13.028Z",
       "task": "V1 closeout STEP1",
-      "released_at": null,
+      "released_at": "2026-09-18T08:37:24.505Z",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -77,9 +77,9 @@
     "workers/duc-scouter": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-18T03:40:17.062Z",
-      "task": "thi nghiem id ephemeral",
-      "released_at": "2026-09-18T03:42:24.947Z"
+      "claimed_at": "2026-09-18T07:12:03.091Z",
+      "task": "closeout V1 buoc 2 — compact state",
+      "released_at": "2026-09-18T08:37:24.627Z"
     },
     "workers/_shared": {
       "owner": null,
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T19:16:07.756Z"
     }
   },
-  "_fingerprint": "0fc96b556190cb0f"
+  "_fingerprint": "f8660b7244e3a4f1"
 }
