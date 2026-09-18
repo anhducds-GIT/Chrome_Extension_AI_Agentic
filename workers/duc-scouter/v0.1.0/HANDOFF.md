@@ -2996,3 +2996,27 @@ Việc cần Đức, đúng một: mở thêm một tab Vizcom đăng nhập **t
 đang chạy Workbench. Đó là đầu vào của thí nghiệm identity attestation, tức mục 1 của V2.
 
 Không đụng mã gói lượt này. Không tiêu thêm credit Vizcom.
+
+## 2026-09-18 · claude-v1 · §V1 thành GÓI ĐÓNG MỐC đầy đủ
+
+`docs/UNIVERSAL-SCOUTER.md` §V1 nay có đủ chín mục để một AI mới — hoặc Đức — đọc một lượt là
+biết V1 chứng minh được gì, chưa làm gì, và V2 bắt đầu ở đâu: **mục tiêu · năng lực đã chứng minh
+· lợi ích đo được · hợp đồng an toàn · giới hạn đã biết · hoãn sang V2 · lệnh chạy/kiểm · luồng
+vận hành nhỏ nhất · điểm vào V2.**
+
+**Không tạo tài liệu mới.** Mọi số liệu vẫn nằm ở ba file gốc (`GIA-THUYET.md` ·
+`CHI-PHI-CONTEXT.md` · `WORKBENCH-GRAPH.md`); §V1 chỉ **trỏ tới**. Luật viết ngay trong mục:
+chép số sang đây là sinh ra bản thứ hai, và hai bản sẽ lệch.
+
+**Số method KHÔNG gõ vào tài liệu** — mục ⑺ đưa lệnh đếm lại thay cho con số. Cùng lý do ở mục ⑵:
+mọi ô đều trỏ tới một dòng sổ `G-xx`, không tự khai.
+
+Khối CHẶN nằm ở mục ⑸ **đầu danh sách giới hạn**, không nằm cuối tài liệu: V1 tự khai là
+**feasibility + control**, không phải **autonomy**, và câu đó phải đọc được trước khi ai đó tin
+rằng gói này chạy một mình được.
+
+Mục ⑼ nói rõ thí nghiệm mở màn V2 là một thí nghiệm **BÁC BỎ**: *một ghế Scouter có chứa được hai
+tài khoản Vizcom khác nhau cùng lúc không*. Được thì *"ghế = tài khoản"* sai và mọi thiết kế
+attestation neo vào ghế phải bỏ. **Cần Đức mở tab thứ hai** — không AI nào thay được bước đó.
+
+Không đụng mã gói. Không tiêu credit Vizcom.
