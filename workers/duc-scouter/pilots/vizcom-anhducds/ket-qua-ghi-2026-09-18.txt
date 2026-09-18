@@ -1,0 +1,50 @@
+## ⓪ SOÁT HỢP ĐỒNG ADAPTER
+    {"dat":true,"loi":[]}
+
+## ① GIẢI TARGET — không nêu ghế, để resolver tự tìm
+    hỏi (không nhãn)     6 target · 1 page · 1 khớp origin
+    hỏi (không nhãn)     1 target · 0 page · 0 khớp origin
+    hỏi Scouter_blank    40 target · 16 page · 0 khớp origin
+    hỏi Dummy_Scout      8 target · 0 page · 0 khớp origin
+    → CHỌN ghế 5ba67fd2-701f-489a-bfd1-8bedb0df3153 · target BF727D93DD12C7BDDBEEA4B899E6DE49
+      url https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+      danh tính CHÍNH: "anhducds@gmail.com" · phụ: "ĐĐức Nguyễn's WorkspaceFree plan"
+
+## ② scout.song — phải ĐẠT trước khi đi tiếp
+    {"song":true,"ms":8,"han_ms":1500}
+
+## ③ KHOÁ DANH TÍNH + CHỤP TRẠNG THÁI TRƯỚC
+    [khoá trước khi đo] ĐẠT · "anhducds@gmail.com" · url=https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+    98 tên node trong cây trợ năng
+
+## ④ BỀ MẶT `/workbench/…` — ĐO, RỒI DỪNG TRƯỚC CỬA
+    a[href^="/workbench/"] → 1 khớp
+    → Đường duy nhất tới /workbench/ từ trang này là nút TẠO TỆP MỚI.
+      Tạo tệp không đảo ngược được nếu không xoá, mà xoá là thứ Đức cấm. DỪNG ở đây.
+
+## ⑤ LƯỢT GHI — khoá lại NGAY TRƯỚC, không dùng lại lượt khoá ở ③
+    [khoá ngay trước ghi] ĐẠT · "anhducds@gmail.com" · url=https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+    scout.type → da_kiem=true · kiem_bang=a11y · gõ 17 ký tự
+      lời tự khai: "Đọc lại bằng a11y: chuỗi 17 ký tự xuất hiện 0 lần trước khi gõ và 1 lần sau khi gõ — trang đã nhận."
+      ngân sách ghi còn: {"used":3,"cap_per_unlock":200,"remaining":197}
+
+## ⑥ TRẠNG THÁI SAU — đọc lại TRANG, không tin lời báo của lệnh ghi
+    98 → 100 tên node · mất 0 · thêm 2
+    MẤT : []
+    THÊM: ["zzq-scouter-probe","zzq-scouter-probe"]
+    chuỗi đã gõ có mặt trong cây trợ năng: true
+
+## ⑦ ĐẢO NGƯỢC — khoá lại lần nữa rồi mới xoá
+    [khoá ngay trước xoá] ĐẠT · "anhducds@gmail.com" · url=https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+    scout.clear → da_kiem=true · kiem_noi="Đọc lại bằng a11y: ô có 17 ký tự trước khi xoá và rỗng sau khi xoá — hai phím đã tới trang và ô đã sạch."
+    [khoá ngay trước Escape] ĐẠT · "anhducds@gmail.com" · url=https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+    scout.key Escape → da_kiem=undefined
+    so với TRƯỚC: mất 2 · thêm 0 → CÒN LỆCH (xem dưới)
+      MẤT : ["Recent searches","Recent searches"]
+      THÊM: []
+
+## ⑧ BỘ ĐẾM — tách theo từng target
+    (không target)     đọc  9 · GHI 0   lệnh không nhắm target nào
+    BF727D93DD12C7BD   đọc 15 · GHI 3   anhducds ← ĐÃ GIẢI RA
+
+    Tổng 27 lượt · GHI 3, tất cả trên đúng một target.

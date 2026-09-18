@@ -2800,3 +2800,27 @@ hổng an toàn, nhưng một con số không nói mình đo được gì thì k
 **CHƯA ĐO ĐƯỢC đường TREO trên máy thật.** 6 target chết của `G-107` nằm ở ghế `Scouter_blank`,
 và ghế đó chưa nạp lại. Đường treo hiện chỉ có phép ghim với đồ giả — đừng đọc `G-111` thành
 "đã chứng minh cả ba lớp".
+
+## 2026-09-18f · `claude-universal-scouter` — chặng ④: lượt GHI thật trên Vizcom `anhducds`
+
+Đức bật công tắc ghi. Lượt ghi chạy: `scout.type` 17 ký tự vào ô tìm tệp → `scout.clear` →
+`scout.key Escape`. **3 lệnh GHI trên đúng một target**, hai tài khoản Vizcom kia **0**. Chi
+tiết + bảng bằng chứng: `docs/VIZCOM-PHASE-2.md` §9 · `pilots/vizcom-anhducds/ket-qua-ghi-2026-09-18.txt`.
+
+**KHÔNG vào được `/workbench/…`, và đó là luật STOP chạy đúng** (`G-112`): `a[href^="/workbench/"]`
+khớp đúng **1** phần tử và nó là nút **`Create new file`**; thẻ tệp là `<button>` không `href`
+nên cũng không có URL để `scout.navigate` tới. Đường duy nhất sang workbench là TẠO một tệp.
+Trường adapter đổi tên `tep_moi` → **`tao_tep_moi`** — cái tên cũ mời phiên sau bấm vào tưởng
+là điều hướng.
+
+**Ba bẫy đã trả giá, phiên sau đừng trả lại:**
+
+1. **`da_kiem` nằm CÙNG TẦNG với `data`**, không trong nó (`{...ra, da_kiem}`). Đọc
+   `g.data.da_kiem` ra `undefined` và tôi suýt báo "lệnh ghi không tự kiểm" (`G-114`). Đọc
+   đúng chỗ thì `scout.type` tự khai *"0 lần trước, 1 lần sau — trang đã nhận"*.
+   `scout.key` thì **thật sự không có** `da_kiem` — phải tự kiểm bằng phép đọc riêng.
+2. **So ảnh chụp với GỐC, không với đầu lượt chạy này** (`G-113`). Lượt ① để lại bảng gợi ý
+   MỞ, nên lượt ② vào với nền 98 thay vì 96 và báo "còn lệch" trong khi nó đang dọn dẹp.
+3. **Máy chủ Bridge tắt thì mọi thứ im lặng giống hệt "không có target"**. Bật lại bằng
+   `START-BRIDGE_Scouter.cmd` ở `C:\WORKING ZONE\Chrome Extension Bridge\duc-scouter`. Ghế tự
+   nối lại, nhưng **mọi `target_id` cũ đều chết** — phải giải lại qua adapter.

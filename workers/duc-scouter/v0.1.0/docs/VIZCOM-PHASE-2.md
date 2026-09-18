@@ -184,7 +184,7 @@ sai hai tiếng sau. Xem `G-108`.
 | ① danh tính chính = email | **XONG** | `_shared/adapters/vizcom.mjs` — `danh_tinh` = `{a11y_chua:"anhducds@gmail.com"}`, workspace/gói xuống `danh_tinh_phu`. Ghim: `hop-dong-smoke` ⓙ · `giai-target-smoke` ⓞ/ⓞ′ |
 | ③ khoá danh tính trước/sau | **XONG** | `_shared/goi-bridge/giai-target.mjs` → `khoaDanhTinh()`. Ghim ⓟ–ⓣ, cả bốn đã thử **đột biến** và đều ĐỎ |
 | ② `scout.song` | **CHẠY THẬT, ĐO XONG** | Đức nạp lại 2/4 ghế 18/09. Vizcom `anhducds` **20·84·85·10·4 ms** · `tuanvv4` **2·3·3·2·3 ms**, `song:true` 10/10 — cách hạn 1.500ms ≥17×. Hai ghế chưa nạp vẫn `METHOD_NOT_FOUND`. Sửa thêm `ly_do` tách **từ chối nhanh** khỏi **treo** (`G-111`). Đường TREO chưa đo được trên máy thật |
-| ④ pilot ghi | **CHƯA** | Chặn bởi công tắc đường ghi |
+| ④ pilot ghi | **ĐẠT MỘT PHẦN** | Đức bật công tắc 18/09. Lượt ghi chạy thật trên đúng `anhducds`, 3 lệnh GHI, hai tài khoản kia **0**. **Không vào được `/workbench/…`** — xem dưới |
 
 **Ba chỗ pilot sửa lại lộ trình này** — ghi ra vì lộ trình là một lời khai, không phải một sự thật:
 
@@ -195,3 +195,40 @@ sai hai tiếng sau. Xem `G-108`.
 3. **Khai `CO_Y_KHAC` chưa đủ**: nó làm `continue`, tức tắt hẳn phép ghim byte trên cả tệp.
    Đã đổi sang **neo bằng băm hai bên** — và nó bắt thật một lượt sửa của chính tôi ngay
    trong phiên (`G-110`).
+
+
+---
+
+## 9. CHẶNG ④ — ĐÃ CHẠY, 18/09
+
+**Ghế** `5ba67fd2…` · **target** `BF727D93DD12C7BDDBEEA4B899E6DE49` · **tài khoản** `anhducds@gmail.com`
+(bằng chứng đầy đủ: `pilots/vizcom-anhducds/ket-qua-ghi-2026-09-18.txt`)
+
+| Bước | Kết quả |
+|---|---|
+| giải target | 4 ghế được hỏi · 1 ứng viên · danh tính chính = email |
+| `scout.song` | `song:true`, **8ms** |
+| khoá danh tính | **4 lượt** — trước khi đo · trước `type` · trước `clear` · trước `Escape`. Cả 4 ĐẠT |
+| lượt ghi | `scout.type` 17 ký tự → `scout.clear` → `scout.key Escape` |
+| bằng chứng đọc | cây trợ năng **98 → 100 → 96**. Chuỗi thử xuất hiện rồi biến mất; bảng gợi ý đóng lại |
+| khôi phục | **96 tên node, đúng bằng ảnh chụp trước lượt ghi đầu tiên** |
+| bộ đếm | `anhducds` **3 ghi** · `v.tuanvv4` **0** · `vf.styling01` **0** |
+| ngân sách | `used 3 / cap 200 / remaining 197` |
+
+### Vì sao KHÔNG vào `/workbench/…` — và đó là luật STOP chạy đúng
+
+`a[href^="/workbench/"]` khớp **đúng 1** phần tử trên trang `/files/<org>/recent`, và nó là nút
+**`Create new file`**. Thẻ tệp trong danh sách là `<button>` không có `href`, nên cũng không có
+URL nào để `scout.navigate` tới. Tức đường duy nhất sang `/workbench/` là **tạo một tệp** — chỉ
+xoá mới đảo ngược, mà xoá bị cấm thẳng. Đề bài nói: *"Nếu action khả dụng duy nhất sẽ tiêu
+credit hoặc gây thay đổi khó đảo ngược: STOP trước action và báo Đức"*. Pilot dừng đúng đó.
+
+**Đức muốn vào `/workbench/` thì chọn một trong hai, và cả hai đều cần Đức:**
+⒜ tự mở sẵn một tệp Vizcom ở cửa sổ đó rồi bảo tôi chạy lại — pilot sẽ thấy `/workbench/…`
+   ngay từ lượt giải target và không phải tạo gì;
+⒝ cho phép tạo **một** tệp nháp rồi Đức tự xoá — tôi không tự xoá.
+
+### Khoảng trống còn lại
+
+`scout.key` **không** trả `da_kiem` (khác `scout.type`/`scout.clear`). Lượt `Escape` được kiểm
+bằng một phép đọc riêng, không bằng lời tự khai của lệnh. Ghi ở `G-114`.

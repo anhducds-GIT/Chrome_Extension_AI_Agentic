@@ -50,7 +50,12 @@ export const VIZCOM = {
     chuyen_to_chuc: '[data-testid="organization-switcher-button"]',
     tim_tep: 'input[placeholder="Search all files"]',
     cai_dat: '[data-testid="settings-button"]',
-    tep_moi: 'a[href^="/workbench/folder/"]',
+    /* ⚠ TẠO TỆP — KHÔNG phải một đường điều hướng. Đo 18/09: `a[href^="/workbench/"]` khớp
+     * đúng **1** phần tử trên trang này, và nó chính là nút `Create new file`. Tức đường DUY
+     * NHẤT từ trình duyệt tệp sang `/workbench/…` là tạo một tệp mới — và tạo tệp thì chỉ xoá
+     * mới đảo ngược được, mà xoá là thứ Đức cấm thẳng. Pilot ghi 18/09 dừng trước đúng cửa này.
+     * Ai đọc tên trường này thành "mở tệp" sẽ tạo rác trong tài khoản của Đức. */
+    tao_tep_moi: 'a[href^="/workbench/folder/"]',
     khung_intercom: "iframe#intercom-frame"
   },
 
