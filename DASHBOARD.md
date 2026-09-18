@@ -6,7 +6,7 @@ Trang được sinh ngày 2026-09-18. Đây là lúc sinh trang, **KHÔNG phải
 
 ## A · Bắt đầu từ đâu
 
-1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 3 đơn vị cùng khai `priority_rank: 1` (`_root` · `workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
+1. **Việc ưu tiên #1** — **_root** — N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16). · [STATUS](STATUS.md)
 2. **Phiên gần nhất** — 2026-09-18 · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)

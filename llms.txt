@@ -8,7 +8,7 @@ Trang được sinh ngày 2026-09-18.
 
 ## Việc ưu tiên #1
 
-- **XUNG ĐỘT** — 3 đơn vị cùng khai `priority_rank: 1` (`_root` · `workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
+- **_root** — N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).
 
 ## Đọc theo thứ tự này
 
