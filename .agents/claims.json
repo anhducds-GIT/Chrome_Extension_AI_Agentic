@@ -75,11 +75,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-18T07:12:03.091Z",
-      "task": "closeout V1 buoc 2 — compact state",
-      "released_at": "2026-09-18T08:37:24.627Z"
+      "owner": "claude-v2",
+      "ai": "Claude",
+      "claimed_at": "2026-09-18T10:46:06.711Z",
+      "task": "V2 chang 1 — do identity attestation, READ-ONLY",
+      "released_at": null
     },
     "workers/_shared": {
       "owner": null,
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T19:16:07.756Z"
     }
   },
-  "_fingerprint": "f8660b7244e3a4f1"
+  "_fingerprint": "88e8c1edc630f690"
 }
