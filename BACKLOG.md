@@ -1489,3 +1489,33 @@ theo đồng hồ.
   byte, **cộng một đối chứng bắt buộc** — bản SỐNG (`--khoa-song`) phải ĐỔI, nếu không thì cái
   shim đồng hồ hỏng và vế đầu xanh vì *không đo được gì*. Thử phá (trả `luc` về `new Date()`):
   **ĐỎ**. Chạy riêng: `npm run test:tat-dinh` (~9 giây).
+
+## N-71 · Trang tổng ĐẾM CHÍNH NÓ, nên bản vừa commit làm con số của mình sai
+
+- **nhóm:** cong
+- **mở:** 2026-09-18 · lane `claude-v1`
+- **vùng:** `_code`
+
+**[ĐO 18/09, bước 5 của closeout V1]** Commit bản sinh xong thì cổng lại `TRANG_CU`. Diff **đúng
+hai chỗ**, và cả hai là **cùng một con số**:
+
+```
+- 77 nợ cấu trúc (đỏ + vàng)     + 73 nợ cấu trúc (đỏ + vàng)
+```
+
+Trang tổng in **nợ cấu trúc của repo**, mà chính lượt commit trang ấy làm bốn khoản nợ biến mất
+(artifact hết cũ, tệp mới đã khai). Tức bản ra là **một hàm của cây làm việc mà nó nằm trong** —
+tự quy chiếu, không phải nhìn đồng hồ.
+
+**Khác `N-70` ở chỗ quan trọng: nó HỘI TỤ.** Đo: vòng hai `KHOP HEAD`. Nên cái giá không phải
+"không bao giờ đứng yên" mà là **một lượt sinh + commit thừa** mỗi phiên có chạm nợ cấu trúc.
+
+**Và đây là chỗ tôi đã báo hơi sớm.** Bước 3 tôi kết luận *"`--amend` hết cần"* dựa trên **một**
+lượt sạch. Đúng một nửa: `--amend` thật sự không cần — một commit thường thứ hai là đủ — nhưng câu
+*"hội tụ một phát"* thì sai, và tôi đã viết nó như một phép đo.
+
+- **đóng khi:** lệnh: sau khi commit bản sinh, `node scripts/build-overview.mjs --check-head` thoát
+  **0 ngay vòng đầu** trên một phiên có sửa nợ cấu trúc; và có một phép ghim dựng cảnh hai giá trị
+  nợ khác nhau rồi kiểm bản ra không đổi. Hướng gợi ý: con số nợ cấu trúc suy từ **HEAD** như mọi
+  con số khác trên trang, hoặc mang `NHAN_KHOA` để phép so trang-với-HEAD bỏ qua dòng của nó —
+  đúng cách khối *"đang làm gì"* đã dùng. Khoá cần: `_code`.

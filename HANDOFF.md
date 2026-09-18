@@ -936,5 +936,13 @@ phải *"đã đạt"*, và nói ra ở đây thay vì để nó trôi.
 khối CHẶN (*Workbench không lộ email ⇒ chưa chứng minh autonomous authorization*) nằm **đầu** danh
 sách giới hạn, không nằm cuối tài liệu.
 
+**Một mục mới, ghi chứ không đuổi theo:** `N-71` — trang tổng in **nợ cấu trúc của repo**, mà
+chính lượt commit trang ấy làm bốn khoản nợ biến mất, nên bản vừa commit làm con số của mình sai
+(`77` → `73`). Tự quy chiếu, **không** phải nhìn đồng hồ, và nó **HỘI TỤ** — vòng hai `KHOP HEAD`.
+Cái giá là một lượt sinh + commit thừa, không phải một vòng lặp vô tận. **Và đây là chỗ tôi báo
+hơi sớm:** bước 3 tôi kết luận *"`--amend` hết cần"* từ **một** lượt sạch. Đúng một nửa — `--amend`
+thật sự không cần, một commit thường thứ hai là đủ; nhưng *"hội tụ một phát"* thì sai, và tôi đã
+viết nó như một phép đo.
+
 **V2 bắt đầu ở đúng một chỗ, và nó cần Đức:** mở thêm một tab Vizcom đăng nhập **tài khoản khác**
 trong **cùng** profile đang chạy Workbench.
