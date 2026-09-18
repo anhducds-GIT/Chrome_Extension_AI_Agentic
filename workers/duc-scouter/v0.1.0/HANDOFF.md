@@ -2926,3 +2926,32 @@ trên workbench** — xác nhận `G-115` qua một kênh khác.
 **Mở được bằng đúng một thứ:** tham số **CHỈ SỐ** cho lệnh ghi (chọn khớp thứ n sau khi đã đọc
 `value` của đúng khối đó để xác nhận). Đó là **đổi luật an toàn** — Đức chốt, rồi nạp lại
 extension. Không có nó thì đường đo `outputs = N → N+1` vẫn phải do Đức bấm tay, tôi chụp diff.
+
+## 2026-09-18k · `claude-universal-scouter` — ĐÃ BẤM Generate, và tôi sai hai lần trước đó
+
+Chi tiết: `docs/WORKBENCH-GRAPH.md` §9. Pilot: `pilots/vizcom-anhducds/bam-generate.mjs`.
+
+**Neo bấm được, hợp mọi luật:**
+`[class^="WorkbenchElementImg2Img__Img2Img-"]:has(button[id="<id-React>"]) button[class*="__GenerateButton"]`
+→ khớp **1**. Mỗi khối mang một `id` React (`useId`) riêng. `id` **đọc sống mỗi lượt** — React
+sinh lại theo mỗi lượt tải, gõ cứng là bấm mù. Trước khi bấm, đọc `value` ô prompt **trong cùng
+phạm vi** để xác nhận khối bằng **chữ, không bằng thứ tự**.
+
+**Hai lần tôi báo sai, cùng một gốc:** ⑴ *"mọi class là hash"* (`G-127`) — hash ở đuôi, tên
+component ở đầu. ⑵ *"không selector nào khớp một, đây là số học"* (`G-129`) — tôi thử 18 biến
+thể CSS rồi tuyên bố bất khả; thứ 19 chạy. **"Tôi đã thử N cách" là một con số về TÔI, không
+về bề mặt** — và tôi đã dùng nó để đóng một cửa đang mở, hai lần liền.
+
+**Công tắc ghi ghế `99a6cade` ĐANG MỞ** (`G-130`) — `{used:1, cap:200, remaining:199}`. Tôi đã
+báo "có thể chưa mở": một phỏng đoán đội lốt cảnh báo. Đường đo duy nhất là **thử**.
+
+**Kết quả** (`G-131`): hàng output của đúng khối **2 → 3**, ảnh mới **ngoài cùng bên phải hàng
+đó** — ⚠ **n=1**, chưa thành luật. DOM chỉ nhấp nhô **+8 node a11y rồi về đúng chỗ cũ** ở +12s;
+`img` giữ 1, khối giữ 2 ⇒ **không phần tử DOM nào ở lại** cho output. `scout.click` khai thẳng
+`da_kiem:false` ⇒ **xác nhận PHẢI đến từ ngoài lệnh bấm**.
+
+**Đường ảnh ra ĐĨA đã chạy thật:** 2 lượt `scout.shot` ~206 KB trên dây, **0 byte vào context**.
+
+**Lỗ hổng duy nhất còn lại: danh tính.** Lượt ghi này **không** chứng minh được tài khoản
+(`G-115`) — chạy theo chỉ thị trực tiếp của Đức, và pilot **khai điều đó ra ở đầu mỗi lượt** thay
+vì im lặng. Tự động hoá thật thì phải đóng chỗ này trước.

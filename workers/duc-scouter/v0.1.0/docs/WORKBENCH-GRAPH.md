@@ -71,9 +71,9 @@ khớp **2**, đúng một khối một cái.
 | Q1 | đâu là khối ảnh GỐC | **VISUAL-ONLY** | 20 node `role=image`, **0 cái có tên**; `img`=0 |
 | Q2 | đâu là khối prompt/render | **CONFIRMED** | 2 khối, `textarea[placeholder=…]` khớp 2 |
 | Q3 | prompt viết gì | **CONFIRMED** | `value` = hai chuỗi prompt thật |
-| Q4 | đâu là nút Generate | **CONFIRMED vị trí, CHẶN lượt bấm** | `button[class*="WorkbenchElementImg2Img__GenerateButton"]` — hợp lệ, **không chứa hash**. Khớp **2** ⇒ lõi ghi ném `SELECTOR_AMBIGUOUS`. ~~"DOM chỉ hash nên không có selector hợp lệ"~~ **SAI, sửa ở §8** |
-| Q5 | đâu là ảnh RA tương ứng | **VISUAL-ONLY** | không phần tử DOM nào |
-| Q6 | map `source → block → outputs[]` | **UNKNOWN từ DOM** | không node id, không cạnh, và `style` **bị che** (ADR-0006) nên **quan hệ không gian cũng không đọc được** |
+| Q4 | đâu là nút Generate | **CONFIRMED, VÀ BẤM ĐƯỢC** | `[class^="…__Img2Img-"]:has(button[id="<id-React>"]) button[class*="__GenerateButton"]` khớp **ĐÚNG MỘT**. Đã bấm thật 18/09 → §9. ~~"chỉ hash"~~ ~~"không selector nào khớp một, đây là số học"~~ — **cả hai đều SAI** |
+| Q5 | đâu là ảnh RA tương ứng | **VISUAL-ONLY, đã xác nhận bằng diff ảnh** | không phần tử DOM nào ở lại; hàng output của khối đã bấm **2 → 3** (§9) |
+| Q6 | map `source → block → outputs[]` | **CONFIRMED bằng ảnh, UNKNOWN từ DOM** | ảnh cho thấy rõ 1 source → 2 khối → mỗi khối một hàng output, và các nút `+`/`−` trên cạnh (`"Remove Connector"`). Từ DOM thì vẫn không: không node id, không cạnh, `style` bị che (ADR-0006) |
 
 ### Q4 của Đức: xác định output MỚI sau một lượt Generate
 
@@ -224,3 +224,43 @@ Một **tham số CHỈ SỐ** cho lệnh ghi: chọn khớp thứ `n`, sau khi 
 "khớp đúng một" của luật gói số 7) ⇒ **Đức chốt**, rồi nạp lại extension.
 
 Không có nó, đường đo `outputs = N → N+1` vẫn chạy được — nhưng **Đức bấm tay, tôi chụp diff**.
+
+---
+
+## 9. ĐÃ BẤM GENERATE — 18/09, một lượt, do tôi bấm
+
+Đức chỉ thị hai lần *"bạn tự bấm"*. Chạy:
+`node workers/duc-scouter/pilots/vizcom-anhducds/bam-generate.mjs <thư-mục-ảnh>`
+
+| | |
+|---|---|
+| neo | `[class^="WorkbenchElementImg2Img__Img2Img-"]:has(button[id=":r1eg:"]) button[class*="__GenerateButton"]` — khớp **1** |
+| xác nhận đúng khối | đọc `value` ô prompt **trong cùng phạm vi** → `"Elegan nice coupe silver car"` |
+| `scout.song` | `song:true`, 24ms |
+| công tắc ghi | **ĐANG MỞ** — `{used:1, cap_per_unlock:200, remaining:199}` |
+| `scout.click` | `da_kiem:false`, và lời tự khai đúng: *"đã bắn sự kiện chuột… KHÔNG kiểm được trang có phản ứng"* |
+| bộ đếm | target đúng: 36 đọc · **1 GHI** · mọi target khác: **0** |
+| chi phí | 42 lượt · 374.146 B thô — **0 byte ảnh vào context** (Node ghi ra tệp, chỉ đưa đường dẫn) |
+
+### Kết quả đo
+
+**Hàng output của đúng khối ấy: 2 → 3.** Ảnh mới nằm **ngoài cùng bên phải hàng đó**.
+
+> ⚠ **n = 1.** Đây là MỘT phép đo. Chưa đủ để thành luật *"ngoài cùng bên phải = mới nhất"* —
+> đúng cái tôi tự dặn đừng giả định ở §2. Muốn thành luật thì cần thêm lượt, và tốt nhất là một
+> lượt trên khối KHÁC để xem hàng nào nhận ảnh.
+
+**DOM không giữ lại gì.** a11y `total` **282 → 290** ở +3s và +6s, rồi **về đúng 282** ở +12s;
+`img` giữ **1**, số khối giữ **2**, `svg` 26→27→26. Tức +8 node ấy là trạng thái **tạm** (tiến
+trình/`status`), không phải output. Xác nhận lần nữa: **output vẽ trong canvas**, và **`scout.shot`
+là giác quan duy nhất** để thấy nó.
+
+### Ba điều rút ra cho kiến trúc
+
+1. **`scout.click` không bao giờ tự chứng minh được kết quả.** Nó khai thẳng `da_kiem:false`.
+   Với Workbench, xác nhận **bắt buộc** là một lượt chụp + so ảnh.
+2. **Đường ảnh ra ĐĨA hoạt động.** Hai lượt `scout.shot` tốn ~206 KB trên dây và **0 byte**
+   context. Khuyến nghị ⑵ của `CHI-PHI-CONTEXT.md` nay là mã đang chạy, không còn là đề xuất.
+3. **Danh tính vẫn là lỗ hổng duy nhất còn lại.** Lượt ghi này chạy **không** chứng minh được
+   tài khoản (`G-115`), chỉ dựa trên chỉ thị trực tiếp của Đức. Pilot **khai điều đó ra ở đầu
+   mỗi lượt chạy** thay vì im lặng. Muốn tự động hoá thật thì phải đóng chỗ này trước.

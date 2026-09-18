@@ -38,11 +38,11 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-18T03:04:10.677Z",
       "task": "sinh lai trang tong",
-      "released_at": null,
+      "released_at": "2026-09-18T03:04:54.432Z",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -77,15 +77,15 @@
     "workers/duc-scouter": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-18T03:02:17.340Z",
-      "task": "sua ket luan luat 5",
+      "claimed_at": "2026-09-18T03:19:55.970Z",
+      "task": "pilot Generate + diff anh",
       "released_at": null
     },
     "workers/_shared": {
       "owner": "claude-universal-scouter",
       "ai": null,
-      "claimed_at": "2026-09-18T03:02:17.237Z",
-      "task": "ban do component workbench",
+      "claimed_at": "2026-09-18T03:19:56.046Z",
+      "task": "neo Generate theo id khoi",
       "released_at": null
     },
     "workers/hnx-fetch": {
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T19:16:07.756Z"
     }
   },
-  "_fingerprint": "ff3e2ffdd6ce53ff"
+  "_fingerprint": "fef9fea1aa9192f9"
 }

@@ -92,11 +92,19 @@ export const VIZCOM = {
    *       │   └ __Img2ImgTextArea                 ← ô prompt
    *       └ __GenerateButton                      ← Generate
    *
-   * CHỖ CHẶN THẬT không phải hash, mà là **SỐ LƯỢNG**: canvas có 2 khối đối xứng, và mọi biến
-   * thể CSS đã thử đều trả **2** — `:has()` chạy, nhưng CSS không so được chữ trong `value` nên
-   * không tách được khối nào là khối nào. Lõi ghi ném `SELECTOR_AMBIGUOUS` khi khớp ≠ 1
-   * (`scouter-actions-core.mjs`), nên **không lệnh GHI nào chạm được nút Generate hôm nay**.
-   * Cần một tham số CHỈ SỐ — đổi luật an toàn, Đức chốt. */
+   * ~~"Chỗ chặn thật là SỐ LƯỢNG: mọi biến thể CSS trả 2, không lệnh GHI nào chạm được nút
+   * Generate, cần đổi luật an toàn"~~ — **SAI, sửa 18/09 sau khi thử biến thể thứ 19** (`G-129`).
+   * Mỗi khối mang một **`id` React (`useId`)** riêng, và nó tách sạch:
+   *
+   *     [class^="WorkbenchElementImg2Img__Img2Img-"]:has(button[id="<id>"]) button[class*="__GenerateButton"]
+   *         → khớp ĐÚNG MỘT, và ô prompt trong cùng phạm vi cũng khớp 1
+   *
+   * Nên trước khi bấm, ĐỌC `value` ô prompt trong phạm vi ấy để **xác nhận đang nhắm khối nào
+   * bằng chữ, không bằng thứ tự**. `id` phải **đọc sống mỗi lượt chạy** — React sinh lại nó theo
+   * mỗi lượt tải trang, gõ cứng là bấm mù.
+   *
+   * ĐÃ BẤM THẬT 18/09: `bam-generate.mjs`, 1 lượt GHI trên đúng target, hàng output **2 → 3**.
+   * Bài học: *"tôi đã thử 18 cách"* không phải một chứng minh bất khả. */
   be_mat_workbench: {
     /* Ô nhập prompt. **KHỚP 2** — mỗi phần tử trên canvas một ô. Luật gói số 7 đòi selector
      * khớp ĐÚNG MỘT trước khi ghi, nên selector này KHÔNG dùng để ghi được. */
