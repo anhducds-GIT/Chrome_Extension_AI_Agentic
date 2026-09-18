@@ -1531,8 +1531,24 @@ const doSoNo = () => {
   }
   const so = path.join(ROOT, "BACKLOG.md");
   if (!fs.existsSync(so)) return { ok: true, msg: `Chưa có BACKLOG.md ở gốc repo (trần khai là ${tran}).` };
-  const { mo } = parseBacklog(fs.readFileSync(so, "utf8"));
-  if (mo.length <= tran) return { ok: true, msg: `${mo.length}/${tran} mục nợ đang mở.` };
+  const chu = fs.readFileSync(so, "utf8");
+  const { mo } = parseBacklog(chu);
+  /* SÀN: một bộ đọc trả 0 thì nó đang nói MỘT TRONG HAI câu — "sổ sạch" hoặc "tôi đọc sai hình
+     dạng" — và hàng cổng này không phân biệt được. ĐO 18/09: `parseBacklog` neo vào `^###` trong
+     khi sổ dùng `##`, nên nó trả **0 mục mở** suốt 9 ngày và cái trần 15 KHÔNG THỂ vượt. Một
+     trần không thể vượt là một trần đã tắt. Đếm lại tiêu đề mục bằng một phép độc lập: có tiêu
+     đề mà không đọc ra mục nào thì đó là BỘ ĐỌC HỎNG, không phải sổ sạch. */
+  const soTieuDe = (chu.match(/^#{2,3}\s+~*\s*[A-Z][A-Z0-9]*-\d+/gm) ?? []).length;
+  const soDong = (chu.match(/^\s*[-*]\s*\*\*\s*ĐÓNG\s+[A-Z][A-Z0-9]*-\d+\s*\*\*/gm) ?? []).length;
+  if (mo.length === 0 && soTieuDe > soDong) {
+    return {
+      ok: false,
+      msg: `BO_DOC_SO_NO_HONG — đọc ra 0 mục đang mở, nhưng sổ có ${soTieuDe} tiêu đề mục và chỉ `
+        + `${soDong} dòng đóng. Con số 0 ở đây là "tôi đọc sai hình dạng", không phải "sổ sạch". `
+        + `Sửa \`parseBacklog\` trong scripts/what-next.mjs, đừng sửa trần.`
+    };
+  }
+  if (mo.length <= tran) return { ok: true, msg: `${mo.length}/${tran} mục nợ đang mở (sổ có ${soTieuDe} tiêu đề mục, ${soDong} dòng đóng).` };
   return {
     ok: false,
     msg: `SO_NO_VUOT_TRAN — ${mo.length} mục đang mở, trần là ${tran}. `

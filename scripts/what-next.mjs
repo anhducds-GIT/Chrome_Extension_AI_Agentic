@@ -51,7 +51,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
    chứa số — n8n · s3 · web3 · i18n — đều vấp.
    Bắt buộc chữ cái ở đầu là có lý do: cho phép số ở đầu thì `### 2026-09 · ...` (một mốc ngày
    trong sổ) sẽ bị đọc thành mã việc `2026-09`. */
-const MA_VIEC = /^###\s+~*\s*([A-Z][A-Z0-9]*-\d+)~*\s*[·:]?\s*(.*)$/;
+/* HAI hay BA dấu thăng đều là một mục (vá 18/09, N-65 — BẢN SAO THỨ BA của cùng một luật).
+   ĐO 18/09: `BACKLOG.md` của repo này dùng `## N-05 · …` cho cả 41 mục, nên bộ đọc neo cứng
+   vào `^###` trả về **0 mục mở** — và hàng cổng "Ngân sách trong trần · sổ nợ" in
+   *"0/15 mục nợ đang mở"*, một cái trần KHÔNG THỂ vượt. `what-next.mjs` cũng thấy repo sạch nợ.
+   Đúng bệnh đã vá ở `overview-doc.mjs` (`readNo`) và `can-nang.mjs` hôm 17/09 — nhưng đây là
+   bản sao THỨ BA của luật đọc sổ nợ, và nó không được sửa cùng lượt. Gộp ba bản về một nhà là
+   việc của bước 3 (bộ đọc trùng); ở đây vá đúng chỗ sai. */
+const MA_VIEC = /^#{2,3}\s+~*\s*([A-Z][A-Z0-9]*-\d+)~*\s*[·:]?\s*(.*)$/;
 /* Mọi dòng `###` trong sổ nợ ĐỀU phải là một mục việc — quy ước sổ nói thế, và đo ở repo nhà
    06/09: 24/24 dòng `###` là mục việc, không có ngoại lệ nào. Nên dòng `###` mà không đọc ra
    mã việc là SAI QUY ƯỚC, và phải bị NÊU TÊN. Đây mới là gốc bệnh của KHUNG-18: không phải
@@ -66,7 +73,7 @@ const UU_TIEN = /^##\s+(P[1-9])\b/;
    Nên: `~~` là chính, từ khoá in HOA là lưới hứng, và mục rơi vào lưới thì BỊ NÊU TÊN (mục
    `khaiSai`) thay vì âm thầm bỏ qua — cách viết thứ năm sẽ xuất hiện, và lúc đó phải có người
    thấy. In hoa toàn phần là cố ý: `đóng phiên` trong văn xuôi không trúng lưới. */
-const GACH = /^###\s+~~/;
+const GACH = /^#{2,3}\s+~~/;
 
 /* CO "CHO NGUOI CHOT" trong mot muc no. In HOA va co dau hai cham la co y: cau van xuoi
    "viec nay cho nguoi chot quyet" KHONG trung, chi dong khai moi trung.
@@ -84,15 +91,28 @@ const TU_DONG = /(ĐÃ ĐÓNG|ĐÓNG|ĐÃ XONG|XONG|ĐÃ VÁ)/;
     Trả `{ mo, khaiSai, khongHieu }`.
     `khaiSai`   = mục đóng bằng từ khoá mà không gạch, sai quy ước sổ.
     `khongHieu` = dòng `###` mà KHÔNG đọc ra mã việc — bản cũ nuốt im, giờ bị nêu tên. */
+/* CÁCH ĐÓNG THỨ BA, và là cách CHÍNH THỨC của repo này (vá 18/09, N-65).
+   `.repo-structure.json` khai nguyên văn: *"Mục đóng bằng dòng `- **ĐÓNG <mã>**` thêm ở CUỐI sổ,
+   không gạch tiêu đề."* — vì luật mục 1 bắt sổ này CHỈ ĐƯỢC THÊM DÒNG Ở CUỐI, nên quay lên gạch
+   tiêu đề là sửa dòng cũ, tức phạm đúng luật giữ sổ. Bộ đọc này chỉ biết `~~` và từ khoá in HOA
+   trên chính dòng tiêu đề, nên nó đọc 41 mục đang mở trong khi sổ còn 12. Hệ quả đo 18/09: hàng
+   cổng "sổ nợ" nói `0/15` (vì mã việc `##` không khớp) rồi nói `41/15` (khi đã khớp) — hai con
+   số, không con nào đúng. `overview-doc.mjs` (`readNo`) đã biết luật này từ 17/09; đây là bản
+   thứ ba của cùng một luật đọc sổ, và gộp chúng là việc của bước 3. */
+const DONG_CUOI_SO = /^\s*[-*]\s*\*\*\s*ĐÓNG\s+([A-Z][A-Z0-9]*-\d+)\s*\*\*/;
+
 export function parseBacklog(text) {
   const ra = [];
   const khaiSai = [];
   const khongHieu = [];
+  const daDong = new Set();
   let uuTien = "P?";
   let hienTai = null;
   for (const dong of String(text).split(/\r?\n/)) {
     const moc = UU_TIEN.exec(dong);
     if (moc) { uuTien = moc[1]; continue; }
+    const khoa = DONG_CUOI_SO.exec(dong);
+    if (khoa) { daDong.add(khoa[1]); continue; }
     const viec = MA_VIEC.exec(dong);
     if (!viec) {
       // Dòng `###` mà không ra mã việc: KHÔNG được lặng lẽ đi tiếp. Nó trông như một mục
@@ -111,7 +131,8 @@ export function parseBacklog(text) {
     hienTai = { ma: viec[1], tieuDe: lamSach(viec[2]), uuTien, choChot: false };
     ra.push(hienTai);
   }
-  return { mo: ra, khaiSai, khongHieu };
+  /* Hai lượt, không một: dòng đóng nằm ở CUỐI sổ nên lúc đọc tới mục thì chưa biết nó đã đóng. */
+  return { mo: ra.filter((m) => !daDong.has(m.ma)), khaiSai, khongHieu };
 }
 
 

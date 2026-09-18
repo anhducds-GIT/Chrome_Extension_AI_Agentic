@@ -828,3 +828,30 @@ Thử phá **3/3 ĐỎ**, ba chỗ đau khác nhau: bỏ cờ quotepath · rút 
 khẳng định nổ, KHÔNG chứng minh aggregate đỏ — bài đó còn ngoài aggregate.
 
 **Còn nợ, theo chốt của Đức:** `N-31` (3 khối `what-next-smoke` hoãn cùng nó) · `N-70`.
+
+## 2026-09-18 · claude-v1 · N-65 ĐÓNG — khu cách ly rỗng, và nó nhả ra 5 lỗ sản phẩm
+
+Bước 1/5 closeout **Universal Scouter V1**. Hợp đồng N-65 **siết**: đóng khi *mọi* khu cách ly
+rỗng. Hàng rào đọc theo **tiền tố** nên đặt tên khác vẫn kêu. Aggregate **41 → 43 suite, 0 đỏ**.
+
+`claim-smoke` REWRITE 26/26 · `build-dashboard-smoke` COMPACT 3522→896 dòng, 37/37 — cả hai vào
+`npm test`. DROP `build-overview-smoke`: **45/45** tên import đã chết, IA ba tầng bị bản 5-tab
+thay, năm bài đang sống đã sở hữu `build-overview.mjs`. DROP (gộp) `dau-vet-vung-smoke`: mọi bất
+biến của nó nằm sẵn trong `khoa-dau-vet.mjs` (vế 6 chữ · vế 7 VÀNG không đổi mã thoát · vế 11
+không tự nhả), và 4/6 ký hiệu nó import không còn ở đâu.
+
+**NĂM lỗ SẢN PHẨM, vá ở sản phẩm:**
+⑴ Dấu niêm phong không được soi ở **đường GHI nào**. Sửa tay đổi chủ → `--release` thoát 0 và
+đóng dấu lại cho chính vụ sửa (`110536d7`→`bdd56ff9`). Chuông kêu một lần rồi tự tắt.
+⑵ `mocMs` bị `4da1e9e5` xoá, thay `Date.parse` trần ở **bốn** chỗ — mốc thiếu múi đọc thành giờ
+địa phương, lệch 7h, đủ bật ⚠ oan. Đúng con số ma 06/09.
+⑶ `--duc-duyet "   "` và `--du-biet` cờ trần mở được cửa thoát mà không để lại câu khai.
+⑷ `tra_khi_chua_day` sống dai hơn lượt trả → cảnh báo ma vĩnh viễn.
+⑸ **Bản sao thứ BA của luật đọc sổ nợ.** `parseBacklog` neo `^###` (sổ dùng `##`) và không biết
+dòng `- **ĐÓNG <mã>**`. Hàng cổng "sổ nợ" in **0/15** suốt 9 ngày — một cái trần không thể vượt
+là một cái trần đã tắt. Nay 12/15, khớp `readNo`. Thêm **sàn**: đọc ra 0 mà sổ còn tiêu đề → ĐỎ
+*"bộ đọc hỏng"*, không phải "sổ sạch".
+
+**Phá là ĐỎ 5/5**, năm chỗ đau khác nhau, đếm neo trước khi tin. Giới hạn khai hôm qua nay **gỡ**.
+
+**Còn nợ:** `N-31` · `N-70` · gộp ba bộ đọc sổ nợ (bước 3).

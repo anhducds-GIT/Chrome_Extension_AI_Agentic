@@ -10,6 +10,12 @@
 import assert from "node:assert/strict";
 
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { readNo } from "../scripts/overview-doc.mjs";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 import { dangMo } from "../scripts/backlog-check.mjs";
 import { banDoVung, daDongBang, dangBiChan, locChoNguoiChot, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus } from "../scripts/what-next.mjs";
@@ -338,5 +344,53 @@ kiem("gói đóng băng: ra khỏi mục A, vào mục riêng, và KHÔNG biến
  * Đây là nợ THẬT, không phải mục obsolete: nó phải quay lại cùng `N-31` (cùng một bộ đọc sổ,
  * cùng một file), và Đức chốt 18/09 là lượt này KHÔNG làm `N-31`. */
 
+
+/* ---- BỘ ĐỌC SỔ NỢ PHẢI ĐỌC ĐƯỢC SỔ CỦA CHÍNH REPO NÀY (18/09, N-65) ------
+ *
+ * Đây là BẢN SAO THỨ BA của một luật, và cả ba đã từng lệch nhau. `overview-doc.mjs` (`readNo`)
+ * và `can-nang.mjs` được vá 17/09; `parseBacklog` thì không, và nó nuôi HAI người đọc quan
+ * trọng: hàng cổng *"Ngân sách trong trần · sổ nợ"* và chính `what-next.mjs`.
+ *
+ * ĐO 18/09 trên `BACKLOG.md` thật, 41 mục:
+ *     neo `^###`, không biết dòng đóng  → **0 mục mở** (cổng in "0/15" — trần không thể vượt)
+ *     neo `^#{2,3}`, không biết dòng đóng → 41 mục mở (cổng in "41/15" — đỏ oan)
+ *     đúng cả hai                        → **12 mục mở**, khớp `readNo`
+ * Hai cách sai cho hai con số, và KHÔNG con nào tự khai là mình sai.
+ *
+ * Ghim HAI hình dạng vì repo này dùng cả hai, và `.repo-structure.json` khai rõ cách thứ hai là
+ * cách CHÍNH THỨC (*"đóng bằng dòng `- **ĐÓNG <mã>**` thêm ở CUỐI sổ, không gạch tiêu đề"*) —
+ * vì luật mục 1 bắt sổ này chỉ được THÊM DÒNG Ở CUỐI, nên quay lên gạch tiêu đề là phạm luật. */
+{
+  const NL = String.fromCharCode(10);
+  const soNo = [
+    "## P1", "",
+    "## N-01 · hai thăng, còn mở", "", "- **đóng khi nào:** xong",
+    "### N-02 · ba thăng, còn mở", "",
+    "### ~~N-03~~ · gạch tiêu đề", "",
+    "## N-04 · đóng bằng dòng cuối sổ", "",
+    "## Luật của sổ — văn xuôi, không phải mục", "",
+    "- **ĐÓNG N-04**", "",
+    "- **ĐÓNG N-99** — dòng đóng mồ côi, không có mục nào tên thế"
+  ].join(NL);
+
+  const { mo } = parseBacklog(soNo);
+  assert.deepEqual(mo.map((m) => m.ma), ["N-01", "N-02"],
+    "phai doc CA `##` lan `###`; gach tieu de VA dong dong cuoi so deu la DA DONG");
+
+  // Dòng đóng mồ côi không được đẻ ra một mục — sổ nói về một mã không tồn tại là chuyện của sổ.
+  assert.ok(!mo.some((m) => m.ma === "N-99"), "dong dong mo coi khong duoc thanh mot muc");
+
+  /* VÀ TRÊN SỔ THẬT: hai bộ đọc độc lập phải ra CÙNG một con số. Vế này là thứ bắt được ca
+     18/09 — mỗi bộ đọc riêng lẻ đều "chạy được", chỉ có phép so giữa chúng mới kêu. */
+  const chuThat = fs.readFileSync(path.join(ROOT, "BACKLOG.md"), "utf8");
+  const theoWhatNext = parseBacklog(chuThat).mo.length;
+  const theoOverview = readNo(chuThat).filter((m) => !m.dong).length;
+  assert.ok(theoWhatNext > 0,
+    "SAN: doc ra 0 muc mo tren so THAT nghia la bo doc gay, khong phai repo het no");
+  assert.equal(theoWhatNext, theoOverview,
+    `hai bo doc so no phai ra cung mot con so: what-next=${theoWhatNext} · overview-doc=${theoOverview}`);
+  so += 1;
+  console.log(`  ok  bộ đọc sổ nợ: ## và ### · hai cách đóng · dòng đóng mồ côi không đẻ mục · khớp readNo (${theoWhatNext} mục mở)`);
+}
 
 console.log(`\n${so} passed, 0 failed, ${so} total`);
