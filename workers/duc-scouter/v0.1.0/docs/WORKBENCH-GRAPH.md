@@ -264,3 +264,62 @@ là giác quan duy nhất** để thấy nó.
 3. **Danh tính vẫn là lỗ hổng duy nhất còn lại.** Lượt ghi này chạy **không** chứng minh được
    tài khoản (`G-115`), chỉ dựa trên chỉ thị trực tiếp của Đức. Pilot **khai điều đó ra ở đầu
    mỗi lượt chạy** thay vì im lặng. Muốn tự động hoá thật thì phải đóng chỗ này trước.
+
+---
+
+## 10. `id` CÓ BỀN KHÔNG — thí nghiệm remount, 18/09, READ-ONLY
+
+Đức hỏi đúng một câu: *dựa được vào `id` đã lưu, hay mỗi lượt phải giải động khối bằng bằng
+chứng prompt rồi lấy nút Generate con hiện tại?*
+
+Cách đo: đọc mapping → `scout.navigate` về **đúng URL cũ** (một lượt tải lại) → **giải lại
+target từ đầu** → đọc lại. **1 lượt GHI duy nhất là lượt tải lại. Không bấm Generate. 0 credit.**
+
+| | trước | sau |
+|---|---|---|
+| `id` khối *"Elegan nice coupe silver car"* | `:r1eg:` | **`:r1l:`** |
+| `id` khối *"Racing morden car colorful"* | `:r1et:` | **`:r22:`** |
+| class nút Generate | `…__GenerateButton-sc-ukbsh3-2 jiRMPz fOFwsU` | **y nguyên** |
+| `target_id` | `9B33CA1E…` | **y nguyên** |
+| mỗi phạm vi khớp Generate | 1 | **1** |
+| chữ prompt | 2 chuỗi | **y nguyên** |
+
+**Confound đã loại bằng phép đo.** Banner *"An updated version of the app is available"* đang
+hiện, nên "id đổi" rất dễ bị đọc nhầm thành "app đổi build". Chuỗi class **giữ y nguyên** ⇒ lượt
+đổi `id` **không** do build. Đây là chỗ dễ kết luận sai nhất của cả thí nghiệm.
+
+### Trả lời — phân loại theo mức chắc chắn
+
+**FACT**
+- `id` **đổi** qua một lượt tải lại, dù build không đổi. ⇒ **không neo được vào `id` đã lưu.**
+- Chuỗi class component **bền** qua lượt tải lại đó.
+- Khoanh khối bằng `id` đọc sống cho **matchCount = 1** ở cả nút Generate lẫn ô prompt, cả
+  trước và sau.
+- Chữ prompt **bền** qua lượt remount.
+- **`target_id` SỐNG qua một lượt tải lại trang** — id là của **cái tab**, không của tài liệu.
+
+**INFERENCE**
+- `id` có hình dạng React `useId` (`:r…:`), nên nó phụ thuộc thứ tự dựng cây ⇒ **mọi** lượt
+  remount đều đổi nó, không riêng lượt tải lại. *Chỉ đo được ca tải lại.*
+- Thứ tự `id` ↔ thứ tự prompt trùng nhau ở **cả hai** lượt đọc, nhưng **n = 1 lượt remount** —
+  chưa đủ gọi là bền. **Đừng dựa vào thứ tự.**
+
+**UNKNOWN**
+- Hai khối **cùng một chữ prompt** thì phân biệt thế nào. Chưa đo, và dựng được bằng tay bất cứ
+  lúc nào — đây là lỗ thật của cách neo theo chữ.
+- Class có bền qua một lượt đổi build THẬT hay không. Lượt này class không đổi, nên **chưa đo
+  được** vế đó (không rõ reload đã nạp bản mới chưa).
+
+### LUỒNG ĐÚNG — và nó không cần thêm năng lực nào
+
+```
+mỗi lượt chạy:
+  giải target (đừng cho rằng id cũ đã chết — G-133 — nhưng cũng đừng cache qua phiên)
+  → scout.query 'button[id]'            đọc id SỐNG
+  → khoanh khối: [class^="…__Img2Img-"]:has(button[id="<id>"])
+  → scout.text  <khối> textarea         ĐỌC CHỮ để biết khối nào
+  → lấy nút Generate CON của chính khối đó
+```
+
+**Không cache `id` qua lượt.** Và vì neo cuối cùng là **dữ liệu của người dùng**, phải đọc lại
+chữ **ngay trước** mỗi lượt ghi: Đức sửa prompt là neo đổi ngay (`G-134`).

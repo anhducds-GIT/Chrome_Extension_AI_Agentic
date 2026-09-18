@@ -100,8 +100,10 @@ export const VIZCOM = {
    *         → khớp ĐÚNG MỘT, và ô prompt trong cùng phạm vi cũng khớp 1
    *
    * Nên trước khi bấm, ĐỌC `value` ô prompt trong phạm vi ấy để **xác nhận đang nhắm khối nào
-   * bằng chữ, không bằng thứ tự**. `id` phải **đọc sống mỗi lượt chạy** — React sinh lại nó theo
-   * mỗi lượt tải trang, gõ cứng là bấm mù.
+   * bằng chữ, không bằng thứ tự**. `id` phải **đọc sống mỗi lượt chạy** — và đây **không còn là
+   * suy luận**: đo 18/09 (`G-132`), một lượt tải lại trang đổi `:r1eg:`/`:r1et:` thành
+   * `:r1l:`/`:r22:`, trong khi chuỗi class giữ **y nguyên** (tức không phải do đổi build).
+   * Gõ cứng một `id` là bấm mù.
    *
    * ĐÃ BẤM THẬT 18/09: `bam-generate.mjs`, 1 lượt GHI trên đúng target, hàng output **2 → 3**.
    * Bài học: *"tôi đã thử 18 cách"* không phải một chứng minh bất khả. */

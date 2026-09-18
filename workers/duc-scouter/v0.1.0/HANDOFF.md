@@ -2955,3 +2955,27 @@ báo "có thể chưa mở": một phỏng đoán đội lốt cảnh báo. Đư
 **Lỗ hổng duy nhất còn lại: danh tính.** Lượt ghi này **không** chứng minh được tài khoản
 (`G-115`) — chạy theo chỉ thị trực tiếp của Đức, và pilot **khai điều đó ra ở đầu mỗi lượt** thay
 vì im lặng. Tự động hoá thật thì phải đóng chỗ này trước.
+
+## 2026-09-18l · `claude-universal-scouter` — `id` khối KHÔNG bền; phải giải động mỗi lượt
+
+Thí nghiệm READ-ONLY, chi tiết ở `docs/WORKBENCH-GRAPH.md` §10. **1 lượt GHI duy nhất là lượt
+tải lại trang. Không bấm Generate. 0 credit.**
+
+**FACT** — `id` đổi qua một lượt tải lại: `:r1eg:`/`:r1et:` → **`:r1l:`/`:r22:`**. Nhưng chuỗi
+class giữ **y nguyên** ⇒ **không phải do đổi build** (`G-132`). Banner "update available" đang
+hiện nên đây là chỗ dễ lẫn nhất, và nó đã được loại bằng phép đo chứ không bằng lời.
+
+**FACT** — **`target_id` SỐNG qua lượt tải lại** (`G-133`). Đừng gộp với `G-118` (Bridge nối lại
+thì mọi id chết): id là của **cái tab**, không của tài liệu. *"Tải lại ⇒ id mới"* là suy luận sai.
+
+**Luồng đúng:** đọc `button[id]` **sống** → khoanh khối `[class^="…__Img2Img-"]:has(button[id=…])`
+→ **đọc chữ** ô prompt để biết khối nào → lấy nút Generate **con** của khối đó. Không cache `id`
+qua lượt.
+
+**Giá của cách neo theo chữ** (`G-134`): neo cuối cùng là **dữ liệu người dùng**, nên ⑴ hai khối
+cùng chữ prompt sẽ không phân biệt được — **chưa đo**, dựng được bằng tay bất cứ lúc nào; ⑵ Đức
+sửa prompt là neo đổi ngay ⇒ phải đọc lại chữ **ngay trước** mỗi lượt ghi.
+
+**INFERENCE, chưa đo:** `id` dạng React `useId` nên **mọi** lượt remount đều đổi nó, không riêng
+lượt tải lại. Và thứ tự `id` ↔ thứ tự prompt trùng ở cả hai lượt đọc, nhưng **n=1** — **đừng dựa
+vào thứ tự**.
