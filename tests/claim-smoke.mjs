@@ -11,8 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, ghiBangNguyenTu, khoaBiDoiChu, khoaFileTrongVung, kiemKhoaKhaiDuoc, quyetDinhSua, quyetDinhXong, readClaims, soatDanHang } from "../scripts/claim.mjs";
-import { CHUA_DAY } from "../scripts/repo-structure.mjs";
+import { ageHours, ageLabel, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, ghiBangNguyenTu, khoaFileTrongVung, kiemKhoaKhaiDuoc, quyetDinhSua, quyetDinhXong, readClaims, soatDanHang } from "../scripts/claim.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -260,7 +259,10 @@ const CLAIMS = () => ({
   for (const xau of [null, undefined, "", "hom qua", 42, "2026-13-99"]) {
     assert.equal(ageHours(xau, moc), null, `moc khong doc duoc phai tra null: ${JSON.stringify(xau)}`);
   }
-  assert.equal(ageLabel(null), "", "khong biet tuoi thi khong in gi");
+  /* ĐỔI 18/09 (N-65): bản cũ ghim `""` — in RỖNG khi không biết tuổi. Nay là câu "không rõ từ
+     khi nào", và câu đó ĐÚNG HƠN: một ô trống trong bảng đọc thành "vừa nhận", tức chỗ này
+     từng nói dối theo đúng cái hướng khiến người ta giành khoá. Ghim CÂU, không ghim rỗng. */
+  assert.equal(ageLabel(null), "không rõ từ khi nào", "khong biet tuoi thi phai NOI la khong biet, khong duoc im");
   assert.match(ageLabel(0.5), /phút/, "duoi 1h thi in phut");
   assert.match(ageLabel(5), /^5h$/, "vai gio thi in gio");
   assert.match(ageLabel(72), /ngày/, "qua 48h thi in ngay cho de doc");
@@ -291,7 +293,10 @@ const CLAIMS = () => ({
     assert.match(dong("_root"), /⚠/, "khoa giu qua nguong phai co dau nhac");
     assert.doesNotMatch(dong("_docs"), /⚠/, "khoa vua nhan thi KHONG duoc nhac — bao oan la nguoi ta bo qua het");
     assert.doesNotMatch(dong("workers/goi-b"), /giữ/, "khoa TRONG thi khong co tuoi de in");
-    assert.match(run("--list").out, /hỏi Đức/, "phai noi ro day la so lieu de HOI, khong phai giay phep gianh");
+    /* BỎ 18/09 (N-65): vế "câu nhắc HỎI, đừng nhả" đã có nhà — `tests/khoa-dau-vet.mjs` vế 6
+       và vế 8, và nó ghim CẢ chữ lẫn nguồn chung. Ở đây câu ấy chỉ hiện khi tín hiệu dấu vết
+       ra "chưa thấy", mà thư mục tạm này không phải repo git nên tín hiệu ra "không đo được".
+       Ghim lại ở đây là bản thứ hai của một luật, và là bản sẽ đỏ oan. Khối này ghim TUỔI. */
 
     // VẾ PHỦ ĐỊNH — quan trọng nhất cả khối.
     const cuop = run("--take", "_root", "--as", "phien-khac", "--task", "khoa nay cu roi ma");
@@ -299,10 +304,15 @@ const CLAIMS = () => ({
     assert.equal(JSON.parse(readFileSync(claimsPath, "utf8")).claims._root.owner, "phien-cu",
       "va khong duoc ghi mot chu nao vao bang");
 
-    // Mốc mới phải có GIỜ, không chỉ ngày — nếu không thì cả khối này vô nghĩa từ lần ghi sau.
+    /* Mốc mới phải có GIỜ, không chỉ ngày — nếu không thì cả khối này vô nghĩa từ lần ghi sau.
+       VÀ PHẢI CÓ MÚI (18/09, N-65). Bản cũ ghim đúng hình dạng `…THH:MM`, tức một chuỗi KHÔNG
+       múi giờ — và chính hình dạng đó là con bug vừa vá: `Date.parse` đọc nó là giờ ĐỊA PHƯƠNG,
+       nên trên máy UTC+7 một khoá vừa nhận hiện thành "giữ 7h ⚠". Ghim TÍNH CHẤT, không ghim
+       hình dạng: có giờ, và tự nói ra mình ở múi nào. */
     assert.equal(run("--take", "workers/goi-b", "--as", "phien-moi", "--task", "viec moi").code, EXIT.OK);
-    assert.match(JSON.parse(readFileSync(claimsPath, "utf8")).claims["workers/goi-b"].claimed_at,
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "moc moi PHAI co gio — ngay tran la goc benh dang chua");
+    const mocMoi = JSON.parse(readFileSync(claimsPath, "utf8")).claims["workers/goi-b"].claimed_at;
+    assert.match(mocMoi, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, "moc moi PHAI co gio — ngay tran la goc benh dang chua");
+    assert.match(mocMoi, /([Zz]|[+-]\d{2}:?\d{2})$/, "va PHAI mang mui gio — thieu mui la doc thanh gio dia phuong");
     ok("K2-5 · --list in tuoi va nhac dung khoa cu; khoa qua han VAN khong tu doi lai duoc");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-tuoi-")), "chi don dung temp fixture cua phep kiem nay");
@@ -311,34 +321,6 @@ const CLAIMS = () => ({
 }
 
 
-/* ---- K2-11. HÀM THUẦN: khoá nào vừa bị chuyển khỏi tay người khác ---- */
-{
-  const truoc = { _code: { owner: "A" }, _docs: { owner: "B" }, _root: { owner: null }, "workers/g": { owner: "C" } };
-
-  // Lấy khỏi tay A, sang mình → phải bị bắt. Đây là ca thật ngày 04/09.
-  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: "toi" } }, "toi"),
-    [{ key: "_code", tu: "A", sang: "toi" }], "lay khoa tu tay A ve minh PHAI bi bat");
-
-  // Lấy khỏi tay A, sang người thứ ba → cũng phải bị bắt. Bắt hộ người khác vẫn là bắt.
-  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: "D" } }, "toi"),
-    [{ key: "_code", tu: "A", sang: "D" }], "chuyen khoa cua A sang D cung PHAI bi bat");
-
-  // Xoá chủ hộ người khác → vẫn bắt. Trả hộ là xoá dấu vết một phiên đang làm dở.
-  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _docs: { owner: null } }, "toi"),
-    [{ key: "_docs", tu: "B", sang: null }], "tra quyen ho nguoi khac cung PHAI bi bat");
-
-  // BA ca KHÔNG được bắt — thiếu vế này thì một hàm "luôn báo" vẫn qua test.
-  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _root: { owner: "toi" } }, "toi"), [],
-    "nhan mot vung TRONG khong lay cua ai — khong duoc bao");
-  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: null } }, "A"), [],
-    "chinh chu tra khoa cua minh — khong duoc bao");
-  assert.deepEqual(khoaBiDoiChu(truoc, truoc, "toi"), [], "khong doi gi thi khong bao gi");
-
-  // Không có bảng cũ để so (repo chưa commit lần nào) → không có gì để kết luận.
-  assert.deepEqual(khoaBiDoiChu(null, { _code: { owner: "toi" } }, "toi"), [],
-    "khong co ban cu thi khong the ket luan ai lay cua ai");
-  ok("K2-11 · hàm thuần: bắt đúng ba hình dạng lấy khoá, và im với bốn ca hợp lệ");
-}
 
 /* ---- K2-11. Lệnh: `--restamp` KHÔNG được rửa sạch một vụ đổi chủ ----
    Lỗ thật (04/09): `--take` từ chối cứng khi vùng có chủ khác, nhưng `--restamp` đóng dấu cho
@@ -377,8 +359,8 @@ const CLAIMS = () => ({
     writeFileSync(claimsPath, `${JSON.stringify(cuop, null, 2)}\n`, "utf8");
     const r1 = run("--restamp", "--as", "ke-lay");
     assert.equal(r1.code, EXIT.REFUSED, `K2-11: restamp de gan dau cho mot vu lay khoa PHAI bi tu choi. Ra: ${r1.out}`);
-    assert.match(r1.out, /TU_CHOI_DONG_DAU/, "phai co ma loi doc duoc");
-    assert.match(r1.out, /_code: "nan-nhan" → "ke-lay"/, "phai noi RO khoa nao, cua ai, ve tay ai");
+    assert.match(r1.out, /TU_CHOI: lượt sửa tay này CHUYỂN CHỦ/, "phai noi ro LY DO tu choi, khong chi mot ma");
+    assert.match(r1.out, /_code: nan-nhan → ke-lay/, "phai noi RO khoa nao, cua ai, ve tay ai");
     assert.match(r1.out, /--duc-duyet/, "phai chi ra duong hop le, khong chi noi khong");
     // `taken_from` viết tay KHÔNG phải giấy phép — nó chỉ là chữ, công cụ chưa bao giờ sinh ra nó.
     assert.notEqual(doc()[FINGERPRINT_FIELD], claimsFingerprint(doc().claims),
@@ -389,10 +371,18 @@ const CLAIMS = () => ({
     assert.equal(r2.code, EXIT.OK, `co cau chot cua Duc thi phai di duoc. Ra: ${r2.out}`);
     const sau = doc();
     assert.equal(sau[FINGERPRINT_FIELD], claimsFingerprint(sau.claims), "di duoc thi phai dong dau that");
-    assert.equal(sau.claims._code.taken_from, "nan-nhan", "xuat xu phai ghi VAO FILE");
-    assert.equal(sau.claims._code.taken_by, "ke-lay", "phai ghi ai la nguoi lay");
-    assert.equal(sau.claims._code.duc_decision, "Duc chot 04/09: chu cu da tat",
+    /* XUẤT XỨ ĐỔI CHỖ, KHÔNG ĐỔI LUẬT (18/09, N-65). Bản cũ ghim ba trường `taken_from` ·
+       `taken_by` · `duc_decision` NGAY TRONG mục khoá. Nay là một dòng nhật ký ở `_chuyen_khoa`
+       mức trên cùng. Hình dạng mới đúng hơn — nó là SỔ, nên lượt đổi chủ thứ hai không đè lên
+       lượt thứ nhất — nên ghim TÍNH CHẤT: ai lấy, lấy của ai, và câu chốt của Đức đều phải nằm
+       TRONG FILE, vì người cần đọc chúng là nạn nhân, mà họ không chạy lệnh này. */
+    const so = sau._chuyen_khoa;
+    assert.ok(Array.isArray(so) && so.length === 1, `xuat xu phai ghi VAO FILE, o \`_chuyen_khoa\`. Dang co: ${JSON.stringify(sau._chuyen_khoa)}`);
+    assert.equal(so[0].boi, "ke-lay", "phai ghi ai la nguoi lay");
+    assert.deepEqual(so[0].khoa, ["_code: nan-nhan → ke-lay"], "phai ghi khoa nao, cua ai, ve tay ai");
+    assert.equal(so[0].duc_duyet, "Duc chot 04/09: chu cu da tat",
       "cau chot cua Duc phai nam trong file — nguoi can doc no la nan nhan, ma ho khong chay lenh nay");
+    assert.ok(so[0].luc, "va phai co moc: mot so khong co ngay thi khong doi chieu duoc voi git log");
 
     // VẾ 3 — cờ RỖNG không được coi là có chốt. Nếu không thì `--duc-duyet ""` là đường vòng.
     gitAt("add", "-A"); gitAt("commit", "-q", "-m", "sau khi Duc chot");
@@ -423,157 +413,63 @@ const CLAIMS = () => ({
 }
 
 
-/* ---- K2-12. Mốc so phải là BẢN NIÊM PHONG HỢP LỆ GẦN NHẤT, không mù quáng là HEAD ----
-   Hai fail-open GPT bắt được ở vòng 7, cộng một cái tôi tìm ra khi đọc lại vòng lặp của mình:
 
-   1. VÒNG QUA BẰNG MỘT LƯỢT COMMIT: sửa tay owner → `git commit` → `--restamp`. Mốc cũ là HEAD,
-      mà HEAD giờ đã mang owner mới, nên phép so thấy "không đổi gì" và cho qua. Chốt vừa dựng
-      hôm nay đã có cửa sau, và cửa đó chỉ tốn thêm một lệnh.
-   2. LỖI ĐỌC GIT thành "không có vấn đề" — `catch → null → mảng rỗng → cho qua".
-   3. (tôi) MỌI BẢN ĐỌC HỎNG cũng từng lọt: vòng lặp chỉ `continue`, nên nó kết thúc êm rồi trả
-      BOOTSTRAP tức cho qua. Nấp sâu hơn một tầng so với (2). */
-{
-  const temp = mkdtempSync(join(tmpdir(), "claim-baseline-"));
-  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: temp, encoding: "utf8" });
-  try {
-    const claimsPath = join(temp, ".agents", "claims.json");
-    mkdirSync(dirname(claimsPath), { recursive: true });
-    mkdirSync(join(temp, "scripts"), { recursive: true });
-    chepLenh(temp);
-    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
-    const ghiDoc = (p) => writeFileSync(claimsPath, `${JSON.stringify(p, null, 2)}\n`, "utf8");
-    const run = (...args) => {
-      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8" });
-      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
-    };
-
-    gitAt("init", "-q", "-b", "main");
-    gitAt("config", "user.name", "K2 Baseline");
-    gitAt("config", "user.email", "k2@example.invalid");
-
-    // CA A — repo chưa có commit nào: BOOTSTRAP thật, phải cho qua. Đòi hỏi ở đây là khoá repo
-    // ngay từ commit đầu tiên — đúng kiểu chặn oan mà cả K2 sinh ra để xoá.
-    ghiDoc({ claims: { _code: { owner: "nan-nhan", task: "dang lam do" }, _docs: { owner: null } } });
-    assert.equal(baselineDaNiemPhong(temp).trangThai, BASELINE.BOOTSTRAP,
-      "repo chua co commit nao thi chua tung co trang thai niem phong de mat — phai cho qua");
-    assert.equal(run("--restamp", "--as", "nan-nhan").code, EXIT.OK, "va restamp phai chay duoc o repo moi");
-    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "seed da dong dau");
-
-    // Mốc lành có thật, và nó đúng là bản vừa commit.
-    const moc = baselineDaNiemPhong(temp);
-    assert.equal(moc.trangThai, BASELINE.OK, "co ban niem phong hop le thi phai tim ra");
-    assert.equal(moc.claims._code.owner, "nan-nhan", "moc phai mang trang thai LANH, khong phai trang thai hien tai");
-
-    // CA B — CRITICAL 1: sửa tay ĐỂ LẤY KHOÁ, rồi COMMIT, rồi restamp. Lượt commit KHÔNG được
-    // biến trạng thái bẩn thành mốc so — nếu không thì chốt hôm nay có cửa sau một lệnh.
-    const cuop = doc();
-    cuop.claims._code = { owner: "ke-lay", taken_from: "nan-nhan" };
-    ghiDoc(cuop);
-    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "sua tay roi commit — dau dang vo");
-    const sauCommit = baselineDaNiemPhong(temp);
-    assert.equal(sauCommit.trangThai, BASELINE.OK, "van phai tim duoc moc lanh, bang cach LUI QUA ban vua bi sua tay");
-    assert.equal(sauCommit.claims._code.owner, "nan-nhan",
-      "moc phai van la ban LANH truoc do — neu no la HEAD thi vu lay khoa da tu hop thuc hoa");
-    const rB = run("--restamp", "--as", "ke-lay");
-    assert.equal(rB.code, EXIT.REFUSED, `CRITICAL 1: commit truoc roi restamp VAN phai bi tu choi. Ra: ${rB.out}`);
-    assert.match(rB.out, /_code: "nan-nhan" → "ke-lay"/, "phai chi dung khoa nao, cua ai, ve tay ai");
-
-    // CA C — CRITICAL 2 / fail-closed: không có mốc lành nào trong tầm quét thì TỪ CHỐI, không
-    // đoán. Ép bằng cách chỉ cho quét đúng 1 bản — bản đó chính là bản vừa bị sửa tay.
-    const hepTam = baselineDaNiemPhong(temp, 1);
-    assert.equal(hepTam.trangThai, BASELINE.LOI,
-      "quet het tam ma khong thay moc lanh thi phai la LOI — 'khong biet' KHONG duoc thanh 'khong sao'");
-    assert.match(hepTam.ly_do, /không thấy mốc niêm phong lành nào/, "phai noi ro vi sao");
-
-    // CA D — KHÔNG phải repo git thì phải TỪ CHỐI, không được lùi về BOOTSTRAP.
-    //
-    // Ca này TRƯỚC ĐÂY GHIM NGƯỢC (sửa 04/09, GPT audit vòng 8 chỉ ra): chú thích viết "phải
-    // TỪ CHỐI" mà khẳng định ngay dưới lại đòi BOOTSTRAP. Tức test đang xác nhận chính cái
-    // fail-open là hành vi đúng — tệ hơn không có test, vì nó làm cái lỗ trông như đã kiểm chứng.
-    //
-    // Phân biệt: "repo git chưa có commit" (ca A) là chưa từng có gì để mất → cho qua.
-    // "Không phải repo git / git hỏng" là KHÔNG BIẾT lịch sử có gì → từ chối.
-    const troc = mkdtempSync(join(tmpdir(), "claim-khong-git-"));
-    try {
-      assert.equal(baselineDaNiemPhong(troc).trangThai, BASELINE.LOI,
-        "khong phai repo git = KHONG BIET lich su co gi, khong phai 'chua tung co gi de mat'");
-      // Và qua ĐƯỜNG LỆNH nữa — bài học vòng trước: ghim hàm không thay được ghim đường đi.
-      mkdirSync(join(troc, ".agents"), { recursive: true });
-      mkdirSync(join(troc, "scripts"), { recursive: true });
-      writeFileSync(join(troc, ".agents", "claims.json"),
-        `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
-      chepLenh(troc);
-      const cliTroc = spawnSync(process.execPath, [join(troc, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
-      assert.equal(cliTroc.status, EXIT.REFUSED,
-        `khong phai repo git thi LENH phai tu choi. Ra: ${cliTroc.stdout}${cliTroc.stderr}`);
-      assert.match(`${cliTroc.stdout}${cliTroc.stderr}`, /KHONG_CO_MOC_SO/, "phai co ma loi doc duoc");
-    } finally { rmSync(troc, { recursive: true, force: true }); }
-
-    // CA E — khôi phục hợp lệ: Đức chốt thì đi được, và xuất xứ ghi VÀO FILE.
-    const rE = run("--restamp", "--as", "ke-lay", "--duc-duyet", "Duc chot 04/09: chu cu da tat that");
-    assert.equal(rE.code, EXIT.OK, `co cau chot cua Duc thi phai di duoc. Ra: ${rE.out}`);
-    assert.equal(doc().claims._code.duc_decision, "Duc chot 04/09: chu cu da tat that", "cau chot phai nam trong bang");
-    // CA F — nhánh tôi tự tìm ra: MỌI bản trong lịch sử đều đọc hỏng. Vòng lặp chỉ `continue`
-    // nên nó kết thúc êm, không bản nào "có dấu", và hàm suýt trả BOOTSTRAP tức CHO QUA. Nấp
-    // sâu hơn một tầng so với ca đọc-git-lỗi mà GPT nêu, và không ca nào ở trên chạm tới nó.
-    const hong = mkdtempSync(join(tmpdir(), "claim-ban-hong-"));
-    try {
-      const gh = (...a) => execFileSync("git", a, { cwd: hong, encoding: "utf8" });
-      gh("init", "-q", "-b", "main");
-      gh("config", "user.name", "K2"); gh("config", "user.email", "k2@example.invalid");
-      mkdirSync(join(hong, ".agents"), { recursive: true });
-      writeFileSync(join(hong, ".agents", "claims.json"), "{ khong-phai-json", "utf8");
-      gh("add", "-A"); gh("commit", "-q", "-m", "ban duy nhat trong lich su bi hong");
-      const r = baselineDaNiemPhong(hong);
-      assert.equal(r.trangThai, BASELINE.LOI,
-        "moi ban trong lich su doc hong thi phai LOI — 'khong doc duoc' KHONG duoc thanh 'chua tung dong dau'");
-      assert.match(r.ly_do, /không đọc được/, "phai noi ro co ban khong doc duoc, de nguoi doc biet di sua dau");
-
-      // VÀ QUA ĐƯỜNG LỆNH, không chỉ qua hàm. Mutation chỉ ra rằng ghim hàm thôi thì gỡ hẳn
-      // chốt trong `main()` vẫn không test nào đỏ — hàm trả LOI xong mà nơi gọi lờ đi thì cũng
-      // như không. Bảng trên đĩa để HỢP LỆ, chỉ lịch sử là hỏng, để `readClaims` không chặn trước.
-      mkdirSync(join(hong, "scripts"), { recursive: true });
-      chepLenh(hong);
-      writeFileSync(join(hong, ".agents", "claims.json"),
-        `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
-      const cli = spawnSync(process.execPath, [join(hong, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
-      assert.equal(cli.status, EXIT.REFUSED,
-        `khong co moc lanh thi LENH phai tu choi, khong chi ham bao LOI. Ra: ${cli.stdout}${cli.stderr}`);
-      assert.match(`${cli.stdout}${cli.stderr}`, /KHONG_CO_MOC_SO/, "phai co ma loi doc duoc");
-    } finally { rmSync(hong, { recursive: true, force: true }); }
-    ok("K2-12 · mốc so là bản niêm phong LÀNH gần nhất: commit-rồi-restamp vẫn bị chặn · hết tầm quét thì TỪ CHỐI · bản đọc hỏng KHÔNG thành bootstrap · repo mới vẫn chạy");
-  } finally {
-    assert.ok(temp.startsWith(join(tmpdir(), "claim-baseline-")), "chi don dung temp fixture cua phep kiem nay");
-    rmSync(temp, { recursive: true, force: true });
-  }
-}
-
-/* ---- TRA-KHOA-01. TRẢ QUYỀN SAU KHI ĐẨY, KHÔNG PHẢI SAU KHI COMMIT --------
+/* ---- TRẢ QUYỀN SAU KHI ĐẨY, KHÔNG PHẢI SAU KHI COMMIT (TRA-KHOA-01) ------
  *
  * Luật `AGENTS.md` mục 1. Trước 06/09 nó chỉ là chữ, và ngày 06/09 ba lane cùng vi phạm trong
  * một buổi — cả ba đều thành thật: chúng đọc hiến pháp, không thấy luật, nên trả khoá cho sạch.
  *
+ * VIẾT LẠI 18/09 (N-65). Bản cũ gọi `canDayTruocKhiTra(ketQuaDo, vung)` từ `repo-structure.mjs`
+ * cùng bảng mã `CHUA_DAY`. Cả hai KHÔNG CÒN TỒN TẠI sau `4da1e9e5`: phép đo nay nằm thẳng trong
+ * nhánh `--release` của `claim.mjs`, và kết quả vào `decide()` qua ĐÚNG MỘT tham số `chuaDay` —
+ * một mảng mã commit, hoặc `null` nghĩa là không đo được. Nên khối này ghim `decide` trực tiếp.
+ *
+ * VÀ MỘT VẾ ĐÃ ĐẢO CHIỀU, ghi ra đây vì nó đúng là chỗ dễ "sửa cho xanh" nhất: bản cũ ghim
+ * *"không đọc được git thì CHẶN (bất biến ④)"*. Hôm nay `chuaDay == null` **KHÔNG chặn**, và
+ * `claim.mjs` nêu lý do ngay tại chỗ: trả khoá là thao tác GỠ BÍ, một lệnh gỡ bí mà tự chặn vì
+ * git hỏng thì biến sự cố nhỏ thành sự cố kẹt cả vùng. Fail-closed chuyển sang cửa `--take`,
+ * nơi nó đúng vì giành vùng không lùi lại được — vế đó ghim ở khối lệnh bên dưới. Đừng "khôi
+ * phục" bất biến ④ ở đây: nó đã bị một quyết định có ghi lý do thay thế, không phải bị đánh rơi.
+ *
  * BỐN CON ĐỘT BIẾN mà khối này phải bắt (MULTIFLOW mục 5 — chốt không có test ghim là bình luận):
- *   ① gỡ hẳn phép chặn trong `main()`     → ca A, F
- *   ② đảo điều kiện (chặn khi ĐÃ đẩy)     → ca B, C  (vế "KHÔNG chặn thứ hợp lệ", bẫy ③)
- *   ③ bỏ nhánh "không có remote"          → ca D
- *   ④ lối thoát bỏ qua mà KHÔNG ghi lý do → ca F
- * Mọi ca đều đi qua ĐƯỜNG LỆNH, không chỉ qua hàm thuần — bẫy ① của mục 5: hàm trả đúng mà
- * `main()` lờ đi thì cũng như không, và bài học đó đã trả giá một lần ở K2-12. */
+ *   ① gỡ hẳn phép chặn trong `decide`        → vế ⑶
+ *   ② đảo điều kiện (chặn khi mảng RỖNG)     → vế ⑴⑵
+ *   ③ coi `null` là "có commit" (chặn oan)   → vế ⑵
+ *   ④ lối thoát `--du-biet` mà KHÔNG ghi lý do vào bảng → vế ⑷⑸ */
 {
-  // Hàm thuần trước: ba nhánh, kiểm được mà không cần dựng remote.
-  const commit = (sha, areas) => ({ sha, subject: `viec ${sha}`, areas, lane: "ai-do", laneProblem: null });
-  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.LOI, ly_do: "git chet" }, "_code").chan, true,
-    "khong doc duoc git = KHONG BIET, va khong biet phai la DO (bat bien 4)");
-  assert.equal(canDayTruocKhiTra(null, "_code").chan, true, "khong co ket qua do cung phai chan");
-  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.KHONG_CO_MOC }, "_code").chan, false,
-    "chua co remote = bootstrap that, KHONG duoc chan — repo moi dung tu bo khung khong co origin");
-  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.OK, commits: [commit("aaa", ["_docs"])] }, "_code").chan, false,
-    "commit chua day cua VUNG KHAC khong duoc chan vung nay");
-  const dinh = canDayTruocKhiTra({ trangThai: CHUA_DAY.OK, commits: [commit("aaa", ["_code", "_docs"])] }, "_code");
-  assert.equal(dinh.chan, true, "commit chua day cham dung vung nay thi phai chan");
-  assert.equal(dinh.commits.length, 1, "va phai keo theo commit de bao cho nguoi doc biet la cai nao");
-  ok("TRA-KHOA-01 · hàm thuần: git hỏng chặn · chưa có remote KHÔNG chặn · chỉ chặn khi đúng vùng còn commit chưa đẩy");
+  const nen = { _code: { owner: "phien-A", ai: "Claude", task: "x", released_at: null } };
+  const tra = (them) => decide(nen, { action: "release", key: "_code", as: "phien-A", today: "2026-09-18", ...them });
+
+  // ⑴ Không commit nào chưa đẩy → trơn. Mảng rỗng KHÔNG được đọc thành "có nợ".
+  assert.equal(tra({ chuaDay: [] }).code, EXIT.OK, "mang rong = da day het = tra duoc");
+
+  // ⑵ Không đo được → KHÔNG chặn. Đây là vế đã đảo chiều; đọc docblock trên trước khi sửa.
+  assert.equal(tra({ chuaDay: null }).code, EXIT.OK,
+    "khong do duoc thi KHONG chan — tra khoa la thao tac go bi (claim.mjs, nhanh release)");
+
+  // ⑶ Có commit chưa đẩy chạm đúng vùng → TỪ CHỐI, và từ chối thì KHÔNG kèm dữ liệu ghi.
+  const chan = tra({ chuaDay: ["aaa1111 viec mot", "bbb2222 viec hai"] });
+  assert.equal(chan.code, EXIT.REFUSED, "con commit chua day thi phai tu choi");
+  assert.equal(chan.next, undefined, "TU CHOI nghia la KHONG GHI GI");
+  for (const sha of ["aaa1111", "bbb2222"]) {
+    assert.ok(chan.message.includes(sha), `phai keo theo ma commit de nguoi doc biet la cai nao: ${sha}`);
+  }
+  assert.ok(chan.message.includes("safe-push.mjs"), "va phai chi duong ra, khong chi noi khong");
+
+  // ⑷ Cửa thoát `--du-biet` mở được — nó là ĐIỀU KIỆN để vế ⑶ được phép tồn tại: thiếu nó thì
+  //    một lane bị cổng xuất bản từ chối sẽ kẹt khoá vĩnh viễn.
+  const duBiet = tra({ chuaDay: ["aaa1111 viec mot"], duBiet: "Duc chot 18/09: de lane sau cuon theo" });
+  assert.equal(duBiet.code, EXIT.OK, "cua thoat phai mo duoc");
+  assert.equal(duBiet.next.owner, null, "va no phai ve trong that");
+
+  // ⑸ …nhưng cửa thoát phải GHI LẠI cái giá VÀO BẢNG. Một cửa thoát không để lại vết là một
+  //    cái tặc lưỡi; ghi vào bảng thì nó là một câu khai, và lane sau đọc được.
+  assert.ok(duBiet.next.tra_khi_chua_day, "cua thoat phai ghi vet vao bang, khong duoc im");
+  assert.ok(String(duBiet.next.tra_khi_chua_day).includes("Duc chot 18/09"),
+    "va vet phai cho ra LY DO da neu, khong phai mot co bool");
+  assert.ok(!tra({ chuaDay: [] }).next.tra_khi_chua_day, "khong no thi khong duoc dan nhan khai bao");
+
+  ok("TRA-KHOA-01 · decide: rỗng trơn · KHÔNG ĐO ĐƯỢC cũng trơn (vế đã đảo) · đúng vùng thì TỪ CHỐI không ghi gì · --du-biet mở được và ghi lý do vào bảng");
 }
 
 {
@@ -620,7 +516,7 @@ const CLAIMS = () => ({
     const chan = run("--release", "_code", "--as", "phien-A");
     assert.equal(chan.code, EXIT.REFUSED, `con commit chua day thi phai TU CHOI, thoat 3. Ra: ${chan.out}`);
     assert.equal(owner("_code"), "phien-A", "TU CHOI nghia la KHONG GHI GI — day moi la diem chinh");
-    assert.match(chan.out, /TU_CHOI_TRA_KHOA/, "phai co ma loi doc duoc");
+    assert.match(chan.out, /TU_CHOI: "_code" còn 1 commit CHƯA ĐẨY/, "phai noi ro LY DO va SO LUONG, khong chi mot ma");
     assert.match(chan.out, /_code/, "phai noi RO la vung nao");
     assert.match(chan.out, /1 commit CHƯA ĐẨY/, "phai noi RO con bao nhieu commit chua day");
     assert.match(chan.out, /safe-push\.mjs --as phien-A/, "phai chi duong di tiep DUNG: day truoc roi moi tra");
@@ -649,22 +545,25 @@ const CLAIMS = () => ({
     const thoat = run("--release", "_code", "--as", "phien-A", "--du-biet", "remote tu choi vi khoa 2FA, ban giao cho phien-B");
     assert.equal(thoat.code, EXIT.OK, `co cau ly do thi phai di duoc. Ra: ${thoat.out}`);
     assert.equal(owner("_code"), null, "va khoa phai ve trong that");
-    assert.equal(doc().claims._code.unpushed_reason, "remote tu choi vi khoa 2FA, ban giao cho phien-B",
+    /* ĐỔI CHỖ 18/09 (N-65): bản cũ ghim hai trường `unpushed_reason` + `released_with_unpushed`.
+       Nay là MỘT trường `tra_khi_chua_day` chở cả hai vế trong một câu. Ghim TÍNH CHẤT: bảng
+       phải nói ra BAO NHIÊU commit và VÌ SAO — thiếu vế nào thì phiên sau cũng không quyết được. */
+    const khai = String(doc().claims._code.tra_khi_chua_day ?? "");
+    assert.match(khai, /^1 commit · /, "bang phai ghi con bao nhieu commit chua day");
+    assert.ok(khai.includes("remote tu choi vi khoa 2FA, ban giao cho phien-B"),
       "cau ly do phai nam TRONG BANG, khong phai chi in ra man hinh");
-    assert.equal(doc().claims._code.released_with_unpushed, 1, "va phai ghi con bao nhieu commit chua day");
     assert.equal(fingerprintState(doc()).ok, true, "ghi xong van phai dong dau");
 
     // CA G — dấu vết trả sớm KHÔNG được sống dai hơn lượt đó.
     assert.equal(run("--take", "_code", "--as", "phien-B", "--task", "nhan ban giao").code, EXIT.OK, "phien sau nhan duoc vung");
-    assert.equal(doc().claims._code.unpushed_reason, undefined,
+    assert.equal(doc().claims._code.tra_khi_chua_day, undefined,
       "nhan lai thi phai xoa dau vet tra som cu — de nguoi doc sau khong tuong van con commit vo chu");
-    assert.equal(doc().claims._code.released_with_unpushed, undefined, "ca hai truong phai bien mat");
 
     // CA C — đẩy xong thì trả trơn, và KHÔNG còn trường trả sớm nào.
     gw("push", "-q", "origin", "main");
     const sach = run("--release", "_code", "--as", "phien-B");
     assert.equal(sach.code, EXIT.OK, `day xong roi thi tra khoa phai troi chay. Ra: ${sach.out}`);
-    assert.equal(doc().claims._code.unpushed_reason, undefined, "tra binh thuong thi khong ghi truong tra som nao");
+    assert.equal(doc().claims._code.tra_khi_chua_day, undefined, "tra binh thuong thi khong ghi truong tra som nao");
     ok("TRA-KHOA-01 · lệnh: còn commit chưa đẩy thì TỪ CHỐI mà không ghi gì · vùng khác không bị vạ lây · --du-biet phải kèm lý do và lý do vào BẢNG · đẩy xong thì trơn");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-tra-khoa-")), "chi don dung temp fixture cua phep kiem nay");
@@ -672,45 +571,52 @@ const CLAIMS = () => ({
   }
 }
 
-/* ---- TRA-KHOA-01. Hai ca không-đo-được, hai cách xử KHÁC NHAU -------------
- * Ranh giới này là điểm chính của bản vá, và nó dễ bị "dọn" mất thành một nhánh chung. */
+/* ---- HAI CỬA, HAI CÁCH XỬ KHI KHÔNG ĐO ĐƯỢC — và đó là CHỦ Ý ---------------
+ *
+ * VIẾT LẠI 18/09 (N-65). Bản cũ ghim hai ca ở CÙNG MỘT CỬA (`--release`): chưa có remote thì
+ * cho qua, không phải repo git thì TỪ CHỐI với mã `KHONG_DEM_DUOC_COMMIT`. Mã đó không còn tồn
+ * tại: `--release` nay bọc cả phép đo trong `try` và trả `chuaDay = null`, tức KHÔNG chặn.
+ *
+ * Ranh giới THẬT hôm nay không nằm giữa hai loại lỗi git — nó nằm giữa HAI CỬA:
+ *   · `--release` = GỠ BÍ, lùi lại được → không đo được thì cho qua;
+ *   · `--take` đang GIÀNH vùng của người khác = KHÔNG lùi lại được → không đo được thì TỪ CHỐI.
+ * Gộp hai cửa này là cách fail-open quay lại mà vẫn trông có lý: "không đọc được git" đội lốt
+ * "repo mới, cho qua" ở đúng cái cửa mà một lượt cho qua là xoá việc đang dở của người khác.
+ * Cả hai ca đi qua ĐƯỜNG LỆNH, không chỉ qua hàm thuần — hàm trả đúng mà `main()` lờ đi thì
+ * cũng như không, và bài học đó đã trả giá một lần ở K2-12. */
 {
   const NL = String.fromCharCode(10);
-  // CA D — repo CHƯA CÓ REMOTE thì KHÔNG được chặn. Repo mới dựng từ bộ khung không có
-  // `origin`, và nó không bao giờ có commit chưa đẩy để mà mất — chưa có chỗ nào để đẩy tới.
-  const moi = mkdtempSync(join(tmpdir(), "claim-chua-remote-"));
+  const dungBang = (dir, claims) => {
+    mkdirSync(join(dir, ".agents"), { recursive: true });
+    writeFileSync(join(dir, ".agents", "claims.json"), `${JSON.stringify({ claims }, null, 2)}${NL}`, "utf8");
+    return chepLenh(dir);
+  };
+  const chuCua = (dir) => JSON.parse(readFileSync(join(dir, ".agents", "claims.json"), "utf8")).claims._code.owner;
+
+  // CỬA 1 — `--release` trong một thư mục KHÔNG phải repo git: vẫn phải TRƠN.
+  // Repo mới dựng từ bộ khung chưa có `origin`, và một lane bị git hỏng vẫn phải trả được khoá.
+  const go = mkdtempSync(join(tmpdir(), "claim-tra-khong-git-"));
   try {
-    mkdirSync(join(moi, ".agents"), { recursive: true });
-    writeFileSync(join(moi, ".agents", "claims.json"),
-      `${JSON.stringify({ claims: { _code: { owner: "phien-A", task: "x" } } }, null, 2)}${NL}`, "utf8");
-    const cli = chepLenh(moi);
-    const g = (...a) => execFileSync("git", a, { cwd: moi, encoding: "utf8" });
-    g("init", "-q", "-b", "main");
-    g("config", "user.name", "TRA-KHOA"); g("config", "user.email", "tra-khoa@example.invalid");
-    g("add", "-A"); g("commit", "-q", "-m", `nen${NL}${NL}Lane: phien-A`);
+    const cli = dungBang(go, { _code: { owner: "phien-A", task: "x" } });
     const r = spawnSync(process.execPath, [cli, "--release", "_code", "--as", "phien-A"], { encoding: "utf8" });
     assert.equal(r.status, EXIT.OK,
-      `repo chua co origin thi KHONG duoc chan — chan o day la khoa cung repo moi dung. Ra: ${r.stdout}${r.stderr}`);
-    assert.equal(JSON.parse(readFileSync(join(moi, ".agents", "claims.json"), "utf8")).claims._code.owner, null,
-      "va no phai ve trong that");
-  } finally { rmSync(moi, { recursive: true, force: true }); }
+      `khong do duoc o cua --release thi KHONG duoc chan: tra khoa la thao tac go bi. Ra: ${r.stdout}${r.stderr}`);
+    assert.equal(chuCua(go), null, "va no phai ve trong that");
+  } finally { rmSync(go, { recursive: true, force: true }); }
 
-  // CA H — KHÔNG phải repo git thì TỪ CHỐI. Đây là ca ĐỐI của ca D, và gộp hai ca này lại là
-  // đúng fail-open đã bị loại nhiều lần: "không đọc được git" bị đội lốt "repo mới, cho qua".
-  const troc = mkdtempSync(join(tmpdir(), "claim-khong-git-tra-"));
+  // CỬA 2 — `--take` GIÀNH vùng người khác, cùng một thư mục không phải repo git: phải TỪ CHỐI,
+  // có mã đọc được, và KHÔNG ghi một chữ nào vào bảng.
+  const gianh = mkdtempSync(join(tmpdir(), "claim-gianh-khong-git-"));
   try {
-    mkdirSync(join(troc, ".agents"), { recursive: true });
-    writeFileSync(join(troc, ".agents", "claims.json"),
-      `${JSON.stringify({ claims: { _code: { owner: "phien-A", task: "x" } } }, null, 2)}${NL}`, "utf8");
-    const cli = chepLenh(troc);
-    const r = spawnSync(process.execPath, [cli, "--release", "_code", "--as", "phien-A"], { encoding: "utf8" });
+    const cli = dungBang(gianh, { _code: { owner: "phien-A", task: "dang lam do" } });
+    const r = spawnSync(process.execPath, [cli, "--take", "_code", "--as", "phien-B", "--task", "cuop"], { encoding: "utf8" });
     assert.equal(r.status, EXIT.REFUSED,
-      `khong doc duoc git = KHONG BIET, va khong biet phai la DO. Ra: ${r.stdout}${r.stderr}`);
-    assert.match(`${r.stdout}${r.stderr}`, /KHONG_DEM_DUOC_COMMIT/, "phai co ma loi doc duoc");
-    assert.equal(JSON.parse(readFileSync(join(troc, ".agents", "claims.json"), "utf8")).claims._code.owner, "phien-A",
-      "TU CHOI nghia la KHONG GHI GI");
-  } finally { rmSync(troc, { recursive: true, force: true }); }
-  ok("TRA-KHOA-01 · chưa có remote thì KHÔNG chặn (bootstrap thật) · không đọc được git thì CHẶN (bất biến ④) — hai ca KHÔNG được gộp");
+      `khong biet vung do co file sua do hay khong thi KHONG duoc gianh. Ra: ${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /KHONG_DO_DUOC_VIEC_DO/, "phai co ma loi doc duoc");
+    assert.equal(chuCua(gianh), "phien-A", "TU CHOI nghia la KHONG GHI GI");
+  } finally { rmSync(gianh, { recursive: true, force: true }); }
+
+  ok("hai cửa KHÔNG được gộp: `--release` không đo được thì TRƠN (gỡ bí) · `--take` đang giành thì TỪ CHỐI và không ghi gì");
 }
 
 /* ---- N-15 · NỐI `claim.mjs` VÀO MỘT ỐNG LÀM CÚ TỪ CHỐI CỦA NÓ BIẾN MẤT --------------------
@@ -1013,7 +919,9 @@ const CLAIMS = () => ({
     // Trả hết rồi thì đường cũ thông lại.
     assert.equal(run("--xong", "--het", "--as", "p1").code, EXIT.OK);
     assert.equal(run("--xong", "--het", "--as", "p2").code, EXIT.OK);
-    assert.deepEqual(doc().tam, {}, "tra het thi khoi `tam` phai RONG, khong con xac duong dan");
+    /* RỖNG hay VẮNG đều đạt (18/09): nay lệnh xoá hẳn khoá `tam` thay vì để lại `{}`. Luật là
+       "không còn xác đường dẫn", không phải "phải có một object rỗng". */
+    assert.deepEqual(Object.keys(doc().tam ?? {}), [], "tra het thi khong duoc con xac duong dan nao");
     assert.equal(run("--take", "_code", "--as", "p3", "--task", "x").code, EXIT.OK, "het khoa file thi nhan ca vung duoc");
 
     // Dấu niêm phong phải còn khớp sau tất cả những lượt trên.
@@ -1045,7 +953,7 @@ const CLAIMS = () => ({
     mienKhoa: ["BACKLOG.md", "HANDOFF.md", "IDEAS.md"],
     vungCua,
   });
-  assert.deepEqual(kq.soChung.map((x) => x.duongDan), ["BACKLOG.md", "HANDOFF.md"],
+  assert.deepEqual(kq.soChung, ["BACKLOG.md", "HANDOFF.md"],
     "so mien khoa phai duoc TRA VE RIENG, khong duoc im lang bo qua — day la cho N-05 no");
   assert.deepEqual(kq.la, [], "file minh dang khoa thi khong phai la");
 
@@ -1055,47 +963,51 @@ const CLAIMS = () => ({
     mienKhoa: ["IDEAS.md"], vungCua,
   });
   assert.deepEqual(chiSo.la, [], "so mien khoa KHONG bi coi la la, du vung co chu khac");
-  assert.deepEqual(chiSo.soChung.map((x) => x.duongDan), ["IDEAS.md"]);
-  assert.equal(chiSo.soChung[0].coQuyen, false, "vung co chu khac thi khong co quyen viet lai");
-  /* GIỮ KHOÁ THÌ ĐƯỢC VIẾT LẠI MỘT SỔ MIỄN KHOÁ — và bản đầu KHÔNG cho, dù giữ đủ khoá.
-     "Miễn khoá" nghĩa là *thêm dòng ở cuối thì không CẦN khoá*; nó không có nghĩa là *có khoá
-     cũng không được sửa*. Hệ quả đo thật 09/09: lượt cắt `HANDOFF.md` mà ADR-0008 cho phép
-     tường minh không có đường nào qua nổi `--soat`, và cửa duy nhất còn lại là `--no-verify`
-     — tức tắt cả phép soát để làm một việc hợp lệ. Một cổng chỉ mở được bằng cách tắt nó thì
-     nó sẽ bị tắt thường xuyên, và lần sau người ta tắt nó cho một việc KHÔNG hợp lệ. */
+  assert.deepEqual(chiSo.soChung, ["IDEAS.md"]);
+
+  /* VẾ `coQuyen` BỎ 18/09 (N-65), và nêu bằng chứng chứ không bỏ vì khó sửa. Bản cũ ghim rằng
+     mỗi mục `soChung` chở một cờ `coQuyen`, để nhánh CLI phân biệt "giữ khoá → được viết lại"
+     với "không giữ gì → chỉ được thêm ở cuối". Hôm nay:
+       · chuỗi `coQuyen` xuất hiện 0 lần trong cả `scripts/` — hàm trả về mảng CHUỖI đường dẫn;
+       · nhánh `--soat` KHÔNG từ chối vì `soChung` ở bất kỳ nhánh nào; nó in cùng một câu nhắc
+         "soi lại: có đúng là CHỈ THÊM Ở CUỐI không?" cho mọi mục.
+     Tức cái cờ ấy không còn người tiêu thụ, và luật nó tinh chỉnh (đừng chặn oan lượt cắt
+     HANDOFF mà ADR-0008 cho phép) không còn cửa nào để chặn oan. Luật N-05 — NÊU TÊN chứ không
+     im, và KHÔNG chặn — vẫn sống, và được ghim ngay trên. */
   {
-    const coKhoaFile = soatDanHang({
-      daDan: ["HANDOFF.md"], tam: { "HANDOFF.md": { owner: "p1" } }, claims: { _root: { owner: null } },
-      as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
-    });
-    assert.equal(coKhoaFile.soChung[0].coQuyen, true, "giu khoa FILE thi duoc viet lai so do");
-    const coKhoaVung = soatDanHang({
-      daDan: ["HANDOFF.md"], tam: {}, claims: { _root: { owner: "p1" } },
-      as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
-    });
-    assert.equal(coKhoaVung.soChung[0].coQuyen, true, "giu ca VUNG thi cung duoc");
     const khongKhoa = soatDanHang({
       daDan: ["HANDOFF.md"], tam: { "HANDOFF.md": { owner: "p2" } }, claims: { _root: { owner: "p2" } },
       as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
     });
-    assert.equal(khongKhoa.soChung[0].coQuyen, false,
-      "khong giu gi thi VAN phai chi them o cuoi — day la cho N-05 no, dung noi ra");
+    assert.deepEqual(khongKhoa.soChung, ["HANDOFF.md"], "khong giu gi thi so chung VAN phai duoc neu ten");
     assert.deepEqual(khongKhoa.la, [], "va van khong duoc coi la LA: ghi vao so chung la hop le");
   }
   ok("soat: so mien khoa tra ve RIENG de soi append-only, khong im va khong chan (N-05)");
 }
 
 {
-  // Ghim ĐƯỜNG DÂY: hàm trả về đúng mà nhánh CLI không soi thì N-05 vẫn nguyên.
+  /* ĐƯỜNG DÂY append-only ĐÃ DỜI NHÀ — bỏ khối ghim cũ 18/09 (N-65), nêu bằng chứng.
+   *
+   * Bản cũ ghim bằng cách DÒ VĂN BẢN NGUỒN của `claim.mjs`: `includes('if (coQuyen) continue;
+   * // giữ khoá')` · `match(/appendOnlyAtEof\(diff, cu2\)/)` · `match(/SOAT_SO_CHUNG/)`. Cả ba
+   * chuỗi nay xuất hiện 0 lần — và đó là hai chuyện khác nhau gộp vào một:
+   *
+   *   ⑴ Kiểu ghim SAI. Dò văn bản nguồn của một file BỘ KHUNG sở hữu thì hỏng có hệ thống: mỗi
+   *      lượt nâng bộ khung đổi cách viết là ghim chết, và sửa cho khớp chữ hôm nay chỉ là đặt
+   *      lại đồng hồ. Đây là bài học đã trả giá ở `check-bootstrap-smoke` cùng lượt N-65 này.
+   *   ⑵ Luật thì KHÔNG mất, nó ĐỔI CỬA. `--soat` nay nêu tên sổ chung kèm câu nhắc, không tự
+   *      soi diff. Phép soi append-only thật chạy ở hai cửa khác, và cả hai đều có người canh:
+   *        · `scripts/session-check.mjs` — hàng "Vùng CHỈ-THÊM không bị viết lại" (cổng đóng phiên)
+   *        · `scripts/safe-push.mjs`     — cửa xuất bản
+   *      và chính `appendOnlyAtEof` có phép ghim riêng ở `tests/repo-structure-smoke.mjs`
+   *      (vế "K2-2b"), bài đang nằm trong `npm test`.
+   *
+   * Nên chỗ đúng của luật này là ba file trên, không phải một phép dò chuỗi ở đây. Một luật
+   * một chỗ. */
   const nguon = readFileSync(join(SCRIPTS_DIR, "claim.mjs"), "utf8");
-  assert.ok(nguon.includes("if (coQuyen) continue;      // giữ khoá"),
-    "nhanh CLI phai bo qua so minh dang giu khoa — ham biet ma CLI khong soi thi van chan oan");
-  assert.match(nguon, /appendOnlyAtEof\(diff, cu2\)/,
-    "nhanh --soat phai soi so chung bang appendOnlyAtEof");
-  assert.match(nguon, /SOAT_SO_CHUNG/, "phai co ma loi rieng de tra duoc");
-  assert.doesNotMatch(nguon, /import \{ appendOnlyAtEof[^}]*\} from "\.\/[a-z-]*claim/,
-    "phai DUNG LAI ham cua repo-structure, dung viet ban sao thu ba cua luat append-only");
-  ok("--soat that su soi so chung, va dung lai luat append-only san co");
+  assert.ok(!nguon.includes("coQuyen"),
+    "neu `coQuyen` song lai thi no can mot phep ghim THAT (qua ham, khong qua van ban nguon) — xem docblock tren");
+  ok("đường dây append-only đã dời sang session-check · safe-push · repo-structure-smoke (một luật một chỗ)");
 }
 
 {

@@ -49,18 +49,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
    là bộ dò gãy, không phải repo gọn đi. */
 const TOI_THIEU_CAP = 60;
 
-/* ---- Khu cách ly: đọc từ `scripts.test:chet`, KHÔNG gõ lại danh sách -------------------- */
-
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-const chuoiCachLy = pkg?.scripts?.["test:chet"] ?? "";
-const CACH_LY = new Set(
-  [...chuoiCachLy.matchAll(/tests\/([\w.-]+\.mjs)/g)].map((m) => `tests/${m[1]}`),
-);
-assert.ok(
-  CACH_LY.size >= 1,
-  "KHU_CACH_LY_RONG: không đọc được bài nào từ `scripts[\"test:chet\"]`. Hoặc khu cách ly đã hết "
-    + "(thì gỡ luôn phép ghim này và đóng N-65), hoặc bộ đọc SAI — đừng đoán.",
-);
+assert.ok(!Object.keys(pkg.scripts ?? {}).some((k) => /^test:(chet|hong|cach-ly)/.test(k)),
+  "khu cách ly đã sống lại trong package.json — N-65 đóng với hợp đồng \"mọi khu cách ly đều rỗng\".");
 
 /* ---- Quét mọi lượt import có tên --------------------------------------------------------- */
 
@@ -103,61 +94,25 @@ assert.ok(
   `chỉ quét được ${soCap} cặp import (< ${TOI_THIEU_CAP}) — BỘ DÒ GÃY, không phải repo sạch.`,
 );
 
-/* ---- ① Gãy NGOÀI khu cách ly = đỏ -------------------------------------------------------- */
+/* ---- ① KHÔNG FILE NÀO ĐƯỢC IMPORT MỘT CÁI TÊN KHÔNG CÒN TỒN TẠI -------------------------
+ *
+ * ĐƠN GIẢN ĐI 18/09 (N-65 đóng). Trước bản này, vế ① chỉ đỏ cho file NGOÀI khu cách ly, và hai
+ * vế nữa (②③) chỉ để trông chừng chính cái danh sách miễn trừ ấy. Khu cách ly nay RỖNG — 8 bài
+ * đã xử hết: 5 viết lại và về `npm test`, 3 DROP kèm bằng chứng. Nên danh sách miễn biến mất,
+ * và cùng nó biến mất cả hai vế chỉ sinh ra để canh nó.
+ *
+ * Còn lại đúng một câu, và là câu đáng giá nhất: **không ai được import một cái tên đã chết.**
+ * Không miễn cho ai. Đây là hình dạng thiệt hại của lượt migrate `4da1e9e5` (N-68) — 9 cặp
+ * import gãy trên 8 file, và cả 8 file ấy là bài kiểm, nên **không một lớp bảo vệ nào kêu**
+ * suốt 9 ngày. Một danh sách miễn trừ là cách chính xác để chuyện đó xảy ra lần nữa. */
 
-const gayNgoai = [...gay.keys()].filter((f) => !CACH_LY.has(f));
+const gayHet = [...gay.keys()];
 assert.equal(
-  gayNgoai.length, 0,
-  `IMPORT_GAY_NGOAI_KHU: ${gayNgoai.length} file đang import một cái tên KHÔNG CÒN TỒN TẠI, và `
-    + `chúng không nằm trong khu cách ly \`npm run test:chet\`.\n`
+  gayHet.length, 0,
+  `IMPORT_GAY: ${gayHet.length} file đang import một cái tên KHÔNG CÒN TỒN TẠI.\n`
     + `Đây đúng hình dạng thiệt hại của lượt migrate 4da1e9e5 (xem N-68). Xử: hoặc trả lại cái `
-    + `bị mất, hoặc sửa nơi gọi — ĐỪNG nhét thêm vào khu cách ly cho xanh.\n`
-    + gayNgoai.map((f) => `  ${f}\n${gay.get(f).map((l) => `      ${l}`).join("\n")}`).join("\n"),
+    + `bị mất, hoặc sửa nơi gọi. KHÔNG có danh sách miễn trừ — N-65 đóng khu cách ly 18/09.\n`
+    + gayHet.map((f) => `  ${f}\n${gay.get(f).map((l) => `      ${l}`).join("\n")}`).join("\n"),
 );
 
-/* ---- KHU THỨ HAI: IMPORT ĐÃ LÀNH, VẾ KHẲNG ĐỊNH CÒN CŨ (thêm 2026-09-18, N-65) ----------
- *
- * Lượt mở khu cách ly 18/09 làm lộ ra một trạng thái mà mô hình một-danh-sách không kể được:
- * `build-dashboard-smoke` (**469 vế**) đã NẠP ĐƯỢC — trợ thủ chỉ-dùng-cho-test dời về
- * `tests/_chep-script.mjs` — nhưng 66 khối cuối còn ghim hợp đồng CŨ của cổng (chặn hay chỉ
- * cảnh báo khi artifact cũ; `EXPECTED_CHECKS`; dấu sinh trang), và mấy câu đó là **luật**, Đức
- * chốt chứ không phải tôi.
- *
- * Nhét nó vào `test:chet` là nói dối (import đã lành, vế ② sẽ đỏ đúng); đẩy vào `npm test` là
- * làm suite đỏ; để ngoài cả hai danh sách là đúng cái "chỗ chôn" mà vế ② sinh ra để chặn. Nên
- * có danh sách thứ hai, gọi đúng tên bệnh — và nó phải có HÀNG RÀO RIÊNG, xem vế ④. */
-const chuoiVeCu = pkg?.scripts?.["test:chet-ve"] ?? "";
-const CACH_LY_VE = new Set(
-  [...chuoiVeCu.matchAll(/tests\/([\w.-]+\.mjs)/g)].map((m) => `tests/${m[1]}`),
-);
-
-/* ---- ② Đã lành mà vẫn nằm trong khu cách ly = đỏ ----------------------------------------- */
-
-const daLanh = [...CACH_LY].filter((f) => !gay.has(f) && fs.existsSync(path.join(ROOT, f)));
-assert.equal(
-  daLanh.length, 0,
-  `CON_TRONG_KHU_MA_DA_LANH: ${daLanh.length} bài không còn import gãy nhưng vẫn nằm trong `
-    + `\`test:chet\`. Cho nó về \`scripts.test\` — một khu cách ly chỉ phình mà không bao giờ vơi `
-    + `là chỗ chôn, không phải hàng rào.\n`
-    + daLanh.map((f) => `  ${f}`).join("\n"),
-);
-
-/* ---- ③ Danh sách cách ly không được mục ---------------------------------------------------
- * Một tên trong `test:chet` mà file không còn trên đĩa nghĩa là danh sách đang nói về quá khứ. */
-
-const mat = [...CACH_LY].filter((f) => !fs.existsSync(path.join(ROOT, f)));
-assert.equal(
-  mat.length, 0,
-  `KHU_CACH_LY_MUC: ${mat.length} tên trong \`test:chet\` không còn trên đĩa: ${mat.join(", ")}`,
-);
-
-/* HÀNG RÀO CỦA KHU THỨ HAI KHÔNG Ở ĐÂY — cố ý. `tests/dau-suite-smoke.mjs` đã sở hữu luật
- * *"mọi tệp trong `tests/` phải nằm ở đúng một chuỗi, và khu cách ly phải THẬT SỰ đỏ"*, kèm
- * phép chạy thật. Viết bản thứ hai ở đây là đẻ ra hai luật trên cùng một câu hỏi — đúng cái
- * bệnh mà lượt 18/09 vừa vá ở ba bản sao của bộ đọc sổ nợ. File này chỉ giữ phần của nó:
- * import gãy, và khu nào miễn cho ai. */
-
-console.log(
-  `import-gay-smoke: ${soCap} cặp import · ${gay.size} file gãy, tất cả trong khu cách ly `
-    + `(${CACH_LY.size} bài) · khu vế-cũ ${CACH_LY_VE.size} bài, đều còn đỏ thật — XANH`,
-);
+console.log(`import-gay-smoke: ${soCap} cặp import · 0 file gãy · 0 khu cách ly — XANH`);

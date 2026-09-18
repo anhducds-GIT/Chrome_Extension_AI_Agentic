@@ -531,7 +531,12 @@ export function decide(claims, { action, key, as, today, ai, ducDuyet, dirty, ch
     // chính mình và lần trước đã khai rồi thì GIỮ LẠI — chạy lại lệnh để đổi mỗi câu `--task` mà
     // xoá mất tên AI là biến một lệnh vô hại thành lệnh làm mất dữ liệu.
     const aiGiu = ai ?? (owner === as ? cur.ai ?? null : null);
-    return { code: EXIT.OK, already: owner === as, next: { ...cur, owner: as, ai: aiGiu, claimed_at: today, released_at: null } };
+    /* `tra_khi_chua_day` LÀ DẤU VẾT CỦA MỘT LƯỢT TRẢ, không được sống dai hơn lượt đó (vá
+     * 18/09, N-65). `{ ...cur }` chở nó qua mọi lượt nhận, nên phiên MỚI đọc bảng thấy "đã trả
+     * kèm N commit chưa đẩy" trong khi những commit ấy đã đẩy từ lâu — một câu khai đúng lúc
+     * viết, thành một lời cảnh báo ma ở mọi lượt sau. */
+    const { tra_khi_chua_day: _bo, ...sach } = cur;
+    return { code: EXIT.OK, already: owner === as, next: { ...sach, owner: as, ai: aiGiu, claimed_at: today, released_at: null } };
   }
 
   if (action === "release") {
@@ -600,9 +605,26 @@ export function decide(claims, { action, key, as, today, ai, ducDuyet, dirty, ch
  * không phải một phán quyết. */
 export const GIO_NHAC = 6;
 
+/* MỘT BẢN CỦA LUẬT ĐỌC MỐC. Mọi chỗ trong file này hỏi "mốc ấy là lúc nào" đều đi qua đây.
+ *
+ * MẤT RỒI TÌM LẠI 18/09 (N-65). Luật này từng ở `mocMs` trong `repo-structure.mjs`; `4da1e9e5`
+ * xoá nó và thay bằng `Date.parse(stamp)` trần ở BỐN chỗ. `Date.parse` đọc chuỗi CÓ GIỜ mà
+ * THIẾU múi (`2026-09-08T11:51`) là giờ ĐỊA PHƯƠNG — máy này ở UTC+7 nên mốc ấy lệch 7 tiếng,
+ * đủ để bật ⚠ "quá 6h" cho một khoá vừa nhận. Đúng con số ma Đức bắt được 06/09.
+ *
+ * Nó KHÔNG phải ca hiếm: chính `claim.mjs` dòng ~376 đã có bình luận kể một repo tiêu thụ vấp
+ * đúng chuỗi đó, và dặn "dùng `ageHours`, đừng `Date.parse` trần" — trong khi `ageHours` lúc ấy
+ * CHÍNH LÀ `Date.parse` trần. Một lời dặn trỏ vào chỗ đã rỗng thì tệ hơn không dặn. */
+export function mocMs(stamp) {
+  if (typeof stamp !== "string" || stamp === "") return null;
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(stamp) ? `${stamp}T00:00Z` : stamp;
+  const t = Date.parse(/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`);
+  return Number.isFinite(t) ? t : null;
+}
+
 export function ageHours(stamp, now = new Date()) {
-  const t = Date.parse(String(stamp || ""));
-  if (!Number.isFinite(t)) return null;
+  const t = mocMs(stamp);
+  if (t === null) return null;
   return Math.max(0, (now.getTime() - t) / 3600000);
 }
 
@@ -672,14 +694,14 @@ export function xetDauVet(key, claimedAt, chamCommit, chamDia) {
    * hơn bình thường: nhánh "chưa thấy" là nhánh khiến người ta nghĩ tới việc nhả khoá. Một lần
    * git hỏng mà im lặng ngã về "chưa thấy" là dựng đúng tai nạn 06/09 thành hành vi mặc định. */
   if (chamCommit === null || chamDia === null) return DAU_VET.KHONG_DO;
-  const moc = Date.parse(String(claimedAt || ""));
-  if (!Number.isFinite(moc)) return DAU_VET.KHONG_DO;
+  const moc = mocMs(claimedAt);
+  if (moc === null) return DAU_VET.KHONG_DO;
   if (chamDia.some((f) => f.key === key)) return DAU_VET.THAY;
   const coCommit = chamCommit.some((f) => {
     if (f.key !== key) return false;
-    const t = Date.parse(String(f.khi || ""));
+    const t = mocMs(f.khi);
     // Commit không đọc được mốc thì TÍNH LÀ CÓ — nhầm về phía "lane đang làm" là nhầm an toàn.
-    return !Number.isFinite(t) || t >= moc;
+    return t === null || t >= moc;
   });
   return coCommit ? DAU_VET.THAY : DAU_VET.CHUA;
 }
@@ -702,8 +724,8 @@ export async function doDauVet(claims, root = ROOT) {
   if (!dangGiu.length) return new Map();
 
   const som = dangGiu
-    .map(([, v]) => Date.parse(String(v.claimed_at || "")))
-    .filter((t) => Number.isFinite(t));
+    .map(([, v]) => mocMs(v.claimed_at))
+    .filter((t) => t !== null);
   const tuKhi = som.length ? new Date(Math.min(...som)).toISOString() : null;
 
   let chamCommit = null;
@@ -831,7 +853,24 @@ async function main() {
           .map(([k, v]) => [k, truoc.get(k) ?? null, (v && v.owner) || null])
           .filter(([, cu2, moi2]) => cu2 !== moi2 && cu2 !== null && moi2 !== null)
       : [];
-    const duyet = flag("duc-duyet");
+    /* KHÔNG SO ĐƯỢC VỚI HEAD THÌ PHẢI NÓI RA, và phải in thứ sắp được đóng dấu.
+     * `chuTheoHead()` trả `null` ở repo chưa có commit nào, hoặc khi git không đọc được. Lúc đó
+     * phép canh "lượt sửa tay này có chuyển chủ không" KHÔNG chạy — và bản trước im lặng về
+     * chuyện ấy, chỉ in hai con dấu. Người chạy lệnh hồi phục này nhìn thấy đúng hai chuỗi hex
+     * và không thấy mình đang niêm phong ai giữ vùng nào. Một cửa sau mà im thì nó là cửa sau. */
+    if (!truoc) {
+      console.log("KHÔNG so được với HEAD (repo chưa có commit, hoặc git không đọc được) —");
+      console.log("phép canh chuyển-chủ KHÔNG chạy lượt này. Đang niêm phong trạng thái:");
+      for (const [k, v] of Object.entries(parsed.claims)) {
+        console.log(`  ${k.padEnd(34)}${(v && v.owner) || "(trống)"}`);
+      }
+    }
+    /* CỜ TRẮNG KHÔNG PHẢI CÂU CHỐT (vá 18/09, N-65). `flag()` trả về đúng chuỗi người ta gõ,
+     * nên `--duc-duyet "   "` lọt qua phép thử `typeof === "string"` và mở được cửa này. Câu
+     * chốt ấy còn được GHI VÀO BẢNG, nên nạn nhân đọc bảng thấy một ô trống và không có cách
+     * nào biết mình vừa mất khoá vì cái gì. Đòi có chữ thật. */
+    const duyet = typeof flag("duc-duyet") === "string" && flag("duc-duyet").trim() !== ""
+      ? flag("duc-duyet") : null;
     if (doiChu.length && typeof duyet !== "string") {
       console.error(`${String.fromCharCode(10)}TU_CHOI: lượt sửa tay này CHUYỂN CHỦ ${doiChu.length} khoá so với HEAD:`);
       for (const [k, cu2, moi2] of doiChu) console.error(`  ${k}: ${cu2} → ${moi2}`);
@@ -848,6 +887,32 @@ async function main() {
     ghiBang(parsed);
     console.log(`dấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     process.exit(EXIT.OK);
+  }
+
+  /* ---- DẤU VỠ THÌ MỌI ĐƯỜNG GHI DỪNG LẠI ---------------------------------
+   *
+   * LỖ ĐO ĐƯỢC 18/09 (N-65), và nó là đúng cái lỗ dấu niêm phong sinh ra để bịt. Trước bản này
+   * `fingerprintState` chỉ được gọi ở HAI chỗ: `--list` và `--restamp`. Không đường GHI nào hỏi
+   * nó. Đo trên một repo dựng thật, bảng bị sửa tay cho `workers/goi-b` đổi chủ sang `ke-cuop`:
+   *     --list                       → thoát 3, in DAU_VO      ✔ chuông kêu
+   *     --release _docs --as B       → thoát 0, và GHI ĐÈ      ✘ và lượt ghi ĐÓNG DẤU LẠI
+   *     dấu 110536d7 → bdd56ff9, `ke-cuop` nay nằm dưới một con dấu HỢP LỆ
+   * Tức chuông kêu một lần rồi tự tắt: lượt ghi kế tiếp — của BẤT KỲ lane nào, kể cả lane không
+   * liên quan — hợp thức hoá vụ sửa tay. Sau đó không ai còn cách nào biết bảng từng bị mở ra.
+   *
+   * `--list` đặt TRƯỚC khối này (nạn nhân thường chỉ chạy `--list`) và `--restamp` cũng vậy: nó
+   * là đường hồi phục, chặn nó là khoá cứng repo. Mọi đường còn lại dừng ở đây.
+   *
+   * `seal.ok === null` (bảng chưa từng đóng dấu) KHÔNG chặn — bảng cũ phải chạy được, và lượt
+   * ghi kế tiếp sẽ đóng dấu cho nó qua `ghiBang`. "Chưa kiểm" không phải "đã vỡ". */
+  {
+    const seal = fingerprintState(parsed);
+    if (seal.ok === false) {
+      console.error(VO_DAU);
+      console.error(`dấu đang mang: ${seal.stamped}  ·  dấu của nội dung hiện tại: ${seal.actual}`);
+      console.error("KHÔNG ghi gì cả — ghi đè lên một bảng đã bị sửa tay là đóng dấu hợp lệ cho chính vụ sửa đó.");
+      process.exit(EXIT.REFUSED);
+    }
   }
 
   /* ---- --sau-commit : CỬA gọi bởi hook `post-commit` --------------------
@@ -1419,7 +1484,21 @@ async function main() {
     }
   }
 
-  const verdict = decide(parsed.claims, { action, key, as, today, ai: flag("ai"), ducDuyet: flag("duc-duyet"), dirty, chuaDay, duBiet: flag("du-biet") });
+  /* `--du-biet` PHẢI KÈM LÝ DO (vá 18/09, N-65). `flag()` trả `true` cho một cờ trần và trả
+   * đúng chuỗi trắng cho `--du-biet "   "`, nên cả hai mở được cửa thoát mà không nói gì. Cửa
+   * này chỉ được phép tồn tại VÌ nó ghi lại một câu khai; mở nó bằng một cờ trống là biến câu
+   * khai thành cái tặc lưỡi, và phiên sau đọc bảng thấy "đã trả kèm commit chưa đẩy · không nêu
+   * lý do" — đúng lúc họ cần biết vì sao nhất. DÙNG SAI (2), không phải TỪ CHỐI (3): người gõ
+   * thiếu một đối số thì đó là lỗi cú pháp, không phải một phán quyết. */
+  const duBietTho = flag("du-biet");
+  const duBiet = typeof duBietTho === "string" && duBietTho.trim() !== "" ? duBietTho : null;
+  if (duBietTho !== null && duBiet === null) {
+    console.error('THIEU_LY_DO: `--du-biet` phải kèm một câu lý do — `--du-biet "vì sao"`.');
+    console.error("Cửa thoát này chỉ đúng khi nó để lại một câu khai cho phiên nhận vùng sau.");
+    process.exit(EXIT.MISUSE);
+  }
+
+  const verdict = decide(parsed.claims, { action, key, as, today, ai: flag("ai"), ducDuyet: flag("duc-duyet"), dirty, chuaDay, duBiet });
   if (verdict.code !== EXIT.OK) { console.error(verdict.message); process.exit(verdict.code); }
 
   parsed.claims[key] = typeof task === "string" ? { ...verdict.next, task } : verdict.next;

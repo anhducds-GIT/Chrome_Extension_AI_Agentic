@@ -5,9 +5,9 @@
     "workers/duc-auto-gg-flow-video": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T14:38:19.279Z",
-      "task": "doi lien ket studies -> archive theo chot cua Duc",
-      "released_at": "2026-09-17T15:46:13.436Z",
+      "claimed_at": "2026-09-18T04:27:58.484Z",
+      "task": "xep lai priority_rank theo chot cua Duc: _root = 1",
+      "released_at": "2026-09-18T04:30:46.496Z",
       "taken_from": "claude-flow-f28-f33",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)",
       "taken_by": "claude-luat-rasoat",
@@ -38,10 +38,10 @@
       "tra_khi_chua_day": "1 commit · Commit 87543476 (MOC-2 FAIL) khong day duoc: 30f8018a cua harness-loi-02 nam duoi. Can Duc chot --carry roi chay safe-push."
     },
     "_root": {
-      "owner": "claude-universal-scouter",
-      "ai": null,
-      "claimed_at": "2026-09-18T03:41:41.423Z",
-      "task": "sinh lai trang tong",
+      "owner": "claude-v1",
+      "ai": "Claude",
+      "claimed_at": "2026-09-18T06:09:12.934Z",
+      "task": "V1 closeout STEP1 — dong khu cach ly",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -52,9 +52,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T18:25:15.079Z",
-      "task": "khai file moi vao ban do _shared",
-      "released_at": "2026-09-17T18:35:27.326Z",
+      "claimed_at": "2026-09-18T05:05:27.522Z",
+      "task": "khai tests/_chep-script.mjs vao Ban do file",
+      "released_at": "2026-09-18T05:18:06.523Z",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -63,11 +63,11 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-17T17:15:09.953Z",
-      "task": "N-68: dem cua bi migrate 4da1e9e5 xoa mat, roi quyet khoi phuc hay bo",
-      "released_at": "2026-09-17T18:38:01.294Z",
+      "owner": "claude-v1",
+      "ai": "Claude",
+      "claimed_at": "2026-09-18T06:09:13.028Z",
+      "task": "V1 closeout STEP1",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -75,25 +75,25 @@
       "tra_khi_chua_day": "1 commit · Cong DO o B12 (42 ADR, no CO TRUOC luot migrate - KHUNG-M1), nen KHONG duoc day: AGENTS.md muc 2 hang 2 bat hoi Duc truoc khi cong bo viec khi cong chua xanh. Bon commit nam local, da ghi ro o HANDOFF."
     },
     "workers/duc-scouter": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-18T03:40:17.062Z",
       "task": "thi nghiem id ephemeral",
-      "released_at": null
+      "released_at": "2026-09-18T03:42:24.947Z"
     },
     "workers/_shared": {
-      "owner": "claude-universal-scouter",
+      "owner": null,
       "ai": null,
       "claimed_at": "2026-09-18T03:40:17.142Z",
       "task": "adapter: id la runtime",
-      "released_at": null
+      "released_at": "2026-09-18T03:42:25.097Z"
     },
     "workers/hnx-fetch": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-17T16:02:02.428Z",
-      "task": "A5: ra soat PROTOCOL.md (doc het 519 dong)",
-      "released_at": "2026-09-17T16:48:21.633Z"
+      "claimed_at": "2026-09-18T04:27:58.572Z",
+      "task": "xep lai priority_rank theo chot cua Duc: _root = 1",
+      "released_at": "2026-09-18T04:30:46.634Z"
     },
     "workers/udin-optic": {
       "owner": null,
@@ -103,5 +103,5 @@
       "released_at": "2026-09-17T19:16:07.756Z"
     }
   },
-  "_fingerprint": "497123f7c17058f3"
+  "_fingerprint": "0fc96b556190cb0f"
 }

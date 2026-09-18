@@ -486,12 +486,10 @@ try {
  * Rơi khỏi cả ba = chết lặng lẽ, và mép này ĐỎ. Đó là toàn bộ việc của nó. */
 {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-  /* BỐN chỗ, không ba nữa — `test:chet-ve` thêm 2026-09-18 (N-65). Khu cách ly cũ chỉ kể được
-     MỘT bệnh (*"nhập một ký hiệu đã biến mất"*). Lượt mở khu 18/09 làm lộ bệnh thứ hai:
-     `build-dashboard-smoke` **nạp được** rồi nhưng 66 khối cuối còn ghim hợp đồng CŨ của cổng,
-     và mấy câu đó là luật, Đức chốt. Nhét nó vào `test:chet` là lời khai sai (import đã lành);
-     đẩy vào `test` là suite đỏ; để ngoài cả ba là đúng cái mép này sinh ra để chặn. */
-  const phu = ["test", "test:tuan-tu", "test:chet", "test:chet-ve"].map((k) => String(pkg.scripts?.[k] ?? "")).join(" && ");
+  /* KHU CÁCH LY NAY PHẢI RỖNG — N-65 đóng 18/09. Hai chỗ, không bốn nữa.
+     Hợp đồng đóng của N-65 là "MỌI khu cách ly đều rỗng", nên mép này canh cả hai chiều: chuỗi
+     cổng phải phủ hết `tests/`, VÀ không được có khu cách ly nào tồn tại để phủ hộ. */
+  const phu = ["test", "test:tuan-tu"].map((k) => String(pkg.scripts?.[k] ?? "")).join(" && ");
   /* Tệp mở đầu bằng `_` là TRỢ THỦ dùng chung của các bài, không phải một bài — nó không có
      `main`, chạy một mình thì thoát 0 mà chẳng khẳng định gì. Bắt nó vào một chuỗi là dạy
      người ta thêm một dòng vô nghĩa vào cổng. `tests/_chep-script.mjs` là cái đầu tiên (N-65). */
@@ -507,20 +505,21 @@ try {
     `bài kiểm không nằm trong chuỗi nào — nó sẽ chết mà không ai biết:${chuaAiChay.map((f) => `\n    tests/${f}`).join("")}`
     + `\n  → thêm vào \`test\` (chạy mỗi lượt), \`test:tuan-tu\` (chạy một mình), hoặc \`test:chet\` (khu cách ly, kèm một mục BACKLOG).`);
 
-  // Và khu cách ly phải THẬT SỰ đỏ. Một bài đã sửa được rồi mà còn nằm trong đó là lời khai sai
-  // theo hướng ngược: nó bảo "đang hỏng" trong khi nó chạy được, và không ai đi dọn.
-  const lay = (khoa) => [...String(pkg.scripts?.[khoa] ?? "").matchAll(/tests\/([A-Za-z0-9._-]+\.mjs)/g)].map((m) => m[1]);
-  const dsChet = [...lay("test:chet"), ...lay("test:chet-ve")];
-  assert.ok(lay("test:chet").length > 0, "khai `test:chet` mà không đọc ra bài nào — cú pháp đã đổi");
-  assert.ok(lay("test:chet-ve").length > 0, "khai `test:chet-ve` mà không đọc ra bài nào — cú pháp đã đổi");
-  assert.deepEqual(lay("test:chet").filter((f) => lay("test:chet-ve").includes(f)), [],
-    "một bài nằm trong CẢ HAI khu thì không ai biết nó đang bị bệnh gì");
-  for (const f of dsChet) {
-    const r = spawnSync(process.execPath, [path.join(ROOT, "tests", f)], { encoding: "utf8", timeout: 120000 });
-    assert.notEqual(r.status, 0,
-      `tests/${f} nằm trong khu cách ly nhưng CHẠY ĐƯỢC — gỡ nó ra, đưa về \`test\`, và đóng mục BACKLOG của nó`);
-  }
-  ok(`không bài kiểm nào chết lặng lẽ: ${coTrongTests.length} tệp, ${dsChet.length} đang cách ly và cả ${dsChet.length} đều thật sự đỏ`);
+  /* KHÔNG KHU CÁCH LY NÀO ĐƯỢC SỐNG LẠI LẶNG LẼ (N-65, 18/09).
+   *
+   * Khu cách ly là một cơ chế THẬT và có lúc đúng — nhưng nó là một **sự cố có đồng hồ**, không
+   * phải một cái kệ. Tám bài nằm trong `test:chet` chín ngày, và trong chín ngày ấy hai lỗ sản
+   * phẩm đi thẳng qua chúng: `statusScanLines` rụng ba tên, và phép đếm commit chưa đẩy mất cờ
+   * `core.quotepath`. Một bài kiểm gãy `import` không đỏ — nó không nạp.
+   *
+   * Nên luật hôm nay là: khu cách ly RỖNG. Muốn mở lại một khu thì đó là quyết định của Đức, và
+   * nó phải đi kèm mục BACKLOG + ngày đóng; mép này đỏ cho tới lúc ấy. Đọc theo TIỀN TỐ chứ
+   * không theo đúng hai tên cũ — đặt tên khác (`test:hong`, `test:chet-ve-2`) vẫn phải kêu. */
+  const khuCachLy = Object.keys(pkg.scripts ?? {}).filter((k) => /^test:(chet|hong|cach-ly)/.test(k));
+  assert.deepEqual(khuCachLy, [],
+    `khu cách ly đã sống lại: ${khuCachLy.join(" · ")}. N-65 đóng với hợp đồng "mọi khu cách ly đều rỗng".`
+    + "\n  → hoặc sửa bài cho về `test`, hoặc DROP nó kèm bằng chứng; mở lại khu là việc Đức chốt.");
+  ok(`không bài kiểm nào chết lặng lẽ: ${coTrongTests.length} tệp, 0 khu cách ly`);
 }
 
 /* ---- BỘ CHẠY PHẢI THẤY **CẢ HAI** KHOÁ SUITE ------------------------------
