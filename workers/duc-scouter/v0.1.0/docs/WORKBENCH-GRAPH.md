@@ -170,10 +170,16 @@ neo khớp nhiều. Không có hai thứ đó thì Workbench **đọc được n
 
 ---
 
-## 7. BƯỚC KẾ TIẾP — một bước
+## 7. ~~BƯỚC KẾ TIẾP — một bước~~ ĐÃ ĐO XONG 18/09, xem §9
 
-Đo **diff `scout.shot` trước/sau một lượt Generate do ĐỨC bấm tay**: đó là phép đo duy nhất còn
-thiếu để trả lời `outputs = N → N+1`, và nó không cần một lệnh ghi nào từ tôi.
+~~Đo diff `scout.shot` trước/sau một lượt Generate do ĐỨC bấm tay: đó là phép đo duy nhất còn
+thiếu để trả lời `outputs = N → N+1`, và nó không cần một lệnh ghi nào từ tôi.~~
+
+**Gạch tại chỗ, không xoá** (18/09, đóng V1). Phép đo đã chạy — §9 và `G-131` — và chạy khác
+cách viết ở đây: **tôi bấm**, không phải Đức, dưới cổng ghi Đức mở sẵn. Kết quả `outputs 2 → 3`
+trên đúng khối được bấm. Giữ nguyên câu cũ vì nó ghi lại một giả định đã bị chính phép đo sửa:
+*"không cần một lệnh ghi nào từ tôi"* — thực tế cần đúng một, và cái giá của nó là một credit
+Vizcom. Đọc §9 để lấy con số; đừng chạy lại bước này.
 
 ---
 

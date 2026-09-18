@@ -1,6 +1,10 @@
-# UNIVERSAL SCOUTER — bản chốt sau khi đo, và bản đặc tả cho bốn lỗ hổng
+# UNIVERSAL SCOUTER — SSOT của mốc V1
 
-**Đo:** 17/09/2026 · **Chốt bản này:** 18/09/2026 · **Phiên:** `claude-universal-scouter`
+> **V1 ĐÓNG PHẠM VI ngày 18/09/2026.** Đọc **§V1** ngay dưới trước mọi thứ khác: nó nói V1 chứng
+> minh được gì, còn thiếu gì, hoãn gì, và V2 bắt đầu ở đâu. Phần §0–§9 là **đường đi tới đó**,
+> giữ nguyên vì nó ghi cách từng kết luận được đo — không phải một bản kế hoạch đang chạy.
+
+**Đo:** 17–18/09/2026 · **Phiên:** `claude-universal-scouter` → `claude-v1`
 **Chrome:** 153.0.8010.48
 
 **Trạng thái 18/09:** Gap 3 và Gap 4 **ĐÃ TRIỂN KHAI VÀ CHẠY THẬT** · Gap 1 làm phần tối thiểu
@@ -9,6 +13,67 @@ Pilot E2E: [`pilots/vizcom-anhducds/`](../pilots/vizcom-anhducds/) — chọn đ
 Vizcom, loại 2 cái kia, 0 lệnh ghi. Bốn dòng sổ mới: `G-104`…`G-107`.
 
 > Tài liệu này thay thế mọi kết luận cũ về *"Vizcom chưa đọc được"*. Xem §0.
+
+---
+
+## §V1 — ĐÓNG PHẠM VI, 18/09/2026
+
+**Tên mốc:** Universal Scouter V1 — Browser I/O Feasibility + Context-Efficient Workbench Control
+
+**File này là SSOT của mốc.** Bằng chứng từng giả thuyết ở [`GIA-THUYET.md`](GIA-THUYET.md)
+(sổ `G-xx`); số đo context ở [`CHI-PHI-CONTEXT.md`](CHI-PHI-CONTEXT.md); bản đồ Workbench ở
+[`WORKBENCH-GRAPH.md`](WORKBENCH-GRAPH.md). **Đừng chép lại sự thật từ ba file đó sang đây** —
+chép là sinh ra bản thứ hai, và hai bản sẽ lệch nhau.
+
+### ĐÃ CHỨNG MINH — V1 đóng trên những câu này
+
+| # | Câu | Ở đâu |
+|---|---|---|
+| ⑴ | Bridge → extension → CDP → tab là một đường I/O trình duyệt **chạy được**, và Side Panel **không** nằm trên đường dữ liệu | §1, §2 |
+| ⑵ | Biên runtime thật là **ghế Scouter / profile Chrome**, địa chỉ là `instance_id`, **không bao giờ là nhãn** | `G-105` |
+| ⑶ | Danh tính tài khoản **không** suy được từ URL — phải đọc từ TRANG, và đường không-đoán-selector là `scout.a11y` | `G-104` |
+| ⑷ | `target_id` sống qua điều hướng SPA cùng nguồn **và** qua một lượt tải lại; chết khi **Bridge** nối lại. Hai sự kiện KHÁC nhau | §1.1, `G-132`, `G-133`, `G-118` |
+| ⑸ | Graph Workbench là `source → prompt_block → outputs[]`; output vẽ **trong canvas**, không để lại node DOM | `G-123`, `G-131` |
+| ⑹ | Nút Generate **giải động mỗi lượt**: đọc `button[id]` sống → khoanh khối → đọc chữ prompt → lấy nút CON. **Không cache React id** | `G-132`, `G-134` |
+| ⑺ | Ghi an toàn đã chạy thật: **đúng một** khối được bấm, `outputs 2 → 3`, **0** lượt ghi sang ghế/tài khoản khác | `G-130`, `G-131` |
+| ⑻ | Browser Context Burn giảm được rất lớn khi tách RAW/MODEL và lọc phía Node; ảnh ra ĐĨA thì **0 byte** vào context | `CHI-PHI-CONTEXT.md` §B–§D, `G-131` |
+| ⑼ | Ngưỡng sống 1.500ms đo lại vẫn đứng: sống p90 87ms / max 282ms, chết ~20.020ms — hai cực cách ~70× | `G-107`, `G-111` |
+
+### GIỚI HẠN ĐÃ BIẾT — đóng V1 **kèm** những câu này, không lờ đi
+
+- **"Ngoài cùng bên phải = mới nhất"** mới có **n = 1**. Chưa phải luật (`G-131`).
+- **Hai khối cùng một chữ prompt** thì không phân biệt được. Chưa đo, dựng được bằng tay bất cứ lúc nào (`G-134`).
+- **Class styled-components** mới chứng minh bền qua *một* lượt remount, **chưa** qua một lượt đổi build thật (`G-132`).
+- **Đường TREO của `scout.song`** chưa đo được trên máy thật — mới có phép ghim với đồ giả (`G-111`).
+- **Trang có khung lồng (iframe)** chưa thử trang nào.
+- **`scout.clear`** vẫn chưa tự kiểm (`S-27`).
+
+### CHẶN, và nó là chặn THẬT — không chặn V1
+
+> **Workbench thường không expose email identity.** Lượt Generate 18/09 chạy được là nhờ Đức
+> trực tiếp chỉ thị, nên nó **KHÔNG** chứng minh autonomous account authorization.
+
+V1 đóng **với** blocker này còn nguyên, và nói thẳng ra: V1 là *feasibility + control*, không
+phải *autonomy*. Mọi lượt ghi trong V1 cần Đức mở cổng và chỉ thị.
+
+### HOÃN SANG V2 — cố ý, không phải bỏ quên
+
+| # | Việc | Vì sao hoãn |
+|---|---|---|
+| 1 | **Identity attestation**: `/files` → bind ghế/session → mang sang `/workbench`, kèm điều kiện vô hiệu hoá | Là câu hỏi mở của blocker trên. Cần một thí nghiệm sống, và cần Đức mở tài khoản thứ hai cùng profile |
+| 2 | **Output topology** sâu hơn — thứ tự, danh tính từng output | `n = 1` hôm nay |
+| 3 | **BCB_VISUAL** — chính sách nhìn cho đường ảnh | Cần ⑵ trước |
+| 4 | **Vendor usage benchmark** | Tiêu credit Vizcom; Đức duyệt từng lượt |
+| 5 | `scout.song` cho **đường treo** trên máy thật, và `scout.clear` tự kiểm (`S-27`) | Chưa gặp ca thật |
+
+**V2 bắt đầu ở đúng một chỗ:** mục 1 — identity attestation. Thí nghiệm nhỏ nhất đã thiết kế
+sẵn: *một ghế Scouter có chứa được hai tài khoản Vizcom khác nhau cùng lúc không* — cần Đức mở
+thêm một tab Vizcom đăng nhập tài khoản khác trong **cùng** profile đang chạy Workbench.
+
+### KHÔNG ĐỔI TRONG V1
+
+Từ vựng method **đóng** (thêm một method = đổi luật an toàn, luật gói mục 4). Hợp đồng
+**đúng-một** của bộ giải target **không nới**. Cổng ghi vẫn đóng mặc định, chỉ tay Đức mở.
 
 ---
 

@@ -1462,3 +1462,17 @@ theo đồng hồ.
   từng byte**, và có một phép ghim dựng cảnh `claimed_at` cũ rồi kiểm bản ra không chứa số phút
   trôi. Hướng gợi ý: in mốc `claimed_at` (suy từ HEAD) thay cho khoảng cách tới hiện tại. Khoá
   cần: `_code`.
+
+- **ĐÓNG N-65** — 18/09, lane `claude-v1`. Khu cách ly **rỗng**, và hợp đồng đóng đã **siết**:
+  đóng khi *mọi* khu cách ly rỗng, không riêng `test:chet`. Tám bài xử hết: 5 viết lại và về
+  `npm test` (`check-bootstrap` · `session-check-utf8-paths` · `what-next` · `claim` ·
+  `build-dashboard`, bài cuối nén 3522 → 896 dòng), 3 DROP kèm bằng chứng (`frozen-suite-smoke`
+  — cơ chế không còn trong `scripts/`; `build-overview-smoke` — 45/45 tên import đã chết, năm bài
+  đang sống đã sở hữu module; `dau-vet-vung-smoke` — gộp, mọi bất biến đã nằm trong
+  `khoa-dau-vet.mjs`). Aggregate **43 suite, 0 đỏ**; phá là ĐỎ **5/5** ở năm chỗ đau khác nhau.
+  Cái giá đo được của chín ngày im lặng: **bảy** lỗ sản phẩm, do chính những bài này bắt —
+  `statusScanLines` rụng ba tên · `claim.mjs` mất cờ `core.quotepath` · dấu niêm phong không
+  được soi ở đường GHI nào · luật đọc mốc mất múi giờ ở bốn chỗ · hai cửa thoát mở được bằng cờ
+  trắng · `tra_khi_chua_day` thành cảnh báo ma · và bộ đọc sổ nợ thứ ba khiến hàng cổng in
+  `0/15` suốt chín ngày. Hàng rào mới đọc theo **tiền tố** (`test:chet|hong|cach-ly`) nên dựng
+  lại một khu dưới tên khác vẫn kêu.
