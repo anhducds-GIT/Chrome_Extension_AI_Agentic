@@ -26,6 +26,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { readNo } from "./overview-doc.mjs";
 import { readStructureFromDisk, THU_MUC_DOCS_KHONG_TINH } from "./repo-structure.mjs";
 import { napContext } from "./rule-compiler.mjs";
 
@@ -89,15 +90,22 @@ const dem = (rel) => {
   try { return fs.readFileSync(path.join(ROOT, rel), "utf8").split(NL).length; } catch { return 0; }
 };
 
-/* Đếm mục nợ: tổng và đã đóng. Nhận diện "đã đóng" bằng ĐÚNG quy ước sổ (gạch mã `~~`), không
-   dò từ khoá trong văn xuôi — cùng lý do như cờ chờ-chốt ở `what-next.mjs`. */
+/* Đếm mục nợ — MƯỢN BỘ ĐỌC CỦA BẢNG, không giữ bản sao thứ ba của cùng một luật.
+ *
+ * Bản trước tự dò `^###` + gạch mã `~~`, và cả hai vế đều sai với sổ gốc repo: sổ viết
+ * `## N-xx ·` và đóng bằng **một dòng ở cuối file** (luật sổ mục 4). Hậu quả đo được 18/09:
+ * ngân sách in *"sổ nợ: 0 trên 15 mục nợ đang mở"* trong khi có **11**. Một trần chưa bao giờ
+ * chạm tới là một trần chưa bao giờ canh gì.
+ *
+ * Đây là bản sao thứ BA của cùng một luật đọc sổ (bảng · cân nặng · `what-next.mjs`), và cả ba
+ * đều lệch theo cách riêng. Nên cách chữa không phải sửa biểu thức ở đây cho giống, mà là **bỏ
+ * biểu thức đi**: một luật sống ở một chỗ thì không có chỗ thứ hai để lệch. Bản sao còn lại
+ * (`what-next.mjs`) là `N-31`, vẫn đang mở. */
 function docSoNo() {
   let text = "";
   try { text = fs.readFileSync(path.join(ROOT, "BACKLOG.md"), "utf8"); } catch { return { tong: 0, daDong: 0 }; }
-  const dong = text.split(NL);
-  const muc = dong.filter((l) => /^###\s+~*\s*[A-Za-z0-9]+-\d+/.test(l));
-  const daDong = muc.filter((l) => /^###\s+~~/.test(l));
-  return { tong: muc.length, daDong: daDong.length };
+  const muc = readNo(text);
+  return { tong: muc.length, daDong: muc.filter((m) => m.dong).length };
 }
 
 /* `docs/archive/` KHÔNG tính vào ngân sách tài liệu — và đây là bản vá của một mâu thuẫn

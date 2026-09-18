@@ -767,3 +767,31 @@ chứng minh gì; phải tách ca hỏng ra mới đo được.
 nên trước lúc commit nó vô hình. Đã gỡ chú thích trước khi dò.
 
 38 suite. Hai phép ghim mới đã khai vào Bản đồ file.
+
+## 2026-09-18 · `claude-bang` — hai con số đầu bảng đều sai, và một số 0 nói dối
+
+Đúng hai ô trả lời câu *"tôi phải làm gì"*, cả hai đều sai. Đo trước khi sửa.
+
+**⑴ «Cần Đức» khai 5, thật 2.** Ba việc ma đến từ `N-29` — mục nợ ĐANG MỞ nói **về chính cơ chế
+dấu**, nên buộc phải gõ `@Đức:bấm` ra; `quetDauDuc` không neo đầu dòng nên đọc lời giải thích
+thành việc. `BACKLOG.md:248` là ô bảng ĐẾM số dấu, và lượt đếm tự thành cái thứ 18. Lần **thứ
+hai** cùng bệnh; lần trước chữa bằng bỏ `HANDOFF.md` khỏi `SO_CON_SONG`, lần này không được vì
+`BACKLOG.md` đẻ ra việc thật. Chữa bằng NEO VỊ TRÍ, không theo cách gõ.
+
+**⑵ «Việc còn nợ» khai 0 mục mở, thật 11.** `MUC_NO` neo `^###`, sổ viết `## N-xx`. Và sổ đóng
+mục bằng **dòng cuối file** (luật sổ mục 4), không gạch mã, nên vá riêng bậc tiêu đề sẽ khai
+*"38 mở"*: đổi số sai lấy số sai khác. Số 0 này đọc ra *"sổ nợ sạch"* trong khi nghĩa là *"không
+tìm thấy sổ nợ"*. Sửa bên ĐỌC: `BACKLOG.md` thuộc `append_only_exempt`.
+
+**Bản sao thứ ba:** `can-nang.mjs` cũng tự dò `^###` → trần in *"0 trên 15"*. Nay **mượn
+`readNo`**. Bản sao cuối là `N-31` (`what-next.mjs`), còn mở.
+
+**Kèm, không phải mục mới:** `test:dashboard` + `test:overview` **không nạp nổi** từ migrate
+`4da1e9e5`, nằm trong khu cách ly `test:chet` nên `npm test` không gọi và `import-gay` báo XANH.
+Đó là `N-68` — một trong 11 mục bộ đếm vừa hết mù mới lộ.
+
+Thử phá **4/4**, mỗi ca đếm neo trước khi tin — hai lượt harness đầu cho *"XANH"* với neo=0.
+`overview-doc-smoke` 15 → 17 vế.
+
+**Cho Đức:** `priority_rank: 1` bị **ba** đơn vị cùng khai (`_root` · `duc-auto-gg-flow-video` ·
+`hnx-fetch`) nên ô «Việc ưu tiên #1» in XUNG ĐỘT. Chỉ Đức xếp được.
