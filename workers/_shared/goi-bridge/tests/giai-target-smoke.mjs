@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { taoGiaiTarget, MA } from "../giai-target.mjs";
+import { taoGiaiTarget, taiKhoanTuNhan, MA } from "../giai-target.mjs";
 
 const day = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "giai-target.mjs");
 
@@ -354,4 +354,80 @@ const DT = { selector: "title", chua: "anhducds" };
   }
 }
 
-console.log("giai-target-smoke: 21 khối ĐẠT");
+// ⓟ TÀI KHOẢN SUY TỪ NHÃN GHẾ — hàm thuần: nhận đúng quy ước, TỪ CHỐI mọi cách sai
+{
+  const n = (nhan, site) => taiKhoanTuNhan(nhan, site);
+
+  /* Quy ước Đức chốt 18/09: `"<site> <tài-khoản>"`, đúng HAI phần. Bốn ca nhận, đo trên đúng
+     những nhãn thật Đức vừa gõ. */
+  assert.equal(n("Vizcom Anhducds", "vizcom"), "anhducds");
+  assert.equal(n("Vizcom Ducna10", "vizcom"), "ducna10");
+  assert.equal(n("vizcom ANHDUCDS", "Vizcom"), "anhducds", "hoa thuong khong duoc tinh");
+  assert.equal(n("  Vizcom   Ducna10  ", "vizcom"), "ducna10", "khoang trang thua khong duoc tinh");
+
+  /* BẢY CÁCH SAI, và cả bảy phải trả `null` chứ không đoán. Một nhãn gõ nhầm phải im lặng
+     KHÔNG khớp ghế nào rồi để chặng sau kêu — khác hẳn khớp nhầm, thứ dẫn thẳng tới ghi vào
+     sai tài khoản. */
+  assert.equal(n("Scouter_blank", "vizcom"), null, "site khong khop thi khong phai ghe cua site nay");
+  assert.equal(n("", "vizcom"), null, "nhan rong — ghe chua dat ten");
+  assert.equal(n("Vizcom", "vizcom"), null, "mot phan: khong co ten tai khoan");
+  assert.equal(n("Vizcom Anh Duc", "vizcom"), null,
+    "BA phan: doan bua phan nao la ten thi co ngay doan trung mot tai khoan KHAC dang mo canh do");
+  assert.equal(n("Udin Anhducds", "vizcom"), null, "nhan cua site khac khong duoc nhan vao day");
+  assert.equal(n(null, "vizcom"), null);
+  assert.equal(n("Vizcom Anhducds", ""), null, "khong khai site thi khong suy duoc gi");
+}
+
+// ⓠ NHÃN THU HẸP ĐƯỢC GHẾ — trước 18/09 trường `tai_khoan` của adapter là một trường CHẾT
+{
+  const { goi, dem } = bridgeGia({
+    ghe: {
+      "Vizcom Anhducds": [trang("T1", `${VIZ}files/a/recent`)],
+      "Vizcom Ducna10": [trang("T2", `${VIZ}files/b/recent`)]
+    },
+    a11y: { T1: ["anhducds@gmail.com"], T2: ["ducna10@gmail.com"] }
+  });
+  const R = taoGiaiTarget({ goi, site: "vizcom" });
+
+  const g = await R.lietKeGhe();
+  assert.deepEqual(g.map((x) => x.tai_khoan), ["anhducds", "ducna10"],
+    "lietKeGhe phai suy tai khoan tu nhan — khong thi truong `tai_khoan` cua adapter khong chon duoc ghe nao");
+  assert.deepEqual(g.map((x) => x.nguon_tai_khoan), ["nhan", "nhan"],
+    "va phai NOI RA cai ten do den tu dau: nhan va so ghe KHONG cung do tin");
+
+  const r = await R.giai({ origin: VIZ, danh_tinh: { a11y_chua: "ducna10@gmail.com" }, tai_khoan: "ducna10" });
+  assert.equal(r.ok, true, `thu hep theo nhan phai di duoc: ${r.ma ?? ""} ${r.ly_do ?? ""}`);
+  assert.equal(r.target_id, "T2");
+  assert.equal(r.ung_vien, 1, "chi HOI dung mot ghe — do la toan bo cong dung cua nhan");
+  assert.equal(dem.gheDaHoi.length, 1, "va that su chi goi scout.targets MOT lan, khong hoi ca hai roi loc sau");
+}
+
+// ⓡ HAI NGUỒN TÀI KHOẢN: sổ ghế THẮNG nhãn, và nguồn được nêu tên
+{
+  const { goi } = bridgeGia({ ghe: { "Vizcom Ducna10": [] } });
+  const R = taoGiaiTarget({ goi, site: "vizcom", soGhe: { "iid-0": { tai_khoan: "anhducds" } } });
+  const g = await R.lietKeGhe();
+  assert.equal(g[0].tai_khoan, "anhducds",
+    "so ghe la thu nguoi ta ngoi xuong dien co chu dich; nhan la thu go nhanh va de de nguyen tu profile truoc");
+  assert.equal(g[0].nguon_tai_khoan, "so-ghe");
+}
+
+// ⓢ ⚠ VẾ CHỊU LỰC — NHÃN CHỌN GHẾ, TRANG QUYẾT. Nhãn KHÔNG được thay `danh_tinh`.
+{
+  /* Ca này là hình dạng của một tai nạn thật: Đức đăng xuất rồi đăng nhập tài khoản KIA trong
+   * cùng profile, còn nhãn ghế thì ở nguyên. Nhãn nói `Anhducds`, trang khai `ducna10`.
+   *
+   * Vế này ĐỎ nghĩa là nhãn vừa lặng lẽ ghi đè lên lời khai của trang — và mọi lượt ghi sau đó
+   * đi vào SAI TÀI KHOẢN mà không cổng nào còn gì để kêu. Đây là lý do `taiKhoanTuNhan` được
+   * phép tồn tại: vì chặng dưới nó vẫn chặn. Gỡ vế này là gỡ điều kiện ấy. */
+  const { goi } = bridgeGia({
+    ghe: { "Vizcom Anhducds": [trang("T1", `${VIZ}files/a/recent`)] },
+    a11y: { T1: ["ducna10@gmail.com"] }
+  });
+  const R = taoGiaiTarget({ goi, site: "vizcom" });
+  const r = await R.giai({ origin: VIZ, danh_tinh: { a11y_chua: "anhducds@gmail.com" }, tai_khoan: "anhducds" });
+  assert.equal(r.ok, false, "nhan DUNG ma trang khai KHAC thi PHAI tu choi — nhan khong co quyen quyet");
+  assert.equal(r.ma, MA.DANH_TINH_LECH, "va tu choi bang dung ma danh tinh, khong phai mot ma ve ghe");
+}
+
+console.log("giai-target-smoke: 25 khối ĐẠT");

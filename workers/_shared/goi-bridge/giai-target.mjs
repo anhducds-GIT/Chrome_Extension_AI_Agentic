@@ -45,7 +45,45 @@ const LUOC_DO_BO = ["chrome://", "chrome-extension://", "devtools://", "chrome-u
  *   `instance_id → { tai_khoan }` do người điền, nằm NGOÀI repo. Thiếu sổ thì resolver vẫn
  *   chạy, nhưng nó **nói ra** rằng danh tính chỉ đến từ trang.
  */
-export function taoGiaiTarget({ goi, soGhe = null }) {
+/* TÀI KHOẢN SUY TỪ NHÃN GHẾ — Đức chốt 18/09: *"từ sau tôi sẽ đặt tên là được, để identify."*
+ *
+ * ─── NÓ MUA GÌ, VÀ ĐẶC BIỆT LÀ NÓ KHÔNG MUA GÌ ─────────────────────────────
+ * MUA: **địa chỉ**. Trước bản này, sổ ghế (`soGhe`) là đường DUY NHẤT để nói *"ghế nào là tài
+ * khoản nào"*, mà sổ ấy là một tệp thứ hai nằm ngoài repo và chưa ai điền — nên câu `tai_khoan`
+ * của adapter thực tế không chọn được ghế nào cả. Nhãn thì Đức gõ ngay trong bảng bên, một chỗ,
+ * và máy chủ đã chở sẵn nó về trong `bridge.sessions`.
+ *
+ * KHÔNG MUA: **danh tính**. Nhãn là thứ NGƯỜI GÕ; danh tính phải là thứ TRANG KHAI. Đó là luật
+ * của chính Đức, chốt 18/09 khi ông bỏ tên workspace để lấy email làm `danh_tinh`: *"một cái tên
+ * workspace là thứ người ta đặt được... không ai được thêm vào một địa chỉ email."* Một nhãn ghế
+ * còn yếu hơn một tên workspace — nó là lời khai CỦA TA VỀ GHẾ, không phải lời khai CỦA GHẾ.
+ * Nên hàm này chỉ được dùng để **thu hẹp xem hỏi ghế nào**; chặng `danh_tinh` vẫn quyết, và
+ * `DANH_TINH_LECH` vẫn chặn y nguyên. Ai nối nó thẳng vào đường ghi là đã đổi luật an toàn.
+ *
+ * ─── TỪ CHỐI, KHÔNG ĐOÁN ───────────────────────────────────────────────────
+ * Quy ước: `"<site> <tài-khoản>"`, đúng HAI phần. Đo 18/09 trên năm ghế thật:
+ *     "Vizcom Anhducds"  → site khớp, đúng hai phần → `anhducds`
+ *     "Vizcom Ducna10"   → site khớp, đúng hai phần → `ducna10`
+ *     "Scouter_blank"    → site KHÔNG khớp          → null
+ *     ""                 → rỗng                     → null
+ * Ba phần trở lên cũng trả `null`: `"Vizcom Anh Duc"` không đọc được thành một tài khoản, và
+ * đoán bừa phần nào là tên thì có ngày đoán trúng một tài khoản KHÁC đang mở cạnh đó. Một nhãn
+ * sai chính tả phải **im lặng không khớp ghế nào** rồi để chặng sau kêu, chứ không được khớp
+ * nhầm — đó là khác biệt giữa "không chạy" và "ghi nhầm tài khoản".
+ *
+ * @param {string} nhan  nhãn ghế do máy chủ trả (`bridge.sessions[].label`)
+ * @param {string} site  `id` của adapter — `"vizcom"`, `"udin"`, …
+ * @returns {string|null} tài khoản viết thường, hoặc `null` nếu nhãn không theo quy ước.
+ */
+export function taiKhoanTuNhan(nhan, site) {
+  if (typeof nhan !== "string" || typeof site !== "string" || !site) return null;
+  const phan = nhan.trim().split(/\s+/).filter(Boolean);
+  if (phan.length !== 2) return null;
+  if (phan[0].toLowerCase() !== site.toLowerCase()) return null;
+  return phan[1].toLowerCase();
+}
+
+export function taoGiaiTarget({ goi, soGhe = null, site = null }) {
   if (typeof goi !== "function") throw new Error("taoGiaiTarget: thiếu `goi`.");
 
   /** Kiểm kê ghế. Máy chủ đã trả `instance_id` + nhãn sẵn, nên Gap 1 KHÔNG cần đổi extension.
@@ -67,7 +105,13 @@ export function taoGiaiTarget({ goi, soGhe = null }) {
       nhan: s.label || "",
       instance_id: s.instance_id,
       dia_chi: s.instance_id,
-      tai_khoan: soGhe?.[s.instance_id]?.tai_khoan ?? null,
+      /* HAI NGUỒN, THỨ TỰ CÓ CHỦ Ý: sổ ghế thắng nhãn. Sổ là thứ người ta ngồi xuống điền có
+       * chủ đích; nhãn là thứ gõ nhanh trong bảng bên và dễ để nguyên từ profile trước. Và
+       * `nguon_tai_khoan` đi kèm chứ không bị nuốt — người đọc kết quả phải biết cái tên ấy
+       * đến từ đâu, vì hai nguồn KHÔNG cùng độ tin. */
+      tai_khoan: soGhe?.[s.instance_id]?.tai_khoan ?? taiKhoanTuNhan(s.label || "", site) ?? null,
+      nguon_tai_khoan: soGhe?.[s.instance_id]?.tai_khoan ? "so-ghe"
+        : (taiKhoanTuNhan(s.label || "", site) ? "nhan" : null),
       noi_luc: s.connected_at
     }));
   };
@@ -148,7 +192,11 @@ export function taoGiaiTarget({ goi, soGhe = null }) {
         return { ok: false, ma: MA.GHE_CHUA_KHAI, da_hoi: moiGhe.map((g) => g.nhan || g.instance_id),
           ly_do: `adapter đòi ghế ${JSON.stringify(muon)}, không ghế nào đang nối mang tên đó.` };
       }
-    } else if (tai_khoan && soGhe) {
+    } else if (tai_khoan) {
+      /* BỎ ĐIỀU KIỆN `&& soGhe` (18/09). Trước bản này nhánh này chỉ chạy khi có sổ ghế, mà sổ
+       * ghế chưa ai điền — nên `tai_khoan` của adapter là một trường CHẾT: khai nó ra không thu
+       * hẹp được ghế nào. Nay `lietKeGhe` điền `tai_khoan` từ nhãn nữa, nên nhánh này sống.
+       * Nó vẫn chỉ THU HẸP; chặng `danh_tinh` bên dưới vẫn là chặng quyết. */
       const hop = moiGhe.filter((g) => g.tai_khoan === tai_khoan);
       if (!hop.length) {
         return { ok: false, ma: MA.GHE_CHUA_KHAI, da_hoi: moiGhe.map((g) => g.nhan || g.instance_id),
