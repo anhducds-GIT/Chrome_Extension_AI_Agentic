@@ -795,3 +795,36 @@ Thử phá **4/4**, mỗi ca đếm neo trước khi tin — hai lượt harness
 
 **Cho Đức:** `priority_rank: 1` bị **ba** đơn vị cùng khai (`_root` · `duc-auto-gg-flow-video` ·
 `hnx-fetch`) nên ô «Việc ưu tiên #1» in XUNG ĐỘT. Chỉ Đức xếp được.
+
+## 2026-09-18 · `claude-n65` — mở khu cách ly, và hai bài đầu tiên bắt được hai lỗ THẬT
+
+Cả 8 bài chết ở dòng `import`: `4da1e9e5` xoá đúng những export chúng gọi. **Không bài nào KEEP**
+— không bài nào chạy nổi để mà "vẫn đúng".
+
+**VÀO `npm test` — 3 bài, 66 vế:** `check-bootstrap-smoke` 40/40 (sổ phép kiểm 15→**13**,
+`EXPECTED_CHECKS` 18→13) · `session-check-utf8-paths` 7/7 · `what-next-smoke` 19/19.
+
+**HAI LỖ SẢN PHẨM, do chính hai bài ấy bắt:**
+⑴ `statusScanLines` rút còn 2 tên, bỏ `lam_duoc`/`khong_lam_duoc`/`dung_the_nao` —
+`STATUS.template.md` 79–81 khai cả ba là *"lọt số machine-owned → ĐỎ"*, và **3 `STATUS.md` đang
+dùng thật**. Từ 09/09 số gõ tay trong ba trường đó không ai soi.
+⑵ `claim.mjs` đếm commit chưa đẩy bằng `git log --name-only` **thiếu** `core.quotepath=false`.
+Đo thật: commit chạm `workers/Tạo Ảnh tô màu/…` → `stewardOf` trả một **khoá vùng không tồn
+tại**, nên commit chưa đẩy thành **vô hình**, `--release` cho qua im lặng. Đúng con bug 26/08 ở
+một file khác — và phép ghim canh nó thì đang trong khu cách ly.
+
+**DROP 1, có bằng chứng:** `frozen-suite-smoke` — `chonSuiteBoDongBang` không còn trong
+`scripts/`, cổng không có dòng nào về chọn suite theo gói đóng băng, `"frozen": []`.
+
+**CÒN 4 bài** (lý do từng bài + số tên mất: xem thông điệp commit `178f7bf4`):
+`build-dashboard-smoke` → khu MỚI `test:chet-ve` — import đã lành, 66 khối cuối ghim hợp đồng CŨ
+của cổng, và **mấy câu đó là LUẬT nên Đức chốt, không phải tôi**. Ba bài kia còn ở `test:chet`.
+
+Hạ tầng: thêm khu `test:chet-ve`; `dau-suite-smoke` — nơi ĐÃ sở hữu luật *"mọi bài phải ở một
+chuỗi, khu cách ly phải THẬT SỰ đỏ"* — nay biết cả bốn danh sách, miễn `tests/_*.mjs`.
+
+Thử phá **3/3 ĐỎ**, ba chỗ đau khác nhau: bỏ cờ quotepath · rút `statusScanLines` · nhét một bài
+đang xanh vào khu cách ly. Aggregate sạch **41 suite, mã 0**. Giới hạn: ca ② chỉ chứng minh vế
+khẳng định nổ, KHÔNG chứng minh aggregate đỏ — bài đó còn ngoài aggregate.
+
+**Còn nợ, theo chốt của Đức:** `N-31` (3 khối `what-next-smoke` hoãn cùng nó) · `N-70`.
