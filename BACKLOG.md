@@ -1431,3 +1431,34 @@ tên của một lượt audit có thật.
   và chốt xem commit chạm `scripts/`/`tests/` mà **không** khai `Audit:` thì nên CHẶN hay vẫn chỉ
   cảnh báo — hiện tại nó là cửa rộng hơn cửa dành cho người khai thật.
 
+
+## N-70 · `build-overview.mjs` NHÌN ĐỒNG HỒ, nên artifact đã commit không bao giờ đứng yên
+
+- **nhóm:** cong
+
+**[ĐO 2026-09-18]** Cửa xuất bản từ chối `TRANG_CU` hai lượt liên tiếp, và diff của hai bản sinh
+cách nhau chưa tới một phút chỉ khác đúng ba chỗ:
+
+```
+- giữ khoá `_root` · giữ 47 phút        + giữ khoá `_root` · giữ 48 phút
+```
+
+Khối *"AI nào đang giữ vùng"* in **số phút đã giữ**, tính từ `claimed_at` tới **bây giờ**. Nghĩa
+là bản đã commit lệch với bản sinh lại **mỗi khi qua một mốc phút**, dù HEAD không đổi một byte.
+
+**Chính docblock của file cấm điều này** — *"nội dung phải suy HOÀN TOÀN TỪ HEAD … nó nằm trong
+khối `generators` nên cổng kiểm nó mỗi phiên, và một bộ sinh nhìn đồng hồ hay nhìn đĩa sẽ chặn
+push của MỌI phiên."* Lời cảnh báo đúng, và thứ nó cảnh báo đang ở ngay trong file.
+
+**Cái giá:** một phiên sinh bảng rồi làm việc khác vài phút trước khi đẩy sẽ bị từ chối, và câu
+từ chối nói *"sinh lại rồi commit"* — làm đúng thế thì lại hỏng tiếp nếu chặng sau chậm. Lượt
+18/09 phải nối `sinh lại && amend && push` vào MỘT lệnh để lọt qua khe phút. Đó là mẹo, không
+phải bản vá, và nó dạy phiên sau `--amend` cho xong việc.
+
+Khác `N-33`: `N-33` là đỏ không lặp lại được do nhiều lane cùng ghi. Mục này lặp lại **chắc chắn**
+theo đồng hồ.
+
+- **đóng khi:** lệnh: sinh bảng hai lần cách nhau ≥ 90 giây trên cùng một HEAD ra hai file **khớp
+  từng byte**, và có một phép ghim dựng cảnh `claimed_at` cũ rồi kiểm bản ra không chứa số phút
+  trôi. Hướng gợi ý: in mốc `claimed_at` (suy từ HEAD) thay cho khoảng cách tới hiện tại. Khoá
+  cần: `_code`.
