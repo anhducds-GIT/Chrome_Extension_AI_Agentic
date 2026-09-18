@@ -313,3 +313,45 @@ không nằm ở lượt chết — nằm ở khả năng Chrome cấp lại đ�
 
 Khối **ⓤ** của `giai-target-smoke.mjs` quét mã thật của mọi pilot và ĐỎ nếu thấy một chuỗi 32
 hex gõ cứng. Đã thử đột biến: gõ một id vào `ghi.mjs` → ĐỎ đúng dòng.
+
+---
+
+## 11. PHÉP ĐO MENU AVATAR — 18/09 tối, CHƯA TRỌN
+
+Đức mở menu avatar rồi bảo đo diff mở-vs-đóng. **Chưa lấy được mẫu "mở"**: lúc tôi đọc, cửa sổ
+đã về `/files/…` và `scout.page` đếm **23 phần tử tương tác** — đúng bằng nền lúc menu đóng.
+**7 lượt đọc, 0 lệnh GHI.**
+
+### 11.1 Nhưng dữ liệu cũ đã trả lời phần lớn câu hỏi
+
+| Bề mặt | `total_nodes` | có email |
+|---|---|---|
+| `/files` (menu đóng) | 275, trả về 131, `truncated:false` | **có** |
+| `/workbench` sau khi panel Settings từng mở | 143 | **có** ×2 |
+| `/workbench` canvas sạch | 50 | **không** |
+
+Ba dòng này đọc chung nói một câu khác hẳn câu §10.3 viết: dấu hiệu danh tính trên route
+`/workbench/` **không THƯỜNG TRÚ, nhưng GẮN ĐƯỢC**. Nó vào cây khi có thứ gắn nó vào — và
+gắn nó lại cần một lệnh GHI. `G-115` đã sửa tại chỗ.
+
+**Vòng luẩn quẩn giữ nguyên, lý do thì khác:** không phải *"Vizcom không cho biết đang là ai"*
+mà là *"Vizcom chỉ nói khi được hỏi, mà hỏi là một lệnh ghi"*.
+
+### 11.2 Một lỗi tiềm ẩn tìm thấy trên đường đi — CHƯA VÁ
+
+`scout.a11y` có `limit` (mặc định **400**, trần 1500) và một cờ **`truncated`**.
+**`docDanhTinh` của resolver không truyền `limit` và không đọc cờ đó.**
+
+Trang nào có hơn 400 node hữu ích sẽ đẩy dấu hiệu danh tính ra ngoài cửa sổ trả về, và bộ giải
+báo `DANH_TINH_LECH` cho **đúng** tài khoản. Fail-closed nên an toàn — nhưng đó là một lượt
+**từ chối sai mà không ai biết lý do**, và nó sẽ đọc y hệt kết luận §10.3.
+
+Đo lại `/files` hôm nay: `truncated:false`, nên mọi kết luận đã công bố vẫn đứng. Bản vá
+(kiểm `truncated`, ném nếu bị cắt) **chưa làm** — Đức chưa cho sửa code lượt này. `G-119`.
+
+### 11.3 CÒN THIẾU ĐÚNG MỘT PHÉP ĐO
+
+Workbench mở **và** menu avatar mở **cùng lúc**, đọc trong lúc đó. Nếu email xuất hiện → dấu
+hiệu tồn tại, và primitive cần thêm là *"mở menu rồi đọc"* (một lệnh ghi, phải giải bài toán
+danh tính-trước-ghi bằng cách khác). Nếu không xuất hiện → route workbench thật sự không mang
+danh tính, và đường duy nhất là chốt danh tính ở `/files` rồi khoá lại bằng một bất biến khác.
