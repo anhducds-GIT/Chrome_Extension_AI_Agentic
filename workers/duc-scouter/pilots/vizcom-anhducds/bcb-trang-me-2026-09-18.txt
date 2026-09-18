@@ -1,0 +1,30 @@
+## BỀ MẶT ĐANG SỐNG: trang-me
+   https://app.vizcom.com/files/ca2ab962-646b-4aa4-8db1-975e198fab33/recent
+   target BF727D93DD12C7BDDBEEA4B899E6DE49 · ghế 5ba67fd2…
+   (phí tìm bề mặt: 5 lượt · 23080 byte thô — tính riêng, không vào ca nào)
+
+
+## CA A-email — "trang có phơi "anhducds@gmail.com" không"
+   A đọc rộng             2 lượt · thô   23366B · CHO AI   14180 chữ ·  255ms · hữu ích THAP (43/14180) · GIẢI ĐƯỢC
+   B vị ngữ Node          1 lượt · thô   14400B · CHO AI      89 chữ ·   39ms · hữu ích CAO (89/89) · GIẢI ĐƯỢC
+   D ảnh + hỏi đúng chỗ   — KHÔNG CHẠY: ảnh không chỉ ra neo ngữ nghĩa nào
+   → B giảm 99.4% chữ-cho-AI so với A. Thô thì giảm 8966B.
+   → cùng kết luận?  A=["anhducds@gmail.com","anhducds@gmail.com"]  B=["anhducds@gmail.com","anhducds@gmail.com"]
+
+## CA B-o-prompt — "control nào nhận prompt"
+   A đọc rộng             2 lượt · thô   23366B · CHO AI   14180 chữ ·   82ms · hữu ích THAP (2/14180) · KHÔNG_CÓ_TRÊN_BỀ_MẶT_NÀY
+   B vị ngữ Node          1 lượt · thô   14400B · CHO AI      48 chữ ·   42ms · hữu ích CAO (48/48) · KHÔNG_CÓ_TRÊN_BỀ_MẶT_NÀY
+   D ảnh + hỏi đúng chỗ   1 lượt · thô     874B · CHO AI      72 chữ ·   23ms · hữu ích CAO (72/72) · KHÔNG_CÓ_TRÊN_BỀ_MẶT_NÀY
+   → B giảm 99.7% chữ-cho-AI so với A. Thô thì giảm 8966B.
+   → cùng kết luận?  A=[]  B=[]
+
+## CA C-render — "control nào là Render/Generate"
+   A đọc rộng             2 lượt · thô   23366B · CHO AI   14180 chữ ·   68ms · hữu ích THAP (2/14180) · KHÔNG_CÓ_TRÊN_BỀ_MẶT_NÀY
+   B vị ngữ Node          1 lượt · thô   14400B · CHO AI      48 chữ ·   37ms · hữu ích CAO (48/48) · KHÔNG_CÓ_TRÊN_BỀ_MẶT_NÀY
+   D ảnh + hỏi đúng chỗ   — KHÔNG CHẠY: ảnh không chỉ ra neo ngữ nghĩa nào
+   → B giảm 99.7% chữ-cho-AI so với A. Thô thì giảm 8966B.
+   → cùng kết luận?  A=[]  B=[]
+
+## TỔNG — token thật: UNKNOWN (bộ đo này không đọc được usage của runtime, và không bịa)
+   BCB_MODEL toàn benchmark: A 42540 chữ · B 185 chữ · D 72 chữ
+   BCB_RAW   toàn benchmark: A 70098B · B 43200B

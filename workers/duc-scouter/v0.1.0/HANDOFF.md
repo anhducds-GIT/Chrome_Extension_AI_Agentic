@@ -2850,3 +2850,30 @@ ký tự avatar không phải danh tính · mở menu avatar là lệnh GHI, mà
 
 **Bất biến mới, có máy canh:** sau mỗi lượt nối lại Bridge → **không dùng lại `target_id` cũ**.
 Khối ⓤ của `giai-target-smoke.mjs` quét mã thật của mọi pilot, ĐỎ nếu thấy chuỗi 32 hex gõ cứng.
+
+## 2026-09-18h · `claude-universal-scouter` — đo chi phí context, KHÔNG mở thêm năng lực
+
+Báo cáo đầy đủ: `docs/CHI-PHI-CONTEXT.md`. Bằng chứng thô:
+`pilots/vizcom-anhducds/bcb-trang-me-2026-09-18.txt`. Read-only, **0 lệnh ghi**.
+
+**Rút gọn ở Node giảm 99,4–99,7% chữ vào context, không đụng extension, không thêm method**
+(`G-121`). Cùng một `scout.a11y`, cùng 14.400 B về Node, đưa cho AI **89 chữ** thay vì **14.180**
+— cùng kết luận, cùng chuỗi bằng chứng, vẫn khai `truncated`. Tỉ lệ hữu ích của lối đọc rộng:
+**43/14.180 = 0,3%**.
+
+**Đắt nhất KHÔNG phải `a11y`** (`G-120`). `scout.targets` trên một ghế 44 tab = **16.577 B**, và
+một lượt giải target hỏi hết ghế = **23.080 B**. Con số đó tỉ lệ với **số tab Đức đang mở**, không
+với việc phải làm. Phổ: `song` 73 · `view` 244 · `text` 961 · `query` 1.568 · `page` 8.966 ·
+`tree` 10.501 · `a11y` 14.400 · `targets` tới 16.577.
+
+**`bytes_tho` và `chu_cho_ai` là HAI con số, đừng gộp.** Rút gọn ở Node không giảm một byte thô
+nào. Cái cân (`_shared/goi-bridge/do-chi-phi.mjs`) in tách, và phép ghim ⓑ ĐỎ nếu ai gộp lại.
+`token_that` luôn `null` — bộ đo không đọc được usage runtime và **không bịa**.
+
+**Ảnh KHÔNG miễn phí** (`G-122`): ~2.800 token/ảnh theo công thức tài liệu — ƯỚC LƯỢNG, khác đơn
+vị với các số kia. Nó rẻ khi dùng lại nhiều câu hỏi, không rẻ tự động.
+
+**Hai primitive còn thiếu, cả hai là ĐỔI LUẬT AN TOÀN, chưa làm:** ⑴ a11y theo **nhánh con** —
+`scout.a11y` không có tham số gốc nên bậc L4 của thang giác quan là ô trống và mọi câu hỏi rơi
+xuống L5 toàn cây; ⑵ vị ngữ theo **chữ** ở phía extension — hôm nay phải kéo cả cây về rồi tìm
+ở Node, nên byte thô không giảm.
