@@ -56,7 +56,7 @@
       "lifecycle": "active",
       "status_md": "STATUS.md",
       "owner": "harness-loi-01",
-      "next_step": "Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16).",
+      "next_step": "Mốc Universal Scouter V1 ĐÃ ĐÓNG PHẠM VI 18/09 — gói đóng mốc ở workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 (SSOT). Việc kế là của V2 và nó CẦN ĐỨC: mở thêm một tab Vizcom đăng nhập tài khoản khác trong cùng profile, cho thí nghiệm identity attestation. Nợ hạ tầng còn lại: khai luat.chu_de (B16) · N-31 (Đức đã hoãn). N-65 và N-70 đều đã đóng.",
       "human_action": "CÓ — ⑴ mở thêm một tab Vizcom đăng nhập tài khoản KHÁC trong cùng profile, để thí nghiệm identity attestation của V2 có cái để bác · ⑵ bật B16 hay để mức cảnh báo tới khi các ADR khai xong `chu_de`.",
       "priority_rank": 1,
       "superseded_by": null,
@@ -167,7 +167,7 @@
     {
       "id": "_root",
       "unit": "_root",
-      "title": "Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16).",
+      "title": "Mốc Universal Scouter V1 ĐÃ ĐÓNG PHẠM VI 18/09 — gói đóng mốc ở workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 (SSOT). Việc kế là của V2 và nó CẦN ĐỨC: mở thêm một tab Vizcom đăng nhập tài khoản khác trong cùng profile, cho thí nghiệm identity attestation. Nợ hạ tầng còn lại: khai luat.chu_de (B16) · N-31 (Đức đã hoãn). N-65 và N-70 đều đã đóng.",
       "rank": 1,
       "claim": null
     },
