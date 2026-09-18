@@ -2979,3 +2979,20 @@ sửa prompt là neo đổi ngay ⇒ phải đọc lại chữ **ngay trước**
 **INFERENCE, chưa đo:** `id` dạng React `useId` nên **mọi** lượt remount đều đổi nó, không riêng
 lượt tải lại. Và thứ tự `id` ↔ thứ tự prompt trùng ở cả hai lượt đọc, nhưng **n=1** — **đừng dựa
 vào thứ tự**.
+
+## 2026-09-18 · claude-v1 · V1 đóng phạm vi
+
+`STATUS.md` của gói đổi sang trạng thái V1: mốc kiểm lại là lượt Generate thật 18/09 (giải target
+→ khoanh đúng một khối Img2Img theo **chữ prompt** → bấm nút Generate **con** của chính khối đó;
+hàng output của đúng khối ấy 2 → 3; **0** lệnh ghi sang ghế hay tài khoản khác).
+
+Phạm vi của lời khai ấy nói thẳng trong `last_verified_how`: **đây không phải nghiệm thu
+autonomous authorization** — cổng ghi do Đức mở và lượt bấm do Đức chỉ thị.
+
+`next_step` nay chỉ trỏ **một** chỗ: `docs/UNIVERSAL-SCOUTER.md` §V1 là SSOT của mốc. Đừng chép
+số liệu từ đó sang `STATUS.md` — hai bản sẽ lệch nhau, và bản trên bảng của Đức là bản sai.
+
+Việc cần Đức, đúng một: mở thêm một tab Vizcom đăng nhập **tài khoản khác** trong **cùng** profile
+đang chạy Workbench. Đó là đầu vào của thí nghiệm identity attestation, tức mục 1 của V2.
+
+Không đụng mã gói lượt này. Không tiêu thêm credit Vizcom.

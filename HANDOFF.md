@@ -855,3 +855,29 @@ là một cái trần đã tắt. Nay 12/15, khớp `readNo`. Thêm **sàn**: đ
 **Phá là ĐỎ 5/5**, năm chỗ đau khác nhau, đếm neo trước khi tin. Giới hạn khai hôm qua nay **gỡ**.
 
 **Còn nợ:** `N-31` · `N-70` · gộp ba bộ đọc sổ nợ (bước 3).
+
+## 2026-09-18 · claude-v1 · Bước 2/5 — ĐÓNG PHẠM VI V1
+
+Mốc: **Universal Scouter V1 — Browser I/O Feasibility + Context-Efficient Workbench Control**.
+
+**SSOT là `workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md` §V1** — không tạo tài liệu mới.
+Mục ấy giữ đúng bốn thứ, mỗi thứ trỏ tới dòng sổ `G-xx` hoặc mục đo được, **không chép số liệu**:
+9 câu đã chứng minh · 6 giới hạn đã biết · khối CHẶN · 5 việc hoãn sang V2.
+
+**Khối CHẶN giữ nguyên văn, và V1 đóng KÈM nó:** *Workbench thường không expose email identity;
+lượt Generate 18/09 chạy được là nhờ Đức trực tiếp chỉ thị, nên nó KHÔNG chứng minh autonomous
+account authorization.* Nên V1 tự khai là **feasibility + control**, không phải **autonomy** —
+mọi lượt ghi trong V1 cần Đức mở cổng và chỉ thị.
+
+**V2 bắt đầu ở đúng một chỗ:** identity attestation `/files` → bind ghế/session → `/workbench`.
+Thí nghiệm nhỏ nhất đã thiết kế sẵn và **cần Đức**: mở thêm một tab Vizcom đăng nhập tài khoản
+KHÁC trong **cùng** profile đang chạy Workbench, để câu *"ghế = tài khoản"* có cái để bác.
+
+**Gạch tại chỗ, không xoá** — `WORKBENCH-GRAPH.md` mục 7. Phép đo nó gọi là "bước kế tiếp" đã
+chạy ở mục 9, và chạy **khác** cách viết cũ: tôi bấm chứ không phải Đức, tốn đúng một lệnh ghi và
+một credit. Câu cũ giữ lại vì nó ghi một giả định đã bị chính phép đo sửa.
+
+`N-65` **ĐÓNG** bằng dòng cuối sổ, đúng quy ước repo. Sổ nợ còn **11 mục mở**.
+
+Còn nợ hạ tầng, theo thứ tự bước 3: `N-70` (bản sinh nhìn đồng hồ — lượt này đã phải `--amend`
+**hai lần**, đó là triệu chứng, không phải cách sửa) · gộp ba bộ đọc sổ nợ về một nhà · `B16`.
