@@ -910,3 +910,31 @@ xoá. Danh sách chạy-riêng còn tên `dau-vet-vung-smoke.mjs` — đã gỡ.
 đóng khác). Luật thay thế: *được phép ba bản, KHÔNG được phép lệch nhau* — ghim ở `what-next-smoke`.
 
 Aggregate **44 suite, 0 đỏ**.
+
+## 2026-09-18 · claude-v1 · Bước 5/5 — AUDIT CLOSEOUT, và kết luận
+
+**PASS-WITH-DEFERRED.** Không còn blocker nào thuộc phạm vi V1.
+
+**Mười phép đo, chạy lại được, không phép nào là lời khai:**
+repo sạch · `main` đồng bộ, **0** commit chưa đẩy · **0** khu cách ly (`test:chet|hong|cach-ly`) ·
+**34/34** tệp `tests/` nằm trong một chuỗi · aggregate **44 suite, 0 đỏ** · thử phá **7/7 ĐỎ** ở
+bảy chỗ đau khác nhau · artifact tất định qua một lượt đẩy đồng hồ **37 phút** · **4/4** bộ sinh
+khớp HEAD · **3/3** bộ đọc sổ nợ ra cùng con số (**10** mục mở) · **12/12** mã `G-xx` mà §V1
+trích đều có thật trong sổ giả thuyết.
+
+**Một lời khai sai bắt được trong chính lượt audit này:** `STATUS.md` `next_step` vẫn kể `N-70` là
+nợ *"bản sinh nhìn đồng hồ"* — mục ấy đã đóng ở bước 3, và **tiền đề của nó đã bị đo bác**. Câu ấy
+chảy thẳng lên `DASHBOARD.md` dòng 9, tức lên đúng chỗ Đức đọc. Đã sửa. Bài học lặp lại lần thứ ba
+trong ngày: **một dòng trạng thái là một lời khai**, và bảng chỉ trung thực bằng file nó đọc.
+
+**Hai hàng cổng không XANH, cả hai KHÔNG phải nợ của V1:**
+`File mới đã khai vào Bản đồ file` = **BỎ** — 6 tệp `Q00*.png` thuộc vùng lane
+`claude-gpt-chay-het-job` đang giữ, cổng không kiểm được dưới nhãn khác. Đó là *"chưa kiểm"*, không
+phải *"đã đạt"*, và nói ra ở đây thay vì để nó trôi.
+
+**Deferred KHÔNG được trình bày như completed:** năm việc V2 nằm ở §V1 mục ⑹ với lý do từng việc;
+khối CHẶN (*Workbench không lộ email ⇒ chưa chứng minh autonomous authorization*) nằm **đầu** danh
+sách giới hạn, không nằm cuối tài liệu.
+
+**V2 bắt đầu ở đúng một chỗ, và nó cần Đức:** mở thêm một tab Vizcom đăng nhập **tài khoản khác**
+trong **cùng** profile đang chạy Workbench.

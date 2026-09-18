@@ -5,11 +5,11 @@ name: Chrome Extension AI Agentic
 lifecycle: active
 last_verified: 2026-09-18
 last_verified_commit: 6f3a761f3c02a5fba478eb3f3c857fbf9304132a
-last_verified_how: "cổng cấu trúc: nhóm CHẶN đạt hết; aggregate chạy trọn và KHÔNG còn khu cách ly nào — N-65 đóng 18/09, tám bài cuối đã viết lại hoặc DROP kèm bằng chứng; phá một bất biến đại diện thì aggregate ĐỎ ở cả năm chỗ thử"
+last_verified_how: "cổng cấu trúc: nhóm CHẶN đạt hết; aggregate chạy trọn và KHÔNG còn khu cách ly nào — N-65 đóng 18/09, tám bài cuối đã viết lại hoặc DROP kèm bằng chứng; artifact máy sinh khớp HEAD và tất định qua một lượt đẩy đồng hồ (N-70); phá một bất biến đại diện thì bài canh nó ĐỎ ở cả bảy chỗ thử"
 evidence_ref: HANDOFF.md
 owner: harness-loi-01
 priority_rank: 1
-next_step: "Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16)."
+next_step: "Mốc Universal Scouter V1 ĐÃ ĐÓNG PHẠM VI 18/09 — gói đóng mốc ở workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 (SSOT). Việc kế là của V2 và nó CẦN ĐỨC: mở thêm một tab Vizcom đăng nhập tài khoản khác trong cùng profile, cho thí nghiệm identity attestation. Nợ hạ tầng còn lại: khai luat.chu_de (B16) · N-31 (Đức đã hoãn). N-65 và N-70 đều đã đóng."
 version_source: package.json
 current_focus: "Đang đóng mốc Universal Scouter V1 — chứng minh đường I/O trình duyệt và điều khiển Workbench tiết kiệm context. Hạ tầng repo vừa qua một lượt dọn: không còn bài kiểm nào bị cách ly, nên mọi lớp bảo vệ đang thật sự chạy."
 human_action: "CÓ — ⑴ mở thêm một tab Vizcom đăng nhập tài khoản KHÁC trong cùng profile, để thí nghiệm identity attestation của V2 có cái để bác · ⑵ bật B16 hay để mức cảnh báo tới khi các ADR khai xong `chu_de`."
