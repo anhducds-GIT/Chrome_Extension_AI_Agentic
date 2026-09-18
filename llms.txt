@@ -8,7 +8,7 @@ Trang được sinh ngày 2026-09-18.
 
 ## Việc ưu tiên #1
 
-- **_root** — N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).
+- **_root** — Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16).
 
 ## Đọc theo thứ tự này
 
@@ -19,12 +19,12 @@ Trang được sinh ngày 2026-09-18.
 
 ## Từng extension
 
-- [chrome-extension-ai-agentic](STATUS.md): active — Vừa lên khung 1.8.0: nhận bộ nén luật, Context Compiler, can-nang đo token, bảng sống
+- [chrome-extension-ai-agentic](STATUS.md): active — Đang đóng mốc Universal Scouter V1 — chứng minh đường I/O trình duyệt và điều khiển Workbench tiết kiệm context
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — **Nền chạy chuỗi reasoning đã xong và tốn 0 usage CC** — `chay-chuoi.bat` / `dung-chuoi.bat`, chọn hồ sơ và xác nhận hội thoại từ danh sách, sáu mép an toàn đã…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
-- [Duc Scouter (seed v1)](workers/duc-scouter/v0.1.0/STATUS.md): active — Cau \"Scouter la bo do nghe chung\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong
+- [Duc Scouter (seed v1)](workers/duc-scouter/v0.1.0/STATUS.md): active — Moc dang dong: Universal Scouter V1 — Browser I/O Feasibility + Context-Efficient Workbench Control
 - [HNX Fetch](workers/hnx-fetch/v0.1.0/STATUS.md): active — Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh…
 - [Udin Optic (v0.1)](workers/udin-optic/v0.1.0/STATUS.md): active — CA HAI DIEM DUNG DA QUA: Duc nap lai extension 17/09
 

@@ -56,13 +56,13 @@
       "lifecycle": "active",
       "status_md": "STATUS.md",
       "owner": "harness-loi-01",
-      "next_step": "N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).",
-      "human_action": "CÓ — ⑴ N-65: viết lại hay bỏ 8 bài kiểm đang cách ly · ⑵ bật B16 hay để cảnh báo tới khi 154 ADR khai xong `chu_de`.",
+      "next_step": "Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16).",
+      "human_action": "CÓ — ⑴ mở thêm một tab Vizcom đăng nhập tài khoản KHÁC trong cùng profile, để thí nghiệm identity attestation của V2 có cái để bác · ⑵ bật B16 hay để mức cảnh báo tới khi các ADR khai xong `chu_de`.",
       "priority_rank": 1,
       "superseded_by": null,
-      "last_verified": "2026-09-09",
-      "last_verified_commit": "4da1e9e5a5c89002309c35b12c7bb1a52721ef9f",
-      "open_item": "Vừa lên khung 1.8.0: nhận bộ nén luật, Context Compiler, can-nang đo token, bảng sống. Cổng nay chặt hơn và đang nêu nợ có thật."
+      "last_verified": "2026-09-18",
+      "last_verified_commit": "6f3a761f3c02a5fba478eb3f3c857fbf9304132a",
+      "open_item": "Đang đóng mốc Universal Scouter V1 — chứng minh đường I/O trình duyệt và điều khiển Workbench tiết kiệm context. Hạ tầng repo vừa qua một lượt dọn: không còn bài kiểm nào bị cách ly, nên mọi lớp bảo vệ đang thật sự chạy."
     },
     {
       "id": "duc-auto-chatgpt",
@@ -126,13 +126,13 @@
       "lifecycle": "active",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "A1 A2 A3 A5 DONG. A5 di 13 noi -> 1 (noi cuoi cho lane khac tra khoa). No tra ve MOT benh chu khong phai bon loi roi: AGENTS.md danh so lai, 21 cho tren mat luat song van trich so cu — da va, va da co may canh (trich-muc-agents-smoke, thu pha 4/4). A4: da bam gio DUNG lenh (test:song-song 36 suite) thay npm test (29 suite); hang do VAN DO va nay biet vi sao — nhom chay rieng cong lai 177,3s tren tran 180 cua ca bo, xem N-69. Hai con so cua chinh toi da gach: 116s (that: 220s) va N-67 ve mot (thieu 0). Viec ke: N-69 > N-68 > N-67 ve hai. Roi D2 (can Duc mo kenh) va D4.",
-      "human_action": "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai.",
+      "next_step": "V1 DA DONG PHAM VI 18/09 — doc docs/UNIVERSAL-SCOUTER.md §V1 truoc moi thu khac; do la SSOT cua moc, dung chep lai so lieu sang day. V2 bat dau o DUNG MOT cho: identity attestation (/files -> bind ghe/session -> mang sang /workbench, kem dieu kien vo hieu hoa). Thi nghiem nho nhat da thiet ke san: mot ghe Scouter co chua duoc hai tai khoan Vizcom khac nhau cung luc khong. Bon viec hoan khac va ly do tung viec: cung muc §V1.",
+      "human_action": "CO — mot viec, va no la cua V2: mo them mot tab Vizcom dang nhap tai khoan KHAC trong CUNG profile dang chay Workbench, de thi nghiem identity attestation co cai de bac. Ngoai ra: moi luot tieu them credit Vizcom deu cho Duc duyet. AI khong tu gui gi ra ngoai.",
       "priority_rank": 4,
       "superseded_by": null,
-      "last_verified": "2026-09-16",
-      "last_verified_commit": "bf3ff4413e3a384495356b161ed751f6d98121d9",
-      "open_item": "Cau \\\"Scouter la bo do nghe chung\\\" THOI la loi khai tu 15/09: mot extension khac (udin-optic) chay tron mot viec that tren ma nay ma khong bat no sua mot dong. Gia phai tra do duoc: ~2.100 dong may bam/go bi chep sang goi moi (G-93), va bay tep chep nay bi ghim so TUNG BYTE — mot ban va an toan lam o day PHAI toi duoc do hoac suite ben kia do. Bai hoc cua SEED tu luot nay: thu hep host_permissions la mot thay doi HANH VI, khong phai mot dong khai bao (G-94) — goi nao sinh ra tu seed nay ma thu quyen lai thi phai co mot luot chay live truoc khi tin."
+      "last_verified": "2026-09-18",
+      "last_verified_commit": "6f3a761f3c02a5fba478eb3f3c857fbf9304132a",
+      "open_item": "Moc dang dong: Universal Scouter V1 — Browser I/O Feasibility + Context-Efficient Workbench Control. Cau da chung minh: duong Bridge -> extension -> CDP -> tab chay duoc va Side Panel khong nam tren duong du lieu; bien runtime la GHE Scouter, dia chi luon la instance_id chu khong bao gio la nhan; danh tinh tai khoan phai doc tu TRANG chu khong suy tu URL; graph Workbench la source -> prompt_block -> outputs[]; nut Generate phai giai dong moi luot. Cau CHUA chung minh, va no la ly do V1 khong goi la autonomy: Workbench thuong khong lo email, nen luot Generate vua roi chay duoc la nho Duc truc tiep chi thi. Bang chung tung cau o docs/UNIVERSAL-SCOUTER.md §V1 va so gia thuyet docs/GIA-THUYET.md."
     },
     {
       "id": "hnx-fetch",
@@ -167,7 +167,7 @@
     {
       "id": "_root",
       "unit": "_root",
-      "title": "N-65: 8 bài kiểm viết cho bộ khung 0.3.0 đang cách ly ở npm run test:chet — Đức chốt viết lại hay bỏ. Rồi khai luat.chu_de (B16).",
+      "title": "Đóng mốc Universal Scouter V1 (xem workers/duc-scouter/v0.1.0/docs/UNIVERSAL-SCOUTER.md §V1 — SSOT của mốc). Nợ hạ tầng còn lại, theo thứ tự: N-70 (bản sinh nhìn đồng hồ nên artifact không bao giờ đứng yên) · gộp ba bộ đọc sổ nợ về một nhà · khai luat.chu_de (B16).",
       "rank": 1,
       "claim": null
     },
@@ -188,7 +188,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "A1 A2 A3 A5 DONG. A5 di 13 noi -> 1 (noi cuoi cho lane khac tra khoa). No tra ve MOT benh chu khong phai bon loi roi: AGENTS.md danh so lai, 21 cho tren mat luat song van trich so cu — da va, va da co may canh (trich-muc-agents-smoke, thu pha 4/4). A4: da bam gio DUNG lenh (test:song-song 36 suite) thay npm test (29 suite); hang do VAN DO va nay biet vi sao — nhom chay rieng cong lai 177,3s tren tran 180 cua ca bo, xem N-69. Hai con so cua chinh toi da gach: 116s (that: 220s) va N-67 ve mot (thieu 0). Viec ke: N-69 > N-68 > N-67 ve hai. Roi D2 (can Duc mo kenh) va D4.",
+      "title": "V1 DA DONG PHAM VI 18/09 — doc docs/UNIVERSAL-SCOUTER.md §V1 truoc moi thu khac; do la SSOT cua moc, dung chep lai so lieu sang day. V2 bat dau o DUNG MOT cho: identity attestation (/files -> bind ghe/session -> mang sang /workbench, kem dieu kien vo hieu hoa). Thi nghiem nho nhat da thiet ke san: mot ghe Scouter co chua duoc hai tai khoan Vizcom khac nhau cung luc khong. Bon viec hoan khac va ly do tung viec: cung muc §V1.",
       "rank": 4,
       "claim": null
     },

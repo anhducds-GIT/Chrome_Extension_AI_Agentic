@@ -85,6 +85,6 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 ## Trạng thái mới nhất
 
 - lifecycle: active
-- last_verified: 2026-09-16
-- next_step: "A1 A2 A3 A5 DONG. A5 di 13 noi -> 1 (noi cuoi cho lane khac tra khoa). No tra ve MOT benh chu khong phai bon loi roi: AGENTS.md danh so lai, 21 cho tren mat luat song van trich so cu — da va, va da co may canh (trich-muc-agents-smoke, thu pha 4/4). A4: da bam gio DUNG lenh (test:song-song 36 suite) thay npm test (29 suite); hang do VAN DO va nay biet vi sao — nhom chay rieng cong lai 177,3s tren tran 180 cua ca bo, xem N-69. Hai con so cua chinh toi da gach: 116s (that: 220s) va N-67 ve mot (thieu 0). Viec ke: N-69 > N-68 > N-67 ve hai. Roi D2 (can Duc mo kenh) va D4."
-- human_action: "CO — mot viec: mo kenh cho D2 (Codex hoac GPT) khi A4+A5 xong. AI khong tu gui gi ra ngoai."
+- last_verified: 2026-09-18
+- next_step: "V1 DA DONG PHAM VI 18/09 — doc docs/UNIVERSAL-SCOUTER.md §V1 truoc moi thu khac; do la SSOT cua moc, dung chep lai so lieu sang day. V2 bat dau o DUNG MOT cho: identity attestation (/files -> bind ghe/session -> mang sang /workbench, kem dieu kien vo hieu hoa). Thi nghiem nho nhat da thiet ke san: mot ghe Scouter co chua duoc hai tai khoan Vizcom khac nhau cung luc khong. Bon viec hoan khac va ly do tung viec: cung muc §V1."
+- human_action: "CO — mot viec, va no la cua V2: mo them mot tab Vizcom dang nhap tai khoan KHAC trong CUNG profile dang chay Workbench, de thi nghiem identity attestation co cai de bac. Ngoai ra: moi luot tieu them credit Vizcom deu cho Duc duyet. AI khong tu gui gi ra ngoai."
