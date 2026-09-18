@@ -1,0 +1,30 @@
+## WORKBENCH: Car trial 1 | Vizcom
+   https://app.vizcom.com/workbench/5c805df7-97f2-4b78-837b-bb4766f78c60
+   ghế 99a6cade… · target 9B33CA1E7DC3A978969111ABEC10FB28
+   phí tìm: 5 lượt · 24092 B thô
+
+## MODE A — đọc rộng: 2 lượt · 18574 B thô · **15962 chữ cho AI** · 215ms
+   a11y total=194 returned=86 truncated=false · page 25 phần tử
+
+## MODE C — vị ngữ Node: 1 lượt · 9213 B thô · **620 chữ cho AI** · 33ms
+   {"be_mat":"workbench","chi_trong_canvas":true,"khoi_prompt":[{"i":0,"prompt":"Elegan nice coupe silver car","nut_generate":"a11y:button[name=Generate]#0","selector_gõ":"textarea[placeholder=\"What are you creating?\"]  (khớp 2, cần chỉ số)"},{"i":1,"prompt":"Racing morden car colorful","nut_generate":"a11y:button[name=Generate]#1","selector_gõ":"textarea[placeholder=\"What are you creating?\"]  (khớp 2, cần chỉ số)"}],"anh_goc":"KHÔNG_CÓ_TRONG_DOM — vẽ trong canvas","anh_ra":"KHÔNG_CÓ_TRONG_DOM — vẽ trong canvas","canh_noi":"KHÔNG_CÓ_TRONG_DOM — vẽ trong canvas","giac_quan_duy_nhat_cho_ba_dong_tren":"scout.shot"}
+
+## MODE B — ảnh + hỏi đúng chỗ: 1 lượt · 1647 B thô · **72 chữ cho AI** · 16ms
+
+## SÁU CÂU HỎI — trạng thái bằng chứng
+   Q1 đâu là khối ảnh GỐC             VISUAL-ONLY — 20 node role=image, **0 cái có tên**; và `img`/`background-image` đều = 0 nên đây là icon svg, không phải tác phẩm
+   Q2 đâu là khối prompt/render       CONFIRMED — 2 khối, neo `textarea[placeholder="What are you creating?"]` (khớp 2)
+   Q3 prompt viết gì                  CONFIRMED — đọc được `value`: ["Elegan nice coupe silver car","Racing morden car colorful"]
+   Q4 đâu là nút Generate             MỘT NỬA — a11y có 2 button tên "Generate", nhưng DOM chỉ có hash styled-components ⇒ **không có selector hợp lệ để bấm**
+   Q5 đâu là ảnh RA tương ứng         VISUAL-ONLY — không có phần tử DOM nào cho ảnh ra
+   Q6 map được source → block → outputs[] UNKNOWN từ DOM — không node id, không cạnh, và `style` bị che (ADR-0006) nên **quan hệ không gian cũng không đọc được**
+
+## SO SÁNH (chữ cho AI, cho TRỌN bộ 6 câu)
+   A đọc rộng        15962 chữ ·  18574 B thô · hữu ích TRUNG 620/15962
+   C vị ngữ Node       620 chữ ·   9213 B thô · hữu ích CAO 620/620
+   B ảnh + 1 hỏi        72 chữ ·   1647 B thô  (chỉ trả lời Q2, không trả lời Q1/Q5/Q6)
+
+   C giảm 96.1% chữ so với A, **cùng lượng bằng chứng** — cùng một lượt `scout.a11y`.
+   Thô thì C chỉ giảm 9361 B (bỏ `scout.page`): rút gọn ở Node KHÔNG cắt byte thô.
+
+   token thật: UNKNOWN — bộ đo không đọc được usage runtime và không bịa.

@@ -2877,3 +2877,28 @@ vị với các số kia. Nó rẻ khi dùng lại nhiều câu hỏi, không r�
 `scout.a11y` không có tham số gốc nên bậc L4 của thang giác quan là ô trống và mọi câu hỏi rơi
 xuống L5 toàn cây; ⑵ vị ngữ theo **chữ** ở phía extension — hôm nay phải kéo cả cây về rồi tìm
 ở Node, nên byte thô không giảm.
+
+## 2026-09-18i · `claude-universal-scouter` — Workbench là bề mặt chính, graph KHÔNG ở trong DOM
+
+Bản đồ + chi phí: `docs/WORKBENCH-GRAPH.md`. Số thô:
+`pilots/vizcom-anhducds/bcb-workbench-2026-09-18.txt`. Read-only, **0 lệnh ghi**.
+
+**Phát hiện đảo cả hướng nghiên cứu** (`G-123`): `img` **0** · `background-image` 0 · `picture` 0
+· `[role=img]` 0 · `data-node-id` 0 · `draggable` 0 · `canvas` **1** (`data-engine`) ·
+`document` **==** viewport. Ảnh gốc · ảnh ra · cạnh nối **vẽ trong canvas**; 20 `svg` ↔ đúng 20
+node `role=image` **không tên** ⇒ đó là icon. Nên **`scout.shot` không phải cách tối ưu — nó là
+giác quan DUY NHẤT** cho ba lớp ấy. Ảnh Đức gửi là nguồn duy nhất cho hình học graph.
+
+**Đọc được nhưng KHÔNG thao tác được** (`G-126`): `Generate` có tên trong a11y, DOM chỉ hash ⇒
+luật ⑸ chặn; ô prompt khớp **2** mà luật số 7 đòi **1**.
+
+**`outputs = N → N+1`: cả bốn đường Đức nêu đều đóng** (`G-124`). Quan hệ không gian đóng vì
+`style` bị che (ADR-0006) **và không method ĐỌC nào trả hộp phần tử**. Còn một đường: **diff
+`scout.shot`**. Không giả định "ngoài cùng bên phải là mới nhất".
+
+**Ba bẫy chi phí:** ⑴ `scout.shot` **103.066 B**, base64 trong phong bì, gấp 7× `a11y` — nhưng
+nó chỉ tới Node, Node ghi tệp rồi đưa CC **đường dẫn** (`G-125`). ⑵ rút gọn ở Node giảm **96,1%**
+chữ (15.962 → **620**) với **cùng bằng chứng**. ⑶ **đừng `scout.tree` từ gốc `#document`** — tiêu
+hết hạn vào `HEAD` (77 con), `truncated` ở 60 node, **không bao giờ tới canvas**.
+
+Ghế mới `99a6cade-…`. Công tắc ghi hôm qua thuộc ghế `5ba67fd2`, **không áp cho ghế này**.

@@ -64,7 +64,17 @@ export const VIZCOM = {
    * khớp ĐÃ ĐO; không dòng nào là đoán.
    *
    * ═══ KHÔNG GHI ĐƯỢC Ở ĐÂY, VÀ ĐÓ LÀ PHÉP ĐO CHỨ KHÔNG PHẢI SỰ THẬN TRỌNG ═══
-   * Xem `workbench_khong_ghi_duoc` ngay dưới. Hai lý do độc lập, mỗi lý do tự nó đủ. */
+   * Xem `workbench_khong_ghi_duoc` ngay dưới. Hai lý do độc lập, mỗi lý do tự nó đủ.
+   *
+   * ═══ GRAPH CỦA WORKBENCH KHÔNG NẰM TRONG DOM — đo 18/09 ═══
+   * `img` 0 · `[style*="background-image"]` 0 · `picture` 0 · `video` 0 · `[role="img"]` 0 ·
+   * `canvas` **1** (có `data-engine`) · `data-node-id` 0 · `data-id` 0 · `draggable` 0 ·
+   * `scout.view`: `document` 2048×1017 **==** viewport ⇒ graph không nở ra DOM.
+   *
+   * Ảnh gốc · ảnh kết quả · cạnh nối: **vẽ trong canvas, không có phần tử DOM nào**. Với ba
+   * lớp đối tượng đó `scout.shot` KHÔNG phải cách tối ưu — nó là **giác quan duy nhất**.
+   * 20 phần tử `svg` ↔ đúng 20 node `role=image` **không tên**: đó là icon, không phải tác phẩm.
+   * Đầy đủ: `duc-scouter/v0.1.0/docs/WORKBENCH-GRAPH.md`. */
   be_mat_workbench: {
     /* Ô nhập prompt. **KHỚP 2** — mỗi phần tử trên canvas một ô. Luật gói số 7 đòi selector
      * khớp ĐÚNG MỘT trước khi ghi, nên selector này KHÔNG dùng để ghi được. */
@@ -100,11 +110,14 @@ export const VIZCOM = {
     ly_do_o_prompt: "cả 2 ô prompt đang giữ chữ thật của người dùng; selector lại khớp 2, không khớp 1"
   },
 
-  /* Trang đã quét là **trình duyệt tệp**, không phải trình soạn thảo. Bề mặt sinh ảnh (ô nhập
-   * prompt · tải ảnh tham chiếu · nút render · vùng kết quả) nằm ở `/workbench/…` và **chưa
-   * được quét** — đi tới đó cần `scout.navigate` hoặc `scout.click`, cả hai là lệnh GHI, mà
-   * cổng ghi chỉ tay Đức mở được. Để trống ở đây là **đúng**: khai một bước chưa đo là dựng
-   * một selector đoán, và file này tồn tại để chặn đúng chuyện đó. */
+  /* ~~"Bề mặt `/workbench/…` chưa được quét"~~ — câu đó đúng lúc viết và **SAI từ 18/09 tối**:
+   * Đức mở sẵn một tệp, bề mặt đã quét xong, kết quả ở `be_mat_workbench` ngay trên và ở
+   * `duc-scouter/v0.1.0/docs/WORKBENCH-GRAPH.md`. Sửa tại chỗ chứ không xoá, vì một câu
+   * "chưa đo" là thứ phiên sau đọc rồi đi đo lại cái đã có.
+   *
+   * `viec` dưới đây vẫn **chỉ có bước của trang mẹ**, và đó là cố ý: các bước của Workbench
+   * đòi một đường gọi theo CHỈ SỐ (ô prompt khớp 2, nút Generate không có selector) — thứ hôm
+   * nay chưa có. Khai một bước không gọi được là khai một lời hứa. */
   viec: {
     doc_danh_tinh: [
       { ten: "đọc tổ chức đang mở", method: "scout.text", selector: '[data-testid="organization-switcher-button"]' }
