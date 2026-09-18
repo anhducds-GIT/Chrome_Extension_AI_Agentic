@@ -927,10 +927,13 @@ nợ *"bản sinh nhìn đồng hồ"* — mục ấy đã đóng ở bước 3,
 chảy thẳng lên `DASHBOARD.md` dòng 9, tức lên đúng chỗ Đức đọc. Đã sửa. Bài học lặp lại lần thứ ba
 trong ngày: **một dòng trạng thái là một lời khai**, và bảng chỉ trung thực bằng file nó đọc.
 
-**Hai hàng cổng không XANH, cả hai KHÔNG phải nợ của V1:**
-`File mới đã khai vào Bản đồ file` = **BỎ** — 6 tệp `Q00*.png` thuộc vùng lane
-`claude-gpt-chay-het-job` đang giữ, cổng không kiểm được dưới nhãn khác. Đó là *"chưa kiểm"*, không
-phải *"đã đạt"*, và nói ra ở đây thay vì để nó trôi.
+**Hai hàng cổng không XANH, và tôi đã truy ra MỘT nguyên nhân chung — `N-72`.** Cả hai đều là
+**BỎ**, không hàng nào ĐỎ. Nguyên nhân: `sessionChanges` gộp cả file **chưa track của lane khác**
+(6 tệp `Q00*.png`). Chúng làm cổng kết luận *"phiên này có sửa thật"* nhưng lại quy về vùng của
+lane kia, nên `myRootAreas` rỗng và **suite gốc không chạy** — trong khi suite ấy vừa xanh 44/44.
+Tức một lane để lại vài tệp nháp chưa track là **tắt lưới đỡ "đã sửa mà chưa chạy test" cho mọi
+lane khác**, im lặng và vô thời hạn. Ghi `N-72` kèm đường đi của lỗi đọc từ mã; không đuổi theo vì
+nó không chặn V1.
 
 **Deferred KHÔNG được trình bày như completed:** năm việc V2 nằm ở §V1 mục ⑹ với lý do từng việc;
 khối CHẶN (*Workbench không lộ email ⇒ chưa chứng minh autonomous authorization*) nằm **đầu** danh

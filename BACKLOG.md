@@ -1519,3 +1519,41 @@ lượt sạch. Đúng một nửa: `--amend` thật sự không cần — một
   nợ khác nhau rồi kiểm bản ra không đổi. Hướng gợi ý: con số nợ cấu trúc suy từ **HEAD** như mọi
   con số khác trên trang, hoặc mang `NHAN_KHOA` để phép so trang-với-HEAD bỏ qua dòng của nó —
   đúng cách khối *"đang làm gì"* đã dùng. Khoá cần: `_code`.
+
+## N-72 · File CHƯA TRACK của lane khác làm cổng của TÔI mất khả năng đo suite của tôi
+
+- **nhóm:** cong
+- **mở:** 2026-09-18 · lane `claude-v1`
+- **vùng:** `_code`
+
+**[ĐO 18/09, bước 5 của closeout V1]** Cây làm việc sạch, **0** commit chưa đẩy, aggregate chạy
+thật **44 suite / 0 đỏ** — mà cổng vẫn báo hai hàng **BỎ**:
+
+```
+[BO] Test xanh                     "Phien nay doi 7 file nhung KHONG suite nao chay"
+[BO] File moi da khai vao Ban do file
+```
+
+Bảy file ấy là: `.agents/claims.json` (đang sửa) **+ 6 tệp `Q00*.png` CHƯA TRACK của lane
+`claude-gpt-chay-het-job`**. Đường đi của lỗi, đọc từ mã:
+
+1. `sessionChanges` gộp cả `workingChanges` mã `"??"` — tức **file chưa track của bất kỳ ai**.
+2. Sáu tệp PNG không nằm trong `generated` và không phải `FILE_HANH_CHINH`, nên `chiLaArtifact`
+   thành **false** — cổng kết luận *"phiên này có sửa thật"*.
+3. Nhưng chúng quy về `workers/duc-auto-chatgpt`, **không** về một vùng gốc, nên
+   `rootAreasTouched` rỗng ⇒ `myRootAreas` rỗng ⇒ `rootSuite` **false**.
+4. Không suite gói nào của tôi, không suite gốc ⇒ rơi vào nhánh *"KHÔNG suite nào chạy"*.
+
+Tức **một lane khác để lại file chưa track là cổng của tôi thôi đo được suite của tôi** — trong
+khi suite ấy vừa chạy xanh trọn vẹn. Cổng nói *"chưa kiểm"*, và nó nói đúng về chính nó; cái sai
+là nó đáng ra kiểm được.
+
+Nguy hiểm ở chiều ngược lại: hàng này là **lưới đỡ cuối** cho *"đã sửa mà chưa chạy test"*. Một
+lane cẩu thả để vài tệp nháp chưa track trong repo là **tắt lưới đỡ đó cho mọi lane khác**, im
+lặng và vô thời hạn.
+
+- **đóng khi:** lệnh: dựng một repo tạm có ⑴ một file chưa track thuộc vùng lane KHÁC và ⑵ một
+  sửa đổi thật trong vùng của mình → hàng *"Test xanh"* phải CHẠY suite chứ không BỎ; và ca
+  ngược lại (chỉ có file chưa track của lane khác, mình không sửa gì) vẫn phải nói *"không có gì
+  phải kiểm"* chứ không nói *"đã đạt"*. Hướng gợi ý: `sessionChanges` lọc theo `daQuyThuoc` —
+  repo đã có sẵn phép quy thuộc ấy cho hàng *"Ai đứng tên việc này"*. Khoá cần: `_code`.
