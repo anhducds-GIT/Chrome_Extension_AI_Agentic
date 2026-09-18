@@ -118,7 +118,15 @@ function statusScanLines(text) {
     const end = lines.indexOf("---", 1);
     if (end >= 0) {
       for (let index = 1; index < end; index += 1) {
-        const match = lines[index].match(/^\s*(current_focus|last_verified_how)\s*:\s*(.*)$/);
+        /* BA TRƯỜNG `lam_duoc` / `khong_lam_duoc` / `dung_the_nao` PHẢI Ở ĐÂY.
+         * `STATUS.template.md` dòng 79–81 khai cả ba là *"lọt số machine-owned → **đỏ**"*, và
+         * ba `STATUS.md` đang dùng chúng thật (duc-scouter · hnx-fetch · udin-optic). Lượt
+         * migrate `4da1e9e5` rút danh sách này về hai tên, nên từ 09/09 một con số gõ tay nằm
+         * trong ba trường đó **không ai soi** — bảng vẫn sinh ra bình thường, không gì đỏ, và
+         * con số mục dần. Phép ghim canh đúng chỗ này (`build-dashboard-smoke`) bị đẩy vào khu
+         * cách ly trong CÙNG lượt migrate, nên lỗ mở 9 ngày trong im lặng (N-65, 18/09).
+         * Bộ quét nhìn frontmatter theo DANH SÁCH TÊN: một trường mới KHÔNG tự được soi. */
+        const match = lines[index].match(/^\s*(current_focus|last_verified_how|lam_duoc|khong_lam_duoc|dung_the_nao)\s*:\s*(.*)$/);
         if (match) selected.push({ text: match[2], lineNumber: index + 1 });
       }
       for (let index = end + 1; index < lines.length; index += 1) {

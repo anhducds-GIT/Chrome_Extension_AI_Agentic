@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { fileScriptCanChep } from "../scripts/repo-structure.mjs";
+import { fileScriptCanChep } from "./_chep-script.mjs";  // dời về tests/ — xem docblock ở đó (N-65)
 import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -620,7 +620,15 @@ function antiDrift(text, measurements = {}) {
   ok("--check báo đúng số dòng thật trong file, không phải số sau khi lọc dấu commit");
 }
 
-/* 18. Chỉ khác dòng dấu commit vẫn PASS; bộ lọc dùng chung mốc STAMP_PREFIX. */
+/* 18. DÒNG DẤU COMMIT NAY KHÔNG CÒN ĐƯỢC MIỄN — và vế này ĐẢO CHIỀU so với bản cũ.
+ *
+ * Bản cũ: chỉ khác dòng dấu thì vẫn PASS, vì dấu chở một mã commit 7 ký tự — thứ đổi mỗi lượt
+ * commit dù dữ liệu không đổi, nên so nó là chặn oan mọi phiên.
+ * Nay: dấu chỉ còn `Trang được sinh ngày <ngày của HEAD>`, tức **suy hoàn toàn từ HEAD**. Một
+ * dòng suy từ HEAD mà được miễn so là một cái lỗ: artifact cũ mà dấu trùng ngày vẫn đi lọt.
+ *
+ * Nên vế này nay ghim CHIỀU NGƯỢC LẠI: dấu lệch thì `--check` phải ĐỎ và phải NÊU ĐÚNG dòng.
+ * Giữ nguyên bản cũ ở đây là ghim một phép miễn trừ đã bị bỏ — tức tự khoét lại cái lỗ. */
 {
   const expected = buildDashboard(collectModel(fakeRepo()));
   const differentStamp = expected.replace(
@@ -628,8 +636,11 @@ function antiDrift(text, measurements = {}) {
     `${STAMP_PREFIX} \`fffffff\` (1999-01-01). Dấu commit khác hoàn toàn.`
   );
   const harness = checkHarness({ dashboard: differentStamp });
-  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 0);
-  ok("--check bỏ qua đúng dòng dấu commit qua mốc STAMP_PREFIX");
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 1,
+    "dấu sinh trang nay suy từ HEAD nên KHÔNG được miễn so — lệch thì phải đỏ");
+  assert.ok(harness.errors.some((e) => e.includes(STAMP_PREFIX)),
+    "và phải nêu đúng dòng dấu, không chỉ nói 'có lệch'");
+  ok("--check KHÔNG miễn dòng dấu sinh trang nữa (dấu suy từ HEAD), và nêu đúng dòng");
 }
 
 /* 19. CRLF trên đĩa và LF sinh trong bộ nhớ là cùng nội dung. */
@@ -822,8 +833,15 @@ function antiDrift(text, measurements = {}) {
       "N-27: phép đo ĐỘC LẬP phải tự đọc được ngày — ra rỗng thì khẳng định dưới vô nghĩa");
     assert.equal(headDeps.git.headDate(), ngayThat,
       "N-27: `headDate` phải là ngày commit của HEAD, đo lại bằng một lệnh git độc lập — trả ngày cứng thì mọi phép tính tuổi trên bảng sai mà cổng vẫn xanh");
-    assert.ok(headDeps.git.headStamp().startsWith(`${ngayThat}T`),
-      "N-27: `headStamp` và `headDate` phải cùng một nguồn — lệch nhau là một trong hai đã bị gõ cứng");
+    /* `headStamp` KHÔNG CÒN — gỡ vế của nó, và đây là cùng một quyết định với vế 18.
+     * Dấu sinh trang xưa chở một mốc ISO đầy đủ, nên cần `headStamp` và cần canh hai nguồn
+     * khớp nhau. Nay dấu chỉ còn NGÀY của HEAD, nên bộ đọc bỏ luôn `headStamp` (đo 18/09:
+     * `createHeadDeps().git` = shortHead · headDate · lastCommitDate · trackedPaths ·
+     * gitlinksAtRoot · verifyCommit · changedFilesSince). Ghim một hàm đã bỏ là ghim vào cách
+     * làm; vế `headDate` ngay trên mới là thứ canh đúng luật *"ngày phải đến từ git"*, và nó
+     * vẫn đo lại bằng một lệnh git độc lập. */
+    assert.equal(typeof headDeps.git.headStamp, "undefined",
+      "`headStamp` đã bỏ cùng lúc dấu sinh trang thôi chở mốc ISO — nếu nó sống lại thì phải có vế canh hai nguồn khớp nhau trở lại");
     ok("N-27 · bộ đọc HEAD tự đúng: blob khác tree, listDirs không trả file, headDate đến từ git");
 
     // Foreign dirty file: Gate 7 sees only HEAD and stays green.

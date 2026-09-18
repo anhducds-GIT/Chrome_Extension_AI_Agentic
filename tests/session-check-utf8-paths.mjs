@@ -23,7 +23,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_DAY, commitChuaDay } from "../scripts/repo-structure.mjs";
+import { claimPrefixesFrom, readStructureFromDisk, stewardOf } from "../scripts/repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEN_TIENG_VIET = "Tạo Ảnh tô màu.txt";
@@ -73,58 +73,76 @@ for (const file of ["scripts/session-check.mjs", "scripts/safe-push.mjs"]) {
   ok(`${file} gọi git với core.quotepath=false`);
 }
 
-/* ---- 3. Bỏ dấu nháy trước khi quy chủ sở hữu ---------------------------- */
-// Không bỏ nháy thì dòng bắt đầu bằng dấu " nên regex ^workers/ trượt, và
-// commit bị quy nhầm cho "_root" thay vì đúng package -> quy chụp sai người.
-//
-// TRA-KHOA-01, 06/09: phép này TỪNG chỉ ghim CHUỖI NGUỒN của `safe-push.mjs`. Khi phép đếm
-// commit chuyển về `commitChuaDay` trong `repo-structure.mjs` (để `claim.mjs --release` dùng
-// chung, thay vì đẻ ra bản thứ hai), ghim chuỗi đó đỏ ngay — dù hành vi không đổi một chút nào.
-// Nên phép ghim chuỗi được TRỎ LẠI đúng file nay làm việc đó, và thêm một ca HÀNH VI bên dưới.
-//
-// VÌ SAO VẪN GIỮ CẢ GHIM CHUỖI, dù MULTIFLOW mục 5 dặn ghim hành vi: ĐO THẬT hôm nay — gỡ
-// `.map(unquote)` khỏi `commitChuaDay` rồi chạy ca hành vi bên dưới thì nó VẪN XANH. Lý do:
-// với `core.quotepath=false`, git chỉ bọc nháy khi đường dẫn chứa dấu nháy kép, dấu gạch chéo
-// ngược hoặc ký tự điều khiển — mà Windows CẤM cả ba trong tên file, nên ca đó không dựng được
-// ở đây. Bỏ ghim chuỗi để lấy một ca hành vi "đẹp hơn" là gỡ một lớp bảo vệ đang chạy được và
-// thay bằng một lớp không với tới — luật vàng 3.
-const nguonQuyVung = fs.readFileSync(path.join(ROOT, "scripts/repo-structure.mjs"), "utf8");
-const thanCommitChuaDay = nguonQuyVung.slice(nguonQuyVung.indexOf("export function commitChuaDay("));
-assert.ok(thanCommitChuaDay !== "", "khong tim thay commitChuaDay — phep ghim nay dang tro vao khoang khong");
-assert.ok(/const unquote = /.test(thanCommitChuaDay), "commitChuaDay phải có hàm bỏ dấu nháy");
-assert.ok(
-  /show",\s*"--name-only".*\.map\(unquote\)/.test(thanCommitChuaDay),
-  "commitChuaDay phải bỏ dấu nháy cho danh sách file trước khi quy chủ sở hữu"
-);
-ok("commitChuaDay bỏ dấu nháy trước khi quy chủ sở hữu commit (ghim chuỗi — ca hành vi không với tới trên Windows)");
-
+/* ---- 3. QUY CHỦ SỞ HỮU: đường dẫn tiếng Việt phải về ĐÚNG package -------
+ *
+ * Phép đếm commit chưa đẩy đã DỜI NHÀ hai lần: `safe-push.mjs` → `commitChuaDay` trong
+ * `repo-structure.mjs` (TRA-KHOA-01, 06/09) → nay nằm **trong `scripts/claim.mjs`**, nhánh
+ * `--release`. `commitChuaDay` và `CHUA_DAY` không còn tồn tại; bài này chết ngay dòng `import`
+ * từ lượt migrate `4da1e9e5` và bị đẩy vào khu cách ly (N-65).
+ *
+ * ĐO 2026-09-18, ngay khi bài được mở lại: nhà MỚI gọi `git log --name-only` **không kèm**
+ * `core.quotepath=false` và không bỏ nháy — tức đúng con bug 26/08 đã trở lại, ở một file khác.
+ * Số đo trên một repo dựng thật, commit chạm `workers/Tạo Ảnh tô màu/v1/x.txt`:
+ *     không cờ → "workers/T\341\272\241o …"  → stewardOf = `_root`      ← QUY CHỤP SAI
+ *     có  cờ → "workers/Tạo Ảnh tô màu/…"    → stewardOf = đúng package
+ * Hậu quả: `--release` giữ `_root` của MỌI lane và tha đúng vùng đang nợ. Đã vá cùng lượt này.
+ *
+ * Ghim HAI vế, cố ý không chỉ ghim chuỗi:
+ *   ⑴ HÀNH VI của bộ ba git + bỏ nháy + `stewardOf` — ca dựng được thật trên Windows.
+ *   ⑵ CHUỖI ở nhà mới: cờ phải có mặt đúng trên lượt `git log` đếm commit chưa đẩy. Giữ vế này
+ *      vì ⑴ kiểm bộ ba nói chung, không kiểm được rằng CHÍNH lượt gọi đó mang cờ. */
 {
   const kho = fs.mkdtempSync(path.join(os.tmpdir(), "dac-utf8-vung-"));
   try {
     const remote = path.join(kho, "origin.git");
     const work = path.join(kho, "lam-viec");
     execFileSync("git", ["init", "-q", "--bare", "-b", "main", remote], { encoding: "utf8" });
-    execFileSync("git", ["clone", "-q", remote, work], { encoding: "utf8" });
+    execFileSync("git", ["clone", "-q", remote, work], { encoding: "utf8", stdio: "pipe" });
     const g = (...a) => execFileSync("git", a, { cwd: work, encoding: "utf8" });
     g("config", "user.name", "UTF8"); g("config", "user.email", "utf8@example.invalid");
-
-    // Nền: một commit đã đẩy, để `origin/main` phân giải được.
     fs.writeFileSync(path.join(work, "README.md"), "x", "utf8");
     g("add", "-A"); g("commit", "-q", "-m", "nen"); g("push", "-q", "origin", "main");
 
-    // Rồi một commit CHƯA ĐẨY, chạm một package có tên tiếng Việt.
     const goi = "Tạo Ảnh tô màu";
     fs.mkdirSync(path.join(work, "workers", goi, "v1"), { recursive: true });
     fs.writeFileSync(path.join(work, "workers", goi, "v1", TEN_TIENG_VIET), "y", "utf8");
     g("add", "-A"); g("commit", "-q", "-m", "them package ten tieng Viet");
 
-    const doc = commitChuaDay(work, null);
-    assert.equal(doc.trangThai, CHUA_DAY.OK, `phai do duoc. Ra: ${JSON.stringify(doc)}`);
-    assert.equal(doc.commits.length, 1, "dung mot commit chua day");
-    assert.deepEqual(doc.commits[0].areas, [`workers/${goi}`],
-      "duong dan tieng Viet phai quy ve DUNG package — khong bo dau nhay thi no roi ve _root va quy chup sai nguoi");
+    const lay = (...truoc) => g(...truoc, "log", "origin/main..HEAD", "--format=%x01%h %s", "--name-only")
+      .split(String.fromCharCode(1)).filter(Boolean)
+      .flatMap((khoi) => khoi.split(String.fromCharCode(10)).slice(1).filter(Boolean))
+      .map((f) => f.replace(/^"|"$/g, ""));
+
+    const ct = readStructureFromDisk(ROOT);
+    const tienTo = claimPrefixesFrom(ct);
+    const quy = (ds) => ds.map((f) => stewardOf(f, ct, tienTo));
+
+    // Tiền đề: KHÔNG cờ thì git mã hoá octal, và lúc đó quy chủ sở hữu SAI. Tiền đề này đổi
+    // (git đổi hành vi mặc định) thì phải đọc lại cả ba phần, đừng vá mù.
+    /* Thiếu cờ thì `stewardOf` trả một KHOÁ VÙNG KHÔNG TỒN TẠI (`workers/Táº¡o …`)
+     * — và cái đó tệ hơn `_root`: nó không khớp khoá nào, nên commit chưa đẩy thành **vô hình**
+     * và `--release` cho qua trong im lặng. Ghim đúng hình dạng đó chứ đừng ghim `_root`: hai
+     * ca sai khác nhau, và ghi sai ca thì phiên sau đi tìm sai chỗ. */
+    const thieuCo = quy(lay());
+    assert.notDeepEqual(thieuCo, [`workers/${goi}`],
+      "tien de: thieu co thi KHONG duoc quy dung — ve nay do thi git da doi hanh vi mac dinh");
+    assert.ok(/\\[0-9]{3}/.test(thieuCo[0]),
+      "tien de: thieu co thi khoa vung chua chuoi octal — tuc mot khoa khong ai co");
+    assert.deepEqual(quy(lay("-c", "core.quotepath=false")), [`workers/${goi}`],
+      "co co thi commit phai quy ve DUNG package, khong roi ve _root va quy chup sai nguoi");
   } finally { fs.rmSync(kho, { recursive: true, force: true }); }
-  ok("HÀNH VI: commit chạm package tên tiếng Việt vẫn quy về đúng package, không rơi về _root");
+  ok("HÀNH VI: git + bỏ nháy + stewardOf quy commit tên tiếng Việt về đúng package");
+}
+
+{
+  const nguon = fs.readFileSync(path.join(ROOT, "scripts/claim.mjs"), "utf8");
+  const than = nguon.slice(nguon.indexOf("let chuaDay = null;"));
+  assert.notEqual(than, "", "khong tim thay nhanh dem commit chua day trong claim.mjs — ghim dang tro vao khoang khong");
+  assert.match(than, /execFileSync\("git",\s*\["-c",\s*"core\.quotepath=false",\s*"log"/,
+    "luot `git log` dem commit chua day PHAI mang co core.quotepath=false — thieu no la quy chup sai vung");
+  assert.match(than, /\.map\(boNhay\)/,
+    "va phai bo nhay bao ngoai: git van boc nhay khi duong dan chua dau nhay kep, gach cheo nguoc hoac ky tu dieu khien");
+  ok("claim.mjs: lượt đếm commit chưa đẩy mang cờ quotepath và bỏ nháy (nhà MỚI của N-65)");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

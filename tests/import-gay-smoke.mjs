@@ -38,7 +38,7 @@
  */
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -115,6 +115,22 @@ assert.equal(
     + gayNgoai.map((f) => `  ${f}\n${gay.get(f).map((l) => `      ${l}`).join("\n")}`).join("\n"),
 );
 
+/* ---- KHU THỨ HAI: IMPORT ĐÃ LÀNH, VẾ KHẲNG ĐỊNH CÒN CŨ (thêm 2026-09-18, N-65) ----------
+ *
+ * Lượt mở khu cách ly 18/09 làm lộ ra một trạng thái mà mô hình một-danh-sách không kể được:
+ * `build-dashboard-smoke` (**469 vế**) đã NẠP ĐƯỢC — trợ thủ chỉ-dùng-cho-test dời về
+ * `tests/_chep-script.mjs` — nhưng 66 khối cuối còn ghim hợp đồng CŨ của cổng (chặn hay chỉ
+ * cảnh báo khi artifact cũ; `EXPECTED_CHECKS`; dấu sinh trang), và mấy câu đó là **luật**, Đức
+ * chốt chứ không phải tôi.
+ *
+ * Nhét nó vào `test:chet` là nói dối (import đã lành, vế ② sẽ đỏ đúng); đẩy vào `npm test` là
+ * làm suite đỏ; để ngoài cả hai danh sách là đúng cái "chỗ chôn" mà vế ② sinh ra để chặn. Nên
+ * có danh sách thứ hai, gọi đúng tên bệnh — và nó phải có HÀNG RÀO RIÊNG, xem vế ④. */
+const chuoiVeCu = pkg?.scripts?.["test:chet-ve"] ?? "";
+const CACH_LY_VE = new Set(
+  [...chuoiVeCu.matchAll(/tests\/([\w.-]+\.mjs)/g)].map((m) => `tests/${m[1]}`),
+);
+
 /* ---- ② Đã lành mà vẫn nằm trong khu cách ly = đỏ ----------------------------------------- */
 
 const daLanh = [...CACH_LY].filter((f) => !gay.has(f) && fs.existsSync(path.join(ROOT, f)));
@@ -135,7 +151,13 @@ assert.equal(
   `KHU_CACH_LY_MUC: ${mat.length} tên trong \`test:chet\` không còn trên đĩa: ${mat.join(", ")}`,
 );
 
+/* HÀNG RÀO CỦA KHU THỨ HAI KHÔNG Ở ĐÂY — cố ý. `tests/dau-suite-smoke.mjs` đã sở hữu luật
+ * *"mọi tệp trong `tests/` phải nằm ở đúng một chuỗi, và khu cách ly phải THẬT SỰ đỏ"*, kèm
+ * phép chạy thật. Viết bản thứ hai ở đây là đẻ ra hai luật trên cùng một câu hỏi — đúng cái
+ * bệnh mà lượt 18/09 vừa vá ở ba bản sao của bộ đọc sổ nợ. File này chỉ giữ phần của nó:
+ * import gãy, và khu nào miễn cho ai. */
+
 console.log(
   `import-gay-smoke: ${soCap} cặp import · ${gay.size} file gãy, tất cả trong khu cách ly `
-    + `(${CACH_LY.size} bài) — XANH`,
+    + `(${CACH_LY.size} bài) · khu vế-cũ ${CACH_LY_VE.size} bài, đều còn đỏ thật — XANH`,
 );

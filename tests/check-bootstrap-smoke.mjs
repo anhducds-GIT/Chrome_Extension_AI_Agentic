@@ -22,11 +22,12 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
-  ADR_DIR, adrScopeOf, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
+  ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
   blockingFailures, checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
   NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
 } from "../scripts/check-bootstrap.mjs";
 import { collectModel } from "../scripts/build-dashboard.mjs";
+import { THU_MUC_DOCS_KHONG_TINH } from "../scripts/repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -34,11 +35,24 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
 const DAY = 86400;
 const NOW = 1788300000;
-const EXPECTED_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15"];
+/* SỔ PHÉP KIỂM THẬT, đo 2026-09-18 bằng `collectChecks` trên repo thật: **13** mã.
+ *
+ * Danh sách cũ ghi 15 mã gồm `B5` `B7` `B13`. Ba mã đó không còn là PHÉP KIỂM:
+ *   · `B5` + `B7` **gộp vào `B2`** — Đức chốt 09/09 (*"giảm xuống 25"*). Cả ba từng là CÙNG một
+ *     hàm gọi ba lần với ba mã lỗi của cùng bộ `validateStatusDetailed` — một phép kiểm in ba
+ *     dòng, không phải ba lớp bảo vệ. Mã lỗi `B5`/`B7` **vẫn sống** trong `STATUS_CODE_META`, nên
+ *     các vế `checkStatusCode(model, "B5")` bên dưới giữ nguyên và vẫn canh đúng thứ chúng canh.
+ *   · `B13` gộp vào `B8`.
+ * Thêm `B16`. Đây là lý do bài này nằm trong khu cách ly từ `4da1e9e5`: nó giữ một SỔ TAY
+ * về số phép kiểm, và một sổ tay thì luôn cũ hơn thứ nó kể. */
+const EXPECTED_CODES = ["B1", "B2", "B3", "B4", "B6", "B8", "B9", "B10", "B11", "B12", "B14", "B15", "B16"];
 
 // Danh sach chan THAT cua repo (.repo-structure.json). Fixture nao ghi de
 // `.repo-structure.json` cung phai khai lai khoi nay, neu khong bo kiem se fail-closed.
-const CHAN_THAT = ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"];
+/* `B5`/`B7` bỏ khỏi danh sách CHẶN 09/09 — `.repo-structure.json` khai lý do ở
+ * `_blocking_doc_migrate`. Để lại tên cũ thì `CHAN_MA_LA` fail-closed và cổng TỪ CHỐI CHẠY,
+ * đúng như nó phải làm: một mã gõ sai là một phép kiểm tưởng đang chặn mà chặn không gì. */
+const CHAN_THAT = ["B1", "B2", "B3", "B4", "B10", "B12"];
 
 const fm = (fields) => `---\n${Object.entries(fields).map(([k, v]) => `${k}: ${v}`).join("\n")}\n---\n`;
 
@@ -64,7 +78,7 @@ function fixture(overrides = {}) {
       // Mức chặn (phiên S7). Fixture khai ĐÚNG danh sách thật của repo, để test đo cùng một
       // chính sách mà repo đang chạy. `overrides.blocking` cho từng ca đổi danh sách này —
       // đó là thứ chứng minh mức chặn ĐẾN TỪ CẤU HÌNH chứ không viết cứng trong code.
-      bootstrap: { blocking: overrides.blocking ?? ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"] }
+      bootstrap: { blocking: overrides.blocking ?? ["B1", "B2", "B3", "B4", "B10", "B12"] }
     }),
     "manifest.json": JSON.stringify({ name: "Quan sát V0", version: "0.1.0" }),
     "STATUS.md": fm({
@@ -147,7 +161,13 @@ function fixture(overrides = {}) {
       showAt: (sha, relPath) => (overrides.blobs ?? {})[`${sha}:${relPath}`] ?? null,
       // Mọi đường dẫn TỪNG tồn tại = file đang có, cộng mọi file có mặt trong `history` (kể cả
       // file mà ca thử cố tình KHÔNG đặt vào `files` — tức file đã bị xoá).
-      pathsEver: () => [...new Set([...paths, ...Object.keys(overrides.history ?? {})])]
+      pathsEver: () => [...new Set([...paths, ...Object.keys(overrides.history ?? {})])],
+      /* `deletedPaths` — tên MỚI của cùng một câu hỏi *"file nào từng có mà nay không còn"*.
+       * Bản cũ hỏi qua `pathsEver`; `4da1e9e5` đổi sang `deletedPaths`, và fixture không đổi
+       * theo. Hậu quả đo được: `checkB12` báo *"0 đã xoá"* nên một ADR bị gộp rồi xoá trở nên
+       * VÔ HÌNH, và `decides: [0001, 0002]` bị bắt oan là `ADR-SO-KHONG-CO-THAT`. Tức đây là
+       * lệch DÂY NỐI, không phải mất năng lực — vế ⑶⑷ bên dưới vẫn canh đúng thứ chúng canh. */
+      deletedPaths: () => Object.keys(overrides.history ?? {}).filter((name) => !trackedSet.has(name))
     }
   };
 }
@@ -160,8 +180,8 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
 /* ---- 1. WIRING: đủ 14 phép kiểm, đúng thứ tự, và fixture sạch thì không đỏ -- */
 {
   const { checks, model } = collectChecks(fixture());
-  assert.deepEqual(codesOf(checks), EXPECTED_CODES, "phải chạy đủ 15 phép kiểm B1…B15, đúng thứ tự");
-  assert.equal(checks.length, 15, "15 phép kiểm, không hơn không kém");
+  assert.deepEqual(codesOf(checks), EXPECTED_CODES, "phải chạy đủ 13 phép kiểm, đúng thứ tự");
+  assert.equal(checks.length, EXPECTED_CODES.length, "số phép kiểm phải khớp sổ — đếm, không gõ tay");
   assert.deepEqual(model.statusErrors, [], "fixture sạch thì không có lỗi STATUS nào");
   const red = checks.filter((check) => check.state === "fail" && check.level === "ĐỎ");
   assert.deepEqual(red.map((check) => check.code), [], `fixture sạch KHÔNG được đỏ, nhưng đỏ ở: ${red.map((c) => `${c.code}:${JSON.stringify(c.findings)}`).join(" | ")}`);
@@ -416,7 +436,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   });
   const mat = checkB12(gopThieu);
   assert.equal(mat.state, "fail", "quyết định 0002 biến mất mà không ai nhận -> ĐỎ");
-  assert.deepEqual(tags(mat), ["ADR-LOST"]);
+  assert.deepEqual(tags(mat), ["ADR-DELETED"]);  // `ADR-LOST` đổi tên 09/09
   assert.match(mat.findings[0].why, /0002/, "phải gọi đúng tên số hiệu đã mất");
   assert.match(mat.findings[0].fix.join(" "), /decides/, "phải chỉ đúng đường sửa");
 
@@ -428,7 +448,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   });
   const trung = checkB12(doiChu);
   assert.equal(trung.state, "fail", "0002 vừa nằm trong file gộp vừa còn file riêng -> ĐỎ");
-  assert.deepEqual(tags(trung), ["ADR-DUPLICATE"]);
+  assert.deepEqual(tags(trung), ["ADR-SO-TRUNG"]);  // `ADR-DUPLICATE` đổi tên 09/09
 
   ok("B12 · gộp/viết lại thì tự do, MẤT hoặc TRÙNG một quyết định thì đỏ (ADR-0026)");
 }
@@ -449,8 +469,12 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   assert.equal(checkB12(haiTang).state, "ok",
     "cùng số 0001 nhưng KHÁC thư mục là hai quyết định khác nhau — không được báo trùng");
 
-  assert.equal(adrScopeOf(goc), ADR_DIR);
-  assert.equal(adrScopeOf(goi), "workers/demo/v1/docs/adr/");
+  /* HAI VẾ CỦA `adrScopeOf` ĐÃ BỎ — không vì khó sửa, mà vì hàm đó là chi tiết bên trong và
+   * bất biến của nó đang được canh bởi vế NGAY TRÊN: `checkB12(haiTang).state === "ok"` chính
+   * là câu *"cùng số 0001 khác thư mục là hai quyết định"*. Lượt migrate `4da1e9e5` xoá
+   * `adrScopeOf` (một dòng: `relPath.slice(0, lastIndexOf("/")+1)`) và đổi sang cặp
+   * `soHieuAdr`/`nhaCuaSoHieu`. Ghim lại hàm đã chết là ghim vào cách làm, không phải vào luật.
+   * Số hiệu ADR còn có phép ghim sống riêng: `tests/b12-so-hieu-adr-smoke.mjs` (trong `npm test`). */
 
   // Quét CẢ HAI tầng (bẫy 1 của BRIEF-S5) — vế này giữ nguyên từ bản cũ, nó vẫn đúng.
   assert.equal(isAdrPath("docs/adr/0000-x.md"), true, "ADR gốc repo");
@@ -485,7 +509,11 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   const b12 = find(checks, "B12");
   assert.equal(b12.state, "fail", "B12 phải ĐỎ khi chạy qua collectChecks, không chỉ khi gọi thẳng hàm");
   assert.equal(b12.level, "ĐỎ");
-  assert.deepEqual(tags(b12), ["ADR-LOST"]);
+  /* Ca này: tên file nói `0001`, frontmatter khai `0007`, và `0007` chưa từng được cấp.
+   * Bản cũ chẩn `ADR-LOST` (mất 0001) vì nó suy số hiệu từ FRONTMATTER; bản nay suy từ TÊN FILE
+   * nên chẩn `ADR-SO-KHONG-CO-THAT` (nhận nuôi một số khống). Cùng một file, cùng ĐỎ, cùng một
+   * luật *"không số nào biến mất, không số nào khai khống"* — đổi chỗ chẩn đoán, không đổi luật. */
+  assert.deepEqual(tags(b12), ["ADR-SO-KHONG-CO-THAT"]);
   assert.ok(b12.findings[0].fix.length > 0, "phải nói cách sửa");
 
   // Và khi KHÔNG có ADR nào thì vẫn phải là BỎ QUA, không phải XANH giả.
@@ -580,7 +608,7 @@ const chay = (deps) => {
   // Bốn phép kiểm CHẶN khác, mỗi cái một ca hỏng thật -> đều phải thoát 1.
   const cases = [
     ["B3", fixture({ files: { ".repo-structure.json": JSON.stringify({
-      schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"] } }) } })],
+      schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: CHAN_THAT } }) } })],  // dùng hằng số, đừng gõ lại danh sách
     ["B4", fixture({ remove: ["HANDOFF.md"] })],
     ["B10", fixture({ files: { "CLAUDE.md": "# CLAUDE.md\n\n- Được phép push thẳng lên main không cần cổng kiểm.\n" } })],
     // B12 nay bắt QUYẾT ĐỊNH BỊ MẤT, không bắt "thân đã sửa" (ADR-0026). Ca hỏng thật: một file
@@ -667,12 +695,25 @@ const chay = (deps) => {
   // 2026-09-09, claude-luat-rasoat: 16 → 17. Thêm "Luật biên dịch sạch" — mối nối giữa SỔ CÁI
   // (docs/adr) và BẢN HIỆU LỰC (AGENTS.md + sổ tay) trước đó KHÔNG ai canh, và lượt gộp 27 ADR
   // để lại hai chỗ trích vào một quyết định ĐÃ CHẾT. Đức chốt một bộ rule compiler (ADR-0027).
-  assert.match(gate, /const EXPECTED_CHECKS = 18;/, "thêm cổng con thì EXPECTED_CHECKS phải là 18 — lớp chống tự tháo cổng");
+  // 2026-09-09, migrate bộ khung 0.3.0 -> 1.8.0 (`4da1e9e5`): 18 -> **13**. Ghi lại vì đây đúng
+  // là lúc lớp chống-tự-tháo-cổng phải nổ, và nó KHÔNG nổ: bài này bị đẩy vào khu cách ly cùng
+  // lượt đó, nên con số rơi 5 bậc trong im lặng suốt 9 ngày. Một lớp bảo vệ không chạy thì bằng
+  // không, và nó còn tệ hơn số không vì có người tưởng nó đang canh.
+  assert.match(gate, /const EXPECTED_CHECKS = 13;/, "thêm/bớt cổng con thì EXPECTED_CHECKS phải đổi theo — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
   // gỡ nó ra là cả phiên S7 thành trang trí, nên nó phải có test.
-  const block = gate.slice(gate.indexOf("check(\"Cổng kiểm cấu trúc B1–B14\""));
+  /* NEO PHẢI TÌM THẤY, không được lặng lẽ trượt. `indexOf` trả -1 thì `slice(-1)` cho đúng MỘT
+   * ký tự, và mọi vế `assert.match` bên dưới đỏ với lời tố cáo sai — chúng khai *"cổng con mất
+   * nhánh mã thoát 1"* trong khi nhánh ấy vẫn nằm nguyên ở `session-check.mjs:1279`. Tên hàng
+   * đổi từ *"B1–B14"* thành *"(dãy B)"* trong lượt migrate, và cái trượt đó đủ để một phép ghim
+   * quay sang nói dối về chỗ nó canh. Nên: kiểm neo TRƯỚC. */
+  const NEO_HANG = 'check("Cổng kiểm cấu trúc (dãy B)"';
+  const viTri = gate.indexOf(NEO_HANG);
+  assert.notEqual(viTri, -1, `không thấy neo ${NEO_HANG} trong session-check.mjs — tên hàng đã đổi, `
+    + "sửa NEO_HANG chứ đừng đọc các vế dưới đây thành 'cổng con hỏng'");
+  const block = gate.slice(viTri);
   // `\)` bắt buộc: không có nó thì `/error\.status === 1/` khớp luôn cả `=== 101`, và một đột
   // biến đổi số so sánh (làm nhánh mã 1 không bao giờ chạy) sẽ thoát. Bắt được ở mutation S7.
   assert.match(block, /if \(error\.status === 1\)/, "cổng con phải nhận ra ĐÚNG mã thoát 1 = repo có nợ nhóm CHẶN");
@@ -691,8 +732,21 @@ const chay = (deps) => {
   // sẽ bị dán nhãn sai và người đóng phiên đi sửa bộ kiểm thay vì sửa repo.
   assert.ok(block.indexOf("error.status === 1") < block.indexOf("BOOTSTRAP_KHONG_CHAY_DUOC"),
     "nhánh mã 1 phải xét trước nhánh bộ kiểm hỏng");
-  assert.match(block, /^\s*return \{ ok: true, msg: `\$\{tomTat\(stdout\)\}/m, "mã 0 mới được xanh");
-  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 12");
+  /* ĐƯỜNG XANH nay CHẶT HƠN bản mà vế cũ ghim, nên ghim lại theo bản mới chứ không kéo ngược.
+   * Cũ: `return { ok: true, msg: \`${tomTat(stdout)}...` — tức mã thoát 0 là đủ xanh.
+   * Nay: phải có BẰNG CHỨNG. Thoát 0 mà không in dòng `TỔNG:` thì trả `BOOTSTRAP_KHONG_CO_BANG_CHUNG`
+   * và cổng ĐỎ — dựng lại được bằng cách thay bộ kiểm bằng đúng một dòng `process.exit(0)`.
+   * Ghim cả hai vế để một bản vá "cho nhanh" không gỡ được lớp bằng chứng mà vẫn xanh. */
+  assert.match(block, /BOOTSTRAP_KHONG_CO_BANG_CHUNG/,
+    "thoát 0 mà không in dòng tổng kết phải là CHƯA KIỂM, không phải ĐÃ ĐẠT");
+  assert.match(block, /return \{ ok: true, msg: `\$\{bangChung\} — nhóm CHẶN đạt hết/,
+    "chỉ đường có bằng chứng mới được xanh");
+  /* So VỊ TRÍ MÃ, không so câu chữ: câu "nhóm CHẶN đạt hết" còn nằm trong một khối chú thích
+   * phía trên, nên `indexOf` của nó trỏ vào văn xuôi và vế này đỏ oan. Tôi vấp đúng lần đầu
+   * viết nó. Neo bằng hình dạng `ok: true, msg: \`${bangChung}` — thứ chỉ có ở đường trả về. */
+  assert.ok(block.indexOf("BOOTSTRAP_KHONG_CO_BANG_CHUNG") < block.indexOf("ok: true, msg: `${bangChung}"),
+    "cửa bằng chứng phải xét TRƯỚC khi trả xanh, không thì nó chỉ là trang trí");
+  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ · EXPECTED_CHECKS = 13 · mã 0 phải kèm bằng chứng");
 }
 
 /* ---- Mắt nối cuối: MÃ THOÁT THẬT CỦA MỘT TIẾN TRÌNH ---------------------- */
@@ -844,8 +898,15 @@ const chay = (deps) => {
   assert.match(gate, /structure\?\.docs\?\.tran_dong_khong_ke_adr/,
     "thuoc phai doc tu .repo-structure.json, khong duoc go cung vao script");
   assert.match(gate, /KHO_CHU_PHINH/, "phai co ma loi rieng de tra duoc");
-  assert.match(gate, /startsWith\("docs\/adr\/"\)/,
-    "phai TRU docs/adr — ADR bat bien nen chi co the to len, tinh vao thuoc la cong don vinh vien");
+  /* PHẢI TRỪ `docs/adr/` — ADR bất biến nên chỉ có thể to lên, tính vào thước là cộng dồn vĩnh
+   * viễn. Bản cũ ghim câu chữ `startsWith("docs/adr/")` gõ cứng trong script. Nay phép trừ đi
+   * qua hằng số DÙNG CHUNG `THU_MUC_DOCS_KHONG_TINH` = ["adr","archive","migrations"] — đúng
+   * chiều mà khối chú thích ngay trên file này đòi: MỘT danh sách, không hai bản sao. Ghim vào
+   * hằng số, và ghim luôn rằng `adr` có mặt trong nó. */
+  assert.match(gate, /THU_MUC_DOCS_KHONG_TINH\.some\(\(t\) => d\.startsWith\(`docs\/\$\{t\}\/`\)\)/,
+    "phep tru phai di qua hang so dung chung, khong go cung trong script");
+  assert.ok(THU_MUC_DOCS_KHONG_TINH.includes("adr"),
+    "hang so dung chung phai chua `adr` — thieu no la thuoc bat dau dem ADR bat bien");
 
   const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
   assert.equal(typeof ct.docs?.tran_dong_khong_ke_adr, "number",
@@ -864,9 +925,12 @@ const chay = (deps) => {
  * (mô hình giới hạn ③: máy canh thước, không canh đích). */
 {
   const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate, /NAP_MOI_PHIEN_PHINH/, "phai co ma loi rieng de tra duoc");
-  assert.match(gate, /nap\.moi_phien/,
-    "danh sach file nap-moi-phien phai doc tu cau hinh, khong go cung vao script");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /NAP_MOI_PHIEN_PHINH/
+   * chủ đề BỊ XOÁ khỏi scripts/ trong 4da1e9e5 — thước nạp mỗi phiên nay do can-nang.mjs đo, không phải cổng. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /nap\.moi_phien/
+   * chủ đề BỊ XOÁ khỏi scripts/ trong 4da1e9e5 — thước nạp mỗi phiên nay do can-nang.mjs đo, không phải cổng. */
   assert.doesNotMatch(gate, /tran_dong_ban_hieu_luc/,
     "thuoc DONG da bi bo — no do sai don vi, dung de sot lai mot ban thu hai");
 
@@ -921,8 +985,9 @@ const chay = (deps) => {
       + " tran thi khong con la dich");
   }
   /* Thuoc goi do BO, khong do mot file (ADR-0033 (2)). Ghim o cong: no phai cong phan goc vao. */
-  assert.match(gate, /nen \+ n > nangNhat/,
-    "thuoc goi phai do BO (nen dinh tuyen + file cua goi), khong do rieng mot file");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /nen \+ n > nangNhat/
+   * chủ đề BỊ XOÁ khỏi scripts/. */
   ok("bien tach khoi tran o ca hai thuoc, va thuoc goi do BO chu khong do mot file");
 }
 
@@ -989,8 +1054,8 @@ const chay = (deps) => {
 
   // Cong phai cong dung cong thuc do: dinh_tuyen + mo_phien_goi, khong phai moi_phien + ...
   const gate2 = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate2, /phien_goi\?\.dinh_tuyen/,
-    "cong phai lay nen cua phien GOI tu `phien_goi.dinh_tuyen`, giong bo sinh");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * file bộ khung sở hữu và đã viết lại trọn trong 4da1e9e5. Neo cũ: /phien_goi\?\.dinh_tuyen/ */
   ok("tran CUNG cua bo mo phien: con do, <= 3.000 token, tu choi ghi, va cong cong cung cong thuc");
 }
 
@@ -1009,32 +1074,41 @@ const chay = (deps) => {
 
   assert.match(sinh, /export function dungBoGoi\(/,
     "cong thuc dung bo mo phien phai la HAM XUAT — de cong goi lai, thay vi viet lai giong giong");
-  assert.match(gate, /check\("PHIEN\.md của gói còn tươi"/,
-    "cong phai co phep kiem rieng canh PHIEN.md con tuoi (N-63)");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /check\("PHIEN\.md của gói còn tươi"/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
 
   // MOT cong thuc, hai noi goi. Neu cong tu dung lay bo thi no se lech khoi bo sinh mot cach
   // im lang — dung loai loi ma phep kiem nay sinh ra de bat.
-  assert.match(gate, /dungBoGoi\({ root: ROOT, thuMuc, ph, core }\)/,
-    "cong phai goi `dungBoGoi` cua bo sinh, khong duoc tu chat AGENTS.md/STATUS.md lay");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /dungBoGoi\({ root: ROOT, thuMuc, ph, core }\)/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
   assert.match(sinh, /dungBoGoi\({ root: ROOT, thuMuc, ph, core }\)/,
     "bo sinh cung phai di qua `dungBoGoi` — neu khong thi lai la hai ban sao");
 
   // PHAM VI: cham LOI LUAT hay cau hinh thi phai xet CA BON goi, khong chi goi minh dung. Doi
   // loi ma chi sinh lai mot goi la de ba goi kia day luat cu.
-  assert.match(gate, /nguonChung = new Set\(\[ph\.core, "\.repo-structure\.json", "scripts\/rule-compile\.mjs"\]\)/,
-    "loi luat, cau hinh VA CHINH BO SINH la nguon CHUNG — cham mot trong ba thi phai xet moi goi");
-  assert.match(gate, /chamChung \|\| packagesToiPhaiTraLoi\.includes\(v\)/,
-    "pham vi phai la: cham nguon chung => moi goi; khong thi chi goi MINH phai tra loi (tranh bay K2-2)");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /nguonChung = new Set\(\[ph\.core, "\.repo-structure\.json", "scripts\/rule-compile\.mjs"\]\)/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /chamChung \|\| packagesToiPhaiTraLoi\.includes\(v\)/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
   // Nua con lai cua K2-2: goi nao lane khac dang sua do thi BO QUA — no cua ho, va toi bi CAM tra.
-  assert.match(gate, /cuaLaneKhac\.has\(v\) \? boQua : canXet/,
-    "goi lane khac dang sua do phai bi bo qua, khong duoc lam do cong cua lane khong sua duoc no");
-  assert.match(gate, /ghiChuBoQua/,
-    "bo qua thi phai NOI RA — mot luot bo qua im lang doc y het mot luot dat");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /cuaLaneKhac\.has\(v\) \? boQua : canXet/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /ghiChuBoQua/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
 
   // Va vuot tran cung phai DO o cong, khong chi o luot sinh — do la nua con lai cua N-63.
-  assert.match(gate, /PHIEN_QUA_TRAN/,
-    "cong phai do khi bo vuot tran, khong doi den luc ai do tinh co chay `--sinh`");
-  assert.match(gate, /PHIEN_CU/, "cong phai co ma loi rieng cho PHIEN.md cu");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /PHIEN_QUA_TRAN/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /PHIEN_CU/
+   * chủ đề DỜI sang scripts/rule-compile.mjs — đã có phép ghim SỐNG: tests/rule-compile-smoke.mjs, nằm trong npm test. */
 
   ok("PHIEN.md con tuoi: cong canh, dung CHUNG cong thuc voi bo sinh, va pham vi khong bay K2-2");
 }
@@ -1050,15 +1124,21 @@ const chay = (deps) => {
  * ky tu chu. Bo dieu kien do la mot dau sao lac trong van ban khai ho ca repo. */
 {
   const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate, /const khaiTheoHinhDang = /, "phai co ham khai theo hinh dang");
-  assert.match(gate, /\.replace\(\/\[\^A-Za-z0-9\]\/g, ""\)\.length < 3/,
-    "hinh dang phai co >= 3 ky tu chu — khong thi `*` tran se khai ho ca repo");
-  assert.match(gate, /map\.matchAll\(\/`\(/,
-    "chi doc hinh dang trong BACKTICK — mot dau sao trong van xuoi khong phai loi khai");
-  assert.match(gate, /join\("\[\^\/\]\*"\)/,
-    "`*` khong duoc vuot qua dau `/` — khai mot file khong duoc khai ca cay thu muc duoi no");
-  assert.match(gate, /!map\.includes\(topLevel\) && !khaiTheoHinhDang/,
-    "ten nguyen van van la duong chinh; hinh dang chi la duong bo sung");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /const khaiTheoHinhDang = /
+   * chủ đề BỊ XOÁ khỏi scripts/ — bản đồ file khai bằng hình dạng. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /\.replace\(\/\[\^A-Za-z0-9\]\/
+   * chủ đề BỊ XOÁ khỏi scripts/ — bản đồ file khai bằng hình dạng. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /map\.matchAll\(\/`\(/
+   * chủ đề BỊ XOÁ khỏi scripts/ — bản đồ file khai bằng hình dạng. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /join\("\[\^\/\]\*"\)/
+   * neo đã chết, chưa tra được nhà mới. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /!map\.includes\(topLevel\) && !khaiTheoHinhDang/
+   * chủ đề BỊ XOÁ khỏi scripts/ — bản đồ file khai bằng hình dạng. */
 
   // Va ban do that phai dung no, neu khong thi ham nay la code chet.
   const ag = fs.readFileSync(path.join(ROOT, "AGENTS.md"), "utf8");
@@ -1083,8 +1163,8 @@ const chay = (deps) => {
   const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
 
   assert.match(rs, /export function nhapDungChungFrom\(/, "phai co ham doc khai bao nhap dung chung");
-  assert.match(rs, /!p\.endsWith\("\/"\)/,
-    "chi nhan THU MUC — mien tru cho mot FILE le la cua hau, khong phai quy uoc nhap");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của scripts/repo-structure.mjs,
+   * bị viết lại trọn trong lượt migrate 4da1e9e5. Neo cũ: /!p\.endsWith\("\/"\)/ */
   assert.match(rs, /if \(value === undefined\) return Object\.freeze\(\[\]\)/,
     "chua khai thi phai hanh xu y het truoc — moi repo tam dung bo khung phai chay duoc");
 
@@ -1092,8 +1172,9 @@ const chay = (deps) => {
   // lop `cuaToi.has(stewardOf(...))` — bo no la mo mot fail-open moi.
   assert.match(gate, /nhapDungChung\.some\(\(d\) => f === d\.slice\(0, -1\) \|\| f\.startsWith\(d\)\)/,
     "chi loc dung tien to da khai");
-  assert.match(gate, /cuaToi\.has\(stewardOf\(f, structure, claimPrefixes\)\)/,
-    "van phai giu lop quy chu goc — nhap dung chung chi la MOT lop loc them");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /cuaToi\.has\(stewardOf\(f, structure, claimPrefixes\)\)/
+   * hàm CÒN SỐNG (scripts/session-check.mjs) nhưng câu chữ quanh nó đã viết lại. */
 
   assert.ok(Array.isArray(ct.nhap_dung_chung) && ct.nhap_dung_chung.includes("drafts/"),
     "`drafts/` phai duoc khai la nhap dung chung — no la cho duy nhat moi agent ghi tu do");
@@ -1114,19 +1195,37 @@ const chay = (deps) => {
   assert.ok(fs.existsSync(hook), "repo phai co .githooks/commit-msg");
   const ma = fs.readFileSync(hook, "utf8");
 
-  // BA CHỐT FAIL-OPEN. Hook chạy trên MỌI lượt commit của MỌI lane; một hook hỏng là cả repo
-  // không commit được, và cái giá đó lớn hơn cái nó canh.
-  assert.match(ma, /command -v node/, "khong co node tren PATH thi phai CHO QUA");
-  assert.match(ma, /\[ -z "\$lane" \] && exit 0/, "khong tim thay nhan Lane thi phai CHO QUA (merge, revert)");
-  assert.match(ma, /\[ "\$ma" -eq 3 \]/, "CHI ma 3 (vi pham that) moi chan — moi loi la khac phai cho qua");
-  assert.match(ma, /--no-verify/, "phai chi ra cua thoat: mot chot khong the vuot se bi go han");
+  /* BỐN CHỐT FAIL-OPEN CŨ ĐÃ RA KHỎI HOOK — đo 2026-09-18.
+   *
+   * Hook nay dài 3 dòng lệnh và **uỷ quyền trọn** cho `claim.mjs --cua-index`, nên bốn neo cũ
+   * (`command -v node` · `[ -z "$lane" ] && exit 0` · `[ "$ma" -eq 3 ]` · `--no-verify`) không
+   * còn trong file. Hai vế dưới ghim thứ hook HÔM NAY thật sự bảo đảm: nó gọi đúng MỘT bộ đọc
+   * dùng chung (vòng audit 10/09 bắt được một bộ đọc `sed` thứ hai đọc `lane:` chữ thường), và
+   * nó không tự đọc nhãn.
+   *
+   * MỘT LỖ ĐÃ ĐO ĐƯỢC, ghi ra chứ không lặng lẽ: `set -e` + `exec node …` nghĩa là **thiếu
+   * `node` trên PATH thì hook thoát khác 0 và commit BỊ CHẶN** — chốt *"không có node thì cho
+   * qua"* không còn hiệu lực ở lớp hook. Không sửa trong lượt này (N-65 chỉ mở đúng khu cách
+   * ly), và không ghim ngược một chốt đã biến mất: ghim thứ không có là dựng lại một phép kiểm
+   * tưởng đang canh. */
+  assert.match(ma, /claim\.mjs["'\s]+--cua-index/,
+    "hook phai uy quyen cho claim.mjs --cua-index, khong tu doc nhan bang bo doc thu hai");
+  /* SOI PHAN LENH, BO CHU THICH. Chinh docblock cua hook KE LAI con bug cu — "ban dau toi tu
+   * viet mot bo doc thu hai bang sed" — nen do tren ca file la do vao loi ke ve can benh chu
+   * khong vao can benh. Toi vap dung lan dau viet ve nay (lan thu ba trong cung mot buoi). */
+  const lenh = ma.split(String.fromCharCode(10)).filter((d) => !/^\s*#/.test(d)).join(String.fromCharCode(10));
+  assert.doesNotMatch(lenh, /\bsed\b|\bawk\b|grep -o/,
+    "hook KHONG duoc tu boc tach nhan — hai bo doc tren cung mot loi nhan tra hai ten khac nhau");
 
   // Và cổng phải canh việc hook ĐƯỢC CÀI — nhưng CHỈ khi repo có hook, nếu không thì mọi repo
   // tạm mà fixture dựng lên đều đỏ (bẫy "cổng nhận thêm phụ thuộc" đã cắn bốn lần 08/09).
   const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate, /HOOK_CHUA_CAI/, "cong phai co ma loi rieng cho viec hook chua duoc cai");
-  assert.match(gate, /coHook && hooksPath !== "\.githooks"/,
-    "chi doi hooksPath KHI repo co hook — khong thi moi fixture chay cong deu do");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /HOOK_CHUA_CAI/
+   * chủ đề BỊ XOÁ khỏi scripts/ — cổng canh hook đã cài. */
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /coHook && hooksPath !== "\.githooks"/
+   * chủ đề BỊ XOÁ khỏi scripts/ — cổng canh hook đã cài. */
   ok("chot commit-msg: co that, fail-open ba cho, va cong canh viec no duoc cai (N-49)");
 }
 
@@ -1137,11 +1236,14 @@ const chay = (deps) => {
  * lượt ghi) điều đó kéo ngược cả cơ chế về khoá vùng; gặp thật ngay lượt đầu dùng. */
 {
   const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
-  assert.match(gate, /const daQuyThuocDuoc = /, "phep loc phai hoi 'da quy thuoc duoc chua'");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /const daQuyThuocDuoc = /
+   * chủ đề BỊ XOÁ khỏi scripts/. */
   assert.doesNotMatch(gate, /nhan !== asLabel/,
     "khong duoc con dieu kien 'nhan phai la cua NGUOI KHAC' — do la cho keo nguoc ve khoa vung");
-  assert.match(gate, /every\(\(nhan\) => Boolean\(nhan\)\)/,
-    "mien khi MOI nguon deu co nhan; mot nguon khong nhan la du de KHONG mien");
+  /* NEO CHẾT — gỡ 2026-09-18 (N-65). Ghim vào VĂN BẢN NGUỒN của session-check.mjs,
+   * một file bộ khung sở hữu và đã bị viết lại trọn trong 4da1e9e5. Neo cũ: /every\(\(nhan\) => Boolean\(nhan\)\)/
+   * chủ đề BỊ XOÁ khỏi scripts/. */
   ok("N-48 · commit mang nhan cua chinh minh khong con bi doi khoa vung");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

@@ -486,9 +486,17 @@ try {
  * Rơi khỏi cả ba = chết lặng lẽ, và mép này ĐỎ. Đó là toàn bộ việc của nó. */
 {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-  const phu = ["test", "test:tuan-tu", "test:chet"].map((k) => String(pkg.scripts?.[k] ?? "")).join(" && ");
+  /* BỐN chỗ, không ba nữa — `test:chet-ve` thêm 2026-09-18 (N-65). Khu cách ly cũ chỉ kể được
+     MỘT bệnh (*"nhập một ký hiệu đã biến mất"*). Lượt mở khu 18/09 làm lộ bệnh thứ hai:
+     `build-dashboard-smoke` **nạp được** rồi nhưng 66 khối cuối còn ghim hợp đồng CŨ của cổng,
+     và mấy câu đó là luật, Đức chốt. Nhét nó vào `test:chet` là lời khai sai (import đã lành);
+     đẩy vào `test` là suite đỏ; để ngoài cả ba là đúng cái mép này sinh ra để chặn. */
+  const phu = ["test", "test:tuan-tu", "test:chet", "test:chet-ve"].map((k) => String(pkg.scripts?.[k] ?? "")).join(" && ");
+  /* Tệp mở đầu bằng `_` là TRỢ THỦ dùng chung của các bài, không phải một bài — nó không có
+     `main`, chạy một mình thì thoát 0 mà chẳng khẳng định gì. Bắt nó vào một chuỗi là dạy
+     người ta thêm một dòng vô nghĩa vào cổng. `tests/_chep-script.mjs` là cái đầu tiên (N-65). */
   const coTrongTests = fs.readdirSync(path.join(ROOT, "tests"))
-    .filter((f) => f.endsWith(".mjs")).sort();
+    .filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort();
 
   // MỎ NEO PHẢI CÒN BÁM: đọc ra 0 tệp thì mép này xanh vì rỗng, đúng bẫy đã trả giá.
   assert.ok(coTrongTests.length > 20,
@@ -501,8 +509,12 @@ try {
 
   // Và khu cách ly phải THẬT SỰ đỏ. Một bài đã sửa được rồi mà còn nằm trong đó là lời khai sai
   // theo hướng ngược: nó bảo "đang hỏng" trong khi nó chạy được, và không ai đi dọn.
-  const dsChet = [...String(pkg.scripts?.["test:chet"] ?? "").matchAll(/tests\/([A-Za-z0-9._-]+\.mjs)/g)].map((m) => m[1]);
-  assert.ok(dsChet.length > 0, "khai `test:chet` mà không đọc ra bài nào — cú pháp đã đổi");
+  const lay = (khoa) => [...String(pkg.scripts?.[khoa] ?? "").matchAll(/tests\/([A-Za-z0-9._-]+\.mjs)/g)].map((m) => m[1]);
+  const dsChet = [...lay("test:chet"), ...lay("test:chet-ve")];
+  assert.ok(lay("test:chet").length > 0, "khai `test:chet` mà không đọc ra bài nào — cú pháp đã đổi");
+  assert.ok(lay("test:chet-ve").length > 0, "khai `test:chet-ve` mà không đọc ra bài nào — cú pháp đã đổi");
+  assert.deepEqual(lay("test:chet").filter((f) => lay("test:chet-ve").includes(f)), [],
+    "một bài nằm trong CẢ HAI khu thì không ai biết nó đang bị bệnh gì");
   for (const f of dsChet) {
     const r = spawnSync(process.execPath, [path.join(ROOT, "tests", f)], { encoding: "utf8", timeout: 120000 });
     assert.notEqual(r.status, 0,

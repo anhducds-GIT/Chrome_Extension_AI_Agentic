@@ -1367,11 +1367,23 @@ async function main() {
       const cauTruc = readStructureFromDisk(ROOT);
       const tienTo = claimPrefixesFrom(cauTruc);
       const xa = execFileSync("git", ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], { cwd: ROOT, encoding: "utf8" }).trim();
-      const ds = execFileSync("git", ["log", `${xa}..HEAD`, "--format=%x01%h %s", "--name-only"], { cwd: ROOT, encoding: "utf8" })
+      /* `-c core.quotepath=false` KHÔNG PHẢI trang trí — thiếu nó là quy chụp sai người.
+       *
+       * ĐO 2026-09-18 trên một repo dựng thật, một commit chạm `workers/Tạo Ảnh tô màu/v1/x.txt`:
+       *     không cờ → "workers/Táº¡o áº¢nh tÃ´ mÃ u/..."  → stewardOf = `_root`
+       *     có  cờ → "workers/Tạo Ảnh tô màu/v1/x.txt"                                → stewardOf = `workers/Tạo Ảnh tô màu`
+       * Tức `--release` chặn SAI VÙNG: giữ `_root` của mọi lane, tha đúng vùng đang nợ. Chủ repo
+       * đặt tên thư mục bằng tiếng Việt, nên đây là đường CHÍNH, không phải ca hiếm.
+       *
+       * Lỗi này đã có một phép ghim riêng từ 26/08 (`tests/session-check-utf8-paths.mjs`) — bài
+       * đó nằm trong khu cách ly từ `4da1e9e5` nên nó không kêu được. Và git còn bọc nháy khi
+       * đường dẫn chứa `"`, `\` hay ký tự điều khiển, nên vẫn phải bỏ nháy sau khi đã có cờ. */
+      const boNhay = (f) => f.replace(/^"|"$/g, "");
+      const ds = execFileSync("git", ["-c", "core.quotepath=false", "log", `${xa}..HEAD`, "--format=%x01%h %s", "--name-only"], { cwd: ROOT, encoding: "utf8" })
         .split(String.fromCharCode(1)).filter(Boolean);
       chuaDay = ds.filter((khoi) => {
         const [, ...file] = khoi.split(String.fromCharCode(10));
-        return file.filter(Boolean).some((f) => f !== ".agents/claims.json" && stewardOf(f, cauTruc, tienTo) === key);
+        return file.filter(Boolean).map(boNhay).some((f) => f !== ".agents/claims.json" && stewardOf(f, cauTruc, tienTo) === key);
       }).map((khoi) => khoi.split(String.fromCharCode(10))[0].trim());
     } catch (_) {
       // Không có nhánh xa, git hỏng, repo mới clone — trả `null`, tức không chặn.

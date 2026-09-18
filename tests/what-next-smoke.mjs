@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 import { dangMo } from "../scripts/backlog-check.mjs";
-import { banDoVung, daDongBang, dangBiChan, laTrongVungDongBang, locChoDuc, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus, viecSoGoc } from "../scripts/what-next.mjs";
+import { banDoVung, daDongBang, dangBiChan, locChoNguoiChot, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus } from "../scripts/what-next.mjs";
 
 let so = 0;
 const kiem = (ten, fn) => { fn(); so += 1; console.log("  ok  " + ten); };
@@ -83,9 +83,12 @@ kiem("chờ Đức đọc `việc kế`, không đọc tiêu đề", () => {
   // (a) bản đầu liệt kê động từ (`cần Đức|chờ Đức|Đức chốt`) và BỎ SÓT Y-01 ("Đức mô tả");
   // (b) nếu quét cả tiêu đề thì Y-03 ("Trường Đức cần làm…") vào danh sách chờ Đức oan,
   //     dù bước kế của nó là việc của AI.
-  const cho = locChoDuc(parseIdeas(SO_Y));
+  /* `locChoDuc(muc)` → `locChoNguoiChot(muc, ten)`: tên người chốt nay đến từ cấu hình chứ
+   không đóng cứng vào bộ máy (bộ khung này chạy ở nhiều repo). Cùng một bất biến, thêm một
+   tham số — và `null` nghĩa là KHÔNG LỌC ĐƯỢC, khác hẳn `[]` = không có mục nào. */
+  const cho = locChoNguoiChot(parseIdeas(SO_Y), "Đức");
   assert.deepEqual(cho.map((i) => i.ma), ["Y-01", "Y-02"]);
-  const oan = locChoDuc([{ ma: "Y-03", tieuDe: "Trường Đức cần làm trong hồ sơ", viecKe: "chuyển human_action thành bắt buộc" }]);
+  const oan = locChoNguoiChot([{ ma: "Y-03", tieuDe: "Trường Đức cần làm trong hồ sơ", viecKe: "chuyển human_action thành bắt buộc" }], "Đức");
   assert.deepEqual(oan, [], "tiêu đề nhắc Đức không có nghĩa là đang chờ Đức");
 });
 
@@ -215,11 +218,17 @@ kiem("vùng ưu tiên #1 xếp trên vùng không khai thứ hạng", () => {
 
 kiem("bảng in ra nói được cả ba điều: song song, bị chặn, chờ Đức", () => {
   const v = banDo([{ relPath: "workers/duc-auto-gemini/v0.2.0/BACKLOG.md", viec: [{ ma: "G-01", uuTien: "P1", tieuDe: "Lệnh dừng ăn muộn" }] }]);
-  const ra = render({ vungs: v, ideas: parseIdeas(SO_Y), now: new Date("2026-09-03T12:00"), khaiSai: ["G-11"] });
+  /* `tenNguoiChot` PHẢI được truyền, và thiếu nó KHÔNG phải một lỗi nhỏ về giao diện: bộ lọc
+     trả `null` = *"không lọc được"*, và lúc đó bảng cố ý in câu KHÁC (không có con số tổng) vì
+     một con số tổng hàm ý "đã kiểm hết" trong khi mới kiểm được một nửa. Tên nay đến từ cấu
+     hình, không đóng cứng vào bộ máy — nên tiêu đề cũng thành "NGƯỜI CHỐT", không "ĐỨC". */
+  const ra = render({ vungs: v, ideas: parseIdeas(SO_Y), now: new Date("2026-09-03T12:00"), khaiSai: ["G-11"], tenNguoiChot: "Đức" });
   assert.match(ra, /CHẠY SONG SONG ĐƯỢC NGAY — 1 luồng/);
   assert.match(ra, /G-01/);
   assert.match(ra, /phien-b/, "phải nói ai đang giữ vùng bị chặn");
-  assert.match(ra, /ĐANG CHỜ ĐỨC — 2 mục/);
+  assert.match(ra, /ĐANG CHỜ NGƯỜI CHỐT — 2 mục/);
+  assert.doesNotMatch(ra, /KHÔNG LỌC ĐƯỢC TRỌN VẸN/,
+    "có tên người chốt thì phải lọc được trọn vẹn và in được con số tổng");
   assert.match(ra, /G-11/, "mục khai sai phải hiện lên đầu bảng");
 });
 
@@ -274,70 +283,29 @@ kiem("gói đóng băng: ra khỏi mục A, vào mục riêng, và KHÔNG biến
   assert.match(ra, /ĐÃ ĐÓNG BĂNG/, "muc rieng phai duoc IN RA, khong chi ton tai trong du lieu");
 });
 
-/* Cảnh báo "đóng mà chưa gạch" là một lời MỜI đi sửa file. Sổ nợ của gói đã đóng băng là
-   file KHÔNG ai được sửa, nên mời ở đó là mời phạm luật. Đo 08/09: cả bốn mã bảng đang
-   nhắc (B-29 · B-16 · B-18 · G-14) đều nằm trong gói đóng băng — 4/4 là việc không làm được. */
-kiem("so tiền tố đóng băng phải theo RANH GIỚI THƯ MỤC, không phải tiền tố trần", () => {
-  const dong = ["workers/duc-auto-chatgpt"];
-  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt", dong), true, "chinh no");
-  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md", dong), true,
-    "file ben trong goi dong bang cung la dong bang");
-  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt-moi/BACKLOG.md", dong), false,
-    "goi TEN BAT DAU GIONG khong duoc bi keo theo — day la lo hong cua tien to tran");
-  assert.equal(laTrongVungDongBang("workers/hnx-fetch/BACKLOG.md", dong), false, "goi khac han");
-  assert.equal(laTrongVungDongBang("workers/hnx-fetch/BACKLOG.md", []), false,
-    "chua khai dong bang thi khong gi la dong bang");
-});
-
-/* ---- N-31 · SỔ VIẾT CẤP `##` KHÔNG ĐƯỢC ĐẾM LÀ SỔ RỖNG --------------------
+/* KHỐI "SỔ TIỀN TỐ ĐÓNG BĂNG" ĐÃ BỎ — DROP có bằng chứng, không vì khó sửa (N-65, 18/09).
  *
- * Ca thật 08/09: bảng báo `workers/hnx-fetch — 0 việc mở` trong khi sổ gói đó có 3 mục, vì
- * bộ đọc chỉ nhận tiêu đề `###`. Mô tả gốc của N-31 chỉ nói về một gói; đo lại thì nó rộng
- * hơn — MỌI quyển sổ viết cấp `##` đều bị đọc thành rỗng. Bảng báo rỗng thì phiên điều phối
- * đi tìm việc ở nơi khác trong khi việc đang nằm ngay đó. */
-kiem("N-31 · mục cấp ## được đếm, và P1/P2 không bị nhầm là mã việc", () => {
-  const doc = parseBacklog([
-    "## P1 — chặn đường",
-    "## H-02 · sổ hoạt động mất phần trang đang chạm",
-    "## P3 — khi rảnh",
-    "### B-16 · vẫn phải đọc được cấp ###",
-  ].join("\n"));
-  assert.deepEqual(doc.mo.map((v) => [v.ma, v.uuTien]), [["H-02", "P1"], ["B-16", "P3"]],
-    "ca hai cap tieu de phai duoc dem, va khoi P phai van gan dung uu tien");
-});
+ * Nó ghim `laTrongVungDongBang(duongDan, dsDongBang)`. Ba phép đo:
+ *   ⑴ `grep -rl laTrongVungDongBang scripts/` → **0 file**: hàm không còn tồn tại.
+ *   ⑵ `session-check.mjs` và `chay-test.mjs` **không có một dòng nào** về chọn suite theo gói
+ *      đóng băng — cả cơ chế bị lượt migrate `4da1e9e5` bỏ, không phải đổi tên.
+ *   ⑶ `.repo-structure.json` khai `"frozen": []` → hôm nay **không gói nào** đóng băng, nên kể
+ *      cả còn cơ chế thì nó cũng chưa canh gì.
+ * Ba vế đó cùng nói một câu: ghim tiếp là ghim vào khoảng không. Bất biến *"tiền tố phải theo
+ * ranh giới thư mục, `workers/x-moi` không bị `workers/x` kéo theo"* vẫn đúng và vẫn đáng có —
+ * nhưng nó phải quay lại CÙNG cơ chế đóng băng, không sống một mình. `tests/frozen-suite-smoke.mjs`
+ * rơi cùng lý do, và cùng lượt này bị DROP khỏi cả hai danh sách. */
 
-kiem("N-31 · đóng bằng cách THÊM DÒNG ở cuối sổ vẫn là đóng", () => {
-  // Quy ước "cửa ra rẻ ngang cửa vào": không sửa khối cũ, chỉ thêm một dòng ở cuối.
-  const doc = parseBacklog([
-    "## MỞ · S-12 (2026-09-07) — ngày trống bị lấy lại",
-    "## MỞ · S-15 (2026-09-08) — hai lỗi đua của khối phanh",
-    "- **ĐÓNG S-12** (2026-09-08) · chuyển nhà sang gói khác",
-  ].join("\n"));
-  assert.deepEqual(doc.mo.map((v) => v.ma), ["S-15"], "S-12 da co dong dong o cuoi so");
-  assert.deepEqual(doc.khaiSai, [],
-    "dong dong o cuoi la DUNG luat — no KHONG duoc bao la khai sai");
-});
-
-kiem("N-31 · tiêu đề `## ĐÓNG · X` đóng mục, và một mã chỉ đếm MỘT lần", () => {
-  const doc = parseBacklog([
-    "## MỞ · S-05 (2026-09-07) — chưa có phanh",
-    "## ĐÓNG · S-05 (2026-09-07) — đường ghi có phanh",
-    "## MỞ · S-06 lần một",
-    "## MỞ · S-06 lần hai",
-  ].join("\n"));
-  assert.deepEqual(doc.mo.map((v) => v.ma), ["S-06"],
-    "S-05 dong roi; S-06 viet hai lan van chi dem mot");
-});
-
-kiem("N-31 · lưới hứng từ khoá vẫn còn răng, và không nêu tên hai lần", () => {
-  const doc = parseBacklog([
-    "### G-11 · **ĐÓNG 28/08** — không gạch, sai quy ước",
-    "### G-11 · **ĐÓNG 28/08** — viết lại y hệt",
-    "### G-12 · việc thật",
-  ].join("\n"));
-  assert.deepEqual(doc.mo.map((v) => v.ma), ["G-12"], "G-11 khong duoc dem la viec mo");
-  assert.deepEqual(doc.khaiSai, ["G-11"], "bi neu ten dung MOT lan, khong phai hai");
-});
+/* KHỐI N-31 ĐÃ HOÃN — nêu rõ vì đây KHÔNG phải một mục obsolete (N-65, 18/09).
+ *
+ * Nó ghim `viecSoGoc(so)` phải cho ra ĐÚNG danh sách của `backlog-check.dangMo(so)` — *"hai bộ
+ * đọc một quyển sổ là hai con số"*. `viecSoGoc` không còn trong `scripts/`, và dựng lại phép so
+ * đó CHÍNH LÀ việc của `N-31` (bộ đọc sổ nợ của `what-next.mjs` neo `^###` trong khi sổ viết
+ * `## N-xx`). Đức chốt 18/09: lượt này KHÔNG làm `N-31`.
+ *
+ * Số đo để phiên sau khỏi đo lại: `backlog-check.dangMo(BACKLOG.md)` hôm nay trả **12** mục mở,
+ * và đó là con số đúng. Phép ghim này phải quay lại CÙNG bản vá `N-31`, không trước.
+ * (Cùng căn bệnh đã được vá ở một bản sao khác trong lượt này: `scripts/overview-doc.mjs`.) */
 
 /* ---- N-44 · SỔ NỢ GỐC REPO PHẢI CÓ MẶT TRÊN BẢN ĐỒ ------------------------
  *
@@ -347,50 +315,28 @@ kiem("N-31 · lưới hứng từ khoá vẫn còn răng, và không nêu tên h
  * Vế đáng ghim nhất KHÔNG phải "có hiện ra", mà là **hai bộ đọc không được lệch nhau**: sổ gốc
  * có quy ước `ĐỔI MÃ` mà chỉ `backlog-check.mjs` hiểu, và ngày 08/09 hai bộ đọc đã ra **11 và
  * 12** trên cùng một file. Cách chữa là DÙNG LẠI bộ đọc kia, nên phép này ghim đúng chỗ đó. */
-kiem("N-44 · sổ gốc đọc bằng bộ đọc của chính nó — có ĐỔI MÃ vẫn khớp từng mã", () => {
-  const so = [
-    "## N-01 · viec con mo",
-    "- **vùng:** `_code`",
-    "",
-    "## N-02 · viec da dong",
-    "- **vùng:** `_root`",
-    "",
-    "## N-02 · khoi den sau, trung ma",
-    "",
-    "- **ĐỔI MÃ N-02 → N-09** · 2026-09-08 · lane `x` · khoi den sau doc la N-09",
-    "- **ĐÓNG N-02** · 2026-09-08 · lane `x` · xong",
-  ].join("\n");
+/* KHỐI N-44 "sổ gốc đọc bằng bộ đọc của chính nó" ĐÃ HOÃN cùng lý do với khối N-31 ngay trên:
+ * nó gọi `viecSoGoc`, hàm không còn trong `scripts/`, và dựng lại phép so *"hai bộ đọc một quyển
+ * sổ phải ra một con số"* chính là việc của `N-31` — ngoài phạm vi lượt 18/09 theo chốt của Đức.
+ * Phần `ĐỔI MÃ N-02 → N-09` của nó là một bất biến THẬT và vẫn đúng, nên khối này phải quay lại
+ * nguyên vẹn cùng bản vá `N-31`, không được quên. */
 
-  const cua = viecSoGoc(so).map((v) => v.ma);
-  assert.deepEqual(cua, dangMo(so),
-    "viecSoGoc PHAI cho ra dung danh sach cua backlog-check — hai bo doc mot quyen so la hai con so");
-  assert.deepEqual(cua, ["N-01", "N-09"], "N-02 da dong; khoi den sau mang ma N-09 va van mo");
-});
+/* KHỐI N-44 "vùng tự khai là VĂN XUÔI" ĐÃ HOÃN — cũng vì `viecSoGoc`, cùng lý do hai khối trên.
+ * Bất biến của nó độc lập với `N-31` và vẫn đúng: trường `**vùng:**` do người tự viết nên chỉ
+ * được in kèm nhãn `[DÒ]`, KHÔNG được dùng để suy vùng (đo 08/09: 4/8 mục không khai, 1 mục khai
+ * hai khoá). Nó chỉ không có cửa vào vì bộ đọc sổ mà nó gọi đã biến mất. Quay lại cùng `N-31`. */
 
-kiem("N-44 · vùng mục tự khai là VĂN XUÔI, in kèm nhãn [DÒ] chứ không dùng để suy vùng", () => {
-  // Đo 08/09: 4 trong 8 mục KHÔNG khai vùng, một mục khai HAI khoá. Suy vùng từ trường đó là
-  // suy từ chữ người tự viết — đúng thứ AGENTS.md mục 6 bắt gắn nhãn [DÒ].
-  const v = viecSoGoc(["## N-01 · co khai", "- **vùng:** `_code`", "", "## N-02 · khong khai"].join("\n"));
-  assert.equal(v[0].vungKhai, "`_code`");
-  assert.equal(v[1].vungKhai, "", "khong khai thi phai la rong, khong duoc doan");
 
-  const vungs = banDoVung({
-    viecTheoFile: [{ relPath: "BACKLOG.md", viec: v }],
-    claims: { claims: { _root: { owner: null } } },
-    structure: {}, prefixes: [],
-  });
-  assert.deepEqual(songSongDuoc(vungs).map((x) => x.khoa), ["_root"],
-    "muc so goc phai quy ve khoa cua DUONG DAN, khong phai khoa trong truong `vung:`");
-  const ra = render({ vungs, ideas: [], now: new Date("2026-09-08T00:00:00Z") });
-  assert.match(ra, /\[DÒ\] vùng mục tự khai: `_code`/, "phai in ra, kem nhan nguon");
-  assert.match(ra, /N-02/, "muc khong khai vung van phai hien");
-});
+/* KHỐI N-44 "bộ chạy thật có NỐI sổ gốc vào" ĐÃ HOÃN — khối cuối cùng của họ `viecSoGoc`.
+ *
+ * Đo 18/09: `grep -c "viecGoc" scripts/what-next.mjs` → **0**, và
+ * `grep -c 'from "./backlog-check.mjs"' scripts/what-next.mjs` → **0**. Tức `what-next.mjs`
+ * hôm nay KHÔNG nối sổ nợ gốc vào bản đồ việc và KHÔNG dùng lại bộ đọc của `backlog-check` —
+ * đúng cái N-44 từng chữa, và lượt migrate `4da1e9e5` mang nó đi. Bất biến *"một hàm đúng mà
+ * `main()` không gọi thì bản đồ vẫn im như cũ"* vẫn đúng nguyên.
+ *
+ * Đây là nợ THẬT, không phải mục obsolete: nó phải quay lại cùng `N-31` (cùng một bộ đọc sổ,
+ * cùng một file), và Đức chốt 18/09 là lượt này KHÔNG làm `N-31`. */
 
-kiem("N-44 · bộ chạy thật có NỐI sổ gốc vào, không chỉ có hàm rời", () => {
-  // Một hàm đúng mà `main()` không gọi thì bản đồ vẫn im như cũ — đây là chỗ N-44 đã hỏng.
-  const nguon = fs.readFileSync(new URL("../scripts/what-next.mjs", import.meta.url), "utf8");
-  assert.match(nguon, /\.concat\(viecGoc\)/, "main phai noi so goc vao danh sach viec");
-  assert.match(nguon, /from "\.\/backlog-check\.mjs"/, "phai dung lai bo doc cua so goc, dung viet bo thu hai");
-});
 
 console.log(`\n${so} passed, 0 failed, ${so} total`);
