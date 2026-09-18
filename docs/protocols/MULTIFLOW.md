@@ -118,9 +118,10 @@ mình đụng, không nhận cả gốc repo** — cổng sẽ nói tên khoá c
 > **Mở một VÙNG MỚI thì hiện chỉ có đường sửa `.repo-structure.json` rồi `--restamp`.** Khối lệnh
 > trên từng có một dòng `--khai-vung` — cửa đó có thật, đóng `N-41` ngày 08/09 kèm 2 phép ghim,
 > rồi **biến mất** trong lượt `4da1e9e5` *(migrate bộ khung 0.3.0 → 1.8.0, 09/09)*. Lượt ấy thay
-> `scripts/claim.mjs` bằng bản của bộ khung; phép ghim `tests/claim-smoke.mjs` **nay không nạp nổi**
-> (`does not provide an export named 'BASELINE'`) và nó nằm trong khu cách ly `npm run test:chet`,
-> nên **không lượt chạy nào kêu suốt 8 ngày**. Dòng dạy một lệnh không tồn tại đã gỡ 17/09; việc
+> `scripts/claim.mjs` bằng bản của bộ khung; phép ghim `tests/claim-smoke.mjs` **đã không nạp nổi**
+> (`does not provide an export named 'BASELINE'`) và nằm trong khu cách ly `npm run test:chet`,
+> nên **không lượt chạy nào kêu suốt 8 ngày**. *(Cập nhật 18/09: bài ấy đã viết lại và chạy trong
+> `npm test`; khu cách ly đã rỗng và `N-65` đóng — nhưng vế thứ hai của `N-68` thì vẫn mở.)* Dòng dạy một lệnh không tồn tại đã gỡ 17/09; việc
 > khôi phục hay bỏ hẳn nằm ở `N-68`.
 
 **Artifact máy sinh KHÔNG đòi khoá nào** — khai ở khối `generated` của `.repo-structure.json`

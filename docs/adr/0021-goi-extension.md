@@ -28,6 +28,15 @@ suite), bản đồ việc (mục `B2 · ĐÃ ĐÓNG BĂNG`), phép ghim `tests/
 nguyên. Đóng băng là **công tắc**, Đức bật lại được bằng một dòng cấu hình. Cái đắt là *cách làm*,
 không phải danh sách.
 
+> **SỬA LỜI KHAI — 2026-09-18 (`N-65`).** Đoạn trên nói *"không bị gỡ khỏi mã"*. Đo lại: lượt
+> migrate bộ khung `4da1e9e5` **đã gỡ**. `chonSuiteBoDongBang` xuất hiện **0 lần** trong
+> `scripts/`; `session-check.mjs` và `chay-test.mjs` không còn dòng nào về chọn suite theo gói
+> đóng băng; và `tests/frozen-suite-smoke.mjs` đã bị DROP vì nó ghim vào một cơ chế không còn
+> tồn tại. Quyết định ⑴ **không đổi** — danh sách vẫn rỗng, nên hôm nay không gì bị tắt oan.
+> Nhưng câu *"Đức bật lại được bằng một dòng cấu hình"* nay **SAI**: bật lại nghĩa là **dựng
+> lại cơ chế**, rồi mới khai tên. Giữ đoạn cũ tại chỗ vì nó ghi lại một giả định mà một lượt
+> nâng bộ khung đã lặng lẽ phá — và không ai kêu, vì phép ghim canh nó nằm trong khu cách ly.
+
 **Cái mất, biết trước:** trần này là thứ duy nhất chặn số gói phình. Nay chặn nằm ở **giới hạn ⑦
 của `AGENTS.md` (tối đa 2 chat song song)** và **giới hạn ② (cấm cài một tính năng hai lần)**.
 Hai cái đó vừa nhận thêm tải — **không nới thêm cái nào trong hai.**

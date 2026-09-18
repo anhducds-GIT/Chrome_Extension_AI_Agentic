@@ -385,12 +385,20 @@ kiem("gói đóng băng: ra khỏi mục A, vào mục riêng, và KHÔNG biến
   const chuThat = fs.readFileSync(path.join(ROOT, "BACKLOG.md"), "utf8");
   const theoWhatNext = parseBacklog(chuThat).mo.length;
   const theoOverview = readNo(chuThat).filter((m) => !m.dong).length;
+  const theoBacklogCheck = dangMo(chuThat).length;
   assert.ok(theoWhatNext > 0,
     "SAN: doc ra 0 muc mo tren so THAT nghia la bo doc gay, khong phai repo het no");
+  /* BA bộ đọc, không hai. Chúng CỐ Ý không gộp — ba câu hỏi khác nhau, ba hình dạng trả về khác
+     nhau, và `what-next` còn đọc cả sổ của GÓI (quy ước đóng khác hẳn). Gộp bừa là đếm một mục
+     đã đóng thành mục mở (N-42). Nhưng ba bản của một luật thì sẽ lệch — đã lệch THẬT ba lần
+     trong hai ngày. Nên luật là: **được phép ba bản, KHÔNG được phép lệch nhau.** Vế này là cái
+     giữ chỗ đó, và nó là thứ duy nhất bắt được ca 18/09 (mỗi bộ đọc riêng lẻ đều "chạy được"). */
   assert.equal(theoWhatNext, theoOverview,
-    `hai bo doc so no phai ra cung mot con so: what-next=${theoWhatNext} · overview-doc=${theoOverview}`);
+    `bo doc so no phai ra cung mot con so: what-next=${theoWhatNext} · overview-doc=${theoOverview}`);
+  assert.equal(theoWhatNext, theoBacklogCheck,
+    `bo doc so no phai ra cung mot con so: what-next=${theoWhatNext} · backlog-check=${theoBacklogCheck}`);
   so += 1;
-  console.log(`  ok  bộ đọc sổ nợ: ## và ### · hai cách đóng · dòng đóng mồ côi không đẻ mục · khớp readNo (${theoWhatNext} mục mở)`);
+  console.log(`  ok  bộ đọc sổ nợ: ## và ### · hai cách đóng · dòng đóng mồ côi không đẻ mục · khớp readNo (${theoWhatNext} mục mở, 3 bộ đọc khớp nhau)`);
 }
 
 console.log(`\n${so} passed, 0 failed, ${so} total`);

@@ -1476,3 +1476,16 @@ theo đồng hồ.
   trắng · `tra_khi_chua_day` thành cảnh báo ma · và bộ đọc sổ nợ thứ ba khiến hàng cổng in
   `0/15` suốt chín ngày. Hàng rào mới đọc theo **tiền tố** (`test:chet|hong|cach-ly`) nên dựng
   lại một khu dưới tên khác vẫn kêu.
+
+- **ĐÓNG N-70** — 18/09, lane `claude-v1`. **Tiền đề của chính mục này SAI lúc viết**, và đó là
+  phần đáng ghi nhất. Mục nói *"`build-overview.mjs` NHÌN ĐỒNG HỒ"* kèm diff `giữ 47 phút` →
+  `giữ 48 phút`. Đo lại: lượt nâng bộ khung `30f8018a` đã thay `new Date()` bằng `mocHEADLuc()`
+  cho đường bản-đã-commit, và `30f8018a` là **tổ tiên** của `887d91ca` — chính commit ghi mục
+  này. Tôi quy một lượt bị từ chối `TRANG_CU` cho đồng hồ mà **không đo**; nguyên nhân thật là
+  **thứ tự** (sinh bản trước khi commit nguồn thì bản ấy tả HEAD cũ). Điều kiện đóng đã viết
+  vẫn đo được và **ĐẠT**: sinh hai lượt cách nhau 95 giây trên cùng HEAD → **5/5 artifact khớp
+  từng byte**. Và vì một thứ đang đúng mà không ai canh thì sẽ hỏng lại, mục này đóng kèm
+  `tests/artifact-tat-dinh-smoke.mjs`: đẩy đồng hồ **37 phút** rồi sinh lại → phải khớp từng
+  byte, **cộng một đối chứng bắt buộc** — bản SỐNG (`--khoa-song`) phải ĐỔI, nếu không thì cái
+  shim đồng hồ hỏng và vế đầu xanh vì *không đo được gì*. Thử phá (trả `luc` về `new Date()`):
+  **ĐỎ**. Chạy riêng: `npm run test:tat-dinh` (~9 giây).

@@ -1302,8 +1302,9 @@ async function main() {
    * Lịch sử ngắn, vì nó là lý do khối này mang một phép ghim riêng: cửa này được chốt, dựng và
    * ghim ngày 08/09 (`38574081`), rồi **biến mất cùng ngày hôm sau** khi lượt migrate bộ khung
    * `4da1e9e5` thay nguyên `scripts/claim.mjs` bằng bản upstream. Không ai kêu trong 8 ngày:
-   * phép ghim của nó (`tests/claim-smoke.mjs`) vỡ ở bước import và đang nằm trong khu cách ly
+   * phép ghim của nó (`tests/claim-smoke.mjs`) vỡ ở bước import và nằm trong khu cách ly
    * `npm run test:chet`, mà một phép ghim bị cách ly trông y hệt một phép ghim đang canh.
+   * (18/09: bài ấy đã viết lại và chạy trong `npm test`; không còn khu cách ly nào — `N-65`.)
    *
    * ĐẶT TRƯỚC `--take` vì nó là điều kiện tiên quyết: `--take` một khoá chưa có trong bảng thì
    * từ chối, và không có cửa này thì lối duy nhất là **sửa tay `claims.json` rồi `--restamp`** —

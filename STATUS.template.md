@@ -82,7 +82,8 @@ này, việc chờ Đức nằm **lẫn** trong câu đó, nên bảng phải đ
 
 > **Ba trường cuối bảng thiếu ở khuôn mẫu này từ đầu tới 17/09, và đó là một lỗ có giá.** Chúng
 > **hiện thẳng lên bảng Đức đọc** (`DASHBOARD.md` và trang tổng), và có phép ghim canh —
-> `tests/build-dashboard-smoke.mjs` · `tests/build-overview-smoke.mjs`. Nhưng khuôn mẫu không hề
+> `tests/build-dashboard-smoke.mjs`. *(Sửa 18/09: bản cũ kể thêm `tests/build-overview-smoke.mjs`,
+> bài đó đã DROP cùng `N-65` — 45/45 tên nó nhập đều không còn tồn tại.)* Nhưng khuôn mẫu không hề
 > nhắc, nên một gói mới khai theo đúng file này sẽ **để trống ba ô** mà các gói khác có chữ, và
 > không ai biết vì sao. Bắt được ở lượt rà `A5` bằng một phép đối chiếu, không bằng mắt:
 >

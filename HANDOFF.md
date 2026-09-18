@@ -881,3 +881,32 @@ một credit. Câu cũ giữ lại vì nó ghi một giả định đã bị ch�
 
 Còn nợ hạ tầng, theo thứ tự bước 3: `N-70` (bản sinh nhìn đồng hồ — lượt này đã phải `--amend`
 **hai lần**, đó là triệu chứng, không phải cách sửa) · gộp ba bộ đọc sổ nợ về một nhà · `B16`.
+
+## 2026-09-18 · claude-v1 · Bước 3/5 — tất định, và một lời khai của tôi bị đo bác
+
+**`N-70` ĐÓNG, nhưng tiền đề của nó SAI lúc tôi viết.** Mục ấy nói `build-overview.mjs` nhìn đồng
+hồ. Đo lại: `30f8018a` (nâng bộ khung) đã thay `new Date()` bằng `mocHEADLuc()` cho đường
+bản-đã-commit, và `30f8018a` là **tổ tiên** của chính commit ghi `N-70`. Tôi quy một lượt bị từ
+chối `TRANG_CU` cho đồng hồ mà **không đo** — nguyên nhân thật là **thứ tự**: sinh bản trước khi
+commit nguồn thì bản ấy tả HEAD cũ.
+
+Điều kiện đóng đã viết vẫn đo được và **ĐẠT**: hai lượt sinh cách nhau 95 giây trên cùng HEAD →
+**5/5 artifact khớp từng byte**.
+
+Một thứ đang đúng mà không ai canh thì sẽ hỏng lại, nên đóng kèm `tests/artifact-tat-dinh-smoke.mjs`:
+đẩy đồng hồ **37 phút** (`tests/_dong-ho-lui.mjs`) rồi sinh lại → phải khớp từng byte. **Đối chứng
+bắt buộc:** bản SỐNG (`--khoa-song`) phải ĐỔI — thiếu vế đó thì một cái shim hỏng làm vế đầu xanh
+vì *không đo được gì*. Thử phá (trả `luc` về `new Date()`): **ĐỎ**. `npm run test:tat-dinh`, ~9s.
+
+**BỐN LỜI KHAI SAI trong tài liệu và cấu hình, sửa TẠI CHỖ:**
+`.repo-structure.json` khai cơ chế đóng băng *"ĐÃ CƯỠNG CHẾ … ghim ở `frozen-suite-smoke.mjs`"* —
+đo: `chonSuiteBoDongBang` **0 lần** trong `scripts/`, bài ghim đã DROP. `ADR-0021` khai *"không bị
+gỡ khỏi mã"* — lượt migrate **đã gỡ**, nên câu *"Đức bật lại bằng một dòng cấu hình"* nay SAI:
+bật lại là **dựng lại cơ chế**. `STATUS.template.md` và `MULTIFLOW.md` cùng trỏ vào hai bài đã
+xoá. Danh sách chạy-riêng còn tên `dau-vet-vung-smoke.mjs` — đã gỡ.
+
+**ZAP: không có gì để xoá.** Quét toàn repo — 0 script/test/doc gốc nào không có người gọi. Ba bộ
+đọc sổ nợ **cố ý không gộp** (ba câu hỏi khác nhau; `what-next` còn đọc sổ của GÓI với quy ước
+đóng khác). Luật thay thế: *được phép ba bản, KHÔNG được phép lệch nhau* — ghim ở `what-next-smoke`.
+
+Aggregate **44 suite, 0 đỏ**.
