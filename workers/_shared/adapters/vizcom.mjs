@@ -75,10 +75,36 @@ export const VIZCOM = {
    * lớp đối tượng đó `scout.shot` KHÔNG phải cách tối ưu — nó là **giác quan duy nhất**.
    * 20 phần tử `svg` ↔ đúng 20 node `role=image` **không tên**: đó là icon, không phải tác phẩm.
    * Đầy đủ: `duc-scouter/v0.1.0/docs/WORKBENCH-GRAPH.md`. */
+  /* ═══ BẢN ĐỒ COMPONENT CỦA KHỐI PROMPT — đo 18/09, và nó SỬA MỘT KẾT LUẬN CỦA TÔI ═══
+   * Tôi từng báo với Đức: *"nút Generate không có đường gọi hợp lệ vì mọi class là hash"*.
+   * **SAI.** Class có hash ở ĐUÔI, còn ĐẦU là tên component ổn định của styled-components:
+   *
+   *     Button__StyledButton-sc-1dj7csb-0  WorkbenchElementImg2Img__GenerateButton-sc-ukbsh3-2 …
+   *     └── hash ở đuôi ──────────────────┘└── tên component, ỔN ĐỊNH ──────────────┘
+   *
+   * Nên một selector khớp TIỀN TỐ **không chứa `-sc-`** và **qua được luật ⑸**. Tám component
+   * đọc được trong khối:
+   *
+   *     WorkbenchElementImg2Img                  ← khung khối
+   *       ├ __Title · __TitleLeft · __TitleRight   ("Render" · "LEGACY")
+   *       ├ __Img2ImgToolbar
+   *       ├ __Img2ImgPromptWrapper
+   *       │   └ __Img2ImgTextArea                 ← ô prompt
+   *       └ __GenerateButton                      ← Generate
+   *
+   * CHỖ CHẶN THẬT không phải hash, mà là **SỐ LƯỢNG**: canvas có 2 khối đối xứng, và mọi biến
+   * thể CSS đã thử đều trả **2** — `:has()` chạy, nhưng CSS không so được chữ trong `value` nên
+   * không tách được khối nào là khối nào. Lõi ghi ném `SELECTOR_AMBIGUOUS` khi khớp ≠ 1
+   * (`scouter-actions-core.mjs`), nên **không lệnh GHI nào chạm được nút Generate hôm nay**.
+   * Cần một tham số CHỈ SỐ — đổi luật an toàn, Đức chốt. */
   be_mat_workbench: {
     /* Ô nhập prompt. **KHỚP 2** — mỗi phần tử trên canvas một ô. Luật gói số 7 đòi selector
      * khớp ĐÚNG MỘT trước khi ghi, nên selector này KHÔNG dùng để ghi được. */
     o_prompt: 'textarea[placeholder="What are you creating?"]',
+    /* Hợp lệ với luật ⑸ (không chứa `-sc-`), nhưng **khớp 2** nên chưa ghi được. */
+    nut_generate: 'button[class*="WorkbenchElementImg2Img__GenerateButton"]',
+    khung_khoi: '[class*="WorkbenchElementImg2Img__Img2Img"]',
+    thanh_cong_cu_khoi: '[class*="WorkbenchElementImg2Img__Img2ImgToolbar"]',
     thu_vien_tai_nguyen: '[data-testid="asset-library-toolbar-button"]',   /* khớp 1 */
     duong_ho_so: 'a[href="/settings/account/profile"]',                    /* khớp 1 */
     khung_intercom: "iframe#intercom-frame"                                /* khớp 1 */

@@ -20,7 +20,7 @@ scout.view: document 2048×1017 == viewport ⇒ graph KHÔNG nở ra DOM
 
 Ảnh gốc, ảnh kết quả và mọi đường nối được **vẽ trong một `<canvas>`**. Thứ duy nhất có mặt
 trong DOM là **lớp phủ của khối prompt** (`[class*="Workbench"]` ×30 — `WorkbenchContent__Container`,
-`WorkbenchCanvas__StyledFileDropper`, tất cả đều hash styled-components).
+`WorkbenchCanvas__StyledFileDropper` — ~~"tất cả đều hash"~~: hash chỉ ở **ĐUÔI**, tên component ở đầu **ổn định và neo được**, xem §8).
 
 > **Hệ quả:** với ảnh gốc và ảnh ra, `scout.shot` **không phải một cách tối ưu — nó là giác
 > quan DUY NHẤT.** Ảnh Đức gửi không phải "tiền đề để tiết kiệm context"; ở ba lớp đối tượng
@@ -48,12 +48,12 @@ CANVAS  (một phần tử duy nhất, data-engine)
   │     ├── PROMPT BLOCK 1                      CONFIRMED
   │     │     prompt  "Elegan nice coupe silver car"        CONFIRMED (đọc `value`)
   │     │     engine  "LEGACY" · "Describe" · "Render"      CONFIRMED (a11y name)
-  │     │     GENERATE                          MỘT NỬA     a11y có tên, DOM không có selector
+  │     │     GENERATE                          CHẶN BỞI SỐ LƯỢNG  selector hợp lệ CÓ (§8), khớp 2 ⇒ không ghi được
   │     │     └── outputs[]                     VISUAL-ONLY
   │     │
   │     └── PROMPT BLOCK 2                      CONFIRMED
   │           prompt  "Racing morden car colorful"          CONFIRMED
-  │           GENERATE                          MỘT NỬA
+  │           GENERATE                          CHẶN BỞI SỐ LƯỢNG (§8)
   │           └── outputs[]                     VISUAL-ONLY
   │
   └── CẠNH NỐI  source → block → output         UNKNOWN
@@ -71,7 +71,7 @@ khớp **2**, đúng một khối một cái.
 | Q1 | đâu là khối ảnh GỐC | **VISUAL-ONLY** | 20 node `role=image`, **0 cái có tên**; `img`=0 |
 | Q2 | đâu là khối prompt/render | **CONFIRMED** | 2 khối, `textarea[placeholder=…]` khớp 2 |
 | Q3 | prompt viết gì | **CONFIRMED** | `value` = hai chuỗi prompt thật |
-| Q4 | đâu là nút Generate | **MỘT NỬA** | a11y có 2 button tên `Generate`; DOM chỉ hash ⇒ **không selector hợp lệ để bấm** |
+| Q4 | đâu là nút Generate | **CONFIRMED vị trí, CHẶN lượt bấm** | `button[class*="WorkbenchElementImg2Img__GenerateButton"]` — hợp lệ, **không chứa hash**. Khớp **2** ⇒ lõi ghi ném `SELECTOR_AMBIGUOUS`. ~~"DOM chỉ hash nên không có selector hợp lệ"~~ **SAI, sửa ở §8** |
 | Q5 | đâu là ảnh RA tương ứng | **VISUAL-ONLY** | không phần tử DOM nào |
 | Q6 | map `source → block → outputs[]` | **UNKNOWN từ DOM** | không node id, không cạnh, và `style` **bị che** (ADR-0006) nên **quan hệ không gian cũng không đọc được** |
 
@@ -156,7 +156,7 @@ graph**, không phải cho **quyền**.
 |---|---|---|---|
 | **1** | Bộ rút gọn graph ở Node thành đường mặc định cho Workbench (đã có bản chạy) | Node-side, **không đụng extension** | **−96,1%** chữ: 15.962 → **620** |
 | **2** | `scout.shot` ghi ra ĐĨA ở lớp Node rồi trả **đường dẫn**, không trả base64 lên context | Node-side, **không đụng extension** | **−103.066 B chữ** mỗi lượt nhìn; và đây là giác quan duy nhất cho canvas nên nó bị gọi nhiều |
-| **3** | Đường gọi **theo chỉ số** cho neo lặp: `textarea[placeholder=…]` khớp 2, mà luật gói số 7 đòi khớp **đúng một** ⇒ **hôm nay không lệnh GHI nào chạm được khối prompt thứ hai** | **ĐỔI LUẬT AN TOÀN** — phải hỏi Đức, phải nạp lại extension | mở đường tự động hoá Workbench; hiện đang **chặn cứng** |
+| **3** | Đường gọi **theo chỉ số** cho neo lặp: cả `textarea[placeholder=…]` lẫn `button[class*="…__GenerateButton"]` đều khớp **2**, mà luật số 7 đòi **đúng một** ⇒ **hôm nay không lệnh GHI nào chạm được khối prompt hay nút Generate** | **ĐỔI LUẬT AN TOÀN** — phải hỏi Đức, phải nạp lại extension | mở đường tự động hoá Workbench; hiện đang **chặn cứng** |
 
 **Không làm:** thêm năng lực trình duyệt chỉ để giảm context · nhét bộ tóm tắt bằng AI giữa
 trình duyệt và CC · che bằng chứng thô khi an toàn cần · giảm fail-closed.
@@ -174,3 +174,53 @@ neo khớp nhiều. Không có hai thứ đó thì Workbench **đọc được n
 
 Đo **diff `scout.shot` trước/sau một lượt Generate do ĐỨC bấm tay**: đó là phép đo duy nhất còn
 thiếu để trả lời `outputs = N → N+1`, và nó không cần một lệnh ghi nào từ tôi.
+
+---
+
+## 8. SỬA MỤC 1/2/6 — nút Generate CÓ đường gọi hợp lệ (18/09 tối)
+
+Ở trên tôi viết *"DOM chỉ hash styled-components ⇒ không có selector hợp lệ"*. **Sai.** Class
+đầy đủ của hai nút:
+
+```
+Button__StyledButton-sc-1dj7csb-0  WorkbenchElementImg2Img__GenerateButton-sc-ukbsh3-2  jiRMPz fOFwsU
+└── hash ở ĐUÔI ─────────────────┘└── tên component, ỔN ĐỊNH ────────────────────────┘
+```
+
+Nên `button[class*="WorkbenchElementImg2Img__GenerateButton"]` **không chứa `-sc-`** và **qua
+luật ⑸**. Tôi đã đọc *"class chứa hash"* thành *"không neo được vào class"* — hai câu khác nhau,
+và câu sai đã đóng một cửa đang mở (`G-127`).
+
+**Bản đồ component của khối prompt** — 8 tên, đọc được, ổn định:
+
+```
+WorkbenchElementImg2Img                    ← khung khối
+  ├ __Title · __TitleLeft · __TitleRight     "Render" · "LEGACY"
+  ├ __Img2ImgToolbar
+  ├ __Img2ImgPromptWrapper
+  │   └ __Img2ImgTextArea                    ô prompt
+  └ __GenerateButton                         Generate
+```
+
+Cũng đo được: **CSS `:has()` chạy** qua `scout.query` — `div:has(> textarea[…])` khớp 2.
+
+### Chỗ chặn thật: SỐ LƯỢNG, không phải hash
+
+Thử **18** biến thể — `:has()` · `:nth-child` · `:nth-of-type` · `:first/last-of-type` · tổ hợp
+ancestor · sibling — **tất cả trả 2 hoặc 0**. Hai khối đối xứng hoàn hảo: cả hai là
+`:nth-child(2)` của **cha riêng**, và CSS **không so được chữ trong `value`** nên không tách
+được theo prompt. Lõi ghi ném `SELECTOR_AMBIGUOUS` khi khớp ≠ 1
+(`scripts/scouter-actions-core.mjs:942`).
+
+⇒ **Không lệnh GHI nào chạm được nút Generate hôm nay.** Đây là số học, không phải sự thận trọng.
+
+Và danh tính vẫn đóng: `a[href="/settings/account/profile"]` trả text `"Đ"`, đúng một ký tự —
+xác nhận `G-115` qua một kênh khác.
+
+### Mở bằng đúng một thứ
+
+Một **tham số CHỈ SỐ** cho lệnh ghi: chọn khớp thứ `n`, sau khi đã đọc `value` của đúng khối `n`
+để **xác nhận bằng bằng chứng** chứ không đoán thứ tự. Đó là **đổi luật an toàn** (nới điều kiện
+"khớp đúng một" của luật gói số 7) ⇒ **Đức chốt**, rồi nạp lại extension.
+
+Không có nó, đường đo `outputs = N → N+1` vẫn chạy được — nhưng **Đức bấm tay, tôi chụp diff**.

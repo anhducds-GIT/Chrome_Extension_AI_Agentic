@@ -2902,3 +2902,27 @@ chữ (15.962 → **620**) với **cùng bằng chứng**. ⑶ **đừng `scout.
 hết hạn vào `HEAD` (77 con), `truncated` ở 60 node, **không bao giờ tới canvas**.
 
 Ghế mới `99a6cade-…`. Công tắc ghi hôm qua thuộc ghế `5ba67fd2`, **không áp cho ghế này**.
+
+## 2026-09-18j · `claude-universal-scouter` — Đức cho bấm Generate; tôi KHÔNG bấm được, và lý do khác cái tôi đã báo
+
+**Tôi báo sai hai lần** (`G-127`). Tôi nói *"mọi class là hash nên không có đường gọi hợp lệ tới
+Generate"*. Class thật là
+`Button__StyledButton-sc-1dj7csb-0 WorkbenchElementImg2Img__GenerateButton-sc-ukbsh3-2 …` —
+hash ở **ĐUÔI**, đầu là **tên component ổn định**. Nên
+`button[class*="WorkbenchElementImg2Img__GenerateButton"]` **không chứa `-sc-`** và **qua luật ⑸**.
+Tôi đã đọc *"class chứa hash"* thành *"không neo được vào class"*. Bản đồ 8 component nay nằm
+trong `_shared/adapters/vizcom.mjs`. Cũng đo được: **CSS `:has()` chạy** qua `scout.query`.
+
+**Chỗ chặn thật là SỐ LƯỢNG** (`G-128`). Thử 18 biến thể selector — `:has()`, `:nth-child`,
+`:nth-of-type`, `:first/last-of-type`, tổ hợp ancestor, sibling — **tất cả trả 2 hoặc 0**. Hai
+khối đối xứng hoàn hảo: cả hai là `:nth-child(2)` của **cha riêng**, và CSS **không so được chữ
+trong `value`** nên không tách theo prompt. Lõi ghi ném `SELECTOR_AMBIGUOUS` khi khớp ≠ 1
+(`scouter-actions-core.mjs:942`). ⇒ **Không lệnh GHI nào chạm được nút Generate.** Số học, không
+phải thận trọng.
+
+Đo thêm: `a[href="/settings/account/profile"]` trả text `"Đ"` ⇒ **danh tính vẫn không đọc được
+trên workbench** — xác nhận `G-115` qua một kênh khác.
+
+**Mở được bằng đúng một thứ:** tham số **CHỈ SỐ** cho lệnh ghi (chọn khớp thứ n sau khi đã đọc
+`value` của đúng khối đó để xác nhận). Đó là **đổi luật an toàn** — Đức chốt, rồi nạp lại
+extension. Không có nó thì đường đo `outputs = N → N+1` vẫn phải do Đức bấm tay, tôi chụp diff.
