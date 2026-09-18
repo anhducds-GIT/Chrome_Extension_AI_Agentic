@@ -117,6 +117,36 @@ export function readIdeas(text) {
 const DAU_DUC = /@\s*(?:Đức|Duc|đức|duc)\s*:\s*(bấm|bam|chốt|chot)\b/i;
 export const LOAI_DUC = { bam: "BẤM", chot: "CHỐT" };
 
+/* DẤU MỞ ĐẦU DÒNG mới là một MỤC VIỆC. Dấu nằm giữa câu là một lượt NHẮC TỚI cơ chế.
+ *
+ * Chú thích ngay trên đã lường trước một kiểu dương tính giả — *"một câu văn xuôi nhắc tới
+ * Đức"* — và chặn nó bằng cách khoá chặt biến thể tên. Nhưng kiểu dương tính giả ĐẮT hơn lại
+ * là kiểu ngược lại: một tài liệu **viết về chính cơ chế này** thì bắt buộc phải gõ đúng chuỗi
+ * ấy ra, và một phép quét không neo sẽ đọc lời giải thích thành việc phải làm.
+ *
+ * ĐO 2026-09-18 trên bản đã commit — bảng khai *"Cần Đức — 5 việc"*, sự thật là **2**:
+ *   THẬT   `IDEAS.md:74,75`   — `- @Đức:bấm …` · dấu mở đầu gạch đầu dòng
+ *   MA     `BACKLOG.md:243`   — `… dùng cơ chế \`@Đức:bấm\` / \`@Đức:chốt\`"…` (văn xuôi của N-29)
+ *   MA     `BACKLOG.md:248`   — `| Dấu \`@Đức:bấm\` … | **17** |` — một ô bảng ĐẾM số dấu, và
+ *                                lượt đếm đó tự biến mình thành cái thứ 18
+ *   MA     `BACKLOG.md:267`   — `**Thứ tự bắt buộc:** ⑴ đặt dấu \`@Đức:bấm\` vào dòng mục thật…`
+ * ⇒ **3/5 = 60% nhiễu**, và cả ba đến từ MỘT mục nợ đang mở hợp lệ (`N-29`) nói về cơ chế.
+ *
+ * Vì sao KHÔNG chữa bằng cách bỏ `BACKLOG.md` khỏi `SO_CON_SONG` — đó là cách đã dùng cho
+ * `HANDOFF.md` (xem hằng số đó). Lần này không dùng được: `BACKLOG.md` là một trong hai sổ
+ * ĐẺ RA việc thật. Bỏ nó đi là đổi 3 việc ma lấy toàn bộ việc thật của sổ nợ.
+ *
+ * Neo chấp nhận tiền tố danh sách / trích dẫn / tiêu đề / nháy ngược / danh sách đánh số, và
+ * KHÔNG chấp nhận CHỮ hay `|`. Thứ tách được việc thật khỏi lời nhắc là **VỊ TRÍ**, không phải
+ * cách gõ: cả ba dấu ma trên đều có chữ đứng trước, còn `> \`@Đức:chốt\` …` là một mục thật
+ * đang được ghim ở vế 4 của `tests/overview-doc-smoke.mjs`. Neo theo nháy ngược là ghim nhầm
+ * vào cách gõ và giết mất mục ấy.
+ *
+ * Lệch về phía ĐẾM THỪA vẫn đúng như cả file này, nhưng chỗ lệch phải là *"dấu đặt hơi lạ"*,
+ * không phải *"có ai đó nhắc tới dấu"*. */
+const DAU_DUC_DAU_DONG = new RegExp(
+  "^[\\s>*+#`-]*(?:\\d+[.)]\\s*)?" + DAU_DUC.source.replace(/^\^/, ""), "i");
+
 const boDau = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /**
@@ -131,7 +161,7 @@ export function quetDauDuc(text, file) {
   const ra = [];
   const dong = donGian(text).split(NL);
   for (let i = 0; i < dong.length; i += 1) {
-    const m = DAU_DUC.exec(dong[i]);
+    const m = DAU_DUC_DAU_DONG.exec(dong[i]);
     if (!m) continue;
     const loai = boDau(m[1]).startsWith("bam") ? "bam" : "chot";
     const cau = dong[i].replace(DAU_DUC, "").replace(/^[#>\-*\s]+/, "").replace(/\*\*/g, "").trim();
@@ -146,7 +176,39 @@ export function quetDauDuc(text, file) {
  * dò từ khoá "xong" trong văn xuôi — có mục viết "gỡ khoá sau khi việc kia xong", và chữ
  * "xong" ở đó là điều kiện chứ không phải trạng thái. Dò giữa câu là đóng oan một việc đang
  * mở, tức bảng báo THIẾU nợ. Lệch về phía báo thừa, cố ý. */
-const MUC_NO = /^###\s+(~~)?\s*([A-Z][A-Z0-9]*-\d+)\s*~*\s*[·:]?\s*(.*)$/;
+/* BẬC TIÊU ĐỀ `##` HAY `###` — nhận CẢ HAI, và đây là một lỗi ĐO ĐƯỢC chứ không phải nới cho
+ * rộng rãi.
+ *
+ * ĐO 2026-09-18 trên bản đã commit: bảng in *"Việc còn nợ — **0** mục đang mở · **0** đã đóng"*.
+ * Sự thật trong `BACKLOG.md` cùng lúc đó: **38 khối mở · 29 dòng đóng · 11 mục CÒN MỞ**
+ * (`N-45 N-59 N-60 N-62 N-63 N-64 N-65 N-66 N-67 N-68 N-69`). Mẫu cũ neo `^###`, còn sổ — và
+ * chính khối mẫu ở mục 3 của luật sổ — viết `## N-xx ·`. Tức bộ đếm tìm một hình dạng **không
+ * ai gõ**, tìm không ra, rồi in ra số 0.
+ *
+ * Vì sao đây là con số nguy hiểm nhất trên cả trang: một số 0 đọc ra *"sổ nợ sạch"* trong khi
+ * nó nghĩa là *"tôi không tìm thấy sổ nợ"*. Hai câu ngược nhau, một chữ số. Đúng ca mà `khoiBaCau`
+ * đã dựng ô «đã dò bao nhiêu» để tách — nhưng ô đó canh phép dò khác, không canh ô này.
+ *
+ * KHÔNG chữa bằng cách sửa `BACKLOG.md` thành `###`: sổ đó nằm trong `append_only_exempt`, nên
+ * **thêm dòng cuối thì miễn khoá, sửa dòng cũ thì không**. Đổi 38 tiêu đề là đổi luật ghi sổ để
+ * chiều một biểu thức chính quy — ngược chiều. Sửa bên đọc, một ký tự.
+ *
+ * Bà con gần: `N-31` là ĐÚNG CĂN BỆNH NÀY ở `what-next.mjs` (`MA_VIEC` cũng neo `^###`), chỉ
+ * khác là nó cắn sổ nợ của từng gói. Mục đó vẫn mở. */
+const MUC_NO = /^#{2,3}\s+(~~)?\s*([A-Z][A-Z0-9]*-\d+)\s*~*\s*[·:]?\s*(.*)$/;
+
+/* HAI CÁCH ĐÓNG MỘT MỤC, và sổ gốc repo chỉ dùng cách thứ hai.
+ *   ⑴ gạch mã ngay trên tiêu đề — `### ~~KHUNG-9~~ · …`
+ *   ⑵ **thêm một dòng ở cuối file** — `- **ĐÓNG N-xx** · <ngày> · <lane> · <bằng chứng>`
+ * Luật sổ mục 4 bắt buộc cách ⑵ (*"Không xoá khối cũ, không sửa khối cũ"*) vì cửa ra phải rẻ
+ * ngang cửa vào — sửa khối cũ là phải xin khoá `_root`. Đo cùng lượt: **0** mục bị gạch, **29**
+ * dòng đóng. Bộ đếm cũ chỉ biết cách ⑴, nên kể cả khi vá xong bậc tiêu đề nó vẫn sẽ khai
+ * *"38 mục đang mở"* — đổi một con số sai lấy một con số sai khác.
+ *
+ * Dòng đóng trỏ tới mã KHÔNG có khối mở (đo được: `N-37`, `N-38` — khối của chúng nằm trong lượt
+ * cắt 07/09) thì **bỏ qua**, không đẻ ra mục. Một mục chỉ tồn tại khi có người mở nó. */
+const DONG_NO = /^\s*[-*]\s*\*\*\s*ĐÓNG\s+([A-Z][A-Z0-9]*-\d+)\s*\*\*/;
+
 /* Cùng mẫu với `what-next.mjs` — hai chỗ đọc CÙNG một sổ thì phải đọc cùng một dấu. */
 const UU_TIEN_NO = /^##\s+(P[1-9])\b/;
 
@@ -157,14 +219,20 @@ export function readNo(text) {
      đi tra từng cái, tức danh sách chỉ dời công việc chứ không bớt. Mục nằm trước mọi tiêu đề
      nhóm thì mang `P?`: **không biết** khác **không quan trọng**, và trộn hai thứ đó là nói dối. */
   let uuTien = "P?";
+  /* MỘT LƯỢT ĐỌC, hai loại dòng. Dòng đóng nằm ở CUỐI file còn khối mở nằm ở giữa, nên tập
+   * đóng chỉ đủ khi đã đọc hết — vì thế đánh dấu ở vòng sau, không đánh dấu tại chỗ. */
+  const daDong = new Set();
   for (const l of donGian(text).split(NL)) {
     const ut = UU_TIEN_NO.exec(l);
     if (ut) { uuTien = ut[1]; continue; }
+    const d = DONG_NO.exec(l);
+    if (d) { daDong.add(d[1]); continue; }
     const m = MUC_NO.exec(l);
     if (!m) continue;
     const ten = m[3].replace(/~~/g, "").trim();
     ra.push({ ma: m[2], ten, dong: Boolean(m[1]), uuTien, choChot: DAU_DUC.test(ten) });
   }
+  for (const n of ra) if (daDong.has(n.ma)) n.dong = true;
   return ra;
 }
 

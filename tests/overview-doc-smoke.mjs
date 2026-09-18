@@ -113,7 +113,38 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   // sách "cần Đức" đầy rác và người ta thôi đọc nó.
   assert.ok(!ra.some((x) => x.cau.includes("không có dấu")), "văn xuôi có tên người không phải là dấu");
   assert.ok(ra[0].cau.startsWith("KHUNG-11") === false, "câu phải là phần còn lại của DÒNG có dấu");
-  ok("dấu chờ: hai loại · bỏ dấu tiếng Việt vẫn nhận · văn xuôi không thành việc");
+
+  /* MỘT TÀI LIỆU VIẾT VỀ CƠ CHẾ BẮT BUỘC PHẢI GÕ ĐÚNG CHUỖI CỦA CƠ CHẾ. Ba dòng dưới đây chép
+   * nguyên văn từ `BACKLOG.md` (mục `N-29`, dòng 243/248/267) — mục nợ ĐANG MỞ hợp lệ bàn về
+   * chính việc gộp nguồn "cần Đức". Bản trước quét không neo nên đọc cả ba thành việc phải làm:
+   * bảng khai *"Cần Đức — 5 việc"* trong khi sự thật là **2**, tức **60% nhiễu**.
+   *
+   * Dòng thứ hai là ca đẹp nhất: nó là một ô bảng ĐẾM số dấu, và lượt đếm ấy tự biến mình thành
+   * một dấu nữa. Bộ đếm tự đếm chính nó.
+   *
+   * Vế này ĐỎ nếu ai bỏ neo đầu dòng. Nó KHÔNG được thay bằng cách loại `BACKLOG.md` khỏi
+   * `SO_CON_SONG` — đó là cách đã dùng cho `HANDOFF.md`, và ở đây nó đổi 3 việc ma lấy toàn bộ
+   * việc thật của sổ nợ. */
+  const ma = quetDauDuc([
+    'cầu *"NEEDS ĐỨC: một SSOT duy nhất, dùng cơ chế `@Đức:bấm` / `@Đức:chốt`"*. Đích đúng. Nhưng',
+    "| Dấu `@Đức:bấm` / `@Đức:chốt` trong ba sổ | **17** (7 bấm · 10 chốt) |",
+    "**Thứ tự bắt buộc:** ⑴ đặt dấu `@Đức:bấm` vào dòng mục thật cho hai việc còn thiếu (Scouter · nửa"
+  ].join(NL), "BACKLOG.md");
+  assert.deepEqual(ma, [], "dấu nằm GIỮA CÂU là một lượt nhắc tới cơ chế, không phải một việc — "
+    + `quét ra ${ma.length} việc ma: ${JSON.stringify(ma.map((x) => x.cau.slice(0, 40)))}`);
+
+  /* Vế ngược lại, cùng một lượt: neo chặt quá thì việc THẬT biến mất im lặng — và mất một việc
+   * thì tệ hơn thừa một việc, vì không ai đi tìm thứ mình không biết là có. Bốn cách gõ thật. */
+  const that = quetDauDuc([
+    "- @Đức:bấm nạp lại tiện ích trên từng hồ sơ",
+    "- **@Đức:chốt** chọn một trong hai phương án",
+    "1. @Đức:bam việc đánh số cũng là việc",
+    "  > `@Đức:chot` trong trích dẫn có nháy ngược"
+  ].join(NL), "IDEAS.md");
+  assert.equal(that.length, 4, "bốn cách gõ dấu THẬT đều phải được đếm — neo chặt quá là mất việc");
+  assert.deepEqual(that.map((x) => x.loai), ["bam", "chot", "bam", "chot"]);
+  ok("dấu chờ: hai loại · bỏ dấu tiếng Việt vẫn nhận · văn xuôi không thành việc · "
+    + "3 dòng NÓI VỀ cơ chế không thành việc · 4 cách gõ thật vẫn đếm đủ");
 }
 
 /* ---- 5. Sổ nợ: dấu đóng phải ở ĐẦU mã, không dò giữa câu ----------------- */
@@ -129,7 +160,35 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   // Chữ "xong" giữa câu là một ĐIỀU KIỆN, không phải trạng thái. Đóng oan nó là bảng báo
   // THIẾU nợ — và một việc bị đếm thiếu thì biến mất, không ai đi tìm.
   assert.equal(ra[2].dong, false, "chữ xong giữa câu KHÔNG phải dấu đóng");
-  ok("sổ nợ: chỉ gạch mã mới là đóng, không dò từ khoá giữa câu");
+
+  /* HÌNH DẠNG THẬT CỦA SỔ NỢ GỐC REPO — `##`, và đóng bằng MỘT DÒNG Ở CUỐI FILE.
+   *
+   * Đo 18/09 trên bản đã commit: bảng in *"Việc còn nợ — 0 mục đang mở · 0 đã đóng"* trong khi
+   * `BACKLOG.md` có **38 khối · 29 dòng đóng · 11 mục còn mở**. Mẫu cũ neo `^###` còn sổ viết
+   * `## N-xx ·`, nên bộ đếm tìm một hình dạng không ai gõ rồi in ra số 0.
+   *
+   * Vì sao vế này đáng có: **một số 0 đọc ra "sổ nợ sạch" trong khi nó nghĩa là "không tìm thấy
+   * sổ nợ"**. Hai câu ngược nhau, cùng một chữ số — không ai phát hiện bằng mắt.
+   *
+   * Ba vế khẳng định, mỗi vế chết vì một đột biến khác nhau:
+   *   · quay `#{2,3}` về `###`            → `tong` rơi về 0
+   *   · bỏ đường đọc dòng `**ĐÓNG N-xx**` → `daDong` rơi về 0, mục mở phình lên
+   *   · đẻ mục từ một dòng đóng mồ côi    → `tong` thành 3 */
+  const that = readNo([
+    "## P1",
+    "## N-05 · mục mở, bậc hai — hình dạng THẬT của sổ gốc repo",
+    "## N-06 · mục này đóng bằng một dòng ở cuối file",
+    "### KHUNG-9 · bậc ba vẫn phải nhận, sổ của gói dùng bậc này",
+    "- **ĐÓNG N-06** · 2026-09-18 · lane `x` · bằng chứng",
+    "- **ĐÓNG N-99** · dòng đóng MỒ CÔI: không khối nào mở N-99"
+  ].join(NL));
+  assert.equal(that.length, 3, "phải đọc được cả `##` lẫn `###`, và KHÔNG đẻ mục từ dòng đóng mồ côi");
+  assert.deepEqual(that.map((x) => x.ma), ["N-05", "N-06", "KHUNG-9"]);
+  assert.deepEqual(that.map((x) => x.dong), [false, true, false],
+    "dòng `- **ĐÓNG N-xx**` ở cuối file là cửa ra CHÍNH THỨC của sổ gốc (luật sổ mục 4)");
+  assert.deepEqual(that.map((x) => x.uuTien), ["P1", "P1", "P1"]);
+  ok("sổ nợ: chỉ gạch mã mới là đóng, không dò từ khoá giữa câu · "
+    + "nhận cả `##` và `###` · dòng ĐÓNG ở cuối file là cửa ra · dòng đóng mồ côi không đẻ mục");
 }
 
 /* ---- 6. Bảng quyền: hỏng thì NÉM, và `_docs` không được bị nuốt ---------- */
