@@ -4,7 +4,7 @@ id: duc-auto-gg-flow-video
 name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
-priority_rank: 1
+priority_rank: 6
 next_step: "Chờ Flow hết quá tải rồi chạy MỘT job — kiểm chứng đầu tiên, và là thứ đưa gói lên active. Job Q001 đã nằm sẵn trong hàng đợi, chưa bấm chạy. Lưu ý tiền: chip đang để x2 mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
 current_focus: "Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10."

@@ -4,7 +4,7 @@ id: hnx-fetch
 name: HNX Fetch
 lifecycle: active
 owner: claude-scouter-s06
-priority_rank: 1
+priority_rank: 7
 next_step: "Chạy lượt lấy dữ liệu: SSOT đang thiếu 3 ngày (01/09, 02/09, 08/09). Hai ngày đầu gần như chắc là nghỉ lễ Quốc khánh — lượt chạy sẽ tự ghi nhận và thôi hỏi lại từ lần sau. Cần Đức bật công tắc trước."
 human_action: "Không có việc gì chờ Đức. Muốn lấy dữ liệu thì bật công tắc Cho phép lấy dữ liệu ở bảng bên rồi bảo AI chạy — mỗi lần bật được 200 lượt. @Đức:bấm"
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
